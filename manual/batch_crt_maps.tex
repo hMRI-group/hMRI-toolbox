@@ -1,0 +1,218 @@
+% $Id: batch_crt_maps.tex 31 2013-11-27 16:42:58Z christophe $ 
+
+\chapter{Create maps  \label{Chap:crt_maps}}
+
+\vskip 1.5cm
+
+You have the option to create B1 corrected parameter maps estimated from dual flip angle FLASH experiment.
+
+
+\section{Multiparameter \& UNICORT\_B1 images}
+Use this option when B0/B1 3D maps not available. Bias field estimation and correction will be performed
+
+using the approach described in 'Unified segmentation based correction... (UNICORT) paper by Weiskopf et al., 2011 
+
+
+\subsection{Create subject entries automatically from DICOM files.}
+DICOM files in the selected directory will be listed recursively and appropriate job subject entries created automatically. Do NOT delete first subject, just leave the image input fields empty. This subject's settings will be copied for all subjects.
+
+
+\subsubsection{Yes}
+Use automatic pipeline.
+
+
+\paragraph{Pipeline input directory}
+Select a directory for automatic pipeline input.
+
+
+\paragraph{Unpack .tar archives}
+If Yes is selected, .tar archives will be unpacked and deleted prior to listing DICOM files. Warning: THIS HAPPENS IN-PLACE!
+
+
+\paragraph{Pipeline output directory}
+Select a directory for automatic pipeline output.
+
+
+\paragraph{Number of subjects}
+If you know the number of subjects in advance you can put it here in order to be able to use dependencies. Subjects will be processed in alphabetical order of PatientName tags.
+
+
+\paragraph{Create hierarchy}
+If Yes is selected, the PatientName/StudyDate/ProtocolName/SeriesNumber hierarchy will be created.
+
+
+\paragraph{Process MOSAIC images}
+If you have DICOM images in MOSAIC format, you have to select YES here in order to extract separate echo images from the mosaic. At the moment, Image Processing Toolbox is required for this functionality to work!!!
+
+
+\paragraph{MT sequence name (regular expression)}
+This regular expression will be used to identify MT sequences.
+
+
+\paragraph{PD sequence name (regular expression)}
+This regular expression will be used to identify PD sequences.
+
+
+\paragraph{T1 sequence name (regular expression)}
+This regular expression will be used to identify T1 sequences.
+
+
+\paragraph{B0 sequence name (regular expression)}
+This regular expression will be used to identify B0 sequences.
+
+
+\paragraph{B1 sequence name (regular expression)}
+This regular expression will be used to identify B1 sequences.
+
+
+\subsubsection{No}
+Do NOT use automatic pipeline.
+
+
+\subsection{Data}
+Specify the number of subjects.
+
+
+\subsubsection{Subject}
+Specify a subject for maps calculation.
+
+
+\paragraph{Output choice}
+Output directory can be the same as the input directory for each input file or user selected
+
+
+\subparagraph{Input directory}
+Output files will be written to the same folder as each corresponding input file.
+
+
+\subparagraph{Output directory}
+Select a directory where output files will be written to.
+
+
+\paragraph{Raw multiparameter data}
+Input all the MT/PD/T1 images in this order.
+
+
+\subparagraph{MT images}
+Input MT images in the same order.
+
+
+\subparagraph{PD images}
+Input PD images in the same order.
+
+
+\subparagraph{T1 images}
+Input T1 images in the same order.
+
+
+\section{Multiparameter \& B0/B1 images}
+Use this option when B0/B1 3D maps available.
+
+
+\subsection{Create subject entries automatically from DICOM files.}
+DICOM files in the selected directory will be listed recursively and appropriate job subject entries created automatically. Do NOT delete first subject, just leave the image input fields empty. This subject's settings will be copied for all subjects.
+
+
+\subsubsection{Yes}
+Use automatic pipeline.
+
+
+\paragraph{Pipeline input directory}
+Select a directory for automatic pipeline input.
+
+
+\paragraph{Unpack .tar archives}
+If Yes is selected, .tar archives will be unpacked and deleted prior to listing DICOM files. Warning: THIS HAPPENS IN-PLACE!
+
+
+\paragraph{Pipeline output directory}
+Select a directory for automatic pipeline output.
+
+
+\paragraph{Number of subjects}
+If you know the number of subjects in advance you can put it here in order to be able to use dependencies. Subjects will be processed in alphabetical order of PatientName tags.
+
+
+\paragraph{Create hierarchy}
+If Yes is selected, the PatientName/StudyDate/ProtocolName/SeriesNumber hierarchy will be created.
+
+
+\paragraph{Process MOSAIC images}
+If you have DICOM images in MOSAIC format, you have to select YES here in order to extract separate echo images from the mosaic. At the moment, Image Processing Toolbox is required for this functionality to work!!!
+
+
+\paragraph{MT sequence name (regular expression)}
+This regular expression will be used to identify MT sequences.
+
+
+\paragraph{PD sequence name (regular expression)}
+This regular expression will be used to identify PD sequences.
+
+
+\paragraph{T1 sequence name (regular expression)}
+This regular expression will be used to identify T1 sequences.
+
+
+\paragraph{B0 sequence name (regular expression)}
+This regular expression will be used to identify B0 sequences.
+
+
+\paragraph{B1 sequence name (regular expression)}
+This regular expression will be used to identify B1 sequences.
+
+
+\subsubsection{No}
+Do NOT use automatic pipeline.
+
+
+\subsection{Choose the B1map type}
+This is the option to choose the type of the B1 map acquisition. If you use B1 maps other than the explicitly stated versions the function will use the defaults for version 3D\_EPI\_v2b
+
+
+\subsection{Data}
+Specify the number of subjects.
+
+
+\subsubsection{Subject}
+Specify a subject for maps calculation.
+
+
+\paragraph{Output choice}
+Output directory can be the same as the input directory for each input file or user selected
+
+
+\subparagraph{Input directory}
+Output files will be written to the same folder as each corresponding input file.
+
+
+\subparagraph{Output directory}
+Select a directory where output files will be written to.
+
+
+\paragraph{Raw B0 \& B1 data}
+Input all B0 \& B1 images in this order.
+
+
+\subparagraph{B0 images}
+Select B0 images
+
+
+\subparagraph{Pairs of SE and STE images}
+Select B1 images - 3D EPI SE \& STE
+
+
+\paragraph{Raw multiparameter data}
+Input all the MT/PD/T1 images in this order.
+
+
+\subparagraph{MT images}
+Input MT images in the same order.
+
+
+\subparagraph{PD images}
+Input PD images in the same order.
+
+
+\subparagraph{T1 images}
+Input T1 images in the same order.
+

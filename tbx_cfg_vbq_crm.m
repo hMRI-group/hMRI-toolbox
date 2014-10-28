@@ -177,7 +177,7 @@ data_spec.values = { sdata sdata_multi };
 data_spec.val    = { sdata };
 create_B0B1.val     = { data_spec };
 create_B0B1.help    = {'Use this option when B0/B1 3D maps available.'};
-create_B0B1.prog    = @vbq_mpr_b0_b1;
+create_B0B1.prog    = @vbq_run_mpr_b0_b1;
 create_B0B1.vout    = @vout_crt_B0B1;
 % ---------------------------------------------------------------------
 % create_Unicort Create MPR maps with UNICORT B1
@@ -197,7 +197,7 @@ create_Unicort.help     = {'Use this option when B0/B1 3D maps not available. ',
     'Bias field estimation and correction will be performed',...
     'using the approach described in ''Unified segmentation based ',...
     'correction... (UNICORT) paper by Weiskopf et al., 2011 '};
-create_Unicort.prog     = @vbq_mpr_unicort;
+create_Unicort.prog     = @vbq_run_mpr_unicort;
 create_Unicort.vout     = @vout_crt_Unicort;
 % ---------------------------------------------------------------------
 % crm Create maps
@@ -213,8 +213,13 @@ end
 %----------------------------------------------------------------------
 
 % ========================================================================
-%% SUBFUNCTIONS
+%% VOUT & OTHER SUBFUNCTIONS
 % ========================================================================
+% The RUN functions :
+% - out = vbq_run_mpr_b0_b1(job)
+% - out = vbq_run_mpr_unicort(job)
+% are defined separately.
+%_______________________________________________________________________
 
 function dep = vout_crt_Unicort(job)
 % This depends on job contents, which may not be present when virtual

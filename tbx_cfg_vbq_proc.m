@@ -156,7 +156,7 @@ preproc8 = cfg_set_val(preproc8, 'tissues', 4, 'native', [0 0]);
 preproc8 = cfg_set_val(preproc8, 'tissues', 5, 'native', [0 0]);
 preproc8 = cfg_set_val(preproc8, 'tissues', 6, 'native', [0 0]);
 preproc8 = cfg_set_val(preproc8, 'warp', 'write', [0 1]);
-preproc8.prog = @spm_local_preproc_run;
+preproc8.prog = @vbq_run_local_preproc;
 preproc8.vout = @vout_preproc;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -260,7 +260,7 @@ eval(['nrm = nrm_tmp', ...
 eval(['nrm' cfg_expr(nrm, 'data') '= multsdata;']); %#ok<NODEF>
 eval(['nrm' regexprep(cfg_expr(nrm, 'preserve'), '{([0-9]+)}$', '($1)') '=[];']);
 
-nrm.prog  = @spm_dartel_norm_fun_local;
+nrm.prog  = @vbq_run_local_dartel_norm_fun;
 nrm.vout  = @vout_norm_fun;
 nrm.check = []; 
 
@@ -374,104 +374,12 @@ end
 %----------------------------------------------------------------------
 
 % =======================================================================
-%% RUN & VOUT FUNCTIONS
+%% VOUT & CHECK FUNCTIONS
 % =======================================================================
-function out = spm_local_preproc_run(job)
-% Deal with the spatial preprocessing, 1 subject at a time:
-% segmentation
-
-job = preproc_perimage_to_persubject(job);
-
-for i=1:numel(job.tissue)
-    out.tiss(i).c = {};
-    out.tiss(i).rc = {};
-end
-
-for i=1:numel(job.subjc(1).maps.mp_vols)
-    out.maps(i).mp_vols = {};
-end
-
-for nm = 1:length(job.subjc)
-    defsa.channel = job.subjc(nm).struct(1);
-    defsa.channel.vols = job.subjc(nm).struct(1).s_vols;
-    defsa.tissue  = job.tissue;
-    defsa.warp    = job.warp;
-    out.subjc(nm) = spm_preproc_run(defsa);
-    defs.comp{1}.def = ...
-        strcat(spm_str_manip(job.subjc(nm).struct(1).s_vols,'h'), ...
-        filesep,'y_',spm_str_manip(job.subjc(nm).struct(1).s_vols,'tr'),'.nii');
-    % defs.ofname = '';
-    defs.out{1}.pull.fnames = cellstr(char(char(job.subjc(nm).maps.mp_vols{:})));
-    if isfield(job.subjc(nm).output,'indir') && job.subjc(nm).output.indir == 1
-        defs.out{1}.pull.savedir.saveusr{1} = ...
-            spm_str_manip(job.subjc(nm).maps.mp_vols{1},'h');
-    else
-        defs.out{1}.savedir.saveusr{1} = job.subjc(nm).output.outdir{1};
-    end
-    defs.out{1}.pull.interp = 1;
-    defs.out{1}.pull.mask = 1;
-    defs.out{1}.pull.fwhm = [0 0 0];
-    outdef = spm_deformations(defs);
-    
-    for i=1:numel(out.subjc(1).tiss)
-        if isfield(out.subjc(nm).tiss(i), 'c')
-            out.tiss(i).c = [out.tiss(i).c; out.subjc(nm).tiss(i).c];
-        end
-        if isfield(out.subjc(nm).tiss(i), 'rc')
-            out.tiss(i).rc = [out.tiss(i).rc; out.subjc(nm).tiss(i).rc];
-        end
-    end
-    for i=1:numel(outdef.warped)
-        out.maps(i).mp_vols{end+1} = outdef.warped{i};
-    end
-    
-    % Create sum of GM/WM
-    c1 = insert_pref(job.subjc(nm).struct(1).s_vols{1},'mwc1'); % modulated warped GM
-    c2 = insert_pref(job.subjc(nm).struct(1).s_vols{1},'mwc2'); % modulated warped WM
-    c  = spm_imcalc(char(char(c1),char(c2)),insert_pref(f,'bb_'),'(i1+i2)');
-    c  = c.fname; % file with sum of GM & WM
-    for i=1:length(outdef.warped)
-        if isfield(job.subjc(nm).output,'indir') && job.subjc(nm).output.indir == 1
-            p = spm_str_manip(job.subjc(nm).maps.mp_vols{1},'h');
-        else
-            p = job.subjc(nm).output.outdir{1};
-        end
-        f  = insert_pref(job.subjc(nm).maps.mp_vols{i},'w');  % removed s f=outdef.warped{i};
-        m_c1 = [spm_select('FPList',fullfile(spm('Dir'),'tpm'),'^TPM.nii') ',1']; % GM tpm
-        m_c2 = [spm_select('FPList',fullfile(spm('Dir'),'tpm'),'^TPM.nii') ',2']; % WM tpm
-        m_c  = [spm_select('FPList',fullfile(spm('Dir'),'tpm'),'^TPM.nii') ',6']; % Outside head tpm
-        p1 = spm_imcalc(char(char(c1),char(f),m_c1),insert_pref(f,'p1_'), ...
-            '(i1.*i2).*(i3>0.05)');
-        p1 = p1.fname; % MP weighted with its own GM, and a priori GM>.05
-        p2 = spm_imcalc(char(char(c2),char(f),m_c2),insert_pref(f,'p2_'), ...
-            '(i1.*i2).*(i3>0.05)');
-        p2 = p2.fname; % MP weighted with its own WM, and a priori GM>.05
-        pp = spm_imcalc(char(char(c),char(f),m_c),insert_pref(f,'p_'), ...
-            '(i1.*i2).*((1-i3)>0.05)');
-        pp = pp.fname; % MP weighted with its own GM+WM, and a priori in the head > .05
-        m1 = insert_pref(c1,'s'); spm_smooth(c1,m1,job.fwhm); % smooth mwc1
-        m2 = insert_pref(c2,'s'); spm_smooth(c2,m2,job.fwhm); % smooth mwc2
-        m  = insert_pref(c,'s');  spm_smooth(c,m,job.fwhm); % smooth mwc1+mwc2
-        n1 = insert_pref(p1,'s'); spm_smooth(p1,n1,job.fwhm); % smooth weighted(GM) MP
-        n2 = insert_pref(p2,'s'); spm_smooth(p2,n2,job.fwhm); % smooth weighted(WM) MP
-        n  = insert_pref(pp,'s'); spm_smooth(pp,n,job.fwhm); % smooth weighted(GM+WM) MP
-        q1 = spm_imcalc(char(n1,m1,m1),insert_pref(p1,'fin_uni_'), ...
-            '(i1./i2).*(i3>0.05)'); % Signal as in paper
-        q1 = q1.fname;
-        q2 = spm_imcalc(char(n2,m2,m2),insert_pref(p2,'fin_uni_'), ...
-            '(i1./i2).*(i3>0.05)');
-        q2 = q2.fname;
-        q  = spm_imcalc(char(n,m,m),insert_pref(pp,'fin_uni_bb_'), ...
-            '(i1./i2).*((i3)>0.05)');
-        q  = q.fname;
-        delfiles = strrep({c,p1,p2,m1,m2,n1,n2,pp,m,n,q},'.nii,1','.nii');
-        for ii=1:numel(delfiles)
-            delete(delfiles{ii});
-        end
-    end
-    
-end
-end
+% The RUN functions :
+% - out = vbq_run_local_preproc(job)
+% - out = vbq_run_local_dartel_norm_fun(job)
+% are defined separately.
 %_______________________________________________________________________
 
 function dep = vout_preproc(job)
@@ -540,85 +448,6 @@ end
 end
 %_______________________________________________________________________
 
-function out = spm_dartel_norm_fun_local(job)
-
-out = struct();
-
-% MFC - Setting up feds structure which has a copy of the (reordered) subject info:
-job = dartel_perimage_to_persubject(job);
-
-feds.template = job.template;
-feds.vox      = job.vox;
-feds.bb       = job.bb;
-feds.fwhm     = [0 0 0];
-for m=1:length(job.subjd)
-    feds.data.subj(m).flowfield = job.subjd(m).flowfield;
-    feds.data.subj(m).images    = job.subjd(m).images;
-end
-
-% MFC - Jacobian modulation correction to preserve total signal intensity:
-feds.preserve = 1;
-
-% MFC - Produces mwc* images, i.e. modulated, spatially normalised images.
-% This produces w = |Dphi|t(phi), the product of the Jacobian determinants
-% of deformation phi and the tissue class image warped by phi, as per
-% Draganski 2011, NeuroImage.  spm_dartel_norm_fun calls dartel3:
-spm_dartel_norm_fun(feds);
-
-% MFC - Now take the MPMs and do a regular normalisation but don't apply
-% Jacobian modulation. Produces ws* images.
-for mm=1:length(job.subjd)
-    feds.data.subj(mm).images    = job.subjd(mm).mp_vols;
-end
-feds.preserve = 0;
-spm_dartel_norm_fun(feds);
-
-for nm=1:length(job.subjd)
-    c1 = insert_pref(job.subjd(nm).images{1},'mw');  % removed s
-    c2 = insert_pref(job.subjd(nm).images{2},'mw');  % removed s
-    c  = spm_imcalc(char(char(c1),char(c2)),insert_pref(f,'bb_'),'(i1+i2)');
-    c  = c.fname;
-    for i=1:length(job.subjd(nm).mp_vols)
-        chk = check_entry(job.subjd(nm));
-        if ~isempty(chk)
-            error(chk)
-        end
-        p  = spm_str_manip(job.subjd(nm).mp_vols{1},'h');
-        f  = insert_pref(job.subjd(nm).mp_vols{i},'w');  % removed s
-        m_c1 = [spm_select('FPList',fullfile(spm('Dir'),'tpm'),'^TPM.nii') ',1'];
-        m_c2 = [spm_select('FPList',fullfile(spm('Dir'),'tpm'),'^TPM.nii') ',2'];
-        m_c  = [spm_select('FPList',fullfile(spm('Dir'),'tpm'),'^TPM.nii') ',6'];
-        p1 = spm_imcalc(char(char(c1),char(f),m_c1),insert_pref(f,'p1_'), ...
-                '(i1.*i2).*(i3>0.05)');
-        p1 = p1.fname;
-        p2 = spm_imcalc(char(char(c2),char(f),m_c2),insert_pref(f,'p2_'), ...
-            '(i1.*i2).*(i3>0.05)');
-        p2 = p2.fname;
-        pp = spm_imcalc(char(char(c),char(f),m_c),insert_pref(f,'p_'), ...
-            '(i1.*i2).*((1-i3)>0.05)');
-        pp = pp.fname;
-        m1 = insert_pref(c1,'s'); spm_smooth(c1,m1,job.fwhm);
-        m2 = insert_pref(c2,'s'); spm_smooth(c2,m2,job.fwhm);
-        m  = insert_pref(c, 's');  spm_smooth(c,m,job.fwhm);
-        n1 = insert_pref(p1,'s'); spm_smooth(p1,n1,job.fwhm);
-        n2 = insert_pref(p2,'s'); spm_smooth(p2,n2,job.fwhm);
-        n  = insert_pref(pp,'s'); spm_smooth(pp,n,job.fwhm);
-        q1 = spm_imcalc(char(n1,m1,m1),insert_pref(p1,'fin_dart_'), ...
-            '(i1./i2).*(i3>0.05)');
-        q2 = spm_imcalc(char(n2,m2,m2),insert_pref(p2,'fin_dart_'), ...
-            '(i1./i2).*(i3>0.05)');
-        q = spm_imcalc(char(n,m,m),insert_pref(pp,'fin_dart_bb_'), ...
-            '(i1./i2).*((i3)>0.05)');
-        q = q.fname;
-        delfiles=strrep({c,p1,p2,m1,m2,n1,n2,pp,m,n,q},'.nii,1','.nii');
-        for ii=1:numel(delfiles)
-            delete(delfiles{ii});
-        end
-    end
-end
-end
-%_______________________________________________________________________
-
 function dep = vout_norm_fun(job) %#ok<*INUSD>
 dep = cfg_dep;
 end
@@ -673,45 +502,8 @@ end;
 end
 
 % ========================================================================
-%% SUBFUNCTIONS
+%% SUBFUNCTIONS to handle matlabbatch structure and fields
 % ========================================================================
-function job = preproc_perimage_to_persubject(job)
-% Rearrange data per subject for further preprocessing.
-if isfield(job, 'many_few_sdatas')
-    if isfield(job.many_few_sdatas, 'subjc')
-        job.subjc = job.many_few_sdatas.subjc;
-    else
-        for i = 1:numel(job.many_few_sdatas.many_sdatas.struct.s_vols)
-            job.subjc(i).output = job.many_few_sdatas.many_sdatas.output;
-            job.subjc(i).struct = job.many_few_sdatas.many_sdatas.struct;
-            job.subjc(i).struct.s_vols = ...
-                job.many_few_sdatas.many_sdatas.struct.s_vols(i);
-            job.subjc(i).maps.mp_vols = {};
-            for k = 1:numel(job.many_few_sdatas.many_sdatas.mp_vols)
-                job.subjc(i).maps.mp_vols{end+1} = ...
-                    job.many_few_sdatas.many_sdatas.mp_vols{k}{i};
-            end
-        end
-    end
-end
-end
-%_______________________________________________________________________
-
-function job = dartel_perimage_to_persubject(job)
-% Rearrange data per subject for dartel processing.
-for i=1:numel(job.multsdata.multsdata_gm)
-    job.subjd(i).images = {};
-    job.subjd(i).images{1} = job.multsdata.multsdata_gm{i};
-    job.subjd(i).images{2} = job.multsdata.multsdata_wm{i};
-    job.subjd(i).flowfield = {};
-    job.subjd(i).flowfield{1} = job.multsdata.multsdata_u{i};
-    job.subjd(i).mp_vols = {};
-    for j=1:numel(job.multsdata.multsdata_f1)
-        job.subjd(i).mp_vols{j} = job.multsdata.multsdata_f1{j}{i};
-    end
-end
-end
-%_______________________________________________________________________
 
 function expr = cfg_expr_values(c, varargin) %#ok<INUSL>
 % Extracting the 'values' field with index matching the input argument and
@@ -775,11 +567,6 @@ end
 function c = cfg_set_val(c, varargin)
 expr = ['c' cfg_expr(c, varargin{1:end-1})];
 eval([expr '.val={varargin{end}};']);
-end
-%_______________________________________________________________________
-
-function fout = insert_pref(f,p)
-fout = strcat(spm_str_manip(f,'h'),filesep,p,spm_str_manip(f,'t'));
 end
 %_______________________________________________________________________
 

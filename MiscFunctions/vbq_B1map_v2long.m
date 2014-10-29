@@ -28,10 +28,10 @@ if nargin < 3
     end
 end
 
-beta=[135:-5:65];
+beta = 135:-5:65;
 TM = 33.24;
-eps=0.0001;
-Nonominalvalues=5;
+eps = 0.0001;
+Nonominalvalues = 5;
 
 disp('----- Calculation of B1 map -----');
 

@@ -20,9 +20,6 @@ function vbq_defaults
 % Cyclotron Research Centre, University of Liege, Belgium
 % $Id: vbq_defaults.m 30 2013-11-27 14:50:20Z christophe $
 
-% Note:
-% it's advised to organize the defaults by "families", i.e. substructures.
-
 %%
 global vbq_def
 
@@ -205,6 +202,7 @@ vbq_def.b1map.lren.b1_type.val = vbq_def.b1map.lren.b1_type.labels{1};
 % separate substructure.
 %
 % 1) 'i3D_EPI_v3a_allegra_crc'
+vbq_def.b1map.i3D_EPI_v3a_allegra_crc.b1proc.data    = 'EPI'; 
 vbq_def.b1map.i3D_EPI_v3a_allegra_crc.b1proc.avail   = true; 
 vbq_def.b1map.i3D_EPI_v3a_allegra_crc.b1proc.procreq = true; 
 vbq_def.b1map.i3D_EPI_v3a_allegra_crc.b1proc.T1 = 1192; % ms, strictly valid only at 3T
@@ -229,8 +227,11 @@ vbq_def.b1map.i3D_EPI_v3a_allegra_crc.b0proc.B1FWHM = 8; %For smoothing. FWHM in
 vbq_def.b1map.i3D_EPI_v3a_allegra_crc.b0proc.match_vdm = 1;
 vbq_def.b1map.i3D_EPI_v3a_allegra_crc.b0proc.b0maskbrain = 0;
 % 2) 'i3D_EPI_v4a_allegra_crc'
+vbq_def.b1map.i3D_EPI_v4a_allegra_crc.b1proc.data    = 'EPI'; 
 vbq_def.b1map.i3D_EPI_v4a_allegra_crc.b1proc.avail   = true; 
 vbq_def.b1map.i3D_EPI_v4a_allegra_crc.b1proc.procreq = true; 
+vbq_def.b1map.i3D_EPI_v4a_allegra_crc.b1proc.T1 = 1192; % ms, strictly valid only at 3T
+vbq_def.b1map.i3D_EPI_v4a_allegra_crc.b1proc.eps = 0.0001;
 vbq_def.b1map.i3D_EPI_v4a_allegra_crc.b1proc.beta = 140:-7.5:65;
 vbq_def.b1map.i3D_EPI_v4a_allegra_crc.b1proc.TM = 40;
 vbq_def.b1map.i3D_EPI_v4a_allegra_crc.b1proc.Nonominalvalues = 5;
@@ -249,8 +250,11 @@ vbq_def.b1map.i3D_EPI_v4a_allegra_crc.b0proc.b0maskbrain = 0;
 % 3) 'i3D_EPI_v2b_prisma_crc' % used on the Prisma (Lausanne & Liege)
 % NB: in Liege, maskbrain is set to zero because segmentation
 % used in masking procedure diverges for unknown reason...
+vbq_def.b1map.i3D_EPI_v2b_prisma_crc.b1proc.data    = 'EPI'; 
 vbq_def.b1map.i3D_EPI_v2b_prisma_crc.b1proc.avail   = true; 
 vbq_def.b1map.i3D_EPI_v2b_prisma_crc.b1proc.procreq = true; 
+vbq_def.b1map.i3D_EPI_v2b_prisma_crc.b1proc.T1 = 1192; % ms, strictly valid only at 3T
+vbq_def.b1map.i3D_EPI_v2b_prisma_crc.b1proc.eps = 0.0001;
 vbq_def.b1map.i3D_EPI_v2b_prisma_crc.b1proc.beta = 115:-5:65;
 vbq_def.b1map.i3D_EPI_v2b_prisma_crc.b1proc.TM = 31.2;
 vbq_def.b1map.i3D_EPI_v2b_prisma_crc.b1proc.Nonominalvalues = 5;
@@ -267,8 +271,11 @@ vbq_def.b1map.i3D_EPI_v2b_prisma_crc.b0proc.B1FWHM = 8; %For smoothing. FWHM in 
 vbq_def.b1map.i3D_EPI_v2b_prisma_crc.b0proc.match_vdm = 1;
 vbq_def.b1map.i3D_EPI_v2b_prisma_crc.b0proc.b0maskbrain = 0;
 % 4) 'i3D_EPI_v2b_long'
+vbq_def.b1map.i3D_EPI_v2b_long.b1proc.data    = 'EPI'; 
 vbq_def.b1map.i3D_EPI_v2b_long.b1proc.avail   = true; 
 vbq_def.b1map.i3D_EPI_v2b_long.b1proc.procreq = true; 
+vbq_def.b1map.i3D_EPI_v2b_long.b1proc.T1 = 1192; % ms, strictly valid only at 3T
+vbq_def.b1map.i3D_EPI_v2b_long.b1proc.eps = 0.0001;
 vbq_def.b1map.i3D_EPI_v2b_long.b1proc.beta = 135:-5:65;
 vbq_def.b1map.i3D_EPI_v2b_long.b1proc.TM = 33.24;
 vbq_def.b1map.i3D_EPI_v2b_long.b1proc.Nonominalvalues = 5;
@@ -285,9 +292,11 @@ vbq_def.b1map.i3D_EPI_v2b_long.b0proc.B1FWHM = 8; %For smoothing. FWHM in mm - i
 vbq_def.b1map.i3D_EPI_v2b_long.b0proc.match_vdm = 1;
 vbq_def.b1map.i3D_EPI_v2b_long.b0proc.b0maskbrain = 1;
 % 5) 'i3D_EPI_rect700'
-vbq_def.b1map.i3D_EPI_rect700.b1proc.avail   = true; 
+vbq_def.b1map.i3D_EPI_rect700.b1proc.data    = 'EPI'; 
 vbq_def.b1map.i3D_EPI_rect700.b1proc.procreq = true; 
 vbq_def.b1map.i3D_EPI_rect700.b1proc.beta = 80:5:100;
+vbq_def.b1map.i3D_EPI_rect700.b1proc.T1 = 1192; % ms, strictly valid only at 3T
+vbq_def.b1map.i3D_EPI_rect700.b1proc.eps = 0.0001;
 vbq_def.b1map.i3D_EPI_rect700.b1proc.TM = 33.53;
 vbq_def.b1map.i3D_EPI_rect700.b1proc.Nonominalvalues = 5;
 vbq_def.b1map.i3D_EPI_rect700.b1proc.EchoSpacing = 540e-3;
@@ -303,11 +312,13 @@ vbq_def.b1map.i3D_EPI_rect700.b0proc.B1FWHM = 8; %For smoothing. FWHM in mm - i.
 vbq_def.b1map.i3D_EPI_rect700.b0proc.match_vdm = 1;
 vbq_def.b1map.i3D_EPI_rect700.b0proc.b0maskbrain = 1;
 % 6) 'i3D_AFI_v4b_n5_allegra_crc'
+vbq_def.b1map.i3D_AFI_v4b_n5_allegra_crc.b1proc.data    = 'AFI'; 
 vbq_def.b1map.i3D_AFI_v4b_n5_allegra_crc.b1proc.avail   = true; 
 vbq_def.b1map.i3D_AFI_v4b_n5_allegra_crc.b1proc.procreq = true; 
 vbq_def.b1map.i3D_AFI_v4b_n5_allegra_crc.b1proc.TR2TR1ratio = 5;
 vbq_def.b1map.i3D_AFI_v4b_n5_allegra_crc.b1proc.alphanom = 60;
 % 7) 'i3D_AFI_v4b_n3_allegra_crc'
+vbq_def.b1map.i3D_AFI_v4b_n3_allegra_crc.b1proc.data    = 'AFI'; 
 vbq_def.b1map.i3D_AFI_v4b_n3_allegra_crc.b1proc.avail   = true; 
 vbq_def.b1map.i3D_AFI_v4b_n3_allegra_crc.b1proc.procreq = true; 
 vbq_def.b1map.i3D_AFI_v4b_n3_allegra_crc.b1proc.TR2TR1ratio = 3;

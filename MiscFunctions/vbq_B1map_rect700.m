@@ -1,4 +1,5 @@
-function vbq_B1map_rect700(P, Q) % MFC: added arguments P & Q to mirror vbq_B1map_v2
+function vbq_B1map_rect700(P, Q)
+% MFC: added arguments P & Q to mirror vbq_B1map_v2
 % Calculation of B1 mapping data 3D EPI spin echo (SE) and stimulated (STE) echo images (see Jiru and Klose MRM 2006).
 % Corresponding scanning protocol/sequence: al_B1mapping_rect700
 % Inputs: SE and STE images for B1 map calculation and the 3 data images
@@ -14,10 +15,10 @@ function vbq_B1map_rect700(P, Q) % MFC: added arguments P & Q to mirror vbq_B1ma
 
 % $Id$
 
-beta=[80:5:100];
-TM = 33.53;%
+beta = 80:5:100;
+TM = 33.53; %
 T1 = 1192; %ms
-eps=0.0001;
+eps = 0.0001;
 
 if nargin < 2
 %     P = spm_select(Inf,'-0..nii','Select the SE/STE images'); 
@@ -26,7 +27,7 @@ if nargin < 2
 end
 disp('----- Calculation of B1 map -----');
 
-V=spm_vol(P);
+V = spm_vol(P);
 n   = numel(V);
 Y_tmp   = zeros([V(1).dim(1:2) n]);
 Y_ab = zeros([V(1).dim(1:3)]);

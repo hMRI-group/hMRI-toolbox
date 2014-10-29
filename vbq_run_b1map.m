@@ -29,11 +29,11 @@ end
 
 % calculate the B1 map if required
 if b1map_defs.procreq
-    if strfind(b1map_defs.b1_type.val,'AFI')
+    if strcmpi(b1map_defs.data,'AFI')
         % processing B1 map from AFI data
         P_trans  = calc_AFI_b1map(jobsubj, b1map_defs);
         
-    elseif strfind(b1map_defs.b1_type.val,'EPI')
+    elseif strcmpi(b1map_defs.data,'EPI')
         % processing B1 map from SE/STE EPI data
         P_trans  = calc_SESTE_b1map(jobsubj, b1map_defs);
         
@@ -154,19 +154,22 @@ corr_fact = exp(b1map_defs.TM/b1map_defs.T1);
 for p = 1:V(1).dim(3),%loop over the partition dimension of the data set
     B = spm_matrix([0 0 -p 0 0 0 1 1 1]);
     for i = 1:n/2
-        M = inv(B*inv(V(1).mat)*V(1).mat);
-        Y_tmptmp(:,:,((i-1)*2+1))  = real(acos(corr_fact*spm_slice_vol(V((i-1)*2+2),M,V(1).dim(1:2),0)./(spm_slice_vol(V((i-1)*2+1),M,V(1).dim(1:2),0)+b1map_defs.eps))/pi*180/b1map_defs.beta(i)); % nearest neighbor interpolation
+        M = inv(B*inv(V(1).mat)*V(1).mat); %#ok<*MINV>
+        Y_tmptmp(:,:,((i-1)*2+1))  = real( ...
+            acos(corr_fact*spm_slice_vol(V((i-1)*2+2),M,V(1).dim(1:2),0) ./ ...
+            (spm_slice_vol(V((i-1)*2+1),M,V(1).dim(1:2),0)+b1map_defs.eps))/pi*180/b1map_defs.beta(i) ...
+            ); % nearest neighbor interpolation
         Y_tmptmp(:,:,((i-1)*2+2))  = 180/b1map_defs.beta(i) - Y_tmptmp(:,:,((i-1)*2+1));
-        Temp_mat(:,:,i) = spm_slice_vol(V((i-1)*2+1),M,V(1).dim(1:2),0);
+        Temp_mat(:,:,i) = spm_slice_vol(V((i-1)*2+1),M,V(1).dim(1:2),0); %#ok<*AGROW>
     end
     
     [~,indexes] = sort(Temp_mat,3);
     for x_nr = 1:V(1).dim(1)
         for y_nr = 1:V(1).dim(2)
             for k=1:b1map_defs.Nonominalvalues
-                real_Y_tmp(x_nr,y_nr,2*k-1)=Y_tmptmp(x_nr,y_nr,2*indexes(x_nr,y_nr,n/2-k+1)-1);
-                real_Y_tmp(x_nr,y_nr,2*k)=Y_tmptmp(x_nr,y_nr,2*indexes(x_nr,y_nr,n/2-k+1));
-                Index_Matrix(x_nr,y_nr,p,k)=indexes(x_nr,y_nr,indexes(x_nr,y_nr,n/2-k+1));
+                real_Y_tmp(x_nr,y_nr,2*k-1) = Y_tmptmp(x_nr,y_nr,2*indexes(x_nr,y_nr,n/2-k+1)-1);
+                real_Y_tmp(x_nr,y_nr,2*k)   = Y_tmptmp(x_nr,y_nr,2*indexes(x_nr,y_nr,n/2-k+1));
+                Index_Matrix(x_nr,y_nr,p,k) = indexes(x_nr,y_nr,indexes(x_nr,y_nr,n/2-k+1));
             end
         end
     end
@@ -212,13 +215,16 @@ W_save = spm_write_vol(W_save,Y_cd*100);
 X_save = struct('fname',V(1).fname,'dim',V(1).dim,'mat',V(1).mat,'dt',V(1).dt,'descrip','SE SSQ matrix');
 P_SsqMat = fullfile(outpath,['SumOfSq' e]);
 X_save.fname = P_SsqMat;
-X_save = spm_write_vol(X_save,Ssq_matrix);
+X_save = spm_write_vol(X_save,Ssq_matrix); %#ok<*NASGU>
 
 
 %-B0 undistortion
 %-----------------------------------------------------------------------
 % load default parameters and customize...
-b0proc_defs = vbq_get_defaults('b0proc');
+b1_prot = vbq_get_defaults('b1map.b1_type.val');
+% load the resulting default parameters:
+b0proc_defs = vbq_get_defaults(['b1map.',b1_prot,'.b0proc']);
+
 pm_defaults;
 pm_defs = pm_def;
 pm_defs.SHORT_ECHO_TIME = b0proc_defs.shorTE;

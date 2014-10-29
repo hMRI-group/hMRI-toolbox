@@ -11,15 +11,17 @@ function P_trans = run_vbq_b1map(jobsubj)
 % Written by E. Balteau, 2014.
 % Cyclotron Research Centre, University of Liege, Belgium
 %_______________________________________________________________________
-% $Id: 
+% $Id$
 
 % retrieve b1_type from job and pass it as default value for the current
 % processing:
-vbq_get_defaults('b1map.b1_type.val',jobsubj.b1_type);
-% force recalculation of default values taking b1_type into account:
-vbq_defaults;
+b1_prot = jobsubj.b1_type;
+vbq_get_defaults('b1map.b1_type.val',b1_prot);
 % load the resulting default parameters:
-b1map_defs = vbq_get_defaults('b1map');
+b1map_defs = vbq_get_defaults(['b1map.',b1_prot,'.b1proc']);
+
+% % force recalculation of default values taking b1_type into account:
+% vbq_defaults;
 
 P_trans = [];
 

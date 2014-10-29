@@ -30,16 +30,20 @@ out.T1w = {};
 % loop over subjects in the main function, calling the local function for
 % each subject:
 for in=1:numel(job.subj)
-    local_job.subj=job.subj(in);
-    out_temp=vbq_mpr_b0_b1_local(local_job);
-    out.subj(in)=out_temp.subj(1);
-    out.R1{end+1} = out.subj(in).R1{1};
+    local_job.subj = job.subj(in);
+    out_temp       = vbq_mpr_b0_b1_local(local_job);
+    out.subj(in)   = out_temp.subj(1);
+    out.R1{end+1}  = out.subj(in).R1{1};
     out.R2s{end+1} = out.subj(in).R2s{1};
-    out.MT{end+1} = out.subj(in).MT{1};
-    out.A{end+1} = out.subj(in).A{1};
+    out.MT{end+1}  = out.subj(in).MT{1};
+    out.A{end+1}   = out.subj(in).A{1};
     out.T1w{end+1} = out.subj(in).T1w{1};
 end
 end
+
+% ========================================================================
+%% SUBFUNCTION
+% ========================================================================
 
 function out_loc = vbq_mpr_b0_b1_local(job)
 
@@ -81,7 +85,7 @@ out_loc.subj.A   = {fullfile(outpath,spm_str_manip(fA,'t'))};
 out_loc.subj.T1w = {fullfile(outpath,spm_str_manip(PT1w,'t'))};
 
 % save processing params (vbq defaults) and job for the current subject:
-vbq_def = vbq_get_defaults;
+vbq_def = vbq_get_defaults; %#ok<*NASGU>
 save(fullfile(outpath, [spm_file(P_mtw(1,:),'basename') '_create_maps_vbqdef.mat']),'vbq_def');
 save(fullfile(outpath, [spm_file(P_mtw(1,:),'basename') '_create_maps_job.mat']),'job');
 
@@ -90,15 +94,15 @@ fclose(f);
 
 end
 
-function p = hinfo(P)
-N = nifti(P);
-for ii = 1:numel(N),
-    tmp = regexp(N(ii).descrip,...
-        'TR=(?<tr>.+)ms/TE=(?<te>.+)ms/FA=(?<fa>.+)deg',...
-        'names');
-    p(ii).tr=str2num(tmp.tr);
-    p(ii).te=str2num(tmp.te);
-    p(ii).fa=str2num(tmp.fa);
-end
-
-end
+% function p = hinfo(P)
+% N = nifti(P);
+% for ii = 1:numel(N),
+%     tmp = regexp(N(ii).descrip,...
+%         'TR=(?<tr>.+)ms/TE=(?<te>.+)ms/FA=(?<fa>.+)deg',...
+%         'names');
+%     p(ii).tr=str2num(tmp.tr);
+%     p(ii).te=str2num(tmp.te);
+%     p(ii).fa=str2num(tmp.fa);
+% end
+% 
+% end

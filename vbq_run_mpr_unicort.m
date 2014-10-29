@@ -140,7 +140,7 @@ preproc8.warp.reg = [0   0.001   0.5   0.05   0.2];
 preproc8.warp.affreg = 'mni';
 preproc8.warp.samp = 3;
 preproc8.warp.write = [0 0];
-preproc8.warp.mrf = [0];
+preproc8.warp.mrf = 0;
 % set parameters different from defaults
 preproc8.channel.biasfwhm = FWHM;
 preproc8.channel.biasreg = reg;
@@ -152,7 +152,7 @@ spm_preproc_run(preproc8)
 clear('matlabbatch');
 
 %% calculate B1+ map from bias field
-[p,n,e] = fileparts(V_R1_mask.fname);
+[p,n,e] = fileparts(V_R1_mask.fname); %#ok<*NASGU>
 if isempty(spm_select('FPList',p,['^BiasField_' n '.nii']))
     P_biasmap = spm_select('FPList',p,['^BiasField_' n '.img']);
 else
@@ -204,15 +204,20 @@ end
     fclose(f);
     
 end
+
+% ========================================================================
+%% SUBFUNCTION
+% ========================================================================
+
 function p = hinfo(P)
 N = nifti(P);
 for ii = 1:numel(N),
     tmp = regexp(N(ii).descrip,...
                  'TR=(?<tr>.+)ms/TE=(?<te>.+)ms/FA=(?<fa>.+)deg',...
                  'names');
-    p(ii).tr=str2num(tmp.tr);
-    p(ii).te=str2num(tmp.te);
-    p(ii).fa=str2num(tmp.fa);
+    p(ii).tr = str2num(tmp.tr); %#ok<*AGROW,*ST2NM>
+    p(ii).te = str2num(tmp.te);
+    p(ii).fa = str2num(tmp.fa);
 end
 
 

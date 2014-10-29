@@ -60,8 +60,35 @@ vbq_get_defaults('MPMacq.TE_t1w', cat(1,p.te));
 vbq_get_defaults('MPMacq.TR_t1w', p(1).tr);
 vbq_get_defaults('MPMacq.fa_t1w', p(1).fa);
 
-% force running default script to update steady-state correction parameters
-vbq_defaults;
+% Get the MPMacq parameters specific for each protocols:  [TR_pdw TR_t1w fa_pdw fa_t1w]
+% and their specific protocol values/names/tags.
+MPMacq_prot = [ ...
+    vbq_get_defaults('MPMacq.TR_pdw') ...
+    vbq_get_defaults('MPMacq.TR_t1w') ...
+    vbq_get_defaults('MPMacq.fa_pdw') ...
+    vbq_get_defaults('MPMacq.fa_t1w')];
+MPMacq_sets = vbq_get_defaults('MPMacq_set');
+% then match the values and find protocol tag
+Nb_protocols = numel(MPMacq_sets.vals);
+ii = 1; mtch = false;
+while ~mtch && ii<=Nb_protocols
+    if all(MPMacq_prot == MPMacq_sets.vals{ii})
+        mtch  = true;
+    else
+        ii = ii+1;
+    end
+end
+% Define the protocol tag
+if ~mtch
+    prot_tag = 'Unknown';
+else
+    prot_tag = MPMacq_sets.tags{ii};
+end
+% Set the tag for the MPMacq set.
+vbq_get_defaults('MPMacq.tag',prot_tag);
+
+% % force running default script to update steady-state correction parameters
+% vbq_defaults;
 
 
 %% locally retrieves default parameters from vbq_defaults
@@ -83,7 +110,7 @@ fa_pdw = MPMacq.fa_pdw;
 fa_mtw = MPMacq.fa_mtw; 
 fa_t1w = MPMacq.fa_t1w; 
 % RF spoiling correction parameters
-RFC = vbq_get_defaults('rfcorr');
+RFC = vbq_get_defaults(['rfcorr.',prot_tag]);
 
 % a few words to summarize the situation...
 disp(['INFO: Acquisition protocol = ' RFC.tag]);

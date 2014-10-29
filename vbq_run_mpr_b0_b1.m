@@ -4,7 +4,7 @@ function out = vbq_run_mpr_b0_b1(job)
 % al_B1mapping_v2b
 % Input: 11 pairs of (SE, STE) images for B1 map calculation and 3 images
 % for B0 map calculation.
-% This macro calls the functions B1Map_unwarp and B1Map_process for
+% This macro calls the functions vbq_B1Map_unwarp and vbq_B1Map_process for
 % correction of image distortions, padding and smoothing of the images.
 % Output:
 %     - distorted B1 (B1map_----) and error (SDmap_----) maps

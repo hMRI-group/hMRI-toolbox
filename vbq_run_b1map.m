@@ -254,13 +254,13 @@ anat_img = {strcat(path,filesep,name,e)};
 other_img{1} = char(V_save.fname);
 other_img{2} = char(W_save.fname);
 
-[fmap_img,unwarp_img] = B1Map_unwarp(fm_imgs,anat_img,other_img,pm_defs);
+[fmap_img,unwarp_img] = vbq_B1Map_unwarp(fm_imgs,anat_img,other_img,pm_defs);
 uanat_img{1}=unwarp_img{1}.fname;
 ub1_img{1} = unwarp_img{2}.fname;
 ustd_img{1} = unwarp_img{3}.fname;
 fpm_img{1} = fmap_img{1};
 vdm_img{1} = fmap_img{2};
-[allub1_img] = B1Map_process(uanat_img,ub1_img,ustd_img,vdm_img,fpm_img,pm_defs);
+[allub1_img] = vbq_B1Map_process(uanat_img,ub1_img,ustd_img,vdm_img,fpm_img,pm_defs);
 
 P_trans  = char(char(uanat_img),char(allub1_img{2}.fname));
 

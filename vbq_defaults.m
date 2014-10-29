@@ -121,7 +121,7 @@ vbq_def.MPMacq_set.vals{6}  = [24.5 24.5 6 21];
 % T2 = 64 ms at 3T.
 %
 % 1) classic FIL protocol (Weiskopf et al., Neuroimage 2011):
-vbq_def.rfcorr.ClassicFIL.name = 'Classic FIL protocol';
+vbq_def.rfcorr.ClassicFIL.tag = 'Classic FIL protocol';
 vbq_def.rfcorr.ClassicFIL.P2_a = [78.9228195006542,-101.113338489192,47.8783287525126];
 vbq_def.rfcorr.ClassicFIL.P2_b = [-0.147476233142129,0.126487385091045,0.956824374979504];
 vbq_def.rfcorr.ClassicFIL.RFCorr = true;
@@ -173,7 +173,7 @@ vbq_def.rfcorr.Unknown.RFCorr = false;
 
 % List B1 protocols available at the CRC
 % --------------------------------------
-vbq_def.b1map.crc.b1_type.labels  = {
+vbq_def.crc.b1_type.labels  = {
     'i3D_EPI_v2b_prisma_crc' % added the 'i' before the '3' to start with a letter...
     'i3D_EPI_v3a_allegra_crc'
     'i3D_EPI_v4a_allegra_crc'
@@ -182,19 +182,19 @@ vbq_def.b1map.crc.b1_type.labels  = {
     'pre_processed_B1'
     'no_B1_provided'
     }';
-vbq_def.b1map.crc.b1_type.val  = vbq_def.b1map.crc.b1_type.labels{1};
+vbq_def.crc.b1_type.val  = vbq_def.crc.b1_type.labels(1);
 % List B1 protocols available at the FIL
 % --------------------------------------
-vbq_def.b1map.fil.b1_type.labels = {
+vbq_def.fil.b1_type.labels = {
     'i3D_EPI_v2b'
     };
-vbq_def.b1map.fil.b1_type.val = vbq_def.b1map.fil.b1_type.labels{1};
+vbq_def.fil.b1_type.val = vbq_def.fil.b1_type.labels(1);
 % List B1 protocols available at the LREN
 % ---------------------------------------
-vbq_def.b1map.lren.b1_type.labels = {
+vbq_def.lren.b1_type.labels = {
     'i3D_EPI_v2b'
     };
-vbq_def.b1map.lren.b1_type.val = vbq_def.b1map.lren.b1_type.labels{1};
+vbq_def.lren.b1_type.val = vbq_def.lren.b1_type.labels(1);
 
 % B1 map protocol parameters
 % --------------------------

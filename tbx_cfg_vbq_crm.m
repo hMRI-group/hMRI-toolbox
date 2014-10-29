@@ -7,7 +7,7 @@ function crm = tbx_cfg_vbq_crm
 % Christophe Phillips
 % $Id$
 
-b1_choices = vbq_get_defaults('b1map.b1_type.labels');
+b1_choices = vbq_get_defaults('b1_type.labels');
 
 % ---------------------------------------------------------------------
 % raws Raw Images

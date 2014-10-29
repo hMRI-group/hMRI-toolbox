@@ -16,7 +16,7 @@ function P_trans = vbq_run_b1map(jobsubj)
 % retrieve b1_type from job and pass it as default value for the current
 % processing:
 b1_prot = jobsubj.b1_type;
-vbq_get_defaults('b1map.b1_type.val',b1_prot);
+vbq_get_defaults('b1_type.val',b1_prot);
 % load the resulting default parameters:
 b1map_defs = vbq_get_defaults(['b1map.',b1_prot,'.b1proc']);
 
@@ -221,7 +221,7 @@ X_save = spm_write_vol(X_save,Ssq_matrix); %#ok<*NASGU>
 %-B0 undistortion
 %-----------------------------------------------------------------------
 % load default parameters and customize...
-b1_prot = vbq_get_defaults('b1map.b1_type.val');
+b1_prot = vbq_get_defaults('b1_type.val');
 % load the resulting default parameters:
 b0proc_defs = vbq_get_defaults(['b1map.',b1_prot,'.b0proc']);
 

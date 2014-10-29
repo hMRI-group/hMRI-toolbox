@@ -1,7 +1,7 @@
-function P_trans = run_vbq_b1map(jobsubj)
+function P_trans = vbq_run_b1map(jobsubj)
 
 %% Processing of the B1 maps for B1 bias correction
-% FORMAT P_trans = run_vbq_b1map(jobsubj)
+% FORMAT P_trans = vbq_run_b1map(jobsubj)
 %    jobsubj - are parameters for one subject out of the job list. 
 %    NB: ONE SINGLE DATA SET FROM ONE SINGLE SUBJECT IS PROCESSED HERE, 
 %    LOOP OVER SUBJECTS DONE AT HIGHER LEVEL. 
@@ -19,9 +19,6 @@ b1_prot = jobsubj.b1_type;
 vbq_get_defaults('b1map.b1_type.val',b1_prot);
 % load the resulting default parameters:
 b1map_defs = vbq_get_defaults(['b1map.',b1_prot,'.b1proc']);
-
-% % force recalculation of default values taking b1_type into account:
-% vbq_defaults;
 
 P_trans = [];
 

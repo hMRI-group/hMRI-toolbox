@@ -48,7 +48,7 @@ end
 function out_loc = vbq_mpr_b0_b1_local(job)
 
 % run B1 map calculation for B1 bias correction
-P_trans = run_vbq_b1map(job.subj);
+P_trans = vbq_run_b1map(job.subj);
 
 % initialize file names for map creation
 P_mtw    = char(job.subj.raw_mpm.MT);

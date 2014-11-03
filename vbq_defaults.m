@@ -294,9 +294,10 @@ vbq_def.b1map.i3D_EPI_v2b_long.b0proc.b0maskbrain = 1;
 % 5) 'i3D_EPI_rect700'
 vbq_def.b1map.i3D_EPI_rect700.b1proc.data    = 'EPI'; 
 vbq_def.b1map.i3D_EPI_rect700.b1proc.procreq = true; 
-vbq_def.b1map.i3D_EPI_rect700.b1proc.beta = 80:5:100;
+vbq_def.b1map.i3D_EPI_rect700.b1proc.procreq = true; 
 vbq_def.b1map.i3D_EPI_rect700.b1proc.T1 = 1192; % ms, strictly valid only at 3T
 vbq_def.b1map.i3D_EPI_rect700.b1proc.eps = 0.0001;
+vbq_def.b1map.i3D_EPI_rect700.b1proc.beta = 80:5:100;
 vbq_def.b1map.i3D_EPI_rect700.b1proc.TM = 33.53;
 vbq_def.b1map.i3D_EPI_rect700.b1proc.Nonominalvalues = 5;
 vbq_def.b1map.i3D_EPI_rect700.b1proc.EchoSpacing = 540e-3;

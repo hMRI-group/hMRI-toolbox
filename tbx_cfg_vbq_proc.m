@@ -262,7 +262,7 @@ eval(['nrm' regexprep(cfg_expr(nrm, 'preserve'), '{([0-9]+)}$', '($1)') '=[];'])
 
 nrm.prog  = @vbq_run_local_dartel_norm_fun;
 nrm.vout  = @vout_norm_fun;
-nrm.check = []; 
+nrm.check = [];
 
 % ---------------------------------------------------------------------
 % dartel DARTEL Tools
@@ -392,60 +392,61 @@ if isfield(job, 'many_few_sdatas')
     if isfield(job.many_few_sdatas, 'subjc')
         job.subjc = job.many_few_sdatas.subjc;
     else
-        dep = cfg_dep;
         for i=1:numel(job.tissue)
             if job.tissue(i).native(1)
-                dep(end+1) = cfg_dep;
-                dep(end).sname = sprintf('c%d Images', i);
-                dep(end).src_output = substruct('.', 'tiss', '()', {i}, '.', 'c', '()', {':'});
-                dep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
+                cdep(end+1) = cfg_dep;
+                cdep(end).sname = sprintf('c%d Images', i);
+                cdep(end).src_output = substruct('.', 'tiss', '()', {i}, '.', 'c', '()', {':'});
+                cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
             end
             if job.tissue(i).native(2)
-                dep(end+1) = cfg_dep;
-                dep(end).sname = sprintf('rc%d Images', i);
-                dep(end).src_output = substruct('.', 'tiss', '()', {i}, '.', 'rc', '()', {':'});
-                dep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
+                cdep(end+1) = cfg_dep;
+                cdep(end).sname = sprintf('rc%d Images', i);
+                cdep(end).src_output = substruct('.', 'tiss', '()', {i}, '.', 'rc', '()', {':'});
+                cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
             end
         end
         
         disp(job.many_few_sdatas);
         for i=1:numel(job.many_few_sdatas.many_sdatas.mp_vols)
-            dep(end+1) = cfg_dep;
-            dep(end).sname = sprintf('%d Parameter Volumes', i);
-            dep(end).src_output = substruct('.', 'maps', '()', {i}, '.', 'mp_vols', '()', {':'});
-            dep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
+            cdep(end+1) = cfg_dep;
+            cdep(end).sname = sprintf('%d Parameter Volumes', i);
+            cdep(end).src_output = substruct('.', 'maps', '()', {i}, '.', 'mp_vols', '()', {':'});
+            cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
         end
         
-        dep = dep(2:end);
-        
+        dep = cdep(2:end);
+        return;
     end
-else
-    for nm=1:numel(job.subjc)
-        for i=1:numel(job.tissue),
-            if job.tissue(i).native(1),
-                cdep(end+1)          = cfg_dep; %#ok<*AGROW>
-                cdep(end).sname      = sprintf('c%d_subj%d Images',i,nm);
-                cdep(end).src_output = substruct('.','subjc','()',{nm},'.','tiss','()',{i},'.','c','()',{':'});
-                cdep(end).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
-            end
-            if job.tissue(i).native(2),
-                cdep(end+1)          = cfg_dep;
-                cdep(end).sname      = sprintf('rc%d_subj%d Images',i,nm);
-                cdep(end).src_output = substruct('.','subjc','()',{nm},'.','tiss','()',{i},'.','rc','()',{':'});
-                cdep(end).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
-            end
-        end
-        for i=1:numel(job.subjc(nm).maps.mp_vols)
-            cdep(end+1)          = cfg_dep;
-            cdep(end).sname      = sprintf('%d_subj%d Parameter Volumes',i,nm);
-            cdep(end).src_output = substruct('.','subjc','()',{nm},'.','maps','.','mp_vols','()',{i});
+end
+for nm=1:numel(job.subjc)
+    for i=1:numel(job.tissue),
+        if job.tissue(i).native(1),
+            cdep(end+1)          = cfg_dep; %#ok<*AGROW>
+            cdep(end).sname      = sprintf('c%d_subj%d Images',i,nm);
+            cdep(end).src_output = substruct('.','subjc','()',{nm},'.','tiss','()',{i},'.','c','()',{':'});
             cdep(end).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
         end
-        
+        if job.tissue(i).native(2),
+            cdep(end+1)          = cfg_dep;
+            cdep(end).sname      = sprintf('rc%d_subj%d Images',i,nm);
+            cdep(end).src_output = substruct('.','subjc','()',{nm},'.','tiss','()',{i},'.','rc','()',{':'});
+            cdep(end).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
+        end
     end
-    dep = cdep;
+    for i=1:numel(job.subjc(nm).maps.mp_vols)
+        cdep(end+1)          = cfg_dep;
+        cdep(end).sname      = sprintf('%d_subj%d Parameter Volumes',i,nm);
+        cdep(end).src_output = substruct('.','subjc','()',{nm},'.','maps','.','mp_vols','()',{i});
+        cdep(end).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
+    end
+    
 end
+
+dep = cdep(2:end);
+
 end
+
 %_______________________________________________________________________
 
 function dep = vout_norm_fun(job) %#ok<*INUSD>

@@ -33,22 +33,22 @@ feds.preserve = 0;
 spm_dartel_norm_fun(feds);
 
 for nm=1:length(job.subjd)
-    c1 = insert_pref(job.subjd(nm).images{1},'mw');  % removed s
-    c2 = insert_pref(job.subjd(nm).images{2},'mw');  % removed s
-    c  = spm_imcalc(char(char(c1),char(c2)),insert_pref(f,'bb_'),'(i1+i2)');
-    c  = c.fname;
     for i=1:length(job.subjd(nm).mp_vols)
         chk = check_entry(job.subjd(nm));
         if ~isempty(chk)
             error(chk)
         end
+        c1 = insert_pref(job.subjd(nm).images{1},'mw');  % removed s
+        c2 = insert_pref(job.subjd(nm).images{2},'mw');  % removed s
         p  = spm_str_manip(job.subjd(nm).mp_vols{1},'h'); %#ok<*NASGU>
         f  = insert_pref(job.subjd(nm).mp_vols{i},'w');  % removed s
+        c  = spm_imcalc(char(char(c1),char(c2)),insert_pref(f,'bb_'),'(i1+i2)');
+        c  = c.fname;
         m_c1 = [spm_select('FPList',fullfile(spm('Dir'),'tpm'),'^TPM.nii') ',1'];
         m_c2 = [spm_select('FPList',fullfile(spm('Dir'),'tpm'),'^TPM.nii') ',2'];
         m_c  = [spm_select('FPList',fullfile(spm('Dir'),'tpm'),'^TPM.nii') ',6'];
         p1 = spm_imcalc(char(char(c1),char(f),m_c1),insert_pref(f,'p1_'), ...
-                '(i1.*i2).*(i3>0.05)');
+            '(i1.*i2).*(i3>0.05)');
         p1 = p1.fname;
         p2 = spm_imcalc(char(char(c2),char(f),m_c2),insert_pref(f,'p2_'), ...
             '(i1.*i2).*(i3>0.05)');

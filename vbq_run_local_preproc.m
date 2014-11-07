@@ -33,7 +33,7 @@ for nm = 1:length(job.subjc)
         defs.out{1}.pull.savedir.saveusr{1} = ...
             spm_str_manip(job.subjc(nm).maps.mp_vols{1},'h');
     else
-        defs.out{1}.savedir.saveusr{1} = job.subjc(nm).output.outdir{1};
+        defs.out{1}.pull.savedir.saveusr{1} = job.subjc(nm).output.outdir{1};
     end
     defs.out{1}.pull.interp = 1;
     defs.out{1}.pull.mask = 1;
@@ -53,17 +53,17 @@ for nm = 1:length(job.subjc)
     end
     
     % Create sum of GM/WM
-    c1 = insert_pref(job.subjc(nm).struct(1).s_vols{1},'mwc1'); % modulated warped GM
-    c2 = insert_pref(job.subjc(nm).struct(1).s_vols{1},'mwc2'); % modulated warped WM
-    c  = spm_imcalc(char(char(c1),char(c2)),insert_pref(f,'bb_'),'(i1+i2)');
-    c  = c.fname; % file with sum of GM & WM
     for i=1:length(outdef.warped)
         if isfield(job.subjc(nm).output,'indir') && job.subjc(nm).output.indir == 1
             p = spm_str_manip(job.subjc(nm).maps.mp_vols{1},'h'); %#ok<*NASGU>
         else
             p = job.subjc(nm).output.outdir{1};
         end
+        c1 = insert_pref(job.subjc(nm).struct(1).s_vols{1},'mwc1'); % modulated warped GM
+        c2 = insert_pref(job.subjc(nm).struct(1).s_vols{1},'mwc2'); % modulated warped WM
         f  = insert_pref(job.subjc(nm).maps.mp_vols{i},'w');  % removed s f=outdef.warped{i};
+        c  = spm_imcalc(char(char(c1),char(c2)),insert_pref(f,'bb_'),'(i1+i2)');
+        c  = c.fname; % file with sum of GM & WM
         m_c1 = [spm_select('FPList',fullfile(spm('Dir'),'tpm'),'^TPM.nii') ',1']; % GM tpm
         m_c2 = [spm_select('FPList',fullfile(spm('Dir'),'tpm'),'^TPM.nii') ',2']; % WM tpm
         m_c  = [spm_select('FPList',fullfile(spm('Dir'),'tpm'),'^TPM.nii') ',6']; % Outside head tpm

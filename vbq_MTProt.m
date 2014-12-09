@@ -87,10 +87,6 @@ end
 % Set the tag for the MPMacq set.
 vbq_get_defaults('MPMacq.tag',prot_tag);
 
-% % force running default script to update steady-state correction parameters
-% vbq_defaults;
-
-
 %% locally retrieves default parameters from vbq_defaults
 % load threshold to save qMRI maps
 threshall = vbq_get_defaults('qMRI_maps_thresh');
@@ -337,12 +333,17 @@ for p=1:dm(3),
         if RFC.RFCorr
             % MFC: We do have P2_a and P2_b parameters for this sequence
             % => T1 = A(B1) + B(B1)*T1app (see Preibisch 2009)
-             T1 = RFC.P2_a(1)*f_T.^2+RFC.P2_a(2)*f_T+RFC.P2_a(3)+(RFC.P2_b(1)*f_T.^2+RFC.P2_b(2)*f_T+RFC.P2_b(3)).*((((PDw / fa_pdw) - (T1w / fa_t1w)+eps) ./ ...
-                max((T1w * fa_t1w / 2 / TR_t1w) - (PDw * fa_pdw / 2 / TR_pdw),eps))./f_T.^2);
+             T1 = RFC.P2_a(1)*f_T.^2 + ...
+                  RFC.P2_a(2)*f_T + ...
+                  RFC.P2_a(3) + ...
+                  (RFC.P2_b(1)*f_T.^2+RFC.P2_b(2)*f_T+RFC.P2_b(3)) .* ...
+                  ((((PDw / fa_pdw) - (T1w / fa_t1w)+eps) ./ ...
+                  max((T1w * fa_t1w / 2 / TR_t1w) - (PDw * fa_pdw / 2 / TR_pdw),eps))./f_T.^2);
         else
             % MFC: We do not have P2_a or P2_b parameters for this sequence
             % => T1 = T1app
-            T1 = ((((PDw / fa_pdw) - (T1w / fa_t1w)+eps) ./ max((T1w * fa_t1w / 2 / TR_t1w) - (PDw * fa_pdw / 2 / TR_pdw),eps))./f_T.^2);
+            T1 = ((((PDw / fa_pdw) - (T1w / fa_t1w)+eps) ./ ...
+                max((T1w * fa_t1w / 2 / TR_t1w) - (PDw * fa_pdw / 2 / TR_pdw),eps))./f_T.^2);
         end
         
         R1=1./T1*10^6;
@@ -359,7 +360,8 @@ for p=1:dm(3),
     
     R1(R1<0)=0;
     tmp      = R1;
-    Nmap(1).dat(:,:,p) = min(max(tmp,-threshall.R1),threshall.R1); %Truncating images to dynamic range. Originally 20000. Negative values are allowed or min(max(tmp,0),2000)
+    Nmap(1).dat(:,:,p) = min(max(tmp,-threshall.R1),threshall.R1);
+    % Truncating images to dynamic range. Originally 20000. Negative values are allowed or min(max(tmp,0),2000)
     
     % A values proportional to PD
     if (~isempty(f_T)) && (~isempty(f_R))
@@ -376,14 +378,16 @@ for p=1:dm(3),
     
     A_forMT = T1_forMT .* (T1w * fa_t1w / 2 / TR_t1w) + (T1w / fa_t1w);
     tmp      = A;
-    Nmap(2).dat(:,:,p) = max(min(tmp,threshall.A),-threshall.A); % dynamic range increased to 10^5 to accommodate phased-array coils and symmetrical for noise distribution
+    Nmap(2).dat(:,:,p) = max(min(tmp,threshall.A),-threshall.A);
+    % dynamic range increased to 10^5 to accommodate phased-array coils and symmetrical for noise distribution
     
     % MT in [p.u.]; offset by - famt * famt / 2 * 100 where MT_w = 0 (outside mask)
     MT       = ( (A_forMT * fa_mtw - MTw) ./ (MTw+eps) ./ (T1_forMT + eps) * TR_mtw - fa_mtw * fa_mtw / 2 ) * 100;
     if (~isempty(f_T))
         MT = MT .* (1 - 0.4) ./ (1 - 0.4 * f_T);
     end
-    if (PDproc.PDmap)%The two outer voxels in all directions are nulled in order to remove artefactual effects from the MT map
+    if (PDproc.PDmap)
+        % The two outer voxels in all directions are nulled in order to remove artefactual effects from the MT map
         MTforA=MT;
         % Set outer five planes to 0 to prevent errors with bias field
         % estimation during segmentation:
@@ -406,16 +410,16 @@ for p=1:dm(3),
     
     % calculate synthetic reference signal at trmt and famt using the
     % rational approximation of the Ernst equation
-    S_ref      = A_forMT .* fa_mtw * TR_mtw ./ (T1_forMT+eps) ./ ( TR_mtw ./ (T1_forMT+eps) +  fa_mtw * fa_mtw / 2 );
+    S_ref      = A_forMT .* fa_mtw * TR_mtw ./ (T1_forMT+eps) ./ ...
+                ( TR_mtw ./ (T1_forMT+eps) +  fa_mtw * fa_mtw / 2 );
     % MTR_synt = (S_ref ./ MTw - 1) * 100;
     MTR_synt   = (S_ref-MTw) ./ (S_ref+eps) * 100;
     tmp      = MTR_synt;
     Nmap(4).dat(:,:,p) = max(min(tmp,threshall.MTR_synt),-threshall.MTR_synt);
     spm_progress_bar('Set',p);
-    
         
 end
-if(~isempty(f_T))&&(isempty(f_R))&&(PDproc.PDmap)
+if ~isempty(f_T) && isempty(f_R) && PDproc.PDmap
     PDcalculation(pth)
 end
 spm_progress_bar('Clear');
@@ -473,25 +477,24 @@ PDproc = vbq_get_defaults('PDproc');
 threshA = vbq_get_defaults('qMRI_maps_thresh.A');
 
 % Creation of whole-brain and white-matter masks
-P=spm_select('FPList',pth ,'^.*_MTforA.(img|nii)$');
+P = spm_select('FPList',pth ,'^.*_MTforA.(img|nii)$');
 clear matlabbatch
 matlabbatch{1}.spm.spatial.preproc.channel.vols = {P};
-matlabbatch{1}.spm.spatial.preproc.channel.write = [1 0];
+matlabbatch{1}.spm.spatial.preproc.channel.write = [1 0]; % saving bias field
 spm_jobman('initcfg');
 spm_jobman('run', matlabbatch);
 
-TPMs=spm_read_vols(spm_vol(spm_select('FPList',fileparts(P),'^c.*\.(img|nii)$')));
-WBmask=zeros(size(squeeze(TPMs(:,:,:,1))));
-WBmask(sum(cat(4,TPMs(:,:,:,1:2),TPMs(:,:,:,end)),4)>=PDproc.WBMaskTh)=1;
-WMmask=zeros(size(squeeze(TPMs(:,:,:,1))));
-WMmask(squeeze(TPMs(:,:,:,2))>=PDproc.WMMaskTh)=1;
+TPMs = spm_read_vols(spm_vol(spm_select('FPList',fileparts(P),'^c.*\.(img|nii)$')));
+WBmask = zeros(size(squeeze(TPMs(:,:,:,1))));
+WBmask(sum(cat(4,TPMs(:,:,:,1:2),TPMs(:,:,:,end)),4) >= PDproc.WBMaskTh) = 1;
+WMmask = zeros(size(squeeze(TPMs(:,:,:,1))));
+WMmask(squeeze(TPMs(:,:,:,2)) >= PDproc.WMMaskTh) = 1;
 
 temp=spm_select('FPList',pth,'^.*_MTforA');
 for counter=1:size(temp,1)
     delete(deblank(temp(counter,:)));
 end
 % End of creation of whole-brain and white-matter masks
-
 
 % Saves masked A map for bias-field correction later
 P=spm_select('FPList',pth ,'^.*_A.(img|nii)$');
@@ -507,7 +510,7 @@ clear matlabbatch
 matlabbatch{1}.spm.spatial.preproc.channel.vols = {P};
 matlabbatch{1}.spm.spatial.preproc.channel.biasreg = PDproc.biasreg;
 matlabbatch{1}.spm.spatial.preproc.channel.biasfwhm = PDproc.biasfwhm;
-matlabbatch{1}.spm.spatial.preproc.channel.write = [1 0];
+matlabbatch{1}.spm.spatial.preproc.channel.write = [1 0]; % saving bias field
 spm_jobman('initcfg');
 spm_jobman('run', matlabbatch);
 
@@ -528,11 +531,11 @@ Y = BF.*spm_read_vols(spm_vol(P));
 % Calibration of flattened A map to % water content using typical white
 % matter value from the litterature (69%)
 
-A_WM=WMmask.*Y;
-Y=Y/mean(A_WM(A_WM~=0))*69;
+A_WM = WMmask.*Y;
+Y = Y/mean(A_WM(A_WM~=0))*69;
 sprintf('mean White Matter intensity: %04d',mean(A_WM(A_WM~=0)))
 sprintf('SD White Matter intensity %04d',std(A_WM(A_WM~=0),[],1))
-Y(Y>200)=0;
+Y( Y>200 ) = 0;
 % MFC: Estimating Error for data set to catch bias field issues:
 errorEstimate = std(A_WM(A_WM > 0))./mean(A_WM(A_WM > 0));
 Vsave=spm_vol(P);
@@ -545,7 +548,7 @@ end
 % V.fname = P;
 spm_write_vol(Vsave,Y);
 
-temp=spm_select('FPList',pth,'^Bias.*\_A');
+temp = spm_select('FPList',pth,'^Bias.*\_A');
 for counter=1:size(temp,1)
     delete(deblank(temp(counter,:)));
 end

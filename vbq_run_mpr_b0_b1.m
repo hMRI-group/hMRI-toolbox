@@ -1,5 +1,6 @@
 function out = vbq_run_mpr_b0_b1(job)
-% Calculation of B1 mapping data 3D EPI spin echo (SE) and stimulated (STE) echo images (see Jiru and Klose MRM 2006).
+% Calculation of B1 mapping data 3D EPI spin echo (SE) and stimulated (STE) 
+% echo images (see Jiru and Klose MRM 2006).
 % Corresponding scanning protocol/sequence: al_B1mapping_v2a and
 % al_B1mapping_v2b
 % Input: 11 pairs of (SE, STE) images for B1 map calculation and 3 images

@@ -571,14 +571,3 @@ eval([expr '.val={varargin{end}};']);
 end
 %_______________________________________________________________________
 
-function chk = check_entry(job)
-n1 = numel(job.images);
-chk = '';
-n2 = sum(~cellfun('isempty',regexp(spm_str_manip(job.images,'t'),'(^c1|^c2).*.nii')));
-if n1 ~= 2,
-    chk = 'Wrong input - should be c1 and c2';
-end
-if n2 ~= 2,
-    chk = 'Wrong input - should be c1 and c2';
-end
-end

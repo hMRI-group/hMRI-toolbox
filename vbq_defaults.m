@@ -186,13 +186,19 @@ vbq_def.crc.b1_type.val  = vbq_def.crc.b1_type.labels(1);
 % List B1 protocols available at the FIL
 % --------------------------------------
 vbq_def.fil.b1_type.labels = {
-    'i3D_EPI_v2b'
+    'i3D_EPI_v2b_long'
+    'i3D_EPI_rect700'
+    'pre_processed_B1'
+    'no_B1_provided'
     };
 vbq_def.fil.b1_type.val = vbq_def.fil.b1_type.labels(1);
 % List B1 protocols available at the LREN
 % ---------------------------------------
 vbq_def.lren.b1_type.labels = {
-    'i3D_EPI_v2b'
+    'i3D_EPI_v2b_long'
+    'i3D_EPI_rect700'
+    'pre_processed_B1'
+    'no_B1_provided'
     };
 vbq_def.lren.b1_type.val = vbq_def.lren.b1_type.labels(1);
 

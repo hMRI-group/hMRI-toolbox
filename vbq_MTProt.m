@@ -481,10 +481,11 @@ P = spm_select('FPList',pth ,'^.*_MTforA.(img|nii)$');
 clear matlabbatch
 matlabbatch{1}.spm.spatial.preproc.channel.vols = {P};
 matlabbatch{1}.spm.spatial.preproc.channel.write = [1 0]; % saving bias field
-spm_jobman('initcfg');
+% spm_jobman('initcfg');
 spm_jobman('run', matlabbatch);
 
 TPMs = spm_read_vols(spm_vol(spm_select('FPList',fileparts(P),'^c.*\.(img|nii)$')));
+%  Whole brain mask = WM + GM + bone but not the CSF! (CP: why?)
 WBmask = zeros(size(squeeze(TPMs(:,:,:,1))));
 WBmask(sum(cat(4,TPMs(:,:,:,1:2),TPMs(:,:,:,end)),4) >= PDproc.WBMaskTh) = 1;
 WMmask = zeros(size(squeeze(TPMs(:,:,:,1))));
@@ -497,11 +498,11 @@ end
 % End of creation of whole-brain and white-matter masks
 
 % Saves masked A map for bias-field correction later
-P=spm_select('FPList',pth ,'^.*_A.(img|nii)$');
-Vsave=spm_vol(P);
-Vsave.fname=fullfile(spm_str_manip(Vsave.fname,'h'),['masked_' spm_str_manip(Vsave.fname,'t')]);
-Amap=spm_read_vols(spm_vol(P)).*WBmask;
-Amap(Amap==Inf)=0;Amap(isnan(Amap))=0;Amap(Amap==threshA)=0;
+P = spm_select('FPList',pth ,'^.*_A.(img|nii)$');
+Vsave = spm_vol(P);
+Vsave.fname = fullfile(spm_str_manip(Vsave.fname,'h'),['masked_' spm_str_manip(Vsave.fname,'t')]);
+Amap = spm_read_vols(spm_vol(P)).*WBmask;
+Amap(Amap==Inf)=0;Amap(isnan(Amap))=0;Amap(Amap==threshA) = 0;
 spm_write_vol(Vsave,Amap);
 
 % Bias-field correction of masked A map
@@ -511,7 +512,7 @@ matlabbatch{1}.spm.spatial.preproc.channel.vols = {P};
 matlabbatch{1}.spm.spatial.preproc.channel.biasreg = PDproc.biasreg;
 matlabbatch{1}.spm.spatial.preproc.channel.biasfwhm = PDproc.biasfwhm;
 matlabbatch{1}.spm.spatial.preproc.channel.write = [1 0]; % saving bias field
-spm_jobman('initcfg');
+% spm_jobman('initcfg');
 spm_jobman('run', matlabbatch);
 
 temp=spm_select('FPList',pth,'^(c|masked).*\_A');

@@ -25,7 +25,7 @@ global vbq_def
 
 %% %%%%%%%%%%%%%%%%%%%%% Global parameters %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Specifying the lab
-vbq_def.centre = 'crc' ; % can be 'fil' or 'lren' or 'crc'
+vbq_def.centre = 'fil' ; % can be 'fil' or 'lren' or 'crc'
 
 %% %%%%%%%%%%%%%%%%% Common processing parameters %%%%%%%%%%%%%%%%%%%%%
 % These parameters are either parameters that are fixed for all sites or
@@ -186,6 +186,7 @@ vbq_def.crc.b1_type.val  = vbq_def.crc.b1_type.labels(1);
 % List B1 protocols available at the FIL
 % --------------------------------------
 vbq_def.fil.b1_type.labels = {
+    'i3D_EPI_v2b'
     'i3D_EPI_v2b_long'
     'i3D_EPI_rect700'
     'pre_processed_B1'
@@ -195,6 +196,7 @@ vbq_def.fil.b1_type.val = vbq_def.fil.b1_type.labels(1);
 % List B1 protocols available at the LREN
 % ---------------------------------------
 vbq_def.lren.b1_type.labels = {
+    'i3D_EPI_v2b'
     'i3D_EPI_v2b_long'
     'i3D_EPI_rect700'
     'pre_processed_B1'
@@ -287,7 +289,6 @@ vbq_def.b1map.i3D_EPI_v2b_long.b1proc.TM = 33.24;
 vbq_def.b1map.i3D_EPI_v2b_long.b1proc.Nonominalvalues = 5;
 vbq_def.b1map.i3D_EPI_v2b_long.b1proc.EchoSpacing = 540e-3;
 vbq_def.b1map.i3D_EPI_v2b_long.b1proc.nPEacq = 24; % [36] if 75% FoV & PF phase; [48] if only one of these
-vbq_def.b1map.i3D_EPI_v2b_long.b1proc.PEDIR = 2; % [2] for R>>L; [1] for A>>P
 vbq_def.b1map.i3D_EPI_v2b_long.b1proc.blipDIR = 1; % +1 for R>>L; -1 for A>>P
 vbq_def.b1map.i3D_EPI_v2b_long.b0proc.shorTE = 10; % ms
 vbq_def.b1map.i3D_EPI_v2b_long.b0proc.longTE = 12.46; % ms
@@ -308,7 +309,6 @@ vbq_def.b1map.i3D_EPI_rect700.b1proc.TM = 33.53;
 vbq_def.b1map.i3D_EPI_rect700.b1proc.Nonominalvalues = 5;
 vbq_def.b1map.i3D_EPI_rect700.b1proc.EchoSpacing = 540e-3;
 vbq_def.b1map.i3D_EPI_rect700.b1proc.nPEacq = 24; % [36] if 75% FoV & PF phase; [48] if only one of these
-vbq_def.b1map.i3D_EPI_rect700.b1proc.PEDIR = 2; % [2] for R>>L; [1] for A>>P
 vbq_def.b1map.i3D_EPI_rect700.b1proc.blipDIR = 1; % +1 for R>>L; -1 for A>>P
 vbq_def.b1map.i3D_EPI_rect700.b0proc.shorTE = 10; % ms
 vbq_def.b1map.i3D_EPI_rect700.b0proc.longTE = 12.46; % ms
@@ -336,6 +336,28 @@ vbq_def.b1map.pre_processed_B1.b1proc.procreq = false;
 %9) 'no_B1_provided'
 vbq_def.b1map.no_B1_provided.b1proc.procreq = false;
 vbq_def.b1map.no_B1_provided.b1proc.avail   = false;
+% 10) 'i3D_EPI_v2b'
+% Note: no PEDIR entry here since vbq_B1Map_unwarp calls FieldMap directly
+% with "UnwarpEPIxy" flag since phase-encoding is implemented RL.
+vbq_def.b1map.i3D_EPI_v2b.b1proc.data    = 'EPI'; 
+vbq_def.b1map.i3D_EPI_v2b.b1proc.avail   = true; 
+vbq_def.b1map.i3D_EPI_v2b.b1proc.procreq = true; 
+vbq_def.b1map.i3D_EPI_v2b.b1proc.T1 = 1192; % ms, strictly valid only at 3T
+vbq_def.b1map.i3D_EPI_v2b.b1proc.eps = 0.0001;
+vbq_def.b1map.i3D_EPI_v2b.b1proc.beta = 115:-5:65;
+vbq_def.b1map.i3D_EPI_v2b.b1proc.TM = 31.2;
+vbq_def.b1map.i3D_EPI_v2b.b1proc.Nonominalvalues = 5;
+vbq_def.b1map.i3D_EPI_v2b.b1proc.EchoSpacing = 540e-3;
+vbq_def.b1map.i3D_EPI_v2b.b1proc.nPEacq = 24;
+vbq_def.b1map.i3D_EPI_v2b.b1proc.blipDIR = 1;
+vbq_def.b1map.i3D_EPI_v2b.b0proc.shorTE = 10; % ms
+vbq_def.b1map.i3D_EPI_v2b.b0proc.longTE = 12.46; % ms
+vbq_def.b1map.i3D_EPI_v2b.b0proc.HZTHRESH = 110;
+vbq_def.b1map.i3D_EPI_v2b.b0proc.ERODEB1 = 1;
+vbq_def.b1map.i3D_EPI_v2b.b0proc.PADB1 = 3 ;
+vbq_def.b1map.i3D_EPI_v2b.b0proc.B1FWHM = 8; %For smoothing. FWHM in mm - i.e. it is divided by voxel resolution to get FWHM in voxels
+vbq_def.b1map.i3D_EPI_v2b.b0proc.match_vdm = 1;
+vbq_def.b1map.i3D_EPI_v2b.b0proc.b0maskbrain = 1;
 
 end
 

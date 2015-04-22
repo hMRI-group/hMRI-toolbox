@@ -32,6 +32,6 @@ vbq.help    = {
     'and will include a number of (as yet unspecified) extensions in ',...
     'future updates.  Please report any bugs or problems to lreninfo@gmail.com.']
     }';
-vbq.values  = {tbx_cfg_vbq_crm tbx_cfg_vbq_proc };
+vbq.values  = {tbx_scfg_vbq_crm tbx_scfg_vbq_proc };
 end
 

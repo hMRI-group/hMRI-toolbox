@@ -1,5 +1,5 @@
 function out=vbq_mpr_unicort(job)
-% function P = vbq_mpr_unicort(P_PDw, P_R1)
+% function P = unicort(P_PDw, P_R1)
 % P_PDw: proton density weighted FLASH image (small flip angle image) for
 % masking
 % P_R1: R1 (=1/T1) map estimated from dual flip angle FLASH experiment
@@ -62,16 +62,28 @@ TE_t1w = cat(1,p.te);
 TR_t1w = p(1).tr;
 fa_t1w = p(1).fa;
 
-[fR1, fR2s, fMT, fA, PPDw, PT1w]  = vbq_MTProt(P_mtw, P_pdw, P_t1w, TE_mtw, TE_pdw, TE_t1w, TR_mtw, TR_pdw, TR_t1w, fa_mtw, fa_pdw, fa_t1w);
+[fR1, fR2s, fMT, fA, PPDw, PT1w]  = MTProt(P_mtw, P_pdw, P_t1w, TE_mtw, TE_pdw, TE_t1w, TR_mtw, TR_pdw, TR_t1w, fa_mtw, fa_pdw, fa_t1w);
 
 % Use default parameters of SPM8 "New Segment" toolbox except for
 % adapted regularization and smoothness of bias field
 % as determined for 3T Magnetom Tim Trio (Siemens Healthcare, Erlangen, Germany)
 % see Weiskopf et al., Neuroimage 2010
+%
+% MFC 07/09/2015: Settings additionally optimised for Verio using CMU Verio 
+% data with concurrent B1 mapping data.  Outcome: reducing regularisation 
+% below 1e-3 has little impact; FWHM of 30mm reduces error relative to B1+
+% corrected data.
+%
 
-
-reg = 10^-3; 
-FWHM = 60;
+reg = 10^-3;
+if strcmpi(job.uc_type, 'Trio')
+    FWHM = 60;
+elseif strcmpi(job.uc_type, 'Verio')
+    FWHM = 30;
+else
+    warning('Problem with UNICORT system specification, defaulting to Trio setup')
+    FWHM = 60;
+end
 
 P_R1     = fR1;
 P_PDw    = PPDw;

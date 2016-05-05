@@ -1,9 +1,9 @@
 function vbq = tbx_cfg_vbq
 % Configuration file for the Voxel-Based Quantification (VBQ)
-%
-% Warning and disclaimer: This software is for research use only.
+%  
+% Warning and disclaimer: This software is for research use only. 
 % Do not use it for clinical or diagnostic purposes.
-%
+% 
 %_______________________________________________________________________
 %
 % Bogdan Draganski & Ferath Kherif, 2011
@@ -13,7 +13,6 @@ function vbq = tbx_cfg_vbq
 
 if ~isdeployed, addpath(fullfile(spm('Dir'),'toolbox','VBQ')); end
 
-b1_choices = vbq_get_defaults('b1map.b1_type.labels');
 
 % ---------------------------------------------------------------------
 % raws Raw Images
@@ -21,7 +20,7 @@ b1_choices = vbq_get_defaults('b1map.b1_type.labels');
 raws3           = cfg_files;
 raws3.tag       = 'T1';
 raws3.name      = 'T1 images';
-raws3.help      = {'Input T1 images in the same order.'};
+raws3.help      = {'Input T1 images in the same order.'}; 
 raws3.filter    = 'image';
 raws3.ufilter   = '.*';
 raws3.num       = [0 Inf];
@@ -32,7 +31,7 @@ raws3.val       = {''};
 raws2           = cfg_files;
 raws2.tag       = 'PD';
 raws2.name      = 'PD images';
-raws2.help      = {'Input PD images in the same order.'};
+raws2.help      = {'Input PD images in the same order.'}; 
 raws2.filter    = 'image';
 raws2.ufilter   = '.*';
 raws2.num       = [0 Inf];
@@ -43,7 +42,7 @@ raws2.val       = {''};
 raws1           = cfg_files;
 raws1.tag       = 'MT';
 raws1.name      = 'MT images';
-raws1.help      = {'Input MT images in the same order.'};
+raws1.help      = {'Input MT images in the same order.'}; 
 raws1.filter    = 'image';
 raws1.ufilter   = '.*';
 raws1.num       = [0 Inf];
@@ -54,7 +53,7 @@ raws1.val       = {''};
 raws            = cfg_branch;
 raws.tag        = 'raw_mpm';
 raws.name       = 'Raw multiparameter data';
-raws.help       = {'Input all the MT/PD/T1 images in this order.'};
+raws.help       = {'Input all the MT/PD/T1 images in this order.'}; 
 raws.val        = {raws1 raws2 raws3 };
 % ---------------------------------------------------------------------
 % menu type_b1
@@ -63,26 +62,44 @@ b1_type         = cfg_menu;
 b1_type.tag     = 'b1_type';
 b1_type.name    = 'Choose the B1map type';
 b1_type.help    = {'This is the option to choose the type of the B1 map acquisition. If you use B1 maps other than the explicitly stated versions the function will use the defaults for version 3D_EPI_v2b'};
-b1_type.labels  = b1_choices;
-%                 {
-%                 '3D_EPI_v2b'
-%                 '3D_EPI_v2b_long'
-%                 '3D_EPI_rect700'
-%                 }';
-b1_type.values = b1_choices;
-%                 {
-%                 '3D_EPI_v2b'
-%                 '3D_EPI_v2b_long'
-%                 '3D_EPI_rect700'
-%                 }';
-b1_type.val    = b1_choices(1);%{'3D_EPI_v2b'};
+b1_type.labels  = {
+                '3D_EPI_v2b'
+                '3D_EPI_v2b_long'
+                '3D_EPI_rect700'
+                '3D_EPI_12ch'
+                }';
+b1_type.values = {
+                '3D_EPI_v2b'
+                '3D_EPI_v2b_long'
+                '3D_EPI_rect700'
+                '3D_EPI_12ch'
+                }';
+b1_type.val    = {'3D_EPI_v2b'};
+
+% ---------------------------------------------------------------------
+% UNICORT Options (Verio or Trio transmit coil)
+% ---------------------------------------------------------------------
+uc_type         = cfg_menu;
+uc_type.tag     = 'uc_type';
+uc_type.name    = 'Specify the UNICORT correction';
+uc_type.help    = {'This tailors the UNICORT correction to the system used; defaults to Trio'};
+uc_type.labels  = {
+                'Trio'
+                'Verio'
+                }';
+uc_type.values = {
+                'Trio'
+                'Verio'
+                }';
+uc_type.val    = {'Trio'};
+
 % ---------------------------------------------------------------------
 % vols Volumes
 % ---------------------------------------------------------------------
 braws2          = cfg_files;
 braws2.tag      = 'b1';
-braws2.name     = 'B1 images';
-braws2.help     = {'Select B1 images. For pre-processed B1 image, select unprocessed magnitude image + B1 map in that order. For 3D EPI protocols, select all pairs of SE/STE images. For AFI protocol, select the TR2/TR1 pair of magnitude images.'};
+braws2.name     = 'Pairs of SE and STE images';
+braws2.help     = {'Select B1 images - 3D EPI SE & STE'}; 
 braws2.filter   = 'image';
 braws2.ufilter  = '.*';
 braws2.num      = [0 30];
@@ -93,7 +110,7 @@ braws2.val      = {''};
 braws1          = cfg_files;
 braws1.tag      = 'b0';
 braws1.name     = 'B0 images';
-braws1.help     = {'Select B0 images'};
+braws1.help     = {'Select B0 images'}; 
 braws1.filter   = 'image';
 braws1.ufilter  = '.*';
 braws1.num      = [0 3];
@@ -104,8 +121,8 @@ braws1.val      = {''};
 braws           = cfg_branch;
 braws.tag       = 'raw_fld';
 braws.name      = 'Raw B0 & B1 data';
-braws.help      = {'Input all B0 & B1 images in this order.'};
-braws.val       = {braws1 braws2};
+braws.help      = {'Input all B0 & B1 images in this order.'}; 
+braws.val       = {braws1 braws2 b1_type};
 % ---------------------------------------------------------------------
 % subj Subject
 % ---------------------------------------------------------------------
@@ -176,14 +193,14 @@ create1         = cfg_exbranch;
 create1.tag     = 'mp_img_b_img';
 create1.name    = 'Multiparameter & B0/B1 images';
 raws.val        = {raws1 raws2 raws3 };
-braws.val       = {braws1 braws2};
-subj.val        = {output b1_type braws raws};
+braws.val       = {braws1 braws2 };
+subj.val        = {output braws raws };
 sdata.val       = {subj };
 sdata.values    = {subj };
 sdata_multi.val = { output unlimit(braws) unlimit(raws) };
 data_spec.values = { sdata sdata_multi };
 data_spec.val = { sdata };
-create1.val     = { data_spec };
+create1.val     = { b1_type data_spec };
 %create1.check   = @check_maps_b0_b1;
 create1.help    = {'Use this option when B0/B1 3D maps available.'};
 create1.prog    = @vbq_mpr_b0_b1;
@@ -201,7 +218,7 @@ sdata.values    = {subj };
 sdata_multi.val = { output unlimit(raws) };
 data_spec.values = { sdata sdata_multi };
 data_spec.val = { sdata };
-create.val      = { data_spec };
+create.val      = { uc_type data_spec };
 %create.check    = @check_maps_unicort;
 create.help     = {'Use this option when B0/B1 3D maps not available. Bias field estimation and correction will be performed',...
     'using the approach described in ''Unified segmentation based correction... (UNICORT) paper by Weiskopf et al., 2011 '};
@@ -243,7 +260,7 @@ fwhm.val     = {[6 6 6]};
 fwhm.strtype = 'e';
 fwhm.num     = [1 3];
 fwhm.help    = {'Specify the full-width at half maximum (FWHM) of the ',...
-    'Gaussian blurring kernel in mm. Three values should be entered',...
+    'Gaussian blurring kernel in mm. Three values should be entered',... 
     'denoting the FWHM in the x, y and z directions. Note that you can also specify [0 0 0]',...
     'but any ``modulated'' data will show aliasing (see eg Wikipedia), which occurs because of the way the warped images are generated.'};
 
@@ -254,7 +271,7 @@ fwhm.help    = {'Specify the full-width at half maximum (FWHM) of the ',...
 vols_pm         = cfg_files;
 vols_pm.tag     = 'mp_vols';
 vols_pm.name    = 'Volumes';
-vols_pm.help    = {'Select whole brain parameter maps (e.g. MT, R2*, FA etc) for processing.'};
+vols_pm.help    = {'Select whole brain parameter maps (e.g. MT, R2*, FA etc) for processing.'}; 
 vols_pm.filter  = 'image';
 vols_pm.ufilter = '.*';
 vols_pm.num     = [1 Inf];
@@ -265,7 +282,7 @@ pams            = cfg_branch;
 pams.tag        = 'maps';
 pams.name       = 'Parameter maps';
 pams.val        = {vols_pm };
-pams.help       = {'Select whole brain parameter maps (e.g. MT, R2*, FA etc) for processing.'};
+pams.help       = {'Select whole brain parameter maps (e.g. MT, R2*, FA etc) for processing.'}; 
 % ---------------------------------------------------------------------
 % indir Input directory as output directory
 % ---------------------------------------------------------------------
@@ -335,7 +352,7 @@ many_pams.name       = 'Parameter maps';
 many_pams.values        = {vols_pm };
 many_pams.val        = {vols_pm };
 many_pams.num = [1 Inf];
-many_pams.help       = {'Select whole brain parameter maps (e.g. MT, R2*, FA etc) for processing.'};
+many_pams.help       = {'Select whole brain parameter maps (e.g. MT, R2*, FA etc) for processing.'}; 
 % ---------------------------------------------------------------------
 % Many subjects
 % ---------------------------------------------------------------------
@@ -354,7 +371,7 @@ many_few_sdatas.values = {sdatas, many_sdatas};
 many_few_sdatas.val = {sdatas};
 many_few_sdatas.help = {'Specify your data either as many or few subjects.'};
 % ---------------------------------------------------------------------
-% newseg Segment MT/T1w data
+% newseg Segment MT/T1w data 
 % ---------------------------------------------------------------------
 
 
@@ -375,29 +392,29 @@ preproc8.vout = @vout_preproc;
 
 %----------------------------------------------------------------------
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 % -------------------------------------------------------------------------
 % configuration for STEP 2: diffeomorphic registration (DARTEL)
 % -------------------------------------------------------------------------
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % ---------------------------------------------------------------------
-% warp Run DARTEL/SHOOT (create Templates)
+% warp Run DARTEL (create Templates)
 % ---------------------------------------------------------------------
 warp = tbx_cfg_dartel;
 eval(['warp=warp' cfg_expr_values(warp, 'warp') ';']);
 
 warp_shoot = tbx_cfg_shoot;
 eval(['warp_shoot=warp_shoot' cfg_expr_values(warp_shoot, 'warp') ';']);
+% ---------------------------------------------------------------------
+% warp1 Run DARTEL (existing Templates)
+% ---------------------------------------------------------------------
 
-% ---------------------------------------------------------------------
-% warp1 Run DARTEL/SHOOT (existing Templates)
-% ---------------------------------------------------------------------
 warp1 = tbx_cfg_dartel;
-eval(['warp1=warp1' cfg_expr_values(warp1, 'warp1') ';']);
+eval(['warp1=warp1' cfg_expr_values(warp1, 'warp') ';']);
 
 warp1_shoot = tbx_cfg_shoot;
-eval(['warp1_shoot=warp1_shoot' cfg_expr_values(warp1_shoot, 'warp1') ';']);
+eval(['warp1_shoot=warp1_shoot' cfg_expr_values(warp1_shoot, 'warp') ';']);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -426,7 +443,7 @@ eval(['warp1_shoot=warp1_shoot' cfg_expr_values(warp1_shoot, 'warp1') ';']);
 % vols_pm         = cfg_files;
 % vols_pm.tag     = 'mp_vols';
 % vols_pm.name    = 'Volumes';
-% vols_pm.help    = {'Select whole brain parameter maps (e.g. MT, R2*, FA etc) for registration.'};
+% vols_pm.help    = {'Select whole brain parameter maps (e.g. MT, R2*, FA etc) for registration.'}; 
 % vols_pm.filter  = 'image';
 % vols_pm.ufilter = '.*';
 % vols_pm.num     = [1 Inf];
@@ -454,7 +471,7 @@ eval(['warp1_shoot=warp1_shoot' cfg_expr_values(warp1_shoot, 'warp1') ';']);
 multsdata_gm         = cfg_files;
 multsdata_gm.tag     = 'multsdata_gm';
 multsdata_gm.name    = 'GM Volumes';
-multsdata_gm.help    = {'Select GM volumes.'};
+multsdata_gm.help    = {'Select GM volumes.'}; 
 multsdata_gm.filter  = 'image';
 multsdata_gm.ufilter = '.*';
 multsdata_gm.num     = [1 Inf];
@@ -464,7 +481,7 @@ multsdata_gm.num     = [1 Inf];
 multsdata_wm         = cfg_files;
 multsdata_wm.tag     = 'multsdata_wm';
 multsdata_wm.name    = 'WM Volumes';
-multsdata_wm.help    = {'Select WM volumes.'};
+multsdata_wm.help    = {'Select WM volumes.'}; 
 multsdata_wm.filter  = 'image';
 multsdata_wm.ufilter = '.*';
 multsdata_wm.num     = [1 Inf];
@@ -474,7 +491,7 @@ multsdata_wm.num     = [1 Inf];
 multsdata_f1         = cfg_files;
 multsdata_f1.tag     = 'multsdata_f1';
 multsdata_f1.name    = 'Map';
-multsdata_f1.help    = {'Select multi-parameter maps.'};
+multsdata_f1.help    = {'Select multi-parameter maps.'}; 
 multsdata_f1.filter  = 'image';
 multsdata_f1.ufilter = '.*';
 multsdata_f1.num     = [1 Inf];
@@ -485,7 +502,7 @@ multsdata_f         = cfg_repeat;
 multsdata_f.tag     = 'multsdata_f';
 multsdata_f.name    = 'Multi-parameter maps';
 multsdata_f.val = { multsdata_f1 };
-multsdata_f.help    = {'Select multi-parameter maps.'};
+multsdata_f.help    = {'Select multi-parameter maps.'}; 
 multsdata_f.values = { multsdata_f1 };
 multsdata_f.num     = [1 Inf];
 % ---------------------------------------------------------------------
@@ -494,7 +511,7 @@ multsdata_f.num     = [1 Inf];
 multsdata_u         = cfg_files;
 multsdata_u.tag     = 'multsdata_u';
 multsdata_u.name    = 'Flow fields';
-multsdata_u.help    = {'Flow fields.'};
+multsdata_u.help    = {'Flow fields.'}; 
 multsdata_u.filter  = 'image';
 multsdata_u.ufilter = '.*';
 multsdata_u.num     = [1 Inf];
@@ -510,10 +527,10 @@ multsdata.val = {multsdata_gm multsdata_wm multsdata_f multsdata_u};
 % ---------------------------------------------------------------------
 nrm = tbx_cfg_dartel;
 for i=1:numel(nrm.values)
-    if strcmp(nrm.values{i}.tag, 'mni_norm')
-        nrm = nrm.values{i};
-        break
-    end
+     if strcmp(nrm.values{i}.tag, 'mni_norm')
+         nrm = nrm.values{i};
+         break
+     end
 end
 
 eval(['nrm' cfg_expr(nrm, 'data') '=multsdata;']);
@@ -530,14 +547,14 @@ dartel         = cfg_choice;
 dartel.tag     = 'dartel';
 dartel.name    = 'Maps preprocessing - "DARTEL"';
 dartel.help    = {
-    'This toolbox is based around the ``A Fast Diffeomorphic Registration Algorithm'''' paper/* \cite{ashburner07} */. The idea is to register images by computing a ``flow field'''', which can then be ``exponentiated'''' to generate both forward and backward deformations. Currently, the software only works with images that have isotropic voxels, identical dimensions and which are in approximate alignment with each other. One of the reasons for this is that the approach assumes circulant boundary conditions, which makes modelling global rotations impossible. Another reason why the images should be approximately aligned is because there are interactions among the transformations that are minimised by beginning with images that are already almost in register. This problem could be alleviated by a time varying flow field, but this is currently computationally impractical.'
-    'Because of these limitations, images should first be imported. This involves taking the ``*_seg_sn.mat'''' files produced by the segmentation code of SPM5, and writing out rigidly transformed versions of the tissue class images, such that they are in as close alignment as possible with the tissue probability maps. Rigidly transformed original images can also be generated, with the option to have skull-stripped versions.'
-    'The next step is the registration itself.  This can involve matching single images together, or it can involve the simultaneous registration of e.g. GM with GM, WM with WM and 1-(GM+WM) with 1-(GM+WM) (when needed, the 1-(GM+WM) class is generated implicitly, so there is no need to include this class yourself). This procedure begins by creating a mean of all the images, which is used as an initial template. Deformations from this template to each of the individual images are computed, and the template is then re-generated by applying the inverses of the deformations to the images and averaging. This procedure is repeated a number of times.'
-    'Finally, warped versions of the images (or other images that are in alignment with them) can be generated. '
-    ''
-    'This toolbox is not yet seamlessly integrated into the SPM package. Eventually, the plan is to use many of the ideas here as the default strategy for spatial normalisation. The toolbox may change with future updates.  There will also be a number of other (as yet unspecified) extensions, which may include a variable velocity version (related to LDDMM). Note that the Fast Diffeomorphism paper only describes a sum of squares objective function. The multinomial objective function is an extension, based on a more appropriate model for aligning binary data to a template.'
-    }';
-dartel.values  = {warp warp1 nrm }; %crt_warped jacdet crt_iwarped kernfun
+                  'This toolbox is based around the ``A Fast Diffeomorphic Registration Algorithm'''' paper/* \cite{ashburner07} */. The idea is to register images by computing a ``flow field'''', which can then be ``exponentiated'''' to generate both forward and backward deformations. Currently, the software only works with images that have isotropic voxels, identical dimensions and which are in approximate alignment with each other. One of the reasons for this is that the approach assumes circulant boundary conditions, which makes modelling global rotations impossible. Another reason why the images should be approximately aligned is because there are interactions among the transformations that are minimised by beginning with images that are already almost in register. This problem could be alleviated by a time varying flow field, but this is currently computationally impractical.'
+                  'Because of these limitations, images should first be imported. This involves taking the ``*_seg_sn.mat'''' files produced by the segmentation code of SPM5, and writing out rigidly transformed versions of the tissue class images, such that they are in as close alignment as possible with the tissue probability maps. Rigidly transformed original images can also be generated, with the option to have skull-stripped versions.'
+                  'The next step is the registration itself.  This can involve matching single images together, or it can involve the simultaneous registration of e.g. GM with GM, WM with WM and 1-(GM+WM) with 1-(GM+WM) (when needed, the 1-(GM+WM) class is generated implicitly, so there is no need to include this class yourself). This procedure begins by creating a mean of all the images, which is used as an initial template. Deformations from this template to each of the individual images are computed, and the template is then re-generated by applying the inverses of the deformations to the images and averaging. This procedure is repeated a number of times.'
+                  'Finally, warped versions of the images (or other images that are in alignment with them) can be generated. '
+                  ''
+                  'This toolbox is not yet seamlessly integrated into the SPM package. Eventually, the plan is to use many of the ideas here as the default strategy for spatial normalisation. The toolbox may change with future updates.  There will also be a number of other (as yet unspecified) extensions, which may include a variable velocity version (related to LDDMM). Note that the Fast Diffeomorphism paper only describes a sum of squares objective function. The multinomial objective function is an extension, based on a more appropriate model for aligning binary data to a template.'
+}';
+dartel.values  = {warp warp1 nrm }; %crt_warped jacdet crt_iwarped kernfun 
 %dartel.num     = [0 Inf];
 
 %---------------------------
@@ -547,13 +564,13 @@ shoot         = cfg_choice;
 shoot.tag     = 'shoot';
 shoot.name    = 'Maps preprocessing - "SHOOT"';
 shoot.help    = {
-    'This toolbox is based around the ``Diffeomorphic Registration using Geodesic Shooting and Gauss-Newton Optimisation'''' paper, which has been submitted to NeuroImage. The idea is to register images by estimating an initial velocity field, which can then be integrated to generate both forward and backward deformations.  Currently, the software only works with images that have isotropic voxels, identical dimensions and which are in approximate alignment with each other. One of the reasons for this is that the approach assumes circulant boundary conditions, which makes modelling global rotations impossible. Because of these limitations, the registration should be based on images that have first been ``imported'''' via the New Segment toolbox.'
-    'The next step is the registration itself, which involves the simultaneous registration of e.g. GM with GM, WM with WM and 1-(GM+WM) with 1-(GM+WM) (when needed, the 1-(GM+WM) class is generated implicitly, so there is no need to include this class yourself). This procedure begins by creating a mean of all the images, which is used as an initial template. Deformations from this template to each of the individual images are computed, and the template is then re-generated by applying the inverses of the deformations to the images and averaging. This procedure is repeated a number of times.'
-    ''
-    'This toolbox should be considered as only a beta (trial) version, and will include a number of (as yet unspecified) extensions in future updates.  Please report any bugs or problems to the SPM mailing list.'
-    
-    }';
-shoot.values  = {warp_shoot warp1_shoot  }; %crt_warped jacdet crt_iwarped kernfun
+                   'This toolbox is based around the ``Diffeomorphic Registration using Geodesic Shooting and Gauss-Newton Optimisation'''' paper, which has been submitted to NeuroImage. The idea is to register images by estimating an initial velocity field, which can then be integrated to generate both forward and backward deformations.  Currently, the software only works with images that have isotropic voxels, identical dimensions and which are in approximate alignment with each other. One of the reasons for this is that the approach assumes circulant boundary conditions, which makes modelling global rotations impossible. Because of these limitations, the registration should be based on images that have first been ``imported'''' via the New Segment toolbox.'
+                  'The next step is the registration itself, which involves the simultaneous registration of e.g. GM with GM, WM with WM and 1-(GM+WM) with 1-(GM+WM) (when needed, the 1-(GM+WM) class is generated implicitly, so there is no need to include this class yourself). This procedure begins by creating a mean of all the images, which is used as an initial template. Deformations from this template to each of the individual images are computed, and the template is then re-generated by applying the inverses of the deformations to the images and averaging. This procedure is repeated a number of times.'
+                  ''
+                  'This toolbox should be considered as only a beta (trial) version, and will include a number of (as yet unspecified) extensions in future updates.  Please report any bugs or problems to the SPM mailing list.'
+
+}';
+shoot.values  = {warp_shoot warp1_shoot  }; %crt_warped jacdet crt_iwarped kernfun 
 %dartel.num     = [0 Inf];
 
 %_______________________________________________________________________
@@ -565,8 +582,8 @@ proc         = cfg_choice;
 proc.tag     = 'proc';
 proc.name    = 'Process maps';
 proc.help    = {
-    'Parameter maps are registered to standard space, scaled and ready for voxel-based quantitative (VBQ) analysis.'
-    }';
+                'Parameter maps are registered to standard space, scaled and ready for voxel-based quantitative (VBQ) analysis.'
+}';
 proc.values  = {preproc8 dartel shoot};    %shoot scale
 % ---------------------------------------------------------------------
 % vbq VBQ Tools
@@ -575,43 +592,37 @@ vbq         = cfg_choice;
 vbq.tag     = 'VBQ';
 vbq.name    = 'VBQ Tools';
 vbq.help    = {
-    'This toolbox is based around the ``Regional specificity of MRI contrast ... (VBQ)'' paper by Draganski et al., 2011 NeuroImage and ''Unified segmentation based correction... (UNICORT) paper by Weiskopf et al., 2011. '
-    'This toolbox should be considered as only a beta (trial) version, and will include a number of (as yet unspecified) extensions in future updates.  Please report any bugs or problems to lreninfo@gmail.com.'
-    }';
+                  'This toolbox is based around the ``Regional specificity of MRI contrast ... (VBQ)'' paper by Draganski et al., 2011 NeuroImage and ''Unified segmentation based correction... (UNICORT) paper by Weiskopf et al., 2011. '
+                  'This toolbox should be considered as only a beta (trial) version, and will include a number of (as yet unspecified) extensions in future updates.  Please report any bugs or problems to lreninfo@gmail.com.'
+}';
 vbq.values  = {crm proc };
-end
 
-% ______________________________________________________________________
-%
-%% functions segment & register
-% _______________________________________________________________________
+%______________________________________________________________________
+
+% functions segment & register
+%_______________________________________________________________________
 %======================================================================
-function job = preproc_perimage_to_persubject(job)
-% Rearrange data per subject for further processing.
-if isfield(job, 'many_few_sdatas')
-    if isfield(job.many_few_sdatas, 'subjc')
-        job.subjc = job.many_few_sdatas.subjc;
-    else
-        for i = 1:numel(job.many_few_sdatas.many_sdatas.struct.s_vols)
-            job.subjc(i).output = job.many_few_sdatas.many_sdatas.output;
-            job.subjc(i).struct = job.many_few_sdatas.many_sdatas.struct;
-            job.subjc(i).struct.s_vols = ...
-                    job.many_few_sdatas.many_sdatas.struct.s_vols(i);
-            job.subjc(i).maps.mp_vols = {};
-            for k = 1:numel(job.many_few_sdatas.many_sdatas.mp_vols)
-                job.subjc(i).maps.mp_vols{end+1} = ...
-                    job.many_few_sdatas.many_sdatas.mp_vols{k}{i};
+function job=preproc_perimage_to_persubject(job)
+    if isfield(job, 'many_few_sdatas')
+        if isfield(job.many_few_sdatas, 'subjc')
+            job.subjc = job.many_few_sdatas.subjc;
+        else
+            for i=1:numel(job.many_few_sdatas.many_sdatas.struct.s_vols)
+                job.subjc(i).output = job.many_few_sdatas.many_sdatas.output;
+                job.subjc(i).struct = job.many_few_sdatas.many_sdatas.struct;
+                job.subjc(i).struct.s_vols = job.many_few_sdatas.many_sdatas.struct.s_vols(i);
+                job.subjc(i).maps.mp_vols = {};
+                for k=1:numel(job.many_few_sdatas.many_sdatas.mp_vols)
+                    job.subjc(i).maps.mp_vols{end+1} = job.many_few_sdatas.many_sdatas.mp_vols{k}{i};
+                end
             end
         end
     end
-end
-end
 
-%======================================================================
+
 function out = spm_local_preproc_run(job)
-% Deal with the spatial preprocessing, 1 subject at a time:
-% segmentation
-job = preproc_perimage_to_persubject(job);
+
+job=preproc_perimage_to_persubject(job);
 
 for i=1:numel(job.tissue)
     out.tiss(i).c = {};
@@ -622,21 +633,19 @@ for i=1:numel(job.subjc(1).maps.mp_vols)
     out.maps(i).mp_vols = {};
 end
 
-for nm = 1:length(job.subjc)
+for nm=1:length(job.subjc)
     defsa.channel = job.subjc(nm).struct(1);
     defsa.channel.vols = job.subjc(nm).struct(1).s_vols;
     defsa.tissue  = job.tissue;
     defsa.warp    = job.warp;
-    out.subjc(nm) = spm_preproc_run(defsa);
-    defs.comp{1}.def = ...
-        strcat(spm_str_manip(job.subjc(nm).struct(1).s_vols,'h'), ...
-        filesep,'y_',spm_str_manip(job.subjc(nm).struct(1).s_vols,'tr'),'.nii');
+    out.subjc(nm) = spm_preproc_run(defsa);  
+    defs.comp{1}.def = strcat(spm_str_manip(job.subjc(nm).struct(1).s_vols,'h'),filesep,'y_',spm_str_manip(job.subjc(nm).struct(1).s_vols,'tr'),'.nii');
     % defs.ofname = '';
-    defs.out{1}.pull.fnames = cellstr(char(char(job.subjc(nm).maps.mp_vols{:})));
+    defs.out{1}.pull.fnames = cellstr(char(strvcat(job.subjc(nm).maps.mp_vols{:})));
     if isfield(job.subjc(nm).output,'indir') && job.subjc(nm).output.indir == 1
         defs.out{1}.pull.savedir.saveusr{1}=spm_str_manip(job.subjc(nm).maps.mp_vols{1},'h');
     else
-        defs.out{1}.savedir.saveusr{1}=job.subjc(nm).output.outdir{1};
+        defs.out{1}.pull.savedir.saveusr{1}=job.subjc(nm).output.outdir{1};
     end
     defs.out{1}.pull.interp = 1;
     defs.out{1}.pull.mask = 1;
@@ -655,56 +664,37 @@ for nm = 1:length(job.subjc)
         out.maps(i).mp_vols{end+1} = outdef.warped{i};
     end
     
-    % Create sum of GM/WM 
-    c1 = insert_pref(job.subjc(nm).struct(1).s_vols{1},'mwc1'); % modulated warped GM
-    c2 = insert_pref(job.subjc(nm).struct(1).s_vols{1},'mwc2'); % modulated warped WM
-    c  = spm_imcalc(char(char(c1),char(c2)),insert_pref(f,'bb_'),'(i1+i2)');
-    c  = c.fname; % file with sum of GM & WM
     for i=1:length(outdef.warped)
         if isfield(job.subjc(nm).output,'indir') && job.subjc(nm).output.indir == 1
-            p = spm_str_manip(job.subjc(nm).maps.mp_vols{1},'h');
+            p=spm_str_manip(job.subjc(nm).maps.mp_vols{1},'h');
         else
-            p = job.subjc(nm).output.outdir{1};
+            p=job.subjc(nm).output.outdir{1};
         end
-%         c1 = insert_pref(job.subjc(nm).struct(1).s_vols{1},'mwc1'); % modulated warped GM
-%         c2 = insert_pref(job.subjc(nm).struct(1).s_vols{1},'mwc2'); % modulated warped WM
-        f  = insert_pref(job.subjc(nm).maps.mp_vols{i},'w');  % removed s f=outdef.warped{i};
-%         c  = spm_imcalc(char(char(c1),char(c2)),insert_pref(f,'bb_'),'(i1+i2)');
-%         c  = c.fname; % file with sum of GM & WM
-        m_c1 = [spm_select('FPList',fullfile(spm('Dir'),'tpm'),'^TPM.nii') ',1']; % GM tpm
-        m_c2 = [spm_select('FPList',fullfile(spm('Dir'),'tpm'),'^TPM.nii') ',2']; % WM tpm
-        m_c  = [spm_select('FPList',fullfile(spm('Dir'),'tpm'),'^TPM.nii') ',6']; % Outside head tpm
-        p1 = spm_imcalc(char(char(c1),char(f),m_c1),insert_pref(f,'p1_'), ...
-                        '(i1.*i2).*(i3>0.05)'); 
-        p1 = p1.fname; % MP weighted with its own GM, and a priori GM>.05
-        p2 = spm_imcalc(char(char(c2),char(f),m_c2),insert_pref(f,'p2_'), ...
-                        '(i1.*i2).*(i3>0.05)');
-        p2 = p2.fname; % MP weighted with its own WM, and a priori GM>.05
-        pp = spm_imcalc(char(char(c),char(f),m_c),insert_pref(f,'p_'), ...
-                        '(i1.*i2).*((1-i3)>0.05)');
-        pp = pp.fname; % MP weighted with its own GM+WM, and a priori in the head > .05
-        m1 = insert_pref(c1,'s'); spm_smooth(c1,m1,job.fwhm); % smooth mwc1
-        m2 = insert_pref(c2,'s'); spm_smooth(c2,m2,job.fwhm); % smooth mwc2
-        m  = insert_pref(c,'s');  spm_smooth(c,m,job.fwhm); % smooth mwc1+mwc2
-        n1 = insert_pref(p1,'s'); spm_smooth(p1,n1,job.fwhm); % smooth weighted(GM) MP
-        n2 = insert_pref(p2,'s'); spm_smooth(p2,n2,job.fwhm); % smooth weighted(WM) MP
-        n  = insert_pref(pp,'s'); spm_smooth(pp,n,job.fwhm); % smooth weighted(GM+WM) MP
-        q1 = spm_imcalc(char(n1,m1,m1),insert_pref(p1,'fin_uni_'), ...
-                        '(i1./i2).*(i3>0.05)'); % Signal as in paper
-        q1 = q1.fname;
-        q2 = spm_imcalc(char(n2,m2,m2),insert_pref(p2,'fin_uni_'), ...
-                        '(i1./i2).*(i3>0.05)');
-        q2 = q2.fname;
-        q  = spm_imcalc(char(n,m,m),insert_pref(pp,'fin_uni_bb_'), ...
-                        '(i1./i2).*((i3)>0.05)'); 
-        q  = q.fname;
-        delfiles = strrep({c,p1,p2,m1,m2,n1,n2,pp,m,n,q},'.nii,1','.nii');
+        c1=insert_pref(job.subjc(nm).struct(1).s_vols{1},'mwc1');
+        c2=insert_pref(job.subjc(nm).struct(1).s_vols{1},'mwc2');
+        f =insert_pref(job.subjc(nm).maps.mp_vols{i},'w');  % removed s f=outdef.warped{i};
+        c =spm_imcalc(strvcat(char(c1),char(c2)),insert_pref(f,'bb_'),'(i1+i2)'); c=c.fname;
+        m_c1 = [spm_select('FPList',fullfile(spm('Dir'),'tpm'),'^TPM.nii') ',1'];
+        m_c2 = [spm_select('FPList',fullfile(spm('Dir'),'tpm'),'^TPM.nii') ',2'];
+        m_c = [spm_select('FPList',fullfile(spm('Dir'),'tpm'),'^TPM.nii') ',6'];
+        p1= spm_imcalc(strvcat(char(c1),char(f),m_c1),insert_pref(f,'p1_'),'(i1.*i2).*(i3>0.05)'); p1=p1.fname;
+        p2= spm_imcalc(strvcat(char(c2),char(f),m_c2),insert_pref(f,'p2_'),'(i1.*i2).*(i3>0.05)'); p2=p2.fname;
+        pp = spm_imcalc(strvcat(char(c),char(f),m_c),insert_pref(f,'p_'),'(i1.*i2).*((1-i3)>0.05)'); pp=pp.fname;
+        m1=insert_pref(c1,'s');spm_smooth(c1,m1,job.fwhm);
+        m2=insert_pref(c2,'s');spm_smooth(c2,m2,job.fwhm);
+        m=insert_pref(c,'s');spm_smooth(c,m,job.fwhm);
+        n1=insert_pref(p1,'s');spm_smooth(p1,n1,job.fwhm);
+        n2=insert_pref(p2,'s');spm_smooth(p2,n2,job.fwhm);
+        n=insert_pref(pp,'s');spm_smooth(pp,n,job.fwhm);
+        q1 = spm_imcalc(strvcat(n1,m1,m1),insert_pref(p1,'fin_uni_'),'(i1./i2).*(i3>0.05)'); q1=q1.fname;
+        q2 = spm_imcalc(strvcat(n2,m2,m2),insert_pref(p2,'fin_uni_'),'(i1./i2).*(i3>0.05)'); q2=q2.fname;
+        q = spm_imcalc(strvcat(n,m,m),insert_pref(pp,'fin_uni_bb_'),'(i1./i2).*((i3)>0.05)'); q=q.fname;
+        delfiles=strrep({c,p1,p2,m1,m2,n1,n2,pp,m,n,q},'.nii,1','.nii');
         for ii=1:numel(delfiles)
-            delete(delfiles{ii});
+    	    delete(delfiles{ii});
         end
     end
     
-end
 end
 
 
@@ -739,32 +729,32 @@ if isfield(job, 'many_few_sdatas')
     if isfield(job.many_few_sdatas, 'subjc')
         job.subjc = job.many_few_sdatas.subjc;
     else
-        dep = cfg_dep;
-        for i=1:numel(job.tissue)
-            if job.tissue(i).native(1)
+         dep = cfg_dep;
+         for i=1:numel(job.tissue)
+             if job.tissue(i).native(1)
                 dep(end+1) = cfg_dep; %#ok<AGROW>
                 dep(end).sname = sprintf('c%d Images', i);
                 dep(end).src_output = substruct('.', 'tiss', '()', {i}, '.', 'c', '()', {':'});
                 dep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
-            end
-            if job.tissue(i).native(2)
+             end
+             if job.tissue(i).native(2)
                 dep(end+1) = cfg_dep; %#ok<AGROW>
                 dep(end).sname = sprintf('rc%d Images', i);
                 dep(end).src_output = substruct('.', 'tiss', '()', {i}, '.', 'rc', '()', {':'});
                 dep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
-            end
-        end
+             end
+         end
         
-        disp(job.many_few_sdatas);
-        for i=1:numel(job.many_few_sdatas.many_sdatas.mp_vols)
+         disp(job.many_few_sdatas);
+         for i=1:numel(job.many_few_sdatas.many_sdatas.mp_vols)
             dep(end+1) = cfg_dep; %#ok<AGROW>
             dep(end).sname = sprintf('%d Parameter Volumes', i);
             dep(end).src_output = substruct('.', 'maps', '()', {i}, '.', 'mp_vols', '()', {':'});
             dep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
-        end
-        
-        dep = dep(2:end);
-        
+         end
+         
+         dep = dep(2:end);
+
         return;
     end
 end
@@ -793,7 +783,6 @@ for nm=1:numel(job.subjc)
     
 end
 dep = cdep;
-end
 %_______________________________________________________________________
 
 function dep = vout_crt(job)
@@ -832,7 +821,7 @@ if ~isfield(job, 'subj') % Many subjects
     dep(6).sname = 'T1w Maps';
     dep(6).src_output = substruct('.','T1w','()',{':'});
     dep(6).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
-    
+   
     return;
 end
 
@@ -851,38 +840,37 @@ for i=1:numel(job.subj)
     cdep(k).src_output = substruct('.','subj','()',{i},'.','R1u','()',{':'});
     cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
     
-    k=k+1;
+     k=k+1;
     
     cdep(k)            = cfg_dep;
     cdep(k).sname      = sprintf('R2s_subj%d',i);
     cdep(k).src_output = substruct('.','subj','()',{i},'.','R2s','()',{':'});
     cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
     
-    k=k+1;
+     k=k+1;
     
     cdep(k)            = cfg_dep;
     cdep(k).sname      = sprintf('MT_subj%d',i);
     cdep(k).src_output = substruct('.','subj','()',{i},'.','MT','()',{':'});
     cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
-    
-    k=k+1;
+   
+     k=k+1;
     
     cdep(k)            = cfg_dep;
     cdep(k).sname      = sprintf('A_subj%d',i);
     cdep(k).src_output = substruct('.','subj','()',{i},'.','A','()',{':'});
     cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
     
-    k=k+1;
+     k=k+1;
     
     cdep(k)            = cfg_dep;
     cdep(k).sname      = sprintf('T1w_subj%d',i);
     cdep(k).src_output = substruct('.','subj','()',{i},'.','T1w','()',{':'});
     cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
     
-    k=k+1;
+     k=k+1;
 end
 dep = cdep;
-end
 %_______________________________________________________________________
 
 function dep = vout_crt1(job)
@@ -914,51 +902,51 @@ if ~isfield(job, 'subj') % Many subjects
     dep(5).sname = 'T1w Maps';
     dep(5).src_output = substruct('.','T1w','()',{':'});
     dep(5).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
-    
+   
     return;
 end
 
 k=1;
 
 for i=1:numel(job.subj)
-    
+
     cdep(k)            = cfg_dep;
     cdep(k).sname      = sprintf('R1_subj%d',i);
     cdep(k).src_output = substruct('.','subj','()',{i},'.','R1','()',{':'});
     cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
     
     k=k+1;
-    
+     
     cdep(k)            = cfg_dep;
     cdep(k).sname      = sprintf('R2s_subj%d',i);
     cdep(k).src_output = substruct('.','subj','()',{i},'.','R2s','()',{':'});
     cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
     
-    k=k+1;
+     k=k+1;
     
     cdep(k)            = cfg_dep;
     cdep(k).sname      = sprintf('MT_subj%d',i);
     cdep(k).src_output = substruct('.','subj','()',{i},'.','MT','()',{':'});
     cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
-    
-    k=k+1;
+   
+     k=k+1;
     
     cdep(k)            = cfg_dep;
     cdep(k).sname      = sprintf('A_subj%d',i);
     cdep(k).src_output = substruct('.','subj','()',{i},'.','A','()',{':'});
     cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
     
-    k=k+1;
+     k=k+1;
     
     cdep(k)            = cfg_dep;
     cdep(k).sname      = sprintf('T1w_subj%d',i);
     cdep(k).src_output = substruct('.','subj','()',{i},'.','T1w','()',{':'});
     cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
     
-    k=k+1;
+     k=k+1;
 end
 dep = cdep;
-end
+
 
 %_______________________________________________________________________
 
@@ -973,7 +961,6 @@ for i=1:n1,
         break;
     end;
 end;
-end
 %_______________________________________________________________________
 
 %_______________________________________________________________________
@@ -999,9 +986,9 @@ for i=1:numel(job.images{1})
     fdep(i).tgt_spec   = cfg_findspec({{'filter','nifti'}});
 end
 dep = [tdep fdep];
-end
 %_______________________________________________________________________
 
+%_______________________________________________________________________
 function dep = vout_dartel_warp(job)
 for i=1:numel(job.images{1})
     fdep(i)            = cfg_dep;
@@ -1010,23 +997,20 @@ for i=1:numel(job.images{1})
     fdep(i).tgt_spec   = cfg_findspec({{'filter','nifti'}});
 end
 dep = fdep;
-end
 %_______________________________________________________________________
 
-function job = perimage_to_persubject(job)
+function job=perimage_to_persubject(job)
 for i=1:numel(job.multsdata.multsdata_gm)
-    job.subjd(i).images = {};
-    job.subjd(i).images{1} = job.multsdata.multsdata_gm{i};
-    job.subjd(i).images{2} = job.multsdata.multsdata_wm{i};
-    job.subjd(i).flowfield = {};
-    job.subjd(i).flowfield{1} = job.multsdata.multsdata_u{i};
-    job.subjd(i).mp_vols = {};
-    for j=1:numel(job.multsdata.multsdata_f1)
-        job.subjd(i).mp_vols{j} = job.multsdata.multsdata_f1{j}{i};
-    end
+       job.subjd(i).images = {};
+       job.subjd(i).images{1} = job.multsdata.multsdata_gm{i};
+       job.subjd(i).images{2} = job.multsdata.multsdata_wm{i};
+       job.subjd(i).flowfield = {};
+       job.subjd(i).flowfield{1} = job.multsdata.multsdata_u{i};
+       job.subjd(i).mp_vols = {};
+       for j=1:numel(job.multsdata.multsdata_f1)
+           job.subjd(i).mp_vols{j} = job.multsdata.multsdata_f1{j}{i};
+       end
 end
-end
-%_______________________________________________________________________
 
 function out = spm_dartel_norm_fun_local(job)
 
@@ -1048,7 +1032,7 @@ end
 feds.preserve = 1;
 
 % MFC - Produces mwc* images, i.e. modulated, spatially normalised images.
-% This produces w = |Dphi|t(phi), the product of the Jacobian determinants
+% This produces w = |Dphi|t(phi), the product of the Jacobian determinants 
 % of deformation phi and the tissue class image warped by phi, as per
 % Draganski 2011, NeuroImage.  spm_dartel_norm_fun calls dartel3:
 spm_dartel_norm_fun(feds);
@@ -1060,66 +1044,51 @@ for mm=1:length(job.subjd)
 end
 feds.preserve = 0;
 spm_dartel_norm_fun(feds);
-
 for nm=1:length(job.subjd)
-    c1 = insert_pref(job.subjd(nm).images{1},'mw');  % removed s
-    c2 = insert_pref(job.subjd(nm).images{2},'mw');  % removed s
-    c  = spm_imcalc(char(char(c1),char(c2)),insert_pref(f,'bb_'),'(i1+i2)');
-    c  = c.fname;
     for i=1:length(job.subjd(nm).mp_vols)
         chk=check_entry(job.subjd(nm));
         if ~isempty(chk)
             error(chk)
         end
-        p  = spm_str_manip(job.subjd(nm).mp_vols{1},'h');
-%         c1 = insert_pref(job.subjd(nm).images{1},'mw');  % removed s
-%         c2 = insert_pref(job.subjd(nm).images{2},'mw');  % removed s
-        f  = insert_pref(job.subjd(nm).mp_vols{i},'w');  % removed s
-%         c  = spm_imcalc(char(char(c1),char(c2)),insert_pref(f,'bb_'),'(i1+i2)');
-%         c  = c.fname;
+        p=spm_str_manip(job.subjd(nm).mp_vols{1},'h');
+        c1=insert_pref(job.subjd(nm).images{1},'mw');   % removed s
+        c2=insert_pref(job.subjd(nm).images{2},'mw');  % removed s
+        f =insert_pref(job.subjd(nm).mp_vols{i},'w');  % removed s
+        c =spm_imcalc(strvcat(char(c1),char(c2)),insert_pref(f,'bb_'),'(i1+i2)');
+        c = c.fname;
         m_c1 = [spm_select('FPList',fullfile(spm('Dir'),'tpm'),'^TPM.nii') ',1'];
         m_c2 = [spm_select('FPList',fullfile(spm('Dir'),'tpm'),'^TPM.nii') ',2'];
-        m_c  = [spm_select('FPList',fullfile(spm('Dir'),'tpm'),'^TPM.nii') ',6'];
-        p1 = spm_imcalc(char(char(c1),char(f),m_c1),insert_pref(f,'p1_'), ...
-                '(i1.*i2).*(i3>0.05)');
+        m_c = [spm_select('FPList',fullfile(spm('Dir'),'tpm'),'^TPM.nii') ',6'];
+        p1= spm_imcalc(strvcat(char(c1),char(f),m_c1),insert_pref(f,'p1_'),'(i1.*i2).*(i3>0.05)');
         p1 = p1.fname;
-        p2 = spm_imcalc(char(char(c2),char(f),m_c2),insert_pref(f,'p2_'), ...
-            '(i1.*i2).*(i3>0.05)');
+        p2= spm_imcalc(strvcat(char(c2),char(f),m_c2),insert_pref(f,'p2_'),'(i1.*i2).*(i3>0.05)');
         p2 = p2.fname;
-        pp = spm_imcalc(char(char(c),char(f),m_c),insert_pref(f,'p_'), ...
-            '(i1.*i2).*((1-i3)>0.05)');
+        pp = spm_imcalc(strvcat(char(c),char(f),m_c),insert_pref(f,'p_'),'(i1.*i2).*((1-i3)>0.05)');
         pp = pp.fname;
-        m1 = insert_pref(c1,'s'); spm_smooth(c1,m1,job.fwhm);
-        m2 = insert_pref(c2,'s'); spm_smooth(c2,m2,job.fwhm);
-        m  = insert_pref(c, 's');  spm_smooth(c,m,job.fwhm);
-        n1 = insert_pref(p1,'s'); spm_smooth(p1,n1,job.fwhm);
-        n2 = insert_pref(p2,'s'); spm_smooth(p2,n2,job.fwhm);
-        n  = insert_pref(pp,'s'); spm_smooth(pp,n,job.fwhm);
-        q1 = spm_imcalc(char(n1,m1,m1),insert_pref(p1,'fin_dart_'), ...
-            '(i1./i2).*(i3>0.05)');
-        q2 = spm_imcalc(char(n2,m2,m2),insert_pref(p2,'fin_dart_'), ...
-            '(i1./i2).*(i3>0.05)');
-        q = spm_imcalc(char(n,m,m),insert_pref(pp,'fin_dart_bb_'), ...
-            '(i1./i2).*((i3)>0.05)');
+        m1=insert_pref(c1,'s');spm_smooth(c1,m1,job.fwhm);
+        m2=insert_pref(c2,'s');spm_smooth(c2,m2,job.fwhm);
+        m=insert_pref(c,'s');spm_smooth(c,m,job.fwhm);
+        n1=insert_pref(p1,'s');spm_smooth(p1,n1,job.fwhm);
+        n2=insert_pref(p2,'s');spm_smooth(p2,n2,job.fwhm);
+        n=insert_pref(pp,'s');spm_smooth(pp,n,job.fwhm);
+        q1 = spm_imcalc(strvcat(n1,m1,m1),insert_pref(p1,'fin_dart_'),'(i1./i2).*(i3>0.05)');
+        q2 = spm_imcalc(strvcat(n2,m2,m2),insert_pref(p2,'fin_dart_'),'(i1./i2).*(i3>0.05)');
+        q = spm_imcalc(strvcat(n,m,m),insert_pref(pp,'fin_dart_bb_'),'(i1./i2).*((i3)>0.05)');
         q = q.fname;
         delfiles=strrep({c,p1,p2,m1,m2,n1,n2,pp,m,n,q},'.nii,1','.nii');
-        for ii=1:numel(delfiles)
+	for ii=1:numel(delfiles)
             delete(delfiles{ii});
         end
     end
 end
-end
-%_______________________________________________________________________
 
-function dep = vout_norm_fun(job)
-dep = cfg_dep;
-end
-%_______________________________________________________________________
+
+function dep=vout_norm_fun(job)
+    dep = cfg_dep;
 
 %======================================================================
-function fout = insert_pref(f,p)
-fout = strcat(spm_str_manip(f,'h'),filesep,p,spm_str_manip(f,'t'));
-end
+function fout=insert_pref(f,p)
+fout=strcat(spm_str_manip(f,'h'),filesep,p,spm_str_manip(f,'t'));
 %======================================================================
 function chk = check_entry(job)
 n1 = numel(job.images);
@@ -1131,8 +1100,8 @@ end
 if n2 ~= 2,
     chk = 'Wrong input - should be c1 and c2';
 end
-end
-%_______________________________________________________________________
+
+
 
 function c = unlimit(c)
 try
@@ -1147,51 +1116,43 @@ try
     end
 catch e
 end
-end
-%_______________________________________________________________________
 
-function expr = cfg_expr(c, varargin) %#ok<INUSL>
-expr = 'c';
-for i=1:size(varargin,2)
-    %         if strcmp(class(varargin{i}), 'double')
-    if isa(varargin{i}, 'double')
-        expr = [expr '.val{' num2str(varargin{i}) '}']; %#ok<AGROW>
-    else
-        v = eval([expr ';']);
-        for j=1:size(v.val,2)
-            if strcmp(v.val{j}.tag, varargin{i})
-                break
+function expr=cfg_expr(c, varargin) %#ok<INUSL>
+    expr = 'c';
+    for i=1:size(varargin,2)
+        if strcmp(class(varargin{i}), 'double')
+            expr = [expr '.val{' num2str(varargin{i}) '}']; %#ok<AGROW>
+        else
+            v = eval([expr ';']);
+            for j=1:size(v.val,2)
+                if strcmp(v.val{j}.tag, varargin{i})
+                    break
+                end
             end
+            expr = [expr '.val{' num2str(j) '}']; %#ok<AGROW>
         end
-        expr = [expr '.val{' num2str(j) '}']; %#ok<AGROW>
     end
-end
-expr = expr(2:end);
-end
-%_______________________________________________________________________
-
-function expr = cfg_expr_values(c, varargin) %#ok<INUSL>
-expr = 'c';
-for i=1:size(varargin,2)
-    %         if strcmp(class(varargin{i}), 'double')
-    if isa(varargin{i}, 'double')
-        expr = [expr '.values{' num2str(varargin{i}) '}']; %#ok<AGROW>
-    else
-        v = eval([expr ';']);
-        for j=1:size(v.values,2)
-            if strcmp(v.values{j}.tag, varargin{i})
-                break
+    expr = expr(2:end);
+    
+    
+function expr=cfg_expr_values(c, varargin) %#ok<INUSL>
+    expr = 'c';
+    for i=1:size(varargin,2)
+        if strcmp(class(varargin{i}), 'double')
+            expr = [expr '.values{' num2str(varargin{i}) '}']; %#ok<AGROW>
+        else
+            v = eval([expr ';']);
+            for j=1:size(v.values,2)
+                if strcmp(v.values{j}.tag, varargin{i})
+                    break
+                end
             end
+            expr = [expr '.values{' num2str(j) '}']; %#ok<AGROW>
         end
-        expr = [expr '.values{' num2str(j) '}']; %#ok<AGROW>
     end
-end
-expr = expr(2:end);
-end
-%_______________________________________________________________________
+    expr = expr(2:end);
 
-function c = cfg_set_val(c, varargin)
-expr = ['c' cfg_expr(c, varargin{1:end-1})];
-eval([expr '.val={varargin{end}};']);
-end
-%_______________________________________________________________________
+function c=cfg_set_val(c, varargin)
+    expr = ['c' cfg_expr(c, varargin{1:end-1})];
+    eval([expr '.val={varargin{end}};']);
+

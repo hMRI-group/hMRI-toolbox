@@ -1,4 +1,10 @@
-function out = spm_dicom_convert(hdr,opts,root_dir,format,out_dir)
+function out = hMRI_dicom_convert(hdr,opts,root_dir,format,out_dir)
+% Modified spm_dicom_convert for the hMRI toolbox.
+% See comments "hMRI" to retrieve modofocations.
+%--------------------------------------------------------------------------
+% Written by Evelyne Balteau - May 2016 
+% Cyclotron Research Centre, University of Liege
+%--------------------------------------------------------------------------
 % Convert DICOM images into something that SPM can use (e.g. NIfTI)
 % FORMAT spm_dicom_convert(hdr,opts,root_dir,format,out_dir)
 % Inputs:

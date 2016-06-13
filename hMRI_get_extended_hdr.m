@@ -1,4 +1,4 @@
-function hdr = get_extended_hdr(filelist)
+function hdr = hMRI_get_extended_hdr(filelist)
 % To retrieve JSON-encoded metadata from nifti images.
 %__________________________________________________________________________
 % FORMAT hdr = get_extended_hdr(filelist)
@@ -10,8 +10,9 @@ function hdr = get_extended_hdr(filelist)
 %       An open-source MATLAB/Octave JSON/UBJSON encoder and decoder
 %       http://iso2mesh.sourceforge.net/cgi-bin/index.cgi?jsonlab
 %       https://github.com/fangq/jsonlab.git
-%       Copyright (C) 2011-2015 Qianqian Fang <fangq at nmr.mgh.harvard.edu>
-%       License: BSD or GNU General Public License version 3 (GPL v3), see License*.txt
+%       Copyright (C) 2011-2015 Qianqian Fang <fangq@nmr.mgh.harvard.edu>
+%       License: BSD or GNU General Public License version 3 (GPL v3),
+%       see License*.txt 
 %       Version: 1.2 (Optimus - Update 2)
 %__________________________________________________________________________
 % Written by

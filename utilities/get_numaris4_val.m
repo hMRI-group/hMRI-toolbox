@@ -1,6 +1,7 @@
 %==========================================================================
 % function val = get_numaris4_val(str,name)
 % from spm_dicom_convert (SPM12)
+% $Id: spm_dicom_convert.m 6773 2016-04-20 09:26:59Z john $
 %==========================================================================
 function val = get_numaris4_val(str,name)
 name = deblank(name);

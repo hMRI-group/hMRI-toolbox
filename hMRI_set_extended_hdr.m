@@ -1,4 +1,4 @@
-function set_extended_hdr(filelist, hdr)
+function hMRI_set_extended_hdr(filelist, hdr)
 % To insert or update JSON-encoded metadata into nifti images.
 %__________________________________________________________________________
 % FORMAT set_extended_hdr(filelist, hdr)
@@ -11,8 +11,9 @@ function set_extended_hdr(filelist, hdr)
 %       An open-source MATLAB/Octave JSON/UBJSON encoder and decoder
 %       http://iso2mesh.sourceforge.net/cgi-bin/index.cgi?jsonlab
 %       https://github.com/fangq/jsonlab.git
-%       Copyright (C) 2011-2015 Qianqian Fang <fangq at nmr.mgh.harvard.edu>
-%       License: BSD or GNU General Public License version 3 (GPL v3), see License*.txt
+%       Copyright (C) 2011-2015 Qianqian Fang <fangq@nmr.mgh.harvard.edu>
+%       License: BSD or GNU General Public License version 3 (GPL v3),
+%       see License*.txt 
 %       Version: 1.2 (Optimus - Update 2)
 %__________________________________________________________________________
 % Written by

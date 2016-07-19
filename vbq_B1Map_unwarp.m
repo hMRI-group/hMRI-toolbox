@@ -1,4 +1,4 @@
-function [fmap_img,unwarp_img]=B1Map_unwarp(fm_imgs,anat_img,other_img,pm_defs)
+function [fmap_img,unwarp_img] = vbq_B1Map_unwarp(fm_imgs,anat_img,other_img,pm_defs)
 % Ensure that your version of Fieldmap in 'Fieldmapxy' is the right
 % version.
 %_______________________________________________________________________

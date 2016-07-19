@@ -4,7 +4,7 @@ function vbq_B1map_v2(P,Q,T1)
 % al_B1mapping_v2b
 % Input: 11 pairs of (SE, STE) images for B1 map calculation and 3 images
 % for B0 map calculation.
-% This macro calls the functions B1Map_unwarp and B1Map_process for
+% This macro calls the functions vbq_B1Map_unwarp and vbq_B1Map_process for
 % correction of image distortions, padding and smoothing of the images.
 % Output:
 %     - distorted B1 (B1map_----) and error (SDmap_----) maps
@@ -28,10 +28,10 @@ if nargin < 3
     end
 end
 
-beta=[115:-5:65];
+beta = 115:-5:65;
 TM = 31.2;
-eps=0.0001;
-Nonominalvalues=5;
+eps = 0.0001;
+Nonominalvalues = 5;
 
 disp('----- Calculation of B1 map -----');
 
@@ -122,10 +122,12 @@ anat_img = {char(X_save.fname)};
 other_img{1}=char(V_save.fname);
 other_img{2}=char(W_save.fname);
 
-[fmap_img,unwarp_img] = B1Map_unwarp(fm_imgs,anat_img,other_img,pm_defs);
+[fmap_img,unwarp_img] = vbq_B1Map_unwarp(fm_imgs,anat_img,other_img,pm_defs);
 uanat_img{1}=unwarp_img{1}.fname;
 ub1_img{1}=unwarp_img{2}.fname;
 ustd_img{1}=unwarp_img{3}.fname;
 fpm_img{1}=fmap_img{1};
 vdm_img{1}=fmap_img{2};
-[allub1_img]=B1Map_process(uanat_img,ub1_img,ustd_img,vdm_img,fpm_img,pm_defs);
+[allub1_img]=vbq_B1Map_process(uanat_img,ub1_img,ustd_img,vdm_img,fpm_img,pm_defs);
+
+end

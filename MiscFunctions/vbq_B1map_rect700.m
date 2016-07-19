@@ -1,9 +1,10 @@
-function vbq_B1map_rect700(P, Q) % MFC: added arguments P & Q to mirror vbq_B1map_v2
+function vbq_B1map_rect700(P, Q)
+% MFC: added arguments P & Q to mirror vbq_B1map_v2
 % Calculation of B1 mapping data 3D EPI spin echo (SE) and stimulated (STE) echo images (see Jiru and Klose MRM 2006).
 % Corresponding scanning protocol/sequence: al_B1mapping_rect700
 % Inputs: SE and STE images for B1 map calculation and the 3 data images
 % for B0 map calculation.
-% This macro calls the functions B1Map_unwarp and B1Map_process for
+% This macro calls the functions vbq_B1Map_unwarp and vbq_B1Map_process for
 % correction of image distortions, padding and smoothing of the images.
 % Output:
 %     - distorted B1 (B1map_----) and error (SDmap_----) maps
@@ -14,10 +15,10 @@ function vbq_B1map_rect700(P, Q) % MFC: added arguments P & Q to mirror vbq_B1ma
 
 % $Id$
 
-beta=[80:5:100];
-TM = 33.53;%
+beta = 80:5:100;
+TM = 33.53; %
 T1 = 1192; %ms
-eps=0.0001;
+eps = 0.0001;
 
 if nargin < 2
 %     P = spm_select(Inf,'-0..nii','Select the SE/STE images'); 
@@ -26,7 +27,7 @@ if nargin < 2
 end
 disp('----- Calculation of B1 map -----');
 
-V=spm_vol(P);
+V = spm_vol(P);
 n   = numel(V);
 Y_tmp   = zeros([V(1).dim(1:2) n]);
 Y_ab = zeros([V(1).dim(1:3)]);
@@ -105,10 +106,12 @@ anat_img = {strcat(path,filesep,name,e)};
 other_img{1}=char(V_save.fname);
 other_img{2}=char(W_save.fname);
 
-[fmap_img,unwarp_img] = B1Map_unwarp(fm_imgs,anat_img,other_img,pm_defs);
+[fmap_img,unwarp_img] = vbq_B1Map_unwarp(fm_imgs,anat_img,other_img,pm_defs);
 uanat_img{1}=unwarp_img{1}.fname;
 ub1_img{1}=unwarp_img{2}.fname;
 ustd_img{1}=unwarp_img{3}.fname;
 fpm_img{1}=fmap_img{1};
 vdm_img{1}=fmap_img{2};
-[allub1_img]=B1Map_process(uanat_img,ub1_img,ustd_img,vdm_img,fpm_img,pm_defs);
+[allub1_img]=vbq_B1Map_process(uanat_img,ub1_img,ustd_img,vdm_img,fpm_img,pm_defs);
+
+end

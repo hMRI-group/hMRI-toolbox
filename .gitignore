@@ -1,0 +1,10 @@
+# Matlab *.asv files
+*.asv
+
+# version.txt file containing the SHA1, author, date and message 
+# of the last commit of the current branch of the repository 
+# (created each time hMRI_get_version is run)
+version.txt
+
+# ignore *.odt version of the manual (keep PDF only)
+*.odt

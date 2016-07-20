@@ -305,6 +305,11 @@ switch inParName
                 cRes = 1;
                 outParName{cRes} = nam{1};
                 parValue{cRes} = val{1};
+            else
+                nFieldFound = 1;
+                cRes = 1;
+                outParName{cRes} = 'B0Image';
+                parValue{cRes} = [0;0;0];
             end
         end
         

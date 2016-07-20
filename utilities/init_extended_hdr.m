@@ -55,6 +55,9 @@ if isfield(spm_tdyhdr,'CSASeriesHeaderInfo')
     if isfield(spm_tdyhdr.CSASeriesHeaderInfo,'MrPhoenixProtocol')
         spm_tdyhdr.CSASeriesHeaderInfo.MrPhoenixProtocol = ...
             eb_read_phoenix(spm_tdyhdr.CSASeriesHeaderInfo.MrPhoenixProtocol);
+    elseif isfield(spm_tdyhdr.CSASeriesHeaderInfo,'MrProtocol')
+        spm_tdyhdr.CSASeriesHeaderInfo.MrProtocol = ...
+            eb_read_phoenix(spm_tdyhdr.CSASeriesHeaderInfo.MrProtocol);
     end
 end
 % 3) basic anonymisation: for confidentiality, the patient name, date of

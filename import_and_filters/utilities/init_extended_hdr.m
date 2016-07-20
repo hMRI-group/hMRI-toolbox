@@ -53,9 +53,11 @@ spm_tdyhdr = eb_spm_tidycsa(hdr);
 % 2) MrPhoenixProtocol field and ASCCONV part of the DICOM header
 if isfield(spm_tdyhdr,'CSASeriesHeaderInfo')
     if isfield(spm_tdyhdr.CSASeriesHeaderInfo,'MrPhoenixProtocol')
+         % works for Siemens VB and VD DICOM format:
         spm_tdyhdr.CSASeriesHeaderInfo.MrPhoenixProtocol = ...
             eb_read_phoenix(spm_tdyhdr.CSASeriesHeaderInfo.MrPhoenixProtocol);
     elseif isfield(spm_tdyhdr.CSASeriesHeaderInfo,'MrProtocol')
+        % works for Siemens VA DICOM format:
         spm_tdyhdr.CSASeriesHeaderInfo.MrProtocol = ...
             eb_read_phoenix(spm_tdyhdr.CSASeriesHeaderInfo.MrProtocol);
     end

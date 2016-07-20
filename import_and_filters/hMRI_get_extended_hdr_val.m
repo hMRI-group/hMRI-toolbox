@@ -288,8 +288,6 @@ switch inParName
         if hMRI_get_extended_hdr_val(hdr,'isDWI')
             [nFieldFound, fieldList] = findFieldName(hdr, 'alBValue','caseSens','sensitive','matchType','exact');
             [val,nam] = get_val_nam_list(hdr, nFieldFound, fieldList);
-            
-            
             if nFieldFound
                 cRes = 1;
                 outParName{cRes} = nam{1};
@@ -306,6 +304,12 @@ switch inParName
                 outParName{cRes} = nam{1};
                 parValue{cRes} = val{1};
             else
+                % B0 images have "direction" set to [0 0 0].
+                % Null parameters in DICOM headers are often omitted,
+                % therefore no "direction" information is retrievable for
+                % these images. If non-existent field
+                % "DiffusionGradientDirection" found in DWI acquisition,
+                % vector [0 0 0] is now returned. 
                 nFieldFound = 1;
                 cRes = 1;
                 outParName{cRes} = 'B0Image';

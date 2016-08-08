@@ -108,6 +108,15 @@ vbq_def.MPMacq_set.vals{5}  = [25.25 25.25 5 29];
 vbq_def.MPMacq_set.names{6} = 'v2k protocol';
 vbq_def.MPMacq_set.tags{6}  = 'v2k';
 vbq_def.MPMacq_set.vals{6}  = [24.5 24.5 6 21];
+% 7) 800um protocol - seq version v3* released used by MEG group:
+% TR = 25ms for all volumes; flipAngles = [6, 21 deg] for PDw and T1w
+% Correction parameters below were determined via Bloch-Torrey 
+% simulations but end result agrees well with EPG-derived correction 
+% for this RF spoiling increment of 137 degrees.
+% See: Callaghan et al. ISMRM, 2015, #1694
+vbq_def.MPMacq_set.names{7} = 'v3star protocol';
+vbq_def.MPMacq_set.tags{7}  = 'v3star';
+vbq_def.MPMacq_set.vals{7}  = [25 25 6 21];
 
 % Defining the RFCorr parameters for the different protocols
 %---------------------------------------------------------------------
@@ -150,6 +159,11 @@ vbq_def.rfcorr.v2k.tag = 'v2k protocol';
 vbq_def.rfcorr.v2k.P2_a = [71.2817617982844,-92.2992876164017,45.8278193851731];
 vbq_def.rfcorr.v2k.P2_b = [-0.137859046784839,0.122423212397157,0.957642744668469];
 vbq_def.rfcorr.v2k.RFCorr = true;
+% 7) 800um protocol - seq version v3* released used by MEG group:
+vbq_def.rfcorr.v3star.tag = 'v3star protocol';
+vbq_def.rfcorr.v3star.P2_a = [57.427573706259864,-79.300742898810441,39.218584751863879];
+vbq_def.rfcorr.v3star.P2_b = [-0.121114060111119,0.121684347499374,0.955987357483519];
+vbq_def.rfcorr.v3star.RFCorr = true;
 % Unknwon protocol
 vbq_def.rfcorr.Unknown.tag = 'Unknown protocol. No spoiling correction defined.';
 vbq_def.rfcorr.Unknown.RFCorr = false;

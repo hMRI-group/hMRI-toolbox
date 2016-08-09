@@ -32,6 +32,8 @@ vbq_def.centre = 'cbs' ; % can be 'fil', 'lren', 'crc', 'sciz' or 'cbs'
 % recommended values. They can also be changed in a site-specific way at
 % run-time.
 
+vbq_def.R2sOLS = 1; % Create an Ordinary Least Squares R2* map?
+
 %% Processing of PD maps
 vbq_def.PDproc.PDmap    = 1;    % Calculation of PD maps requires a B1 map. Set to 0 if a B1 map is not available
 vbq_def.PDproc.WBMaskTh = 0.1;  % Threshold for calculation of whole-brain mask from TPMs

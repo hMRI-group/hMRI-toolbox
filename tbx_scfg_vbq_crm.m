@@ -1,4 +1,4 @@
-function crm = tbx_cfg_vbq_crm
+function crm = tbx_scfg_vbq_crm
 % Configuration file for the Voxel-Based Quantification (VBQ)
 % -> Dealing with the creation of the maps
 %_______________________________________________________________________

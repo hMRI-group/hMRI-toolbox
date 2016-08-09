@@ -1,4 +1,4 @@
-function proc = tbx_cfg_vbq_proc
+function proc = tbx_scfg_vbq_proc
 % Configuration file for the Voxel-Based Quantification (VBQ)
 % -> Dealing with the processign of the maps
 %_______________________________________________________________________

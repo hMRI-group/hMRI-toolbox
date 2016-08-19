@@ -47,22 +47,7 @@ for ip=1:numel(job.subj)
     P_pdw    = char(job.subj(ip).raw_mpm.PD);
     P_t1w    = char(job.subj(ip).raw_mpm.T1);
     
-    p = hinfo(P_mtw);
-    TE_mtw = cat(1,p.te);
-    TR_mtw = p(1).tr;
-    fa_mtw = p(1).fa;
-    
-    p = hinfo(P_pdw);
-    TE_pdw = cat(1,p.te);
-    TR_pdw = p(1).tr;
-    fa_pdw = p(1).fa;
-    
-    p = hinfo(P_t1w);
-    TE_t1w = cat(1,p.te);
-    TR_t1w = p(1).tr;
-    fa_t1w = p(1).fa;
-    
-    [fR1, fR2s, fMT, fA, PPDw, PT1w]  = vbq_MTProt(P_mtw, P_pdw, P_t1w, TE_mtw, TE_pdw, TE_t1w, TR_mtw, TR_pdw, TR_t1w, fa_mtw, fa_pdw, fa_t1w);
+    [fR1, fR2s, fMT, fA, PPDw, PT1w]  = vbq_MTProt(P_mtw, P_pdw, P_t1w); 
     
     % Use default parameters of SPM8 "New Segment" toolbox except for
     % adapted regularization and smoothness of bias field

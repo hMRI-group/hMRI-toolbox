@@ -196,6 +196,7 @@ vbq_def.cbs.b1_type.labels  = {
     'i3D_EPI_12ch'
     'i3D_EPI_v2d'
     'tfl_b1_map'
+    'rf_map'
     'no_B1_provided'
     }';
 vbq_def.cbs.b1_type.val  = vbq_def.cbs.b1_type.labels(1);
@@ -431,6 +432,10 @@ vbq_def.b1map.i3D_EPI_v2d.b0proc.match_vdm=1;
 vbq_def.b1map.tfl_b1_map.b1proc.data    = 'TFL'; 
 vbq_def.b1map.tfl_b1_map.b1proc.avail   = true; 
 vbq_def.b1map.tfl_b1_map.b1proc.procreq = true; 
+% 14) 'rf_map'
+vbq_def.b1map.rf_map.b1proc.data    = 'RFmap'; 
+vbq_def.b1map.rf_map.b1proc.avail   = true; 
+vbq_def.b1map.rf_map.b1proc.procreq = true; 
 
 end
 
@@ -474,5 +479,3 @@ end
 % vbq_def.lren.cset1.val2 = 24; % in ms
 % vbq_def.lren.cset2.val1 = 47; % in ms
 % vbq_def.lren.cset2.val2 = 68; % in ms
-
-

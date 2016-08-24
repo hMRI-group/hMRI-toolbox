@@ -47,6 +47,17 @@ for ip=1:numel(job.subj)
     P_pdw    = char(job.subj(ip).raw_mpm.PD);
     P_t1w    = char(job.subj(ip).raw_mpm.T1);
     
+    % determine output directory path
+    % CASE INDIR
+    cwd = fileparts(P_mtw(1,:)); 
+    % CASE OUTDIR
+    if isfield(job.subj.output,'outdir')
+        if ~strcmp(cwd, job.subj.output.outdir{1})
+             vbq_get_defaults('outdir',job.subj.output.outdir{1});
+             cwd = vbq_get_defaults('outdir');
+            end
+    end
+    
     [fR1, fR2s, fMT, fA, PPDw, PT1w]  = vbq_MTProt(P_mtw, P_pdw, P_t1w); 
     
     % Use default parameters of SPM8 "New Segment" toolbox except for
@@ -158,19 +169,6 @@ for ip=1:numel(job.subj)
     [p,n,e] = fileparts(P_R1_mask);
     P_R1_unicort = fullfile(p, ['m' n e]);
     
-    if isfield(job.subj(ip).output,'indir') && job.subj(ip).output.indir == 1
-        cwd = fileparts(fR1);
-    else
-        cwd=job.subj(ip).output.outdir{1};
-        
-        movefile(fR1,cwd);
-        movefile(fR2s,cwd);
-        movefile(fMT,cwd);
-        movefile(fA,cwd);
-        movefile(PT1w,cwd);
-        movefile(P_R1_unicort,cwd);
-    end
-    
     out.subj(ip).R1={fullfile(cwd,spm_str_manip(fR1,'t'))};
     out.subj(ip).R1u={fullfile(cwd,spm_str_manip(P_R1_unicort,'t'))};
     out.subj(ip).R2s={fullfile(cwd,spm_str_manip(fR2s,'t'))};
@@ -189,9 +187,3 @@ for ip=1:numel(job.subj)
     fclose(f);
     
 end
-
-
-
-
-
-

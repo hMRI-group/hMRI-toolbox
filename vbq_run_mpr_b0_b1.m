@@ -58,26 +58,37 @@ P_t1w    = char(job.subj.raw_mpm.T1);
 
 P_receiv = [];
 
-% run vbq_MTProt to evaluate the parameter maps
-[fR1, fR2s, fMT, fA, PPDw, PT1w]  = vbq_MTProt(P_mtw, P_pdw, P_t1w, P_trans, P_receiv);
-
 % determine output directory path
 % CASE INDIR
-outpath = fileparts(fR1); 
+outpath = fileparts(P_mtw(1,:)); 
 % CASE OUTDIR
 if isfield(job.subj.output,'outdir')
     if ~strcmp(outpath, job.subj.output.outdir{1})
-        % MFC: Only move files if a different directory is chosen - can't
-        % move a file to itself...
-        outpath = job.subj.output.outdir{1};
-        movefile(fR1,outpath);
-        movefile(fR2s,outpath);
-        movefile(fMT,outpath);
-        movefile(fA,outpath);
-        movefile(PPDw,outpath);
-        movefile(PT1w,outpath);
+         vbq_get_defaults('outdir',job.subj.output.outdir{1});
+         outpath = vbq_get_defaults('outdir');
     end
 end
+
+% run vbq_MTProt to evaluate the parameter maps
+[fR1, fR2s, fMT, fA, PPDw, PT1w]  = vbq_MTProt(P_mtw, P_pdw, P_t1w, P_trans, P_receiv);
+
+% % determine output directory path
+% % CASE INDIR
+% outpath = fileparts(fR1); 
+% % CASE OUTDIR
+% if isfield(job.subj.output,'outdir')
+%     if ~strcmp(outpath, job.subj.output.outdir{1})
+%         % MFC: Only move files if a different directory is chosen - can't
+%         % move a file to itself...
+%         outpath = job.subj.output.outdir{1};
+%         movefile(fR1,outpath);
+%         movefile(fR2s,outpath);
+%         movefile(fMT,outpath);
+%         movefile(fA,outpath);
+%         movefile(PPDw,outpath);
+%         movefile(PT1w,outpath);
+%     end
+% end
 
 out_loc.subj.R1  = {fullfile(outpath,spm_str_manip(fR1,'t'))};
 out_loc.subj.R2s = {fullfile(outpath,spm_str_manip(fR2s,'t'))};

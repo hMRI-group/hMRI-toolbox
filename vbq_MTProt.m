@@ -140,6 +140,12 @@ V       = V_templ(1);
 
 [pth,nam,ext] = fileparts(P_mtw(1,:));
 
+if ~isempty(vbq_get_defaults('outdir')) 
+    tmp = vbq_get_defaults('outdir');
+    if ~strcmp(pth, tmp)
+      pth = tmp;
+    end
+end
 
 %% calculate T2* map from PD echoes
 dm        = V.dim;

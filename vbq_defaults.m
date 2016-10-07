@@ -25,7 +25,7 @@ global vbq_def
 
 %% %%%%%%%%%%%%%%%%%%%%% Global parameters %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Specifying the lab
-vbq_def.centre = 'cbs' ; % can be 'fil', 'lren', 'crc', 'sciz' or 'cbs'
+vbq_def.centre = 'fil' ; % but could be 'fil' or 'lren'
 
 %% %%%%%%%%%%%%%%%%% Common processing parameters %%%%%%%%%%%%%%%%%%%%%
 % These parameters are either parameters that are fixed for all sites or

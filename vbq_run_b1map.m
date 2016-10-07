@@ -250,13 +250,19 @@ pm_defs.ERODEB1 = b0proc_defs.ERODEB1;
 pm_defs.PADB1 = b0proc_defs.PADB1 ;
 pm_defs.B1FWHM = b0proc_defs.B1FWHM; %For smoothing. FWHM in mm - i.e. it is divided by voxel resolution to get FWHM in voxels
 pm_defs.match_vdm = b0proc_defs.match_vdm;
-pm_defs.pedir = b1map_defs.PEDIR;
+if ~strcmp(b1_prot,'i3D_EPI_v2b') % also necessary for other sequences?
+    pm_defs.pedir = b1map_defs.PEDIR;
+end
 
 mag1 = spm_vol(Q(1,:));
 mag = mag1.fname;
 phase1 = spm_vol(Q(3,:));
 phase = phase1.fname;
 scphase = FieldMap('Scale',phase);
+% TL: move generated map to the outpath (next 3 lines)
+[~,name,e] = fileparts(scphase.fname);
+movefile(scphase.fname,fullfile(outpath,[name e]));
+scphase.fname = fullfile(outpath,[name e]);
 fm_imgs = char(scphase.fname,mag);
 
 anat_img1 = spm_vol(P_SsqMat);

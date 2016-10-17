@@ -25,7 +25,7 @@ global vbq_def
 
 %% %%%%%%%%%%%%%%%%%%%%% Global parameters %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Specifying the lab
-vbq_def.centre = 'fil' ; % but could be 'fil' or 'lren'
+vbq_def.centre = 'lren' ; % can be 'fil', 'lren', 'crc', 'sciz' or 'cbs'
 
 %% %%%%%%%%%%%%%%%%% Common processing parameters %%%%%%%%%%%%%%%%%%%%%
 % These parameters are either parameters that are fixed for all sites or
@@ -47,7 +47,7 @@ vbq_def.qMRI_maps_thresh.A        = 10^5;
 vbq_def.qMRI_maps_thresh.R2s      = 10;
 vbq_def.qMRI_maps_thresh.MTR      = 50;
 vbq_def.qMRI_maps_thresh.MTR_synt = 50;
-vbq_def.qMRI_maps_thresh.MT       = 15; % TL: original value: 5 (adapted for cbs & sciz)
+vbq_def.qMRI_maps_thresh.MT       = 5; % TL: 15 for cbs & sciz; original: 5 
 
 %% MPM acquisition parameters and RF spoiling correction parameters
 % these value are initialised with defaults (v2k protocol - Prisma) for the

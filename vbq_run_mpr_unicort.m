@@ -88,7 +88,7 @@ for ip=1:numel(job.subj)
     % create head mask
     V_PDw = spm_vol(P_PDw);
     Y_PDw = spm_read_vols(V_PDw);
-    thresh = 2*mode(round(Y_PDw(:)));
+    thresh = 5*mode(round(Y_PDw(:))); % TL: for sciz & cbs 2* instead of 5*
     
     % mask R1 map with head/neck mask
     V_R1 = spm_vol(P_R1);

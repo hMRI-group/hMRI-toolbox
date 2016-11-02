@@ -11,7 +11,12 @@ function P_trans = vbq_run_b1map(jobsubj)
 % Written by E. Balteau, 2014.
 % Cyclotron Research Centre, University of Liege, Belgium
 %_______________________________________________________________________
-% $Id$
+% Modified by T. Leutritz in 2016 in order to use the SIEMENS product 
+% sequences 'rf_map' and 'tfl_b1map'. The latter produces essentially 
+% a FLASH like image and a flip angle map (multiplied by 10) based on 
+% Chung S. et al.: "Rapid B1+ Mapping Using a Preconditioning RF Pulse with 
+% TurboFLASH Readout", MRM 64:439-446 (2010). 
+%_______________________________________________________________________
 
 % retrieve b1_type from job and pass it as default value for the current
 % processing:
@@ -37,6 +42,13 @@ if b1map_defs.procreq
         % processing B1 map from SE/STE EPI data
         P_trans  = calc_SESTE_b1map(jobsubj, b1map_defs);
         
+    elseif strcmpi(b1map_defs.data,'TFL')
+        % processing B1 map from tfl_b1map data
+        P_trans  = calc_tfl_b1map(jobsubj);
+        
+    elseif strcmpi(b1map_defs.data,'RFmap')
+        % processing B1 map from rf_map data
+        P_trans  = calc_rf_map(jobsubj);
     end
 else
     % return pre-processed B1 map
@@ -238,13 +250,24 @@ pm_defs.ERODEB1 = b0proc_defs.ERODEB1;
 pm_defs.PADB1 = b0proc_defs.PADB1 ;
 pm_defs.B1FWHM = b0proc_defs.B1FWHM; %For smoothing. FWHM in mm - i.e. it is divided by voxel resolution to get FWHM in voxels
 pm_defs.match_vdm = b0proc_defs.match_vdm;
-pm_defs.pedir = b1map_defs.PEDIR;
+if ~strcmp(b1_prot,'i3D_EPI_v2b') % also necessary for other sequences?
+    pm_defs.pedir = b1map_defs.PEDIR;
+end
 
 mag1 = spm_vol(Q(1,:));
 mag = mag1.fname;
 phase1 = spm_vol(Q(3,:));
 phase = phase1.fname;
 scphase = FieldMap('Scale',phase);
+% try to move generated map to the outpath
+[~,name,e] = fileparts(scphase.fname);
+try                
+    movefile(scphase.fname,fullfile(outpath,[name e]));         
+catch MExc          
+    %fprintf(1,'\n%s\n', MExc.getReport);                  
+    fprintf(1,'Output directory is identical to input directory. File doesn''t need to be moved! :)\n');       
+end    
+scphase.fname = fullfile(outpath,[name e]);
 fm_imgs = char(scphase.fname,mag);
 
 anat_img1 = spm_vol(P_SsqMat);
@@ -263,5 +286,98 @@ vdm_img{1} = fmap_img{2};
 [allub1_img] = vbq_B1Map_process(uanat_img,ub1_img,ustd_img,vdm_img,fpm_img,pm_defs);
 
 P_trans  = char(char(uanat_img),char(allub1_img{2}.fname));
+
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% this function is adapted from the function calc_AFI_b1map by T. Leutritz
+function P_trans = calc_tfl_b1map(jobsubj)
+
+disp('----- Calculation of B1 map (SIEMENS tfl_b1map protocol) -----');
+
+P = char(jobsubj.raw_fld.b1); % scaled FA map from tfl_b1map sequence
+Q = char(jobsubj.raw_fld.b0); % FLASH like anatomical from tfl_b1map sequence
+
+% read header information and volumes
+V1 = spm_vol(P); % image volume information
+V2 = spm_vol(Q);
+Vol1 = spm_read_vols(V1);
+Vol2 = spm_read_vols(V2);
+
+p = hinfo(P);
+alphanom = p(1).fa; % nominal flip angle of tfl_b1map
+
+% generating the map
+B1map_norm = abs(Vol1)*10/alphanom;
+
+% smoothed map
+smB1map_norm = zeros(size(B1map_norm));
+pxs = sqrt(sum(V1.mat(1:3,1:3).^2)); % Voxel resolution
+smth = 8./pxs;
+spm_smooth(B1map_norm,smB1map_norm,smth);
+
+% Save everything in OUTPUT dir
+%-----------------------------------------------------------------------
+% determine output directory path
+if isfield(jobsubj.output,'indir')
+    outpath = fileparts(V1.fname);
+else
+    outpath = jobsubj.output.outdir{1};
+end
+
+[~, sname] = fileparts(V1.fname);
+
+VB1 = V1;
+VB1.pinfo = [max(smB1map_norm(:))/16384;0;0]; % what is this for? (TL)
+VB1.fname = fullfile(outpath, [sname '_smB1map_norm.nii']);
+spm_write_vol(VB1,smB1map_norm);
+
+% requires anatomic image + map
+P_trans  = char(Q,char(VB1.fname));
+
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function P_trans = calc_rf_map(jobsubj)
+
+disp('----- Calculation of B1 map (SIEMENS rf_map protocol) -----');
+
+P = char(jobsubj.raw_fld.b1); % scaled FA map from rf_map sequence
+Q = char(jobsubj.raw_fld.b0); % anatomical image from rf_map sequence
+
+% read header information and volumes
+V1 = spm_vol(P); % image volume information
+V2 = spm_vol(Q);
+Vol1 = spm_read_vols(V1);
+Vol2 = spm_read_vols(V2);
+
+% generating the map
+B1map_norm = (abs(Vol1)-2048)*180*100/(90*2048); % *100/90 to get p.u. 
+% the formula (abs(Vol1)-2048)*180/2048 would result in an absolute FA map
+
+% smoothed map
+smB1map_norm = zeros(size(B1map_norm));
+pxs = sqrt(sum(V1.mat(1:3,1:3).^2)); % Voxel resolution
+smth = 8./pxs;
+spm_smooth(B1map_norm,smB1map_norm,smth);
+
+% Save everything in OUTPUT dir
+%-----------------------------------------------------------------------
+% determine output directory path
+if isfield(jobsubj.output,'indir')
+    outpath = fileparts(V1.fname);
+else
+    outpath = jobsubj.output.outdir{1};
+end
+
+[~, sname] = fileparts(V1.fname);
+
+VB1 = V1;
+VB1.pinfo = [max(smB1map_norm(:))/16384;0;0]; % what is this for? (TL)
+VB1.fname = fullfile(outpath, [sname '_smB1map_norm.nii']);
+spm_write_vol(VB1,smB1map_norm);
+
+% requires anatomic image + map
+P_trans  = char(Q,char(VB1.fname));
 
 end

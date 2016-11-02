@@ -442,17 +442,6 @@ fa_t1w = p(1).fa;
 
 vbq_MTProtQA(P_mtw, P_pdw, P_t1w, TE_mtw, TE_pdw, TE_t1w, TR_mtw, TR_pdw, TR_t1w, fa_mtw, fa_pdw, fa_t1w, P_trans, P_receiv);
 end
-function p = hinfo(P)
-N = nifti(P);
-for ii = 1:numel(N),
-    tmp = regexp(N(ii).descrip,...
-        'TR=(?<tr>.+)ms/TE=(?<te>.+)ms/FA=(?<fa>.+)deg',...
-        'names');
-    p(ii).tr=str2num(tmp.tr);
-    p(ii).te=str2num(tmp.te);
-    p(ii).fa=str2num(tmp.fa);
-end
-end
 
 function [meanB1,DB1,avgB1,SDB1,stabB1]=B1anal(B11files,B12files,ImagedObject)
 SSQ=spm_select('FPList',spm_str_manip(B11files,'h'),'^(uSumOfSq).*\.(img|nii)$');

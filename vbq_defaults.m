@@ -25,12 +25,14 @@ global vbq_def
 
 %% %%%%%%%%%%%%%%%%%%%%% Global parameters %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Specifying the lab
-vbq_def.centre = 'fil' ; % can be 'fil' or 'lren' or 'crc'
+vbq_def.centre = 'lren' ; % can be 'fil', 'lren', 'crc', 'sciz' or 'cbs'
 
 %% %%%%%%%%%%%%%%%%% Common processing parameters %%%%%%%%%%%%%%%%%%%%%
 % These parameters are either parameters that are fixed for all sites or
 % recommended values. They can also be changed in a site-specific way at
 % run-time.
+
+vbq_def.R2sOLS = 1; % Create an Ordinary Least Squares R2* map?
 
 %% Processing of PD maps
 vbq_def.PDproc.PDmap    = 1;    % Calculation of PD maps requires a B1 map. Set to 0 if a B1 map is not available
@@ -45,7 +47,7 @@ vbq_def.qMRI_maps_thresh.A        = 10^5;
 vbq_def.qMRI_maps_thresh.R2s      = 10;
 vbq_def.qMRI_maps_thresh.MTR      = 50;
 vbq_def.qMRI_maps_thresh.MTR_synt = 50;
-vbq_def.qMRI_maps_thresh.MT       = 5;
+vbq_def.qMRI_maps_thresh.MT       = 5; % TL: 15 for cbs & sciz; original: 5 
 
 %% MPM acquisition parameters and RF spoiling correction parameters
 % these value are initialised with defaults (v2k protocol - Prisma) for the
@@ -108,6 +110,15 @@ vbq_def.MPMacq_set.vals{5}  = [25.25 25.25 5 29];
 vbq_def.MPMacq_set.names{6} = 'v2k protocol';
 vbq_def.MPMacq_set.tags{6}  = 'v2k';
 vbq_def.MPMacq_set.vals{6}  = [24.5 24.5 6 21];
+% 7) 800um protocol - seq version v3* released used by MEG group:
+% TR = 25ms for all volumes; flipAngles = [6, 21 deg] for PDw and T1w
+% Correction parameters below were determined via Bloch-Torrey 
+% simulations but end result agrees well with EPG-derived correction 
+% for this RF spoiling increment of 137 degrees.
+% See: Callaghan et al. ISMRM, 2015, #1694
+vbq_def.MPMacq_set.names{7} = 'v3star protocol';
+vbq_def.MPMacq_set.tags{7}  = 'v3star';
+vbq_def.MPMacq_set.vals{7}  = [25 25 6 21];
 
 % Defining the RFCorr parameters for the different protocols
 %---------------------------------------------------------------------
@@ -150,6 +161,11 @@ vbq_def.rfcorr.v2k.tag = 'v2k protocol';
 vbq_def.rfcorr.v2k.P2_a = [71.2817617982844,-92.2992876164017,45.8278193851731];
 vbq_def.rfcorr.v2k.P2_b = [-0.137859046784839,0.122423212397157,0.957642744668469];
 vbq_def.rfcorr.v2k.RFCorr = true;
+% 7) 800um protocol - seq version v3* released used by MEG group:
+vbq_def.rfcorr.v3star.tag = 'v3star protocol';
+vbq_def.rfcorr.v3star.P2_a = [57.427573706259864,-79.300742898810441,39.218584751863879];
+vbq_def.rfcorr.v3star.P2_b = [-0.121114060111119,0.121684347499374,0.955987357483519];
+vbq_def.rfcorr.v3star.RFCorr = true;
 % Unknwon protocol
 vbq_def.rfcorr.Unknown.tag = 'Unknown protocol. No spoiling correction defined.';
 vbq_def.rfcorr.Unknown.RFCorr = false;
@@ -171,6 +187,20 @@ vbq_def.rfcorr.Unknown.RFCorr = false;
 % as these names are used to define a structure fieldname with the protocol 
 % parameters.
 
+% List B1 protocols available at the CBS
+% --------------------------------------
+vbq_def.cbs.b1_type.labels  = {
+    'i3D_EPI_v2b'
+    'i3D_EPI_v2b_long'
+    'i3D_EPI_rect700'
+    'i3D_EPI_12ch'
+    'i3D_EPI_v2d'
+    'tfl_b1_map'
+    'rf_map'
+    'no_B1_provided'
+    }';
+vbq_def.cbs.b1_type.val  = vbq_def.cbs.b1_type.labels(1);
+
 % List B1 protocols available at the CRC
 % --------------------------------------
 vbq_def.crc.b1_type.labels  = {
@@ -183,6 +213,7 @@ vbq_def.crc.b1_type.labels  = {
     'no_B1_provided'
     }';
 vbq_def.crc.b1_type.val  = vbq_def.crc.b1_type.labels(1);
+
 % List B1 protocols available at the FIL
 % --------------------------------------
 vbq_def.fil.b1_type.labels = {
@@ -193,6 +224,7 @@ vbq_def.fil.b1_type.labels = {
     'no_B1_provided'
     };
 vbq_def.fil.b1_type.val = vbq_def.fil.b1_type.labels(1);
+
 % List B1 protocols available at the LREN
 % ---------------------------------------
 vbq_def.lren.b1_type.labels = {
@@ -203,6 +235,14 @@ vbq_def.lren.b1_type.labels = {
     'no_B1_provided'
     };
 vbq_def.lren.b1_type.val = vbq_def.lren.b1_type.labels(1);
+
+% List B1 protocols available at the Spinal Cord Injury Lab, Zurich
+% -----------------------------------------------------------------
+vbq_def.sciz.b1_type.labels  = {
+    'tfl_b1map'
+    'no_B1_provided'
+    }';
+vbq_def.sciz.b1_type.val  = vbq_def.sciz.b1_type.labels(1);
 
 % B1 map protocol parameters
 % --------------------------
@@ -300,7 +340,7 @@ vbq_def.b1map.i3D_EPI_v2b_long.b0proc.match_vdm = 1;
 vbq_def.b1map.i3D_EPI_v2b_long.b0proc.b0maskbrain = 1;
 % 5) 'i3D_EPI_rect700'
 vbq_def.b1map.i3D_EPI_rect700.b1proc.data    = 'EPI'; 
-vbq_def.b1map.i3D_EPI_rect700.b1proc.procreq = true; 
+vbq_def.b1map.i3D_EPI_rect700.b1proc.avail = true; 
 vbq_def.b1map.i3D_EPI_rect700.b1proc.procreq = true; 
 vbq_def.b1map.i3D_EPI_rect700.b1proc.T1 = 1192; % ms, strictly valid only at 3T
 vbq_def.b1map.i3D_EPI_rect700.b1proc.eps = 0.0001;
@@ -358,6 +398,44 @@ vbq_def.b1map.i3D_EPI_v2b.b0proc.PADB1 = 3 ;
 vbq_def.b1map.i3D_EPI_v2b.b0proc.B1FWHM = 8; %For smoothing. FWHM in mm - i.e. it is divided by voxel resolution to get FWHM in voxels
 vbq_def.b1map.i3D_EPI_v2b.b0proc.match_vdm = 1;
 vbq_def.b1map.i3D_EPI_v2b.b0proc.b0maskbrain = 1;
+% 11) 'i3D_EPI_12ch'
+vbq_def.b1map.i3D_EPI_12ch.b1proc.data    = 'EPI'; 
+vbq_def.b1map.i3D_EPI_12ch.b1proc.avail   = true; 
+vbq_def.b1map.i3D_EPI_12ch.b1proc.procreq = true; 
+vbq_def.b1map.i3D_EPI_12ch.b1proc.beta = 115:-7.5:62.5;
+vbq_def.b1map.i3D_EPI_12ch.b1proc.TM = 31.2;
+vbq_def.b1map.i3D_EPI_12ch.b1proc.Nonominalvalues = 3;
+vbq_def.b1map.i3D_EPI_12ch.b1proc.T1 = 1192; % ms, strictly valid only at 3T
+vbq_def.b1map.i3D_EPI_12ch.b1proc.eps = 0.0001;
+% 12) 'i3D_EPI_v2d'
+vbq_def.b1map.i3D_EPI_v2d.b1proc.data    = 'EPI'; 
+vbq_def.b1map.i3D_EPI_v2d.b1proc.avail   = true; 
+vbq_def.b1map.i3D_EPI_v2d.b1proc.procreq = true; 
+vbq_def.b1map.i3D_EPI_v2d.b1proc.beta = 115:-5:65;
+vbq_def.b1map.i3D_EPI_v2d.b1proc.TM = 33.8;
+vbq_def.b1map.i3D_EPI_v2d.b1proc.Nonominalvalues=5;
+vbq_def.b1map.i3D_EPI_v2d.b1proc.T1 = 1192; %ms, strictly valid only at 3T
+vbq_def.b1map.i3D_EPI_v2d.b1proc.eps = 0.0001;
+vbq_def.b1map.i3D_EPI_v2d.b1proc.nPEacq = 24;
+vbq_def.b1map.i3D_EPI_v2d.b1proc.EchoSpacing = 540e-3;
+vbq_def.b1map.i3D_EPI_v2d.b1proc.blipDIR=1;
+vbq_def.b1map.i3D_EPI_v2d.b1proc.PEDIR = 2;
+vbq_def.b1map.i3D_EPI_v2d.b0proc.shorTE=10;
+vbq_def.b1map.i3D_EPI_v2d.b0proc.longTE=12.46;
+vbq_def.b1map.i3D_EPI_v2d.b0proc.b0maskbrain=1;
+vbq_def.b1map.i3D_EPI_v2d.b0proc.HZTHRESH=110;
+vbq_def.b1map.i3D_EPI_v2d.b0proc.ERODEB1=1;
+vbq_def.b1map.i3D_EPI_v2d.b0proc.PADB1=3 ;
+vbq_def.b1map.i3D_EPI_v2d.b0proc.B1FWHM=8; %For smoothing. FWHM in mm - i.e. it is divided by voxel resolution to get FWHM in voxels
+vbq_def.b1map.i3D_EPI_v2d.b0proc.match_vdm=1;
+% 13) 'tfl_b1_map'
+vbq_def.b1map.tfl_b1_map.b1proc.data    = 'TFL'; 
+vbq_def.b1map.tfl_b1_map.b1proc.avail   = true; 
+vbq_def.b1map.tfl_b1_map.b1proc.procreq = true; 
+% 14) 'rf_map'
+vbq_def.b1map.rf_map.b1proc.data    = 'RFmap'; 
+vbq_def.b1map.rf_map.b1proc.avail   = true; 
+vbq_def.b1map.rf_map.b1proc.procreq = true; 
 
 end
 
@@ -401,5 +479,3 @@ end
 % vbq_def.lren.cset1.val2 = 24; % in ms
 % vbq_def.lren.cset2.val1 = 47; % in ms
 % vbq_def.lren.cset2.val2 = 68; % in ms
-
-

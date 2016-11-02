@@ -128,6 +128,16 @@ if ~isempty(IP.P{1})
 % Create field map (in Hz) - this routine calls the unwrapping
 %----------------------------------------------------------------------
    IP.fm = FieldMap('CreateFieldMap',IP);
+
+% TL: move created maps to outpath (see vbq_run_b1map line 262 ff.)
+if IP.maskbrain==1
+    [outpath, ~ , ~] = fileparts(IP.P{1}.fname);
+    [inputpt, name, e] = fileparts(IP.P{2}.fname);
+    if ~strcmp(inputpt,outpath)
+        movefile(fullfile(inputpt,['m' name e]),fullfile(outpath,['m' name e]));
+        movefile(fullfile(inputpt,['bmask' name e]),fullfile(outpath,['bmask' name e]));
+    end
+end
 %----------------------------------------------------------------------
 % Write out field map
 % Outputs -> fpm_NAME-OF-FIRST-INPUT-IMAGE.img

@@ -47,22 +47,18 @@ for ip=1:numel(job.subj)
     P_pdw    = char(job.subj(ip).raw_mpm.PD);
     P_t1w    = char(job.subj(ip).raw_mpm.T1);
     
-    p = hinfo(P_mtw);
-    TE_mtw = cat(1,p.te);
-    TR_mtw = p(1).tr;
-    fa_mtw = p(1).fa;
+    % determine output directory path
+    try 
+        cwd = job.subj.output.outdir{1}; % case outdir
+    catch 
+        Pin = char(job.subj.raw_mpm.MT);
+        cwd = fileparts(Pin(1,:)); % case indir
+    end
+    % save outpath as default for this job
+    vbq_get_defaults('outdir',outpath);
     
-    p = hinfo(P_pdw);
-    TE_pdw = cat(1,p.te);
-    TR_pdw = p(1).tr;
-    fa_pdw = p(1).fa;
     
-    p = hinfo(P_t1w);
-    TE_t1w = cat(1,p.te);
-    TR_t1w = p(1).tr;
-    fa_t1w = p(1).fa;
-    
-    [fR1, fR2s, fMT, fA, PPDw, PT1w]  = vbq_MTProt(P_mtw, P_pdw, P_t1w, TE_mtw, TE_pdw, TE_t1w, TR_mtw, TR_pdw, TR_t1w, fa_mtw, fa_pdw, fa_t1w);
+    [fR1, fR2s, fMT, fA, PPDw, PT1w]  = vbq_MTProt(P_mtw, P_pdw, P_t1w); 
     
     % Use default parameters of SPM8 "New Segment" toolbox except for
     % adapted regularization and smoothness of bias field
@@ -92,7 +88,7 @@ for ip=1:numel(job.subj)
     % create head mask
     V_PDw = spm_vol(P_PDw);
     Y_PDw = spm_read_vols(V_PDw);
-    thresh = 5*mode(round(Y_PDw(:)));
+    thresh = 5*mode(round(Y_PDw(:))); % TL: for sciz & cbs 2* instead of 5*
     
     % mask R1 map with head/neck mask
     V_R1 = spm_vol(P_R1);
@@ -173,19 +169,6 @@ for ip=1:numel(job.subj)
     [p,n,e] = fileparts(P_R1_mask);
     P_R1_unicort = fullfile(p, ['m' n e]);
     
-    if isfield(job.subj(ip).output,'indir') && job.subj(ip).output.indir == 1
-        cwd = fileparts(fR1);
-    else
-        cwd=job.subj(ip).output.outdir{1};
-        
-        movefile(fR1,cwd);
-        movefile(fR2s,cwd);
-        movefile(fMT,cwd);
-        movefile(fA,cwd);
-        movefile(PT1w,cwd);
-        movefile(P_R1_unicort,cwd);
-    end
-    
     out.subj(ip).R1={fullfile(cwd,spm_str_manip(fR1,'t'))};
     out.subj(ip).R1u={fullfile(cwd,spm_str_manip(P_R1_unicort,'t'))};
     out.subj(ip).R2s={fullfile(cwd,spm_str_manip(fR2s,'t'))};
@@ -204,26 +187,3 @@ for ip=1:numel(job.subj)
     fclose(f);
     
 end
-
-% ========================================================================
-%% SUBFUNCTION
-% ========================================================================
-
-function p = hinfo(P)
-N = nifti(P);
-for ii = 1:numel(N),
-    tmp = regexp(N(ii).descrip,...
-        'TR=(?<tr>.+)ms/TE=(?<te>.+)ms/FA=(?<fa>.+)deg',...
-        'names');
-    p(ii).tr = str2num(tmp.tr); %#ok<*AGROW,*ST2NM>
-    p(ii).te = str2num(tmp.te);
-    p(ii).fa = str2num(tmp.fa);
-end
-
-
-
-
-
-
-
-

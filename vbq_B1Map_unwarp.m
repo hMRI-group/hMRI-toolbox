@@ -133,8 +133,10 @@ if ~isempty(IP.P{1})
 if IP.maskbrain==1
     [outpath, ~ , ~] = fileparts(IP.P{1}.fname);
     [inputpt, name, e] = fileparts(IP.P{2}.fname);
-    movefile(fullfile(inputpt,['m' name e]),fullfile(outpath,['m' name e]));
-    movefile(fullfile(inputpt,['bmask' name e]),fullfile(outpath,['bmask' name e]));
+    if ~strcmp(inputpt,outpath)
+        movefile(fullfile(inputpt,['m' name e]),fullfile(outpath,['m' name e]));
+        movefile(fullfile(inputpt,['bmask' name e]),fullfile(outpath,['bmask' name e]));
+    end
 end
 %----------------------------------------------------------------------
 % Write out field map

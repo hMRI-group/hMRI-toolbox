@@ -48,15 +48,15 @@ for ip=1:numel(job.subj)
     P_t1w    = char(job.subj(ip).raw_mpm.T1);
     
     % determine output directory path
-    % CASE INDIR
-    cwd = fileparts(P_mtw(1,:)); 
-    % CASE OUTDIR
-    if isfield(job.subj.output,'outdir')
-        if ~strcmp(cwd, job.subj.output.outdir{1})
-             vbq_get_defaults('outdir',job.subj.output.outdir{1});
-             cwd = vbq_get_defaults('outdir');
-            end
+    try 
+        cwd = job.subj.output.outdir{1}; % case outdir
+    catch 
+        Pin = char(job.subj.raw_mpm.MT);
+        cwd = fileparts(Pin(1,:)); % case indir
     end
+    % save outpath as default for this job
+    vbq_get_defaults('outdir',outpath);
+    
     
     [fR1, fR2s, fMT, fA, PPDw, PT1w]  = vbq_MTProt(P_mtw, P_pdw, P_t1w); 
     

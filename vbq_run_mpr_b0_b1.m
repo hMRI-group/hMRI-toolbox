@@ -48,6 +48,16 @@ end
 
 function out_loc = vbq_mpr_b0_b1_local(job)
 
+% determine output directory path
+try 
+    outpath = job.subj.output.outdir{1}; % case outdir
+catch 
+    Pin = char(job.subj.raw_mpm.MT);
+    outpath = fileparts(Pin(1,:)); % case outdir
+end
+% save outpath as default for this job
+vbq_get_defaults('outdir',outpath);
+
 % run B1 map calculation for B1 bias correction
 P_trans = vbq_run_b1map(job.subj);
 
@@ -57,17 +67,6 @@ P_pdw    = char(job.subj.raw_mpm.PD);
 P_t1w    = char(job.subj.raw_mpm.T1);
 
 P_receiv = [];
-
-% determine output directory path
-% CASE INDIR
-outpath = fileparts(P_mtw(1,:)); 
-% CASE OUTDIR
-if isfield(job.subj.output,'outdir')
-    if ~strcmp(outpath, job.subj.output.outdir{1})
-         vbq_get_defaults('outdir',job.subj.output.outdir{1});
-         outpath = vbq_get_defaults('outdir');
-    end
-end
 
 % run vbq_MTProt to evaluate the parameter maps
 [fR1, fR2s, fMT, fA, PPDw, PT1w]  = vbq_MTProt(P_mtw, P_pdw, P_t1w, P_trans, P_receiv);

@@ -259,9 +259,14 @@ mag = mag1.fname;
 phase1 = spm_vol(Q(3,:));
 phase = phase1.fname;
 scphase = FieldMap('Scale',phase);
-% TL: move generated map to the outpath (next 3 lines)
+% try to move generated map to the outpath
 [~,name,e] = fileparts(scphase.fname);
-movefile(scphase.fname,fullfile(outpath,[name e]));
+try                
+    movefile(scphase.fname,fullfile(outpath,[name e]));         
+catch MExc          
+    %fprintf(1,'\n%s\n', MExc.getReport);                  
+    fprintf(1,'Output directory is identical to input directory. File doesn''t need to be moved! :)\n');       
+end    
 scphase.fname = fullfile(outpath,[name e]);
 fm_imgs = char(scphase.fname,mag);
 

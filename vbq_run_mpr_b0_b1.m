@@ -48,6 +48,16 @@ end
 
 function out_loc = vbq_mpr_b0_b1_local(job)
 
+% determine output directory path
+try 
+    outpath = job.subj.output.outdir{1}; % case outdir
+catch 
+    Pin = char(job.subj.raw_mpm.MT);
+    outpath = fileparts(Pin(1,:)); % case outdir
+end
+% save outpath as default for this job
+vbq_get_defaults('outdir',outpath);
+
 % run B1 map calculation for B1 bias correction
 P_trans = vbq_run_b1map(job.subj);
 
@@ -61,23 +71,23 @@ P_receiv = [];
 % run vbq_MTProt to evaluate the parameter maps
 [fR1, fR2s, fMT, fA, PPDw, PT1w]  = vbq_MTProt(P_mtw, P_pdw, P_t1w, P_trans, P_receiv);
 
-% determine output directory path
-% CASE INDIR
-outpath = fileparts(fR1); 
-% CASE OUTDIR
-if isfield(job.subj.output,'outdir')
-    if ~strcmp(outpath, job.subj.output.outdir{1})
-        % MFC: Only move files if a different directory is chosen - can't
-        % move a file to itself...
-        outpath = job.subj.output.outdir{1};
-        movefile(fR1,outpath);
-        movefile(fR2s,outpath);
-        movefile(fMT,outpath);
-        movefile(fA,outpath);
-        movefile(PPDw,outpath);
-        movefile(PT1w,outpath);
-    end
-end
+% % determine output directory path
+% % CASE INDIR
+% outpath = fileparts(fR1); 
+% % CASE OUTDIR
+% if isfield(job.subj.output,'outdir')
+%     if ~strcmp(outpath, job.subj.output.outdir{1})
+%         % MFC: Only move files if a different directory is chosen - can't
+%         % move a file to itself...
+%         outpath = job.subj.output.outdir{1};
+%         movefile(fR1,outpath);
+%         movefile(fR2s,outpath);
+%         movefile(fMT,outpath);
+%         movefile(fA,outpath);
+%         movefile(PPDw,outpath);
+%         movefile(PT1w,outpath);
+%     end
+% end
 
 out_loc.subj.R1  = {fullfile(outpath,spm_str_manip(fR1,'t'))};
 out_loc.subj.R2s = {fullfile(outpath,spm_str_manip(fR2s,'t'))};
@@ -94,16 +104,3 @@ f = fopen(fullfile(outpath, '_finished_'), 'wb');
 fclose(f);
 
 end
-
-% function p = hinfo(P)
-% N = nifti(P);
-% for ii = 1:numel(N),
-%     tmp = regexp(N(ii).descrip,...
-%         'TR=(?<tr>.+)ms/TE=(?<te>.+)ms/FA=(?<fa>.+)deg',...
-%         'names');
-%     p(ii).tr=str2num(tmp.tr);
-%     p(ii).te=str2num(tmp.te);
-%     p(ii).fa=str2num(tmp.fa);
-% end
-% 
-% end

@@ -9,9 +9,6 @@ function [fR1, fR2s, fMT, fA, PPDw, PT1w]  = vbq_MTProt(P_mtw, P_pdw, P_t1w, P_t
 %
 % Gunther Helms, MR-Research in Neurology and Psychiatry, University of Goettingen
 % Nikolaus Weiskopf, Antoine Lutti, John Ashburner, Wellcome Trust Centre for Neuroimaging at UCL, London
-
-
-
 %
 % Antoine Lutti 15/01/09
 % This version of MTProt corrects for imperfect RF spoiling when a B1 map
@@ -21,13 +18,15 @@ function [fR1, fR2s, fMT, fA, PPDw, PT1w]  = vbq_MTProt(P_mtw, P_pdw, P_t1w, P_t
 % Deichmann with the experimental parameters used to get our PDw and T1w
 % images.
 %
-
 % MFC 31.05.2013    If the spoiling correction has not been defined for the
 %                   protocol then none is applied.
 %
 % MFC 27.03.2014    Use PDw image as template for writing out maps to be
 %                   robust in cases of inconsistent FoV positioning.
-
+%
+% MFC 23.10.2015    Adding OLS R2* map option. For details see Weiskopf et 
+%                   al., Front. Neurosci. 2014 DOI: 10.3389/fnins.2014.00278
+%                   This reference should be cited if you use this output.
 % $Id$
 
 disp('----- Create maps from multi-contrast multi-echo FLASH protocol -----');
@@ -141,6 +140,11 @@ V       = V_templ(1);
 
 [pth,nam,ext] = fileparts(P_mtw(1,:));
 
+tmp = vbq_get_defaults('outdir');
+if ~strcmp(pth, tmp)
+  pth = tmp;
+end
+
 
 %% calculate T2* map from PD echoes
 dm        = V.dim;
@@ -238,6 +242,74 @@ else
     Vreceiv = [];
 end
 
+%  --- BEING OLS R2s CODE MFC  ---
+if vbq_get_defaults('R2sOLS')
+    
+    % Calculate OLS R2* map from all echoes (ESTATICS, Weiskopf et al. 2014)
+    disp('----- Calculation of OLS R2* map -----');
+    
+    dt        = [spm_type('float32'),spm_platform('bigend')];
+    Ni        = nifti;
+    Ni.mat    = V.mat;
+    Ni.mat0   = V.mat;
+    Ni.descrip='OLS R2* map [1/ms]';
+    Ni.dat    = file_array(fullfile(pth,[nam '_R2s_OLS' '.nii']),dm,dt, 0,1,0);
+    create(Ni);
+    
+    % Combine the data and echo times:
+    TE = [TE_pdw; TE_mtw; TE_t1w];
+    
+    nPD = numel(TE_pdw);
+    nMT = numel(TE_mtw);
+    nT1 = numel(TE_t1w);
+    nEchoes = nPD + nMT + nT1;
+    
+    V_contrasts = spm_vol(P_pdw);
+    V_contrasts(nPD+1:nPD+nMT) = spm_vol(P_mtw);
+    V_contrasts(nPD+nMT+1:nEchoes) = spm_vol(P_t1w);
+    
+    % The assumption is that the result of co-registering the average 
+    % weighted volumes is applicable for each of the echoes of that
+    % contrast => Replicate the mat field across contrasts for all echoes.
+    matField = cat(3, repmat(VPDw.mat, [1, 1, nPD]), ...
+        repmat(VMTw.mat, [1, 1, nMT]), repmat(VT1w.mat, [1, 1, nT1]));
+    
+    % Same formalism as for PDw fit but now extra colums for the "S(0)" 
+    % amplitudes of the different contrasts:
+    reg = [zeros(nEchoes,3) TE(:)];
+    reg(1 : nPD, 1)             = 1;
+    reg(nPD + 1 : nPD+nMT, 2)   = 1;
+    reg(nPD+nMT+1:nEchoes, 3)   = 1;
+    W   = (reg'*reg)\reg';
+    
+    spm_progress_bar('Init',dm(3),'OLS R2* fit','planes completed');
+    for p = 1:dm(3),
+        M = spm_matrix([0 0 p 0 0 0 1 1 1]);
+        data = zeros([nEchoes dm(1:2)]);
+        
+        for e = 1:nEchoes
+            % Take slice p (defined in M) and map to a location in the 
+            % appropriate contrast using the matField entry for that
+            % contrast, which has been co-registered to the PD-weighted 
+            % data:
+            M1 = matField(:,:,e)\V_contrasts(1).mat*M;
+
+            % Third order B-spline interpolation for OLS R2* estimation
+            % since we no longer assume that the echoes are perfectly 
+            % aligned as we do for the standard PDw derived R2* estimate.
+            data(e,:,:) = log(max(spm_slice_vol(V_contrasts(e),M1,dm(1:2),3),eps));
+        end
+        Y = W*reshape(data, [nEchoes prod(dm(1:2))]);
+        Y = -reshape(Y(4,:), dm(1:2));
+        
+        % Written out in Ni with mat field defined by V_templ => first PDw
+        % echo:
+        Ni.dat(:,:,p) = max(min(Y,threshall.R2s),-threshall.R2s); % threshold T2* at +/- 0.1ms or R2* at +/- 10000 *(1/sec), negative values are allowed to preserve Gaussian distribution
+        spm_progress_bar('Set',p);
+    end
+    spm_progress_bar('Clear');
+        
+end % OLS code
 
 nam2    = {'R1','A','MT','MTR_synt'};
 descrip = {'R1 map [1000/s]', 'A map','Delta MT map', 'Synthetic MTR image'};
@@ -561,18 +633,4 @@ function bl = feq(val, comp_val)
 % floating point comparison
 bl = abs(val - comp_val) <= eps(comp_val);
 
-end
-
-%++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-function p = hinfo(P)
-N = nifti(P);
-p(numel(N)) = struct('tr',[],'te',[],'fa',[]);
-for ii = 1:numel(N),
-    tmp = regexp(N(ii).descrip,...
-        'TR=(?<tr>.+)ms/TE=(?<te>.+)ms/FA=(?<fa>.+)deg',...
-        'names');
-    p(ii).tr = str2num(tmp.tr); %#ok<*ST2NM>
-    p(ii).te = str2num(tmp.te);
-    p(ii).fa = str2num(tmp.fa);
-end
 end

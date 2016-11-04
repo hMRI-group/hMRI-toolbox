@@ -55,7 +55,7 @@ for ip=1:numel(job.subj)
         cwd = fileparts(Pin(1,:)); % case indir
     end
     % save outpath as default for this job
-    vbq_get_defaults('outdir',outpath);
+    vbq_get_defaults('outdir',cwd);
     
     
     [fR1, fR2s, fMT, fA, PPDw, PT1w]  = vbq_MTProt(P_mtw, P_pdw, P_t1w); 

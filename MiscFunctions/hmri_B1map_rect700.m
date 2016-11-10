@@ -1,6 +1,7 @@
 function hmri_B1map_rect700(P, Q)
 % MFC: added arguments P & Q to mirror hmri_B1map_v2
-% Calculation of B1 mapping data 3D EPI spin echo (SE) and stimulated (STE) echo images (see Jiru and Klose MRM 2006).
+% Calculation of B1 mapping data 3D EPI spin echo (SE) and stimulated (STE)
+% echo images (see Jiru and Klose MRM 2006).
 % Corresponding scanning protocol/sequence: al_B1mapping_rect700
 % Inputs: SE and STE images for B1 map calculation and the 3 data images
 % for B0 map calculation.
@@ -12,8 +13,6 @@ function hmri_B1map_rect700(P, Q)
 %     - undistorted, masked and padded B1 maps (muB1map_---------)
 %     - undistorted, masked, padded and smoothed B1 maps (smuB1map_---------) i.e. FULLY PROCESSED
 % IN THIS VERSION, THE B1 MAPS ARE CALCULATED BASED ON ALL 5 PAIRS OF SE/STE IMAGES
-
-% $Id$
 
 beta = 80:5:100;
 TM = 33.53; %

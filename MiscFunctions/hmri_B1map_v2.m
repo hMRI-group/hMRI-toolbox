@@ -1,5 +1,6 @@
 function hmri_B1map_v2(P,Q,T1)
-% Calculation of B1 mapping data 3D EPI spin echo (SE) and stimulated (STE) echo images (see Jiru and Klose MRM 2006).
+% Calculation of B1 mapping data 3D EPI spin echo (SE) and stimulated (STE)
+% echo images (see Jiru and Klose MRM 2006).
 % Corresponding scanning protocol/sequence: al_B1mapping_v2a and
 % al_B1mapping_v2b
 % Input: 11 pairs of (SE, STE) images for B1 map calculation and 3 images
@@ -15,8 +16,6 @@ function hmri_B1map_v2(P,Q,T1)
 % 11) with maximum signal amplitude in the SE images.
 % The sum of square image of all SE images is created (SumOfSq) and
 % undistorted (uSumOfSq) for coregistration of the B1 map to an anatomical dataset
-
-% $Id$
 
 % if nargin == 3: B1 mapping for QA: T1 is given
 % else:

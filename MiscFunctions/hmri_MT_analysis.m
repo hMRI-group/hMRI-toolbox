@@ -1,7 +1,5 @@
 function hmri_MT_analysis(P_mtw,P_pdw,P_t1w, P_trans, P_receiv)
 
-% $Id$
-
 if nargin==0,
     P_mtw = spm_select(Inf,'nifti','MT-weighted');
     P_pdw = spm_select(Inf,'nifti','PD-weighted');

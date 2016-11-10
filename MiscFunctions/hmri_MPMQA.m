@@ -68,13 +68,13 @@ if strcmp('Offline',QAMode)
     target_dir=images_dir;
     qafilename=[target_dir filesep sprintf('mpm_qa_%s.txt',deblank(scanner))];
 elseif strcmp('Online',QAMode)
-    if strcmp(lower(deblank(host_name)),'mr2')
+    if strcmpi(deblank(host_name),'mr2')
         scanner = 'quattro';
         qa_folder =[filesep 'data' filesep scanner filesep 'MPMqa'];%Output folder containing QA results.
         images_dir='/dicom_from_scanner';
         target_dir='/home/dataman/physics/qa_tmp';
         qafilename=[qa_folder filesep sprintf('mpm_qa_%s.txt',deblank(scanner))];
-    elseif strcmp(lower(deblank(host_name)),'mr2b')
+    elseif strcmpi(deblank(host_name),'mr2b')
         scanner = 'trio';
         qa_folder =[filesep 'data' filesep scanner filesep 'MPMqa'];
         images_dir='/dicom_from_scanner';
@@ -91,7 +91,8 @@ elseif strcmp('Online',QAMode)
         qafilename=[target_dir filesep sprintf('mpm_qa_%s.txt',deblank(scanner))];
     end
     P=spm_select(Inf,'^.*\.ima$','Select ima files',[],images_dir);
-    if ~strcmp(lower(deblank(host_name)),'mr2')&&~strcmp(lower(deblank(host_name)),'mr2b')
+    if ~strcmpi(deblank(host_name),'mr2') && ...
+            ~strcmpi(deblank(host_name),'mr2b')
         if ~strcmp(images_dir,spm_str_manip(P,'H'))% when host name is not mr2 or mr2b, images_dir and target_dir were set to pwd. This is changed here to ensure that the niftis are saved somewhere appropriate
             images_dir=spm_str_manip(P(1,:),'H');target_dir=spm_str_manip(P(1,:),'H');
         end

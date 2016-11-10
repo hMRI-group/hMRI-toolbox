@@ -1,4 +1,4 @@
-function [fR1, fR2s, fMT, fA, PPDw, PT1w]  = vbq_MTProt(P_mtw, P_pdw, P_t1w, P_trans, P_receiv)
+function [fR1, fR2s, fMT, fA, PPDw, PT1w]  = hmri_MTProt(P_mtw, P_pdw, P_t1w, P_trans, P_receiv)
 
 % Evaluation function for multi-contrast multi-echo FLASH protocol
 % P_mtw, P_pdw, P_t1w: MTw, PDw, T1w images (can be multiple echoes = images)
@@ -45,28 +45,28 @@ TE_limit = 30; % TE time up to which echoes are averaged (in ms)
 
 %% retrieves acquisition parameters and update defaults parameters set
 p = hinfo(P_mtw);
-vbq_get_defaults('MPMacq.TE_mtw', cat(1,p.te));
-vbq_get_defaults('MPMacq.TR_mtw', p(1).tr);
-vbq_get_defaults('MPMacq.fa_mtw', p(1).fa);
+hmri_get_defaults('MPMacq.TE_mtw', cat(1,p.te));
+hmri_get_defaults('MPMacq.TR_mtw', p(1).tr);
+hmri_get_defaults('MPMacq.fa_mtw', p(1).fa);
 
 p = hinfo(P_pdw);
-vbq_get_defaults('MPMacq.TE_pdw', cat(1,p.te));
-vbq_get_defaults('MPMacq.TR_pdw', p(1).tr);
-vbq_get_defaults('MPMacq.fa_pdw', p(1).fa);
+hmri_get_defaults('MPMacq.TE_pdw', cat(1,p.te));
+hmri_get_defaults('MPMacq.TR_pdw', p(1).tr);
+hmri_get_defaults('MPMacq.fa_pdw', p(1).fa);
 
 p = hinfo(P_t1w);
-vbq_get_defaults('MPMacq.TE_t1w', cat(1,p.te));
-vbq_get_defaults('MPMacq.TR_t1w', p(1).tr);
-vbq_get_defaults('MPMacq.fa_t1w', p(1).fa);
+hmri_get_defaults('MPMacq.TE_t1w', cat(1,p.te));
+hmri_get_defaults('MPMacq.TR_t1w', p(1).tr);
+hmri_get_defaults('MPMacq.fa_t1w', p(1).fa);
 
 % Get the MPMacq parameters specific for each protocols:  [TR_pdw TR_t1w fa_pdw fa_t1w]
 % and their specific protocol values/names/tags.
 MPMacq_prot = [ ...
-    vbq_get_defaults('MPMacq.TR_pdw') ...
-    vbq_get_defaults('MPMacq.TR_t1w') ...
-    vbq_get_defaults('MPMacq.fa_pdw') ...
-    vbq_get_defaults('MPMacq.fa_t1w')];
-MPMacq_sets = vbq_get_defaults('MPMacq_set');
+    hmri_get_defaults('MPMacq.TR_pdw') ...
+    hmri_get_defaults('MPMacq.TR_t1w') ...
+    hmri_get_defaults('MPMacq.fa_pdw') ...
+    hmri_get_defaults('MPMacq.fa_t1w')];
+MPMacq_sets = hmri_get_defaults('MPMacq_set');
 % then match the values and find protocol tag
 Nb_protocols = numel(MPMacq_sets.vals);
 ii = 1; mtch = false;
@@ -84,15 +84,15 @@ else
     prot_tag = MPMacq_sets.tags{ii};
 end
 % Set the tag for the MPMacq set.
-vbq_get_defaults('MPMacq.tag',prot_tag);
+hmri_get_defaults('MPMacq.tag',prot_tag);
 
-%% locally retrieves default parameters from vbq_defaults
+%% locally retrieves default parameters from hmri_defaults
 % load threshold to save qMRI maps
-threshall = vbq_get_defaults('qMRI_maps_thresh');
+threshall = hmri_get_defaults('qMRI_maps_thresh');
 % load PD maps processing parameters
-PDproc = vbq_get_defaults('PDproc');
+PDproc = hmri_get_defaults('PDproc');
 % retrieve acquisition parameters
-MPMacq = vbq_get_defaults('MPMacq');
+MPMacq = hmri_get_defaults('MPMacq');
 % NB: for better readability, avoiding lengthy notations, the following
 % parameters are re-written out of the MPMacq structure :\...
 TE_pdw = MPMacq.TE_pdw; 
@@ -105,7 +105,7 @@ fa_pdw = MPMacq.fa_pdw;
 fa_mtw = MPMacq.fa_mtw; 
 fa_t1w = MPMacq.fa_t1w; 
 % RF spoiling correction parameters
-RFC = vbq_get_defaults(['rfcorr.',prot_tag]);
+RFC = hmri_get_defaults(['rfcorr.',prot_tag]);
 
 % a few words to summarize the situation...
 disp(['INFO: Acquisition protocol = ' RFC.tag]);
@@ -140,7 +140,7 @@ V       = V_templ(1);
 
 [pth,nam,ext] = fileparts(P_mtw(1,:));
 
-tmp = vbq_get_defaults('outdir');
+tmp = hmri_get_defaults('outdir');
 if ~strcmp(pth, tmp)
   pth = tmp;
 end
@@ -243,7 +243,7 @@ else
 end
 
 %  --- BEING OLS R2s CODE MFC  ---
-if vbq_get_defaults('R2sOLS')
+if hmri_get_defaults('R2sOLS')
     
     % Calculate OLS R2* map from all echoes (ESTATICS, Weiskopf et al. 2014)
     disp('----- Calculation of OLS R2* map -----');
@@ -545,8 +545,8 @@ function PDcalculation(pth)
 disp('----- Calculating Proton Density map -----');
 
 % get PD processing default settings
-PDproc = vbq_get_defaults('PDproc');
-threshA = vbq_get_defaults('qMRI_maps_thresh.A');
+PDproc = hmri_get_defaults('PDproc');
+threshA = hmri_get_defaults('qMRI_maps_thresh.A');
 
 % Creation of whole-brain and white-matter masks
 P = spm_select('FPList',pth ,'^.*_MTforA.(img|nii)$');

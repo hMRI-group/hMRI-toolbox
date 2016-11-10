@@ -1,5 +1,5 @@
-function out = vbq_run_mpr_unicort(job)
-% function P = vbq_run_mpr_unicort(P_PDw, P_R1)
+function out = hmri_run_mpr_unicort(job)
+% function P = hmri_run_mpr_unicort(P_PDw, P_R1)
 % P_PDw: proton density weighted FLASH image (small flip angle image) for
 % masking
 % P_R1: R1 (=1/T1) map estimated from dual flip angle FLASH experiment
@@ -33,7 +33,7 @@ function out = vbq_run_mpr_unicort(job)
 
 %%
 
-job=vbq_process_data_spec(job);
+job=hmri_process_data_spec(job);
 
 out.R1 = {};
 out.R1u = {};
@@ -55,10 +55,10 @@ for ip=1:numel(job.subj)
         cwd = fileparts(Pin(1,:)); % case indir
     end
     % save outpath as default for this job
-    vbq_get_defaults('outdir',cwd);
+    hmri_get_defaults('outdir',cwd);
     
     
-    [fR1, fR2s, fMT, fA, PPDw, PT1w]  = vbq_MTProt(P_mtw, P_pdw, P_t1w); 
+    [fR1, fR2s, fMT, fA, PPDw, PT1w]  = hmri_MTProt(P_mtw, P_pdw, P_t1w); 
     
     % Use default parameters of SPM8 "New Segment" toolbox except for
     % adapted regularization and smoothness of bias field

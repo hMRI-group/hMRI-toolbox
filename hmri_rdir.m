@@ -1,4 +1,4 @@
-function [varargout] = vbq_rdir(rootdir,varargin)
+function [varargout] = hmri_rdir(rootdir,varargin)
 % RDIR - Recursive directory listing
 % 
 %  d = rdir(ROOT)

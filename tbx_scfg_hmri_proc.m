@@ -1,5 +1,6 @@
-function proc = tbx_scfg_vbq_proc
-% Configuration file for the Voxel-Based Quantification (VBQ)
+function proc = tbx_scfg_hmri_proc
+% Configuration file for the "histological MRI" (hMRI) toolbox
+% Previously named "Voxel-Based Quantification" (VBQ)
 % -> Dealing with the processign of the maps
 %_______________________________________________________________________
 % Copyright (C) 2014 Wellcome Trust Centre for Neuroimaging
@@ -156,7 +157,7 @@ preproc8 = cfg_set_val(preproc8, 'tissues', 4, 'native', [0 0]);
 preproc8 = cfg_set_val(preproc8, 'tissues', 5, 'native', [0 0]);
 preproc8 = cfg_set_val(preproc8, 'tissues', 6, 'native', [0 0]);
 preproc8 = cfg_set_val(preproc8, 'warp', 'write', [0 1]);
-preproc8.prog = @vbq_run_local_preproc;
+preproc8.prog = @hmri_run_local_preproc;
 preproc8.vout = @vout_preproc;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -260,7 +261,7 @@ eval(['nrm = nrm_tmp', ...
 eval(['nrm' cfg_expr(nrm, 'data') '= multsdata;']); %#ok<NODEF>
 eval(['nrm' regexprep(cfg_expr(nrm, 'preserve'), '{([0-9]+)}$', '($1)') '=[];']);
 
-nrm.prog  = @vbq_run_local_dartel_norm_fun;
+nrm.prog  = @hmri_run_local_dartel_norm_fun;
 nrm.vout  = @vout_norm_fun;
 nrm.check = [];
 
@@ -363,7 +364,7 @@ proc.tag     = 'proc';
 proc.name    = 'Process maps';
 proc.help    = {
     'Parameter maps are registered to standard space, scaled and ready ',...
-    'for voxel-based quantitative (VBQ) analysis.'
+    'for histological MRI (hMRI) analysis.'
     }';
 proc.values  = {preproc8 dartel shoot};
 
@@ -377,8 +378,8 @@ end
 %% VOUT & CHECK FUNCTIONS
 % =======================================================================
 % The RUN functions :
-% - out = vbq_run_local_preproc(job)
-% - out = vbq_run_local_dartel_norm_fun(job)
+% - out = hmri_run_local_preproc(job)
+% - out = hmri_run_local_dartel_norm_fun(job)
 % are defined separately.
 %_______________________________________________________________________
 

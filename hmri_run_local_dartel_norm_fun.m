@@ -1,5 +1,6 @@
-function out = vbq_run_local_dartel_norm_fun(job)
-% function out = spm_dartel_norm_fun_local(job)
+function out = hmri_run_local_dartel_norm_fun(job)
+% function out = hmri_dartel_norm_fun_local(job)
+%  derived from spm_dartel_norm_fun_local
 
 out = struct();
 

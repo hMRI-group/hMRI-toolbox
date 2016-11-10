@@ -1,5 +1,6 @@
-function vbq = tbx_cfg_vbq
-% Configuration file for the Voxel-Based Quantification (VBQ)
+function hmri = tbx_cfg_hmri
+% Configuration file for the "histological MRI" (hMRI) toolbox
+% Previously named "Voxel-Based Quantification" (VBQ)
 %
 % Warning and disclaimer: This software is for research use only.
 % Do not use it for clinical or diagnostic purposes.
@@ -9,21 +10,19 @@ function vbq = tbx_cfg_vbq
 % Bogdan Draganski & Ferath Kherif, 2011
 % ======================================================================
 
-% $Id$
-
-if ~isdeployed, addpath(fullfile(spm('Dir'),'toolbox','VBQ')); end
+if ~isdeployed, addpath(fullfile(spm('Dir'),'toolbox','hmri')); end
 
 % Work is split into 2 main branches:
-% - creating the MPM's from the raw images -> tbx_cfg_vbq_crm
-% - spatially processing the MPM's -> tbx_cfg_vbq_proc
+% - creating the MPM's from the raw images -> tbx_cfg_hmri_crm
+% - spatially processing the MPM's -> tbx_cfg_hmri_proc
 
 % ---------------------------------------------------------------------
-% vbq VBQ Tools
+% hmri hMRI Tools
 % ---------------------------------------------------------------------
-vbq         = cfg_choice;
-vbq.tag     = 'VBQ';
-vbq.name    = 'VBQ Tools';
-vbq.help    = {
+hmri         = cfg_choice;
+hmri.tag     = 'hMRI';
+hmri.name    = 'hMRI Tools';
+hmri.help    = {
     ['This toolbox is based around the ``Regional specificity of MRI ',...
     'contrast ... (VBQ)'' paper by Draganski et al., 2011 NeuroImage ',...
     'and ''Unified segmentation based correction... (UNICORT) paper by ',...
@@ -32,6 +31,6 @@ vbq.help    = {
     'and will include a number of (as yet unspecified) extensions in ',...
     'future updates.  Please report any bugs or problems to lreninfo@gmail.com.']
     }';
-vbq.values  = {tbx_scfg_vbq_crm tbx_scfg_vbq_proc };
+hmri.values  = {tbx_scfg_hmri_crm tbx_scfg_hmri_proc };
 end
 

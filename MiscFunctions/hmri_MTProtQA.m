@@ -1,6 +1,9 @@
-function [fR1, fR2s, fMT, fA, PPDw, PT1w]  = vbq_MTProtQA(P_mtw, P_pdw, P_t1w, TE_mtw, TE_pdw, TE_t1w, TR_mtw, TR_pdw, TR_t1w, fa_mtw, fa_pdw, fa_t1w, P_trans, P_receiv, flatAmap)
+function [fR1, fR2s, fMT, fA, PPDw, PT1w]  = hmri_MTProtQA(P_mtw, P_pdw, P_t1w, TE_mtw, TE_pdw, TE_t1w, TR_mtw, TR_pdw, TR_t1w, fa_mtw, fa_pdw, fa_t1w, P_trans, P_receiv, flatAmap)
 
-% function [fR1, fR2s, fMT, fA, PPDw, PT1w]  = vbq_MTProtQA(P_mtw, P_pdw, P_t1w, TE_mtw, TE_pdw, TE_t1w, TR_mtw, TR_pdw, TR_t1w, fa_mtw, fa_pdw, fa_t1w, P_trans, P_receiv, flatAmap)
+% function [fR1, fR2s, fMT, fA, PPDw, PT1w]  = hmri_MTProtQA(P_mtw, P_pdw, 
+%       P_t1w, TE_mtw, TE_pdw, TE_t1w, TR_mtw, TR_pdw, TR_t1w, fa_mtw, 
+%       fa_pdw, fa_t1w, P_trans, P_receiv, flatAmap)
+% 
 % Evaluation function for multi-contrast multi-echo FLASH protocol
 % P_mtw, P_pdw, P_t1w: MTw, PDw, T1w images (can be multiple echoes = images)
 % TE_mtw, TE_pdw, TE_t1w, TR_mtw, TR_pdw, TR_t1w: echo times and TR of images
@@ -12,7 +15,6 @@ function [fR1, fR2s, fMT, fA, PPDw, PT1w]  = vbq_MTProtQA(P_mtw, P_pdw, P_t1w, T
 % Gunther Helms, MR-Research in Neurology and Psychiatry, University of Goettingen
 % Nikolaus Weiskopf, Antoine Lutti, John Ashburner, Wellcome Trust Centre for Neuroimaging at UCL, London
 
-
 %
 % Antoine Lutti 15/01/09
 % This version of MTProt corrects for imperfect RF spoiling when a B1 map is loaded (line 229 and below)
@@ -21,8 +23,6 @@ function [fR1, fR2s, fMT, fA, PPDw, PT1w]  = vbq_MTProtQA(P_mtw, P_pdw, P_t1w, T
 % Deichmann with the experimental parameters used to get our PDw and T1w
 % images.
 %
-
-% $Id$
 
 P_receiv = []; %CPL to supress error message
 
@@ -370,9 +370,9 @@ if(~isempty(f_T))&&(isempty(f_R))&&flatAmap
 end
 spm_progress_bar('Clear');
 
-return;
+end
+%__________________________________________________________________________
 
-% --------------------------------------------------------------
 function [] = coreg_mt(P_ref, P_src)
 % coregisters the structural images
 % for MT protocol
@@ -390,12 +390,9 @@ for src_nr=1:size(P_src, 1)
     MM = spm_get_space(deblank(VF.fname));
     spm_get_space(deblank(deblank(VF.fname)), M*MM);
 end
-return;
+end
+%__________________________________________________________________________
 
-
-% -----------------------------------------------------------------
-
-% --------------------------------------------------------------
 function [] = coreg_bias_map(P_ref, P_src)
 % coregisters the B1 or receive maps with
 % the structurals in the MT protocol
@@ -417,7 +414,8 @@ M  = inv(spm_matrix(x));
 MM = spm_get_space(deblank(VF2.fname));
 spm_get_space(deblank(deblank(VF2.fname)), M*MM);
 
-return;
+end
+%__________________________________________________________________________
 
 function Aflattening(pth,Athresh)
 % TempT1=spm_select('FPList',pth ,'^.*_R1.(img|nii)$');
@@ -427,7 +425,6 @@ function Aflattening(pth,Athresh)
 % [pth,name,e,v] = fileparts(TempT1);
 % Corr_save.fname = fullfile(pth,['TempT1' e]);
 % spm_write_vol(Corr_save,myT1);%Used further down for flattening of the A maps.
-
 
 pm_defaults
 myflags.template = pm_def.MFLAGS.TEMPLATE;
@@ -503,8 +500,8 @@ for counter=1:size(temp,1)
     delete(deblank(temp(counter,:)));
 end
 
-
-return;
+end
+%__________________________________________________________________________
 
 function [bmask,CSF] = MaskT1(P,flags)
 
@@ -533,18 +530,19 @@ spm_jobman('initcfg');
 spm_jobman('run', matlabbatch);
 [pth,name,e] = fileparts(P.fname);
 VO=spm_vol(cellstr(spm_select('FPList',pth,'^c.*\.(img|nii)$')));
-GM=spm_read_vols(VO{1,1});WM=spm_read_vols(VO{2,1});CSF=spm_read_vols(VO{3,1});Other1=spm_read_vols(VO{4,1});Other2=spm_read_vols(VO{5,1});
+GM=spm_read_vols(VO{1,1});
+WM=spm_read_vols(VO{2,1});
+CSF=spm_read_vols(VO{3,1});
+Other1=spm_read_vols(VO{4,1});Other2=spm_read_vols(VO{5,1});
 bmask=zeros(size(GM,1),size(GM,2),size(GM,3));
 bmask((GM+WM+CSF+Other1+Other2)>=flags.thresh)=1;
 % CSF(CSF<0.95)=0;CSF(CSF>=0.95)=1;
-CSF(WM<0.95)=0;CSF(WM>=0.95)=1;%CSF is actually a white matter mask
-return;
-
-
+CSF(WM<0.95)=0;
+CSF(WM>=0.95)=1;%CSF is actually a white matter mask
+end
 %__________________________________________________________________________
-
 
 function bl = feq(val, comp_val)
 % floating point comparison
 bl = abs(val - comp_val) <= eps(comp_val);
-return;
+end

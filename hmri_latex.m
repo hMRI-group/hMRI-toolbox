@@ -1,4 +1,4 @@
-function vbq_latex(c)
+function hmri_latex(c)
 % Extract information from the toolbox m-files and output them as usable
 % .tex files which can be directly included in the manual.
 %
@@ -7,7 +7,7 @@ function vbq_latex(c)
 %    batching interface into a series of .tex files.
 % 2. converting the help header of the functions into .tex files.
 %
-% These files are then included in a manually edited vbq_manual.tex file,
+% These files are then included in a manually edited hmri_manual.tex file,
 % which also includes chapter/sections written manually.
 %
 % File derived from that of the SPM8 distribution.
@@ -16,20 +16,22 @@ function vbq_latex(c)
 % Copyright (C) 2011 Machine Learning & Neuroimaging Laboratory
 
 % Written by John Ashburner & Christophe Phillips
-% $Id: vbq_latex.m 31 2013-11-27 16:42:58Z christophe $
 
 skip_fct = true;
+% If true, then the list of function is not processed and the corresponding
+% .tex file not created.
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 1. Turning the cfg files into a .tex file
 if ~nargin,
-    c = tbx_cfg_vbq;
+    c = tbx_cfg_hmri;
 end
+
+hMRIdir = spm_str_manip(mfilename('fullpath'),'h');
 
 for ii=1:numel(c.values),
     bn = c.values{ii}.tag;
-%     fp = fopen(fullfile(spm('dir'),'toolbox','VBQ','manual',['batch_',bn,'.tex']),'w');
-    fp = fopen(fullfile('D:\0_MyDropbox\Work\1_SPM\VBQ_trunk_FIL\manual',['batch_',bn,'.tex']),'w');
+    fp = fopen(fullfile(hMRIdir,'manual',['batch_',bn,'.tex']),'w');
     if fp==-1, sts = false; return; end;
     chapter(c.values{ii},fp);
 end;
@@ -37,16 +39,15 @@ end;
 if ~skip_fct
     %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % 2. picking all the functions help files and put them into functions.tex
-    fp = fopen(fullfile(spm('dir'),'toolbox','VBQ','manual','adv_functions.tex'),'w');
+    fp = fopen(fullfile(hMRIdir,'manual','adv_functions.tex'),'w');
     if fp==-1, sts = false; return; end;
     l_subdirs = {};
     excl_files = {};
-    VBQdir = fullfile(spm('dir'),'toolbox','VBQ');
     
     % Heading part
     fprintf(fp,'\\chapter{%s  \\label{Chap:%s}}\n\\minitoc\n\n\\vskip 1.5cm\n\n',...
-        texify('List of VBQ functions'),'sec:functions');
-    fprintf(fp,'This is the list of VBQ functions, including the subdirectories: ');
+        texify('List of hMRI functions'),'sec:functions');
+    fprintf(fp,'This is the list of hMRI functions, including the subdirectories: ');
     for ii=1:numel(l_subdirs)
         fprintf(fp,'%s',texify(['{\tt ',l_subdirs{ii},'}']));
         if ii<numel(l_subdirs)-1
@@ -73,7 +74,7 @@ if ~skip_fct
         write_mfiles_help(f,fp,l_subdirs(ii));
     end
 end
-return;
+end
 
 %==========================================================================
 function write_mfiles_help(f,fp,base_dir)
@@ -124,7 +125,7 @@ for ii=1:size(f,1)
     fprintf(fp,'%s\n\n',texify('\end{alltt}'));
 end
 
-return
+end
 
 %==========================================================================
 function sts = chapter(c,fp)
@@ -134,7 +135,7 @@ if nargin<2
     if fp==-1, sts = false; return; end;
 end
 
-fprintf(fp,'%% $Id: vbq_latex.m 31 2013-11-27 16:42:58Z christophe $ \n\n');
+fprintf(fp,'%% $Id: hmri_latex.m 31 2013-11-27 16:42:58Z christophe $ \n\n');
 fprintf(fp, ...
     '\\chapter{%s  \\label{Chap:%s}}\n\n\\vskip 1.5cm\n\n', ...
     texify(c.name),c.tag);
@@ -152,7 +153,7 @@ switch class(c),
 end;
 fclose(fp);
 sts = true;
-return;
+end
 
 %==========================================================================
 function section(c,fp,lev)
@@ -175,8 +176,8 @@ end;
 % else
 if lev>length(sec),
     warning(['Too many nested levels... ',c.name]); %#ok<WNTAG>
-end;
-return;
+end
+end
 
 %==========================================================================
 function write_help(hlp,fp)
@@ -195,7 +196,7 @@ if iscell(hlp),
 end;
 str = texify(hlp);
 fprintf(fp,'%s\n\n',str);
-return;
+end
 
 %==========================================================================
 function str = texify(str0)
@@ -219,7 +220,7 @@ for i=1:numel(st),
     pen = en(i)+2;
 end;
 str = [str clean_latex(str0(pen:numel(str0)))];
-return;
+end
 
 %==========================================================================
 function str = clean_latex(str)
@@ -232,7 +233,7 @@ str  = strrep(str,'#','\#');
 str  = strrep(str,'|','$|$');
 str  = strrep(str,'>','$>$');
 str  = strrep(str,'<','$<$');
-return;
+end
 
 %==========================================================================
 function bibcstr = get_bib(bibdir)
@@ -241,6 +242,7 @@ bibcstr={};
 for k = 1:numel(biblist)
     [p n e v] = spm_fileparts(biblist(k).name);
     bibcstr{k}  = fullfile(bibdir,n);
+end
 end
 
 %==========================================================================
@@ -259,4 +261,5 @@ f(strcmp(cellstr(f),filesep),:) = [];
 disp(f); pause
 for i=1:size(f,1)
     spm_unlink(deblank(f(i,:)));
+end
 end

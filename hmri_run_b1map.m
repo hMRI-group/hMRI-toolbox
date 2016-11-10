@@ -1,7 +1,7 @@
-function P_trans = vbq_run_b1map(jobsubj)
+function P_trans = hmri_run_b1map(jobsubj)
 
 %% Processing of the B1 maps for B1 bias correction
-% FORMAT P_trans = vbq_run_b1map(jobsubj)
+% FORMAT P_trans = hmri_run_b1map(jobsubj)
 %    jobsubj - are parameters for one subject out of the job list. 
 %    NB: ONE SINGLE DATA SET FROM ONE SINGLE SUBJECT IS PROCESSED HERE, 
 %    LOOP OVER SUBJECTS DONE AT HIGHER LEVEL. 
@@ -21,9 +21,9 @@ function P_trans = vbq_run_b1map(jobsubj)
 % retrieve b1_type from job and pass it as default value for the current
 % processing:
 b1_prot = jobsubj.b1_type;
-vbq_get_defaults('b1_type.val',b1_prot);
+hmri_get_defaults('b1_type.val',b1_prot);
 % load the resulting default parameters:
-b1map_defs = vbq_get_defaults(['b1map.',b1_prot,'.b1proc']);
+b1map_defs = hmri_get_defaults(['b1map.',b1_prot,'.b1proc']);
 
 P_trans = [];
 
@@ -233,9 +233,9 @@ X_save = spm_write_vol(X_save,Ssq_matrix); %#ok<*NASGU>
 %-B0 undistortion
 %-----------------------------------------------------------------------
 % load default parameters and customize...
-b1_prot = vbq_get_defaults('b1_type.val');
+b1_prot = hmri_get_defaults('b1_type.val');
 % load the resulting default parameters:
-b0proc_defs = vbq_get_defaults(['b1map.',b1_prot,'.b0proc']);
+b0proc_defs = hmri_get_defaults(['b1map.',b1_prot,'.b0proc']);
 
 pm_defaults;
 pm_defs = pm_def;
@@ -277,13 +277,13 @@ anat_img = {strcat(path,filesep,name,e)};
 other_img{1} = char(V_save.fname);
 other_img{2} = char(W_save.fname);
 
-[fmap_img,unwarp_img] = vbq_B1Map_unwarp(fm_imgs,anat_img,other_img,pm_defs);
+[fmap_img,unwarp_img] = hmri_B1Map_unwarp(fm_imgs,anat_img,other_img,pm_defs);
 uanat_img{1}=unwarp_img{1}.fname;
 ub1_img{1} = unwarp_img{2}.fname;
 ustd_img{1} = unwarp_img{3}.fname;
 fpm_img{1} = fmap_img{1};
 vdm_img{1} = fmap_img{2};
-[allub1_img] = vbq_B1Map_process(uanat_img,ub1_img,ustd_img,vdm_img,fpm_img,pm_defs);
+[allub1_img] = hmri_B1Map_process(uanat_img,ub1_img,ustd_img,vdm_img,fpm_img,pm_defs);
 
 P_trans  = char(char(uanat_img),char(allub1_img{2}.fname));
 
@@ -304,7 +304,7 @@ V2 = spm_vol(Q);
 Vol1 = spm_read_vols(V1);
 Vol2 = spm_read_vols(V2);
 
-p = hinfo(P);
+p = hmri_hinfo(P);
 alphanom = p(1).fa; % nominal flip angle of tfl_b1map
 
 % generating the map

@@ -87,6 +87,7 @@ if isempty(out.files)
     out.files = {''};
 end
 
+end
 
 %==========================================================================
 % function fnames = convert_mosaic(hdr,root_dir,format,out_dir)
@@ -253,6 +254,7 @@ for i=1:length(hdr)
 end
 spm_progress_bar('Clear');
 
+end
 
 %==========================================================================
 % function fnames = convert_standard(hdr,root_dir,format,out_dir)
@@ -264,6 +266,7 @@ for i=1:length(hdr)
     fnames{i} = write_volume(hdr{i},root_dir,format,out_dir);
 end
 
+end
 
 %==========================================================================
 % function vol = sort_into_volumes(hdr)
@@ -415,6 +418,7 @@ for j=1:length(vol)
     end
 end
 
+end
 
 %==========================================================================
 % function vol2 = sort_into_vols_again(volj)
@@ -520,6 +524,7 @@ if msg
     fprintf('***************************************************\n');
 end
 
+end
 
 %==========================================================================
 % function fname = write_volume(hdr,root_dir,format,out_dir)
@@ -703,6 +708,7 @@ end
 N.dat(:,:,:) = volume;
 spm_progress_bar('Clear');
 
+end
 
 %==========================================================================
 % function fnames = convert_spectroscopy(hdr,root_dir,format,out_dir)
@@ -713,6 +719,7 @@ for i=1:length(hdr)
     fnames{i} = write_spectroscopy_volume(hdr(i),root_dir,format,out_dir);
 end
 
+end
 
 %==========================================================================
 % function fname = write_spectroscopy_volume(hdr,root_dir,format,out_dir)
@@ -884,6 +891,7 @@ data = permute(reshape(read_spect_data(hdr{1},ntp),dim([4 5 1 2 3])), ...
 
 N.dat(:,:,:,:,:) = data;
 
+end
 
 %==========================================================================
 % function [images,guff] = select_tomographic_images(hdr)
@@ -960,6 +968,7 @@ for i=1:length(hdr)
     end
 end
 
+end
 
 %==========================================================================
 % function [multiframe,other] = select_multiframe(hdr)
@@ -975,6 +984,7 @@ for i=1:length(hdr)
     end
 end
 
+end
 
 %==========================================================================
 % function [mosaic,standard] = select_mosaic_images(hdr)
@@ -997,6 +1007,7 @@ for i=1:length(hdr)
     end
 end
 
+end
 
 %==========================================================================
 % function [spect,images] = select_spectroscopy_images(hdr)
@@ -1011,6 +1022,7 @@ end
 spect  = hdr(spectsel);
 images = hdr(~spectsel);
 
+end
 
 %==========================================================================
 % function [standard, guff] = select_last_guff(standard, guff)
@@ -1021,6 +1033,7 @@ i = find(cellfun(@(x) ~isfield(x,'ImageOrientationPatient'),standard));
 guff = [guff, standard(i)];
 standard(i) = [];
 
+end
 
 %==========================================================================
 % function ok = checkfields(hdr,varargin)
@@ -1034,6 +1047,7 @@ for i=1:(nargin-1)
     end
 end
 
+end
 
 %==========================================================================
 % function clean = strip_unwanted(dirty)
@@ -1043,6 +1057,7 @@ msk = (dirty>='a'&dirty<='z') | (dirty>='A'&dirty<='Z') |...
       (dirty>='0'&dirty<='9') | dirty=='_';
 clean = dirty(msk);
 
+end
 
 %==========================================================================
 % function img = read_image_data(hdr)
@@ -1139,6 +1154,7 @@ end;
 
 img = reshape(img,[hdr.Columns,hdr.Rows,NFrames]);
 
+end
 
 %==========================================================================
 % function img = read_spect_data(hdr,privdat)
@@ -1154,6 +1170,7 @@ fseek(fp,hdr.StartOfCSAData,'bof');
 img = fread(fp,2*ntp,'float32');
 fclose(fp);
 
+end
 
 %==========================================================================
 % function nrm = read_SliceNormalVector(hdr)
@@ -1165,6 +1182,7 @@ for i=1:3,
     nrm(i,1) = sscanf(val(i,:),'%g');
 end
 
+end
 
 %==========================================================================
 % function n = read_NumberOfImagesInMosaic(hdr)
@@ -1175,6 +1193,7 @@ val = get_numaris4_val(str,'NumberOfImagesInMosaic');
 n   = sscanf(val','%d');
 if isempty(n), n=[]; end
 
+end
 
 %==========================================================================
 % function dim = read_AcquisitionMatrixText(hdr)
@@ -1188,6 +1207,7 @@ if length(dim)==1
 end
 if isempty(dim), dim=[]; end
 
+end
 
 %==========================================================================
 % function val = get_numaris4_val(str,name)
@@ -1207,6 +1227,7 @@ for i=1:length(str)
 end
 val = strvcat(val{:});
 
+end
 
 %==========================================================================
 % function val = get_numaris4_numval(str,name)
@@ -1218,6 +1239,7 @@ for k = 1:size(val1,1)
     val(k)=str2num(val1(k,:));
 end
 
+end
 
 %==========================================================================
 % function fname = getfilelocation(hdr,root_dir,prefix,format,out_dir)
@@ -1366,6 +1388,7 @@ fname = sprintf('%s%s-%s%s%s-%.5d-%.5d-%d%s.%s', prefix, id, ha, ma, sa, ...
         AcquisitionNumber, InstanceNumber, EchoNumbers, ImTyp, format);
 fname = fullfile(dname, fname);
 
+end
 
 %==========================================================================
 % function suc = mkdir_rec(str)
@@ -1381,6 +1404,7 @@ for g=2:length(pos)
     end
 end
 
+end
 
 %==========================================================================
 % function ret = read_ascconv(hdr)
@@ -1438,6 +1462,7 @@ if ~isempty(X)
     end
 end
 
+end
 
 %==========================================================================
 % function dt = determine_datatype(hdr)
@@ -1459,6 +1484,8 @@ else
     end
 end
 
+end
+
 %==========================================================================
 % function fspe = convert_multiframes(hdr,root_dir,format,out_dir)
 %==========================================================================
@@ -1468,6 +1495,8 @@ dict = load('spm_dicom_dict.mat');
 for i=1:numel(hdr)
     out  = convert_multiframe(hdr{i}, dict, root_dir, format,out_dir);
     fspe = [fspe(:); out(:)];
+end
+
 end
 
 %==========================================================================
@@ -1759,7 +1788,7 @@ for n=1:size(ord,2),
     spm_progress_bar('Clear');
 end
 
-
+end
 
 
 %==========================================================================
@@ -1796,7 +1825,8 @@ if isfield(H,'DimensionIndexSequence'),
         end
     end
 end
-return
+
+end
 
 %==========================================================================
 % dat = read_FGS(H,dim)
@@ -1873,4 +1903,4 @@ else
     error('"%s" is not multiframe.', H.FileName);
 end
 
-
+end

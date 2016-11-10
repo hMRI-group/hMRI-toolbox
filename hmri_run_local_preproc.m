@@ -1,11 +1,10 @@
-function out = vbq_run_local_preproc(job)
+function out = hmri_run_local_preproc(job)
 % Deal with the spatial preprocessing, 1 subject at a time: segmentation of
 % the MT and T1 images
 %_______________________________________________________________________
 % Copyright (C) 2014 Wellcome Trust Centre for Neuroimaging
 
 % Christophe Phillips
-% $Id$
 
 job = preproc_perimage_to_persubject(job);
 

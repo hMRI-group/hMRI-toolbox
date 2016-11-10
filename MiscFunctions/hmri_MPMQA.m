@@ -10,7 +10,7 @@
 % 3. Calculation of the MT, R1 and R2s maps.
 % 4. Quantitative analysis of the stability of the MT, R1, R2s and B1
 % values across the two runs.
-% Notes: a. Specific 'MTProtQA.m' version of vbq_MTProt.m with settings
+% Notes: a. Specific 'MTProtQA.m' version of hmri_MTProt.m with settings
 % optimized for processing of phantom data: i. No coregistration between the
 % runs ii. Dynamic range of the R1 map set between -1e4 and 1e4 to account for
 % the shorter R1 values of the phantom iii. Calculation of the proton
@@ -31,7 +31,7 @@
 % Antoine Lutti, Wellcome Trust Centre for Neuroimaging at UCL, London
 % 03/2012
 
-function vbq_MPMQA(ImagedObject,ImageLoading,QAMode)
+function hmri_MPMQA(ImagedObject,ImageLoading,QAMode)
 
 % Check inputs
 while (~strcmp(ImagedObject,'Fbirn')&&~strcmp(ImagedObject,'WaterBottle'))
@@ -68,13 +68,13 @@ if strcmp('Offline',QAMode)
     target_dir=images_dir;
     qafilename=[target_dir filesep sprintf('mpm_qa_%s.txt',deblank(scanner))];
 elseif strcmp('Online',QAMode)
-    if strcmp(lower(deblank(host_name)),'mr2')
+    if strcmpi(deblank(host_name),'mr2')
         scanner = 'quattro';
         qa_folder =[filesep 'data' filesep scanner filesep 'MPMqa'];%Output folder containing QA results.
         images_dir='/dicom_from_scanner';
         target_dir='/home/dataman/physics/qa_tmp';
         qafilename=[qa_folder filesep sprintf('mpm_qa_%s.txt',deblank(scanner))];
-    elseif strcmp(lower(deblank(host_name)),'mr2b')
+    elseif strcmpi(deblank(host_name),'mr2b')
         scanner = 'trio';
         qa_folder =[filesep 'data' filesep scanner filesep 'MPMqa'];
         images_dir='/dicom_from_scanner';
@@ -91,7 +91,8 @@ elseif strcmp('Online',QAMode)
         qafilename=[target_dir filesep sprintf('mpm_qa_%s.txt',deblank(scanner))];
     end
     P=spm_select(Inf,'^.*\.ima$','Select ima files',[],images_dir);
-    if ~strcmp(lower(deblank(host_name)),'mr2')&&~strcmp(lower(deblank(host_name)),'mr2b')
+    if ~strcmpi(deblank(host_name),'mr2') && ...
+            ~strcmpi(deblank(host_name),'mr2b')
         if ~strcmp(images_dir,spm_str_manip(P,'H'))% when host name is not mr2 or mr2b, images_dir and target_dir were set to pwd. This is changed here to ensure that the niftis are saved somewhere appropriate
             images_dir=spm_str_manip(P(1,:),'H');target_dir=spm_str_manip(P(1,:),'H');
         end
@@ -125,9 +126,9 @@ end
 
 
 disp('----- Calculation of B1 maps -----');
-vbq_B1map_v2(B11,B01,T1);
+hmri_B1map_v2(B11,B01,T1);
 if (~isequal(B11,B12))
-    vbq_B1map_v2(B12,B02,T1);
+    hmri_B1map_v2(B12,B02,T1);
 end
 disp('----- Calculation of quantitative maps -----');
 P_trans=spm_select('FPList',spm_str_manip(B11(1,:),'h'),'^(uSumOfSq|smu).*\.(img|nii)$');
@@ -376,6 +377,7 @@ function [MTw1,PDw1,T1w1,B11,B01,MTw2,PDw2,T1w2,B12,B02]=ManualLoading(images_di
     end
 
 end
+
 function [meanMT,DMT,meanR1,DR1,meanR2s,DR2s,avgMT,SDMT,stabMT,avgR1,SDR1,stabR1,avgR2s,SDR2s,stabR2s]=MPMQA_calc(MT1,MT2,R11,R12,R2s1,R2s2,ImagedObject)
 % OutputDir=fullfile(spm_str_manip(MT1(1,:),'h'),'MPMQA_analysis');
 % if(~exist(OutputDir,'dir'))
@@ -413,6 +415,7 @@ avgR1=mean(meanR1(meanR1~=0));SDR1=std(meanR1(meanR1~=0),[],1);stabR1=mean(DR1(D
 avgR2s=mean(meanR2s(meanR2s~=0));SDR2s=std(meanR2s(meanR2s~=0),[],1);stabR2s=mean(DR2s(DR2s~=0));
 
 end
+
 function MT_analysis_QA(P_mtw,P_pdw,P_t1w,P_trans,P_receiv)
 
 % $Id$
@@ -425,22 +428,26 @@ if nargin==0,
     P_receiv = spm_select([0 2],'nifti','Sensitivity map: T1w+map');
 end
 
-p = hinfo(P_mtw);
+p = hmri_hinfo(P_mtw);
 TE_mtw = cat(1,p.te);
 TR_mtw = p(1).tr;
 fa_mtw = p(1).fa;
 
-p = hinfo(P_pdw);
+p = hmri_hinfo(P_pdw);
 TE_pdw = cat(1,p.te);
 TR_pdw = p(1).tr;
 fa_pdw = p(1).fa;
 
-p = hinfo(P_t1w);
+p = hmri_hinfo(P_t1w);
 TE_t1w = cat(1,p.te);
 TR_t1w = p(1).tr;
 fa_t1w = p(1).fa;
 
-vbq_MTProtQA(P_mtw, P_pdw, P_t1w, TE_mtw, TE_pdw, TE_t1w, TR_mtw, TR_pdw, TR_t1w, fa_mtw, fa_pdw, fa_t1w, P_trans, P_receiv);
+hmri_MTProtQA(P_mtw, P_pdw, P_t1w, ...
+                TE_mtw, TE_pdw, TE_t1w, ...
+                TR_mtw, TR_pdw, TR_t1w, ...
+                fa_mtw, fa_pdw, fa_t1w, ...
+                P_trans, P_receiv);
 end
 
 function [meanB1,DB1,avgB1,SDB1,stabB1]=B1anal(B11files,B12files,ImagedObject)
@@ -567,6 +574,7 @@ for Runctr=1:size(V,1)/2
     spm_write_vol(V(Runctr),spm_read_vols(V(Runctr)));
 end
 end
+
 function CoregRuns(MTw1,PDw1,T1w1,MTw2,PDw2,T1w2)
 
 for CtrstCtr=1:nargin/2

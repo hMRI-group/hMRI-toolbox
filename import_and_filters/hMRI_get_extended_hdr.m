@@ -49,3 +49,5 @@ for cfile = 1:size(filelist,1)
     end
     fclose(fid);
 end
+
+end

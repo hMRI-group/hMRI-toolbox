@@ -1,11 +1,10 @@
-function [fmap_img,unwarp_img] = vbq_B1Map_unwarp(fm_imgs,anat_img,other_img,pm_defs)
+function [fmap_img,unwarp_img] = hmri_B1Map_unwarp(fm_imgs,anat_img,other_img,pm_defs)
 % Ensure that your version of Fieldmap in 'Fieldmapxy' is the right
 % version.
 %_______________________________________________________________________
 % Copyright (C) 2008 Wellcome Trust Centre for Neuroimaging
 
 % Chloe Hutton
-% $Id$
 
 if nargin < 4
   error('Enter field map images, distorted anatomical image, images to unwarp and defaults');
@@ -129,7 +128,7 @@ if ~isempty(IP.P{1})
 %----------------------------------------------------------------------
    IP.fm = FieldMap('CreateFieldMap',IP);
 
-% TL: move created maps to outpath (see vbq_run_b1map line 262 ff.)
+% TL: move created maps to outpath (see hmri_run_b1map line 262 ff.)
 if IP.maskbrain==1
     [outpath, ~ , ~] = fileparts(IP.P{1}.fname);
     [inputpt, name, e] = fileparts(IP.P{2}.fname);
@@ -190,7 +189,7 @@ for filenum=1:numel(other_img)
 
 end
 
-
+end
 
 
 

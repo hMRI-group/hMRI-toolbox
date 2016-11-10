@@ -1,11 +1,11 @@
-function out = vbq_run_mpr_b0_b1(job)
+function out = hmri_run_mpr_b0_b1(job)
 % Calculation of B1 mapping data 3D EPI spin echo (SE) and stimulated (STE) 
 % echo images (see Jiru and Klose MRM 2006).
 % Corresponding scanning protocol/sequence: al_B1mapping_v2a and
 % al_B1mapping_v2b
 % Input: 11 pairs of (SE, STE) images for B1 map calculation and 3 images
 % for B0 map calculation.
-% This macro calls the functions vbq_B1Map_unwarp and vbq_B1Map_process for
+% This macro calls the functions hmri_B1Map_unwarp and hmri_B1Map_process for
 % correction of image distortions, padding and smoothing of the images.
 % Output:
 %     - distorted B1 (B1map_----) and error (SDmap_----) maps
@@ -16,11 +16,9 @@ function out = vbq_run_mpr_b0_b1(job)
 % 11) with maximum signal amplitude in the SE images.
 % The sum of square image of all SE images is created (SumOfSq) and
 % undistorted (uSumOfSq) for coregistration of the B1 map to an anatomical dataset
-% former vbq_B1map_v2.m
+% former hmri_B1map_v2.m
 
-% $Id$
-
-job = vbq_process_data_spec(job);
+job = hmri_process_data_spec(job);
 
 out.R1 = {};
 out.R2s = {};
@@ -32,7 +30,7 @@ out.T1w = {};
 % each subject:
 for in=1:numel(job.subj)
     local_job.subj = job.subj(in);
-    out_temp       = vbq_mpr_b0_b1_local(local_job);
+    out_temp       = hmri_mpr_b0_b1_local(local_job);
     out.subj(in)   = out_temp.subj(1);
     out.R1{end+1}  = out.subj(in).R1{1};
     out.R2s{end+1} = out.subj(in).R2s{1};
@@ -46,7 +44,7 @@ end
 %% SUBFUNCTION
 % ========================================================================
 
-function out_loc = vbq_mpr_b0_b1_local(job)
+function out_loc = hmri_mpr_b0_b1_local(job)
 
 % determine output directory path
 try 
@@ -56,10 +54,10 @@ catch
     outpath = fileparts(Pin(1,:)); % case outdir
 end
 % save outpath as default for this job
-vbq_get_defaults('outdir',outpath);
+hmri_get_defaults('outdir',outpath);
 
 % run B1 map calculation for B1 bias correction
-P_trans = vbq_run_b1map(job.subj);
+P_trans = hmri_run_b1map(job.subj);
 
 % initialize file names for map creation
 P_mtw    = char(job.subj.raw_mpm.MT);
@@ -68,8 +66,8 @@ P_t1w    = char(job.subj.raw_mpm.T1);
 
 P_receiv = [];
 
-% run vbq_MTProt to evaluate the parameter maps
-[fR1, fR2s, fMT, fA, PPDw, PT1w]  = vbq_MTProt(P_mtw, P_pdw, P_t1w, P_trans, P_receiv);
+% run hmri_MTProt to evaluate the parameter maps
+[fR1, fR2s, fMT, fA, PPDw, PT1w]  = hmri_MTProt(P_mtw, P_pdw, P_t1w, P_trans, P_receiv);
 
 % % determine output directory path
 % % CASE INDIR
@@ -95,9 +93,9 @@ out_loc.subj.MT  = {fullfile(outpath,spm_str_manip(fMT,'t'))};
 out_loc.subj.A   = {fullfile(outpath,spm_str_manip(fA,'t'))};
 out_loc.subj.T1w = {fullfile(outpath,spm_str_manip(PT1w,'t'))};
 
-% save processing params (vbq defaults) and job for the current subject:
-vbq_def = vbq_get_defaults; %#ok<*NASGU>
-save(fullfile(outpath, [spm_file(P_mtw(1,:),'basename') '_create_maps_vbqdef.mat']),'vbq_def');
+% save processing params (hmri defaults) and job for the current subject:
+hmri_def = hmri_get_defaults; %#ok<*NASGU>
+save(fullfile(outpath, [spm_file(P_mtw(1,:),'basename') '_create_maps_hmridef.mat']),'hmri_def');
 save(fullfile(outpath, [spm_file(P_mtw(1,:),'basename') '_create_maps_job.mat']),'job');
 
 f = fopen(fullfile(outpath, '_finished_'), 'wb');

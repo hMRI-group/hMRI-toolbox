@@ -1,13 +1,13 @@
-function crm = tbx_scfg_vbq_crm
-% Configuration file for the Voxel-Based Quantification (VBQ)
+function crm = tbx_scfg_hmri_crm
+% Configuration file for the "histological MRI" (hMRI) toolbox
+% Previously named "Voxel-Based Quantification" (VBQ)
 % -> Dealing with the creation of the maps
 %_______________________________________________________________________
 % Copyright (C) 2014 Wellcome Trust Centre for Neuroimaging
 
 % Christophe Phillips
-% $Id$
 
-b1_choices = vbq_get_defaults('b1_type.labels');
+b1_choices = hmri_get_defaults('b1_type.labels');
 
 % ---------------------------------------------------------------------
 % raws Raw Images
@@ -177,7 +177,7 @@ data_spec.values = { sdata sdata_multi };
 data_spec.val    = { sdata };
 create_B0B1.val     = { data_spec };
 create_B0B1.help    = {'Use this option when B0/B1 3D maps available.'};
-create_B0B1.prog    = @vbq_run_mpr_b0_b1;
+create_B0B1.prog    = @hmri_run_mpr_b0_b1;
 create_B0B1.vout    = @vout_crt_B0B1;
 % ---------------------------------------------------------------------
 % create_Unicort Create MPR maps with UNICORT B1
@@ -197,7 +197,7 @@ create_Unicort.help     = {'Use this option when B0/B1 3D maps not available. ',
     'Bias field estimation and correction will be performed',...
     'using the approach described in ''Unified segmentation based ',...
     'correction... (UNICORT) paper by Weiskopf et al., 2011 '};
-create_Unicort.prog     = @vbq_run_mpr_unicort;
+create_Unicort.prog     = @hmri_run_mpr_unicort;
 create_Unicort.vout     = @vout_crt_Unicort;
 % ---------------------------------------------------------------------
 % crm Create maps
@@ -216,8 +216,8 @@ end
 %% VOUT & OTHER SUBFUNCTIONS
 % ========================================================================
 % The RUN functions :
-% - out = vbq_run_mpr_b0_b1(job)
-% - out = vbq_run_mpr_unicort(job)
+% - out = hmri_run_mpr_b0_b1(job)
+% - out = hmri_run_mpr_unicort(job)
 % are defined separately.
 %_______________________________________________________________________
 

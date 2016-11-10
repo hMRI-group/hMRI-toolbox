@@ -1,10 +1,11 @@
-function vbq_B1map_v2(P,Q,T1)
-% Calculation of B1 mapping data 3D EPI spin echo (SE) and stimulated (STE) echo images (see Jiru and Klose MRM 2006).
+function hmri_B1map_v2(P,Q,T1)
+% Calculation of B1 mapping data 3D EPI spin echo (SE) and stimulated (STE)
+% echo images (see Jiru and Klose MRM 2006).
 % Corresponding scanning protocol/sequence: al_B1mapping_v2a and
 % al_B1mapping_v2b
 % Input: 11 pairs of (SE, STE) images for B1 map calculation and 3 images
 % for B0 map calculation.
-% This macro calls the functions vbq_B1Map_unwarp and vbq_B1Map_process for
+% This macro calls the functions hmri_B1Map_unwarp and hmri_B1Map_process for
 % correction of image distortions, padding and smoothing of the images.
 % Output:
 %     - distorted B1 (B1map_----) and error (SDmap_----) maps
@@ -15,8 +16,6 @@ function vbq_B1map_v2(P,Q,T1)
 % 11) with maximum signal amplitude in the SE images.
 % The sum of square image of all SE images is created (SumOfSq) and
 % undistorted (uSumOfSq) for coregistration of the B1 map to an anatomical dataset
-
-% $Id$
 
 % if nargin == 3: B1 mapping for QA: T1 is given
 % else:
@@ -122,12 +121,12 @@ anat_img = {char(X_save.fname)};
 other_img{1}=char(V_save.fname);
 other_img{2}=char(W_save.fname);
 
-[fmap_img,unwarp_img] = vbq_B1Map_unwarp(fm_imgs,anat_img,other_img,pm_defs);
+[fmap_img,unwarp_img] = hmri_B1Map_unwarp(fm_imgs,anat_img,other_img,pm_defs);
 uanat_img{1}=unwarp_img{1}.fname;
 ub1_img{1}=unwarp_img{2}.fname;
 ustd_img{1}=unwarp_img{3}.fname;
 fpm_img{1}=fmap_img{1};
 vdm_img{1}=fmap_img{2};
-[allub1_img]=vbq_B1Map_process(uanat_img,ub1_img,ustd_img,vdm_img,fpm_img,pm_defs);
+[allub1_img]=hmri_B1Map_process(uanat_img,ub1_img,ustd_img,vdm_img,fpm_img,pm_defs);
 
 end

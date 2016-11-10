@@ -5,7 +5,6 @@ function out = hmri_run_local_preproc(job)
 % Copyright (C) 2014 Wellcome Trust Centre for Neuroimaging
 
 % Christophe Phillips
-% $Id$
 
 job = preproc_perimage_to_persubject(job);
 

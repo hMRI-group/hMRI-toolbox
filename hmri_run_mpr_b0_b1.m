@@ -18,8 +18,6 @@ function out = hmri_run_mpr_b0_b1(job)
 % undistorted (uSumOfSq) for coregistration of the B1 map to an anatomical dataset
 % former hmri_B1map_v2.m
 
-% $Id$
-
 job = hmri_process_data_spec(job);
 
 out.R1 = {};

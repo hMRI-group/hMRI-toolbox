@@ -29,8 +29,6 @@ function out = hmri_run_mpr_unicort(job)
 % Author: N. Weiskopf, WTCN, London
 % 29 November 2010
 
-% $Id$
-
 %%
 
 job=hmri_process_data_spec(job);
@@ -186,4 +184,6 @@ for ip=1:numel(job.subj)
     f = fopen(fullfile(cwd, '_finished_'), 'wb');
     fclose(f);
     
+end
+
 end

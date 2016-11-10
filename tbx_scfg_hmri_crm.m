@@ -6,7 +6,6 @@ function crm = tbx_scfg_hmri_crm
 % Copyright (C) 2014 Wellcome Trust Centre for Neuroimaging
 
 % Christophe Phillips
-% $Id$
 
 b1_choices = hmri_get_defaults('b1_type.labels');
 

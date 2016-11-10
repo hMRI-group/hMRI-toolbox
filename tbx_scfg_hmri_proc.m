@@ -6,7 +6,6 @@ function proc = tbx_scfg_hmri_proc
 % Copyright (C) 2014 Wellcome Trust Centre for Neuroimaging
 
 % Christophe Phillips
-% $Id$
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % -------------------------------------------------------------------------

@@ -10,8 +10,6 @@ function hmri = tbx_cfg_hmri
 % Bogdan Draganski & Ferath Kherif, 2011
 % ======================================================================
 
-% $Id$
-
 if ~isdeployed, addpath(fullfile(spm('Dir'),'toolbox','hmri')); end
 
 % Work is split into 2 main branches:

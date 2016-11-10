@@ -1,4 +1,4 @@
-function job=vbq_auto_pipeline(job)
+function job=hmri_auto_pipeline(job)
     if ~isfield(job.auto_pipeline, 'auto_pipeline_yes')
         return
     end
@@ -34,7 +34,7 @@ function job=vbq_auto_pipeline(job)
 %         if progress.stage < 2
 %             progress.stage = 2;
 %             files = list_files_rec(sInDir);
-%             f = fopen(fullfile(sOutDir, 'vbq_files.txt'), 'wt');
+%             f = fopen(fullfile(sOutDir, 'hmri_files.txt'), 'wt');
 %             for i = 1:numel(files)
 %                 fwrite(f, sprintf('%s\n', files{i}));
 %             end
@@ -45,14 +45,14 @@ function job=vbq_auto_pipeline(job)
         progress.stage = 2;
         save(fullfile(sOutDir, 'progress.mat'), '-struct', 'progress');
 
-        cmd1 = ['java -jar "' fullfile(spm('dir'), 'toolbox', 'vbq', 'Dicomymizer.jar') '" anonymizer -hier PatientName:StudyDate:ProtocolName:SeriesNumber_SeriesDescription -outdir "' sOutDir '" -indir "' sInDir '" -nc -sv'];
+        cmd1 = ['java -jar "' fullfile(spm('dir'), 'toolbox', 'hmri', 'Dicomymizer.jar') '" anonymizer -hier PatientName:StudyDate:ProtocolName:SeriesNumber_SeriesDescription -outdir "' sOutDir '" -indir "' sInDir '" -nc -sv'];
         disp(cmd1);
         system(cmd1);
     end
     
     progress.stage = 3; %#ok<STRNU>
     save(fullfile(sOutDir, 'progress.mat'), '-struct', 'progress');
-    vbq_cleanup(sOutDir); % remove results from previous run
+    hmri_cleanup(sOutDir); % remove results from previous run
     
     subj_count = 0;
     subj_orig = job.subj(1);
@@ -80,7 +80,7 @@ function job=vbq_auto_pipeline(job)
                 else
                     N = 1;
                 end
-                for n=1:N % Convert just first series, the one we will use for VBQ
+                for n=1:N % Convert just first series, the one we will use for hMRI
                     P3 = fullfile(P2, ser(n).name);
                     
                     mosaic_result = '';
@@ -339,8 +339,8 @@ function status = local_dicom_convert2(dir_name)
         status = 0;
         return
     end
-    exename = fullfile(spm('dir'), 'toolbox', 'vbq', 'dcm2nii', exename);
-    cmd = [exename ' -b "' fullfile(spm('dir'), 'toolbox', 'vbq', 'dcm2nii', 'dcm2nii.ini') '" -o . -g N "' dir_name '"'];
+    exename = fullfile(spm('dir'), 'toolbox', 'hmri', 'dcm2nii', exename);
+    cmd = [exename ' -b "' fullfile(spm('dir'), 'toolbox', 'hmri', 'dcm2nii', 'dcm2nii.ini') '" -o . -g N "' dir_name '"'];
     status = system(cmd);
 end
 

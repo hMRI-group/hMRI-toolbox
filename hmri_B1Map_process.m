@@ -1,4 +1,4 @@
-function [allub1_img] = vbq_B1Map_process(uanat_img,ub1_img,ustd_img,vdm_img,fpm_img,pm_defs)
+function [allub1_img] = hmri_B1Map_process(uanat_img,ub1_img,ustd_img,vdm_img,fpm_img,pm_defs)
 
 %_______________________________________________________________________
 % Copyright (C) 2008 Wellcome Trust Centre for Neuroimaging
@@ -97,3 +97,4 @@ Vspadb1.fname=fullfile(pth,['sm' fname ext]);
 Vspadb1.descrip=sprintf('Smoothed (%dmm) masked padded unwarped B1 map',pm_defs.B1FWHM(1));
 allub1_img{2}=spm_write_vol(Vspadb1,spadb1map);
   
+end

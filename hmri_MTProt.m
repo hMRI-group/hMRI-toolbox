@@ -44,17 +44,17 @@ TE_limit = 30; % TE time up to which echoes are averaged (in ms)
 
 
 %% retrieves acquisition parameters and update defaults parameters set
-p = hinfo(P_mtw);
+p = hmri_hinfo(P_mtw);
 hmri_get_defaults('MPMacq.TE_mtw', cat(1,p.te));
 hmri_get_defaults('MPMacq.TR_mtw', p(1).tr);
 hmri_get_defaults('MPMacq.fa_mtw', p(1).fa);
 
-p = hinfo(P_pdw);
+p = hmri_hinfo(P_pdw);
 hmri_get_defaults('MPMacq.TE_pdw', cat(1,p.te));
 hmri_get_defaults('MPMacq.TR_pdw', p(1).tr);
 hmri_get_defaults('MPMacq.fa_pdw', p(1).fa);
 
-p = hinfo(P_t1w);
+p = hmri_hinfo(P_t1w);
 hmri_get_defaults('MPMacq.TE_t1w', cat(1,p.te));
 hmri_get_defaults('MPMacq.TR_t1w', p(1).tr);
 hmri_get_defaults('MPMacq.fa_t1w', p(1).fa);

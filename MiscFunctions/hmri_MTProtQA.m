@@ -1,6 +1,6 @@
-function [fR1, fR2s, fMT, fA, PPDw, PT1w]  = vbq_MTProtQA(P_mtw, P_pdw, P_t1w, TE_mtw, TE_pdw, TE_t1w, TR_mtw, TR_pdw, TR_t1w, fa_mtw, fa_pdw, fa_t1w, P_trans, P_receiv, flatAmap)
+function [fR1, fR2s, fMT, fA, PPDw, PT1w]  = hmri_MTProtQA(P_mtw, P_pdw, P_t1w, TE_mtw, TE_pdw, TE_t1w, TR_mtw, TR_pdw, TR_t1w, fa_mtw, fa_pdw, fa_t1w, P_trans, P_receiv, flatAmap)
 
-% function [fR1, fR2s, fMT, fA, PPDw, PT1w]  = vbq_MTProtQA(P_mtw, P_pdw, P_t1w, TE_mtw, TE_pdw, TE_t1w, TR_mtw, TR_pdw, TR_t1w, fa_mtw, fa_pdw, fa_t1w, P_trans, P_receiv, flatAmap)
+% function [fR1, fR2s, fMT, fA, PPDw, PT1w]  = hmri_MTProtQA(P_mtw, P_pdw, P_t1w, TE_mtw, TE_pdw, TE_t1w, TR_mtw, TR_pdw, TR_t1w, fa_mtw, fa_pdw, fa_t1w, P_trans, P_receiv, flatAmap)
 % Evaluation function for multi-contrast multi-echo FLASH protocol
 % P_mtw, P_pdw, P_t1w: MTw, PDw, T1w images (can be multiple echoes = images)
 % TE_mtw, TE_pdw, TE_t1w, TR_mtw, TR_pdw, TR_t1w: echo times and TR of images
@@ -370,7 +370,7 @@ if(~isempty(f_T))&&(isempty(f_R))&&flatAmap
 end
 spm_progress_bar('Clear');
 
-return;
+end
 
 % --------------------------------------------------------------
 function [] = coreg_mt(P_ref, P_src)
@@ -390,7 +390,7 @@ for src_nr=1:size(P_src, 1)
     MM = spm_get_space(deblank(VF.fname));
     spm_get_space(deblank(deblank(VF.fname)), M*MM);
 end
-return;
+end
 
 
 % -----------------------------------------------------------------
@@ -417,7 +417,7 @@ M  = inv(spm_matrix(x));
 MM = spm_get_space(deblank(VF2.fname));
 spm_get_space(deblank(deblank(VF2.fname)), M*MM);
 
-return;
+end
 
 function Aflattening(pth,Athresh)
 % TempT1=spm_select('FPList',pth ,'^.*_R1.(img|nii)$');
@@ -504,7 +504,7 @@ for counter=1:size(temp,1)
 end
 
 
-return;
+end
 
 function [bmask,CSF] = MaskT1(P,flags)
 
@@ -538,7 +538,7 @@ bmask=zeros(size(GM,1),size(GM,2),size(GM,3));
 bmask((GM+WM+CSF+Other1+Other2)>=flags.thresh)=1;
 % CSF(CSF<0.95)=0;CSF(CSF>=0.95)=1;
 CSF(WM<0.95)=0;CSF(WM>=0.95)=1;%CSF is actually a white matter mask
-return;
+end
 
 
 %__________________________________________________________________________
@@ -547,4 +547,4 @@ return;
 function bl = feq(val, comp_val)
 % floating point comparison
 bl = abs(val - comp_val) <= eps(comp_val);
-return;
+end

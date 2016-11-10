@@ -66,3 +66,5 @@ for cfile = 1:size(filelist,1)
     fprintf(fid,'%s',jsonhdr); % disp(jsonhdr);
     fclose(fid);
 end
+
+end

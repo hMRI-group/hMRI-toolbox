@@ -57,7 +57,6 @@ function varargout = hmri_get_defaults(defstr, varargin)
 % Volkmar Glauche
 % Then modified for use with the hMRI toolbox by Christophe Phillips
 % Cyclotron Research Centre, University of Liege, Belgium
-% $Id: hmri_get_defaults.m 37 2013-12-18 13:30:38Z christophe $
 
 global hmri_def;
 if isempty(hmri_def)

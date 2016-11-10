@@ -27,7 +27,6 @@ function [fR1, fR2s, fMT, fA, PPDw, PT1w]  = hmri_MTProt(P_mtw, P_pdw, P_t1w, P_
 % MFC 23.10.2015    Adding OLS R2* map option. For details see Weiskopf et 
 %                   al., Front. Neurosci. 2014 DOI: 10.3389/fnins.2014.00278
 %                   This reference should be cited if you use this output.
-% $Id$
 
 disp('----- Create maps from multi-contrast multi-echo FLASH protocol -----');
 

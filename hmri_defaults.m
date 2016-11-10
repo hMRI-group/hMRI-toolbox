@@ -18,7 +18,6 @@ function hmri_defaults
 
 % Written by C. Phillips, 2013.
 % Cyclotron Research Centre, University of Liege, Belgium
-% $Id: hmri_defaults.m 30 2013-11-27 14:50:20Z christophe $
 
 %%
 global hmri_def

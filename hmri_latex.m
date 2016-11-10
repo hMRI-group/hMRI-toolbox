@@ -16,9 +16,10 @@ function hmri_latex(c)
 % Copyright (C) 2011 Machine Learning & Neuroimaging Laboratory
 
 % Written by John Ashburner & Christophe Phillips
-% $Id: hmri_latex.m 31 2013-11-27 16:42:58Z christophe $
 
 skip_fct = true;
+% If true, then the list of function is not processed and the corresponding
+% .tex file not created.
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 1. Turning the cfg files into a .tex file
@@ -73,7 +74,7 @@ if ~skip_fct
         write_mfiles_help(f,fp,l_subdirs(ii));
     end
 end
-return;
+end
 
 %==========================================================================
 function write_mfiles_help(f,fp,base_dir)
@@ -124,7 +125,7 @@ for ii=1:size(f,1)
     fprintf(fp,'%s\n\n',texify('\end{alltt}'));
 end
 
-return
+end
 
 %==========================================================================
 function sts = chapter(c,fp)
@@ -152,7 +153,7 @@ switch class(c),
 end;
 fclose(fp);
 sts = true;
-return;
+end
 
 %==========================================================================
 function section(c,fp,lev)
@@ -175,8 +176,8 @@ end;
 % else
 if lev>length(sec),
     warning(['Too many nested levels... ',c.name]); %#ok<WNTAG>
-end;
-return;
+end
+end
 
 %==========================================================================
 function write_help(hlp,fp)
@@ -195,7 +196,7 @@ if iscell(hlp),
 end;
 str = texify(hlp);
 fprintf(fp,'%s\n\n',str);
-return;
+end
 
 %==========================================================================
 function str = texify(str0)
@@ -219,7 +220,7 @@ for i=1:numel(st),
     pen = en(i)+2;
 end;
 str = [str clean_latex(str0(pen:numel(str0)))];
-return;
+end
 
 %==========================================================================
 function str = clean_latex(str)
@@ -232,7 +233,7 @@ str  = strrep(str,'#','\#');
 str  = strrep(str,'|','$|$');
 str  = strrep(str,'>','$>$');
 str  = strrep(str,'<','$<$');
-return;
+end
 
 %==========================================================================
 function bibcstr = get_bib(bibdir)
@@ -241,6 +242,7 @@ bibcstr={};
 for k = 1:numel(biblist)
     [p n e v] = spm_fileparts(biblist(k).name);
     bibcstr{k}  = fullfile(bibdir,n);
+end
 end
 
 %==========================================================================
@@ -259,4 +261,5 @@ f(strcmp(cellstr(f),filesep),:) = [];
 disp(f); pause
 for i=1:size(f,1)
     spm_unlink(deblank(f(i,:)));
+end
 end

@@ -4,7 +4,6 @@ function [allub1_img] = hmri_B1Map_process(uanat_img,ub1_img,ustd_img,vdm_img,fp
 % Copyright (C) 2008 Wellcome Trust Centre for Neuroimaging
 
 % Chloe Hutton
-% $Id$
 
 if nargin < 6
   error('Enter unwarped anatomical, B1, std map, matched VDM file, Hz fieldmap and defaults');

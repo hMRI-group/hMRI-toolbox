@@ -5,7 +5,6 @@ function [fmap_img,unwarp_img] = hmri_B1Map_unwarp(fm_imgs,anat_img,other_img,pm
 % Copyright (C) 2008 Wellcome Trust Centre for Neuroimaging
 
 % Chloe Hutton
-% $Id$
 
 if nargin < 4
   error('Enter field map images, distorted anatomical image, images to unwarp and defaults');
@@ -190,7 +189,7 @@ for filenum=1:numel(other_img)
 
 end
 
-
+end
 
 
 

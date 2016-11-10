@@ -1,11 +1,11 @@
-function vbq_cleanup(d)
+function hmri_cleanup(d)
     x=dir(d);
     for i=3:numel(x)
         if x(i).isdir
             if exist(fullfile(d, x(i).name, '_finished_'), 'file')
                 disp(['Skipping finished directory ' fullfile(d, x(i).name)]);
             else
-                vbq_cleanup(fullfile(d, x(i).name));
+                hmri_cleanup(fullfile(d, x(i).name));
             end
         else
             [~,~,ext] = fileparts(x(i).name);

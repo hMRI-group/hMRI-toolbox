@@ -42,29 +42,64 @@ end
 TE_limit = 30; % TE time up to which echoes are averaged (in ms)
 
 
-%% retrieves acquisition parameters and update defaults parameters set
-p = hmri_hinfo(P_mtw);
-hmri_get_defaults('MPMacq.TE_mtw', cat(1,p.te));
-hmri_get_defaults('MPMacq.TR_mtw', p(1).tr);
-hmri_get_defaults('MPMacq.fa_mtw', p(1).fa);
+[~,IsExtended]=hMRI_get_extended_hdr(P_mtw(1,:));
+if (~IsExtended)
+    %% retrieves acquisition parameters and update defaults parameters set
+    p = hmri_hinfo(P_mtw);
+    hmri_get_defaults('MPMacq.TE_mtw', cat(1,p.te));
+    hmri_get_defaults('MPMacq.TR_mtw', p(1).tr);
+    hmri_get_defaults('MPMacq.fa_mtw', p(1).fa);
+    
+    p = hmri_hinfo(P_pdw);
+    hmri_get_defaults('MPMacq.TE_pdw', cat(1,p.te));
+    hmri_get_defaults('MPMacq.TR_pdw', p(1).tr);
+    hmri_get_defaults('MPMacq.fa_pdw', p(1).fa);
+    
+    p = hmri_hinfo(P_t1w);
+    hmri_get_defaults('MPMacq.TE_t1w', cat(1,p.te));
+    hmri_get_defaults('MPMacq.TR_t1w', p(1).tr);
+    hmri_get_defaults('MPMacq.fa_t1w', p(1).fa);
+    % retrieve acquisition parameters
+    MPMacq = hmri_get_defaults('MPMacq');
+    % NB: for better readability, avoiding lengthy notations, the following
+    % parameters are re-written out of the MPMacq structure :\...
+    TE_pdw = MPMacq.TE_pdw;
+    TE_mtw = MPMacq.TE_mtw;
+    TE_t1w = MPMacq.TE_t1w;
+    TR_pdw = MPMacq.TR_pdw;
+    TR_mtw = MPMacq.TR_mtw;
+    TR_t1w = MPMacq.TR_t1w;
+    fa_pdw = MPMacq.fa_pdw;
+    fa_mtw = MPMacq.fa_mtw;
+    fa_t1w = MPMacq.fa_t1w;
+    
+%     Get the MPMacq parameters specific for each protocols:  [TR_pdw TR_t1w fa_pdw fa_t1w]
+%     and their specific protocol values/names/tags.
+    MPMacq_prot = [ ...
+        hmri_get_defaults('MPMacq.TR_pdw') ...
+        hmri_get_defaults('MPMacq.TR_t1w') ...
+        hmri_get_defaults('MPMacq.fa_pdw') ...
+        hmri_get_defaults('MPMacq.fa_t1w')];
+else
+    hdr_mtw=hMRI_get_extended_hdr(P_mtw(1,:));hdr_pdw=hMRI_get_extended_hdr(P_pdw(1,:));hdr_t1w=hMRI_get_extended_hdr(P_t1w(1,:));
+    TE_pdw = hMRI_get_extended_hdr_val(hdr_pdw{1},'EchoTime')';
+    TE_mtw = hMRI_get_extended_hdr_val(hdr_mtw{1},'EchoTime')';
+    TE_t1w = hMRI_get_extended_hdr_val(hdr_t1w{1},'EchoTime')';
+    TR_pdw = hMRI_get_extended_hdr_val(hdr_pdw{1},'RepetitionTime');
+    TR_mtw = hMRI_get_extended_hdr_val(hdr_mtw{1},'RepetitionTime');
+    TR_t1w = hMRI_get_extended_hdr_val(hdr_t1w{1},'RepetitionTime');
+    fa_pdw = hMRI_get_extended_hdr_val(hdr_pdw{1},'FlipAngle');
+    fa_mtw = hMRI_get_extended_hdr_val(hdr_mtw{1},'FlipAngle');
+    fa_t1w = hMRI_get_extended_hdr_val(hdr_t1w{1},'FlipAngle');
 
-p = hmri_hinfo(P_pdw);
-hmri_get_defaults('MPMacq.TE_pdw', cat(1,p.te));
-hmri_get_defaults('MPMacq.TR_pdw', p(1).tr);
-hmri_get_defaults('MPMacq.fa_pdw', p(1).fa);
 
-p = hmri_hinfo(P_t1w);
-hmri_get_defaults('MPMacq.TE_t1w', cat(1,p.te));
-hmri_get_defaults('MPMacq.TR_t1w', p(1).tr);
-hmri_get_defaults('MPMacq.fa_t1w', p(1).fa);
+    MPMacq_prot = [ ...
+        hMRI_get_extended_hdr_val(hdr_pdw{1},'RepetitionTime') ...
+        hMRI_get_extended_hdr_val(hdr_t1w{1},'RepetitionTime') ...
+        hMRI_get_extended_hdr_val(hdr_pdw{1},'FlipAngle') ...
+        hMRI_get_extended_hdr_val(hdr_t1w{1},'FlipAngle')];
+end
 
-% Get the MPMacq parameters specific for each protocols:  [TR_pdw TR_t1w fa_pdw fa_t1w]
-% and their specific protocol values/names/tags.
-MPMacq_prot = [ ...
-    hmri_get_defaults('MPMacq.TR_pdw') ...
-    hmri_get_defaults('MPMacq.TR_t1w') ...
-    hmri_get_defaults('MPMacq.fa_pdw') ...
-    hmri_get_defaults('MPMacq.fa_t1w')];
 MPMacq_sets = hmri_get_defaults('MPMacq_set');
 % then match the values and find protocol tag
 Nb_protocols = numel(MPMacq_sets.vals);
@@ -90,19 +125,7 @@ hmri_get_defaults('MPMacq.tag',prot_tag);
 threshall = hmri_get_defaults('qMRI_maps_thresh');
 % load PD maps processing parameters
 PDproc = hmri_get_defaults('PDproc');
-% retrieve acquisition parameters
-MPMacq = hmri_get_defaults('MPMacq');
-% NB: for better readability, avoiding lengthy notations, the following
-% parameters are re-written out of the MPMacq structure :\...
-TE_pdw = MPMacq.TE_pdw; 
-TE_mtw = MPMacq.TE_mtw; 
-TE_t1w = MPMacq.TE_t1w; 
-TR_pdw = MPMacq.TR_pdw; 
-TR_mtw = MPMacq.TR_mtw; 
-TR_t1w = MPMacq.TR_t1w; 
-fa_pdw = MPMacq.fa_pdw; 
-fa_mtw = MPMacq.fa_mtw; 
-fa_t1w = MPMacq.fa_t1w; 
+
 % RF spoiling correction parameters
 RFC = hmri_get_defaults(['rfcorr.',prot_tag]);
 
@@ -174,6 +197,24 @@ for p = 1:dm(3),
     spm_progress_bar('Set',p);
 end
 spm_progress_bar('Clear');
+
+Output_hdr=struct('history',struct('procstep',[],'input',[],'output',[]));
+Output_hdr.history.procstep.version='TBD';
+Output_hdr.history.procstep.descrip='map creation';
+Output_hdr.history.procstep.procpar=prot_tag;
+for ctr=1:numel(V_pdw)
+    Output_hdr.history.input{ctr}.filename=V_pdw(ctr).fname;
+    input_hdr=hMRI_get_extended_hdr(V_pdw(ctr).fname);
+    if ~isempty(input_hdr{1})
+        Output_hdr.history.input{ctr}.history=input_hdr{1}.history;
+    else
+        Output_hdr.history.input{ctr}.history='';
+    end
+%     Output_hdr.history.input{ctr}.history=input_hdr{1}.history;
+end
+Output_hdr.history.output.imtype='R2* map';
+Output_hdr.history.output.units='ms-1';
+hMRI_set_extended_hdr(fR2s,Output_hdr);
 
 % Average first few echoes for increased SNR and fit T2*
 disp('----- Reading and averaging the images -----');
@@ -255,7 +296,7 @@ if hmri_get_defaults('R2sOLS')
     Ni.dat    = file_array(fullfile(pth,[nam '_R2s_OLS' '.nii']),dm,dt, 0,1,0);
     create(Ni);
     
-    % Combine the data and echo times:
+   % Combine the data and echo times:
     TE = [TE_pdw; TE_mtw; TE_t1w];
     
     nPD = numel(TE_pdw);
@@ -307,18 +348,38 @@ if hmri_get_defaults('R2sOLS')
         spm_progress_bar('Set',p);
     end
     spm_progress_bar('Clear');
+    Output_hdr=struct('history',struct('procstep',[],'input',[],'output',[]));
+    Output_hdr.history.procstep.version='TBD';
+    Output_hdr.history.procstep.descrip='map creation';
+    Output_hdr.history.procstep.procpar=prot_tag;
+    for ctr=1:numel(V_pdw)
+        Output_hdr.history.input{ctr}.filename=V_pdw(ctr).fname;
+        input_hdr=hMRI_get_extended_hdr(V_pdw(ctr).fname);
+        if ~isempty(input_hdr{1})
+            Output_hdr.history.input{ctr}.history=input_hdr{1}.history;
+        else
+            Output_hdr.history.input{ctr}.history='';
+        end
+        %         Output_hdr.history.input{ctr}.history=input_hdr{1}.history;
+    end
+    Output_hdr.history.output.imtype='R2*-OLS map';
+    Output_hdr.history.output.units='ms-1';
+    hMRI_set_extended_hdr(fullfile(pth,[nam '_R2s_OLS' '.nii']),Output_hdr);
         
 end % OLS code
 
 nam2    = {'R1','A','MT','MTR_synt'};
 descrip = {'R1 map [1000/s]', 'A map','Delta MT map', 'Synthetic MTR image'};
+units = {'1000/s', '%','A.U.', 'A.U.'};
 if (TR_mtw == TR_pdw) & (fa_mtw == fa_pdw),
     nam2    = {nam2{:}, 'MTR','MTRdiff'};
     descrip = {descrip{:}, 'Classic MTR image','Percent diff. MTR image (RD/BD)'};
+    units = {units{:}, 'A.U.','A.U.'};
 end
 if (PDproc.PDmap)
     nam2    = {nam2{:}, 'MTforA'};
     descrip = {descrip{:}, 'B1-uncorrected MT map for A flattening'};
+    units = {units{:}, 'A.U.'};
 end
 Nmap    = nifti;
 for ii=1:numel(nam2),
@@ -489,6 +550,26 @@ for p=1:dm(3),
     Nmap(4).dat(:,:,p) = max(min(tmp,threshall.MTR_synt),-threshall.MTR_synt);
     spm_progress_bar('Set',p);
         
+end
+Vtemp=cat(1,V_mtw,V_pdw,V_t1w);
+Output_hdr=struct('history',struct('procstep',[],'input',[],'output',[]));
+Output_hdr.history.procstep.version='TBD';
+Output_hdr.history.procstep.descrip='map creation';
+Output_hdr.history.procstep.procpar=prot_tag;
+for ctr=1:numel(Vtemp)
+    Output_hdr.history.input{ctr}.filename=Vtemp(ctr).fname;
+    input_hdr=hMRI_get_extended_hdr(Vtemp(ctr).fname);
+    if ~isempty(input_hdr{1})
+        Output_hdr.history.input{ctr}.history=input_hdr{1}.history;
+    else
+        Output_hdr.history.input{ctr}.history='';
+    end
+%     Output_hdr.history.input{ctr}.history=input_hdr{1}.history;
+end
+for ctr=1:size(nam2,2)
+    Output_hdr.history.output.imtype=descrip(ctr);
+    Output_hdr.history.output.units=units(ctr);
+    hMRI_set_extended_hdr(fullfile(pth,[nam '_' nam2{ctr} '.nii']),Output_hdr);
 end
 if ~isempty(f_T) && isempty(f_R) && PDproc.PDmap
     PDcalculation(pth)

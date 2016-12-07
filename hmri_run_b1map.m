@@ -20,11 +20,29 @@ function P_trans = hmri_run_b1map(jobsubj)
 
 % retrieve b1_type from job and pass it as default value for the current
 % processing:
+[hdr,IsExtended]=hMRI_get_extended_hdr(jobsubj.raw_fld.b1{1});
 b1_prot = jobsubj.b1_type;
 hmri_get_defaults('b1_type.val',b1_prot);
-% load the resulting default parameters:
-b1map_defs = hmri_get_defaults(['b1map.',b1_prot,'.b1proc']);
-
+if (~IsExtended)
+    b1map_defs = hmri_get_defaults('b1map.i3D_EPI');
+else
+    if ~isempty(strfind(hdr{1}.acqpar.ProtocolName,'al_B1mapping'))
+        b1map_defs.data='EPI';b1map_defs.avail=true;b1map_defs.procreq=true;
+        b1map_defs.b1acq.beta=hMRI_get_extended_hdr_val(hdr{1},'B1mapNominalFAValues');
+        b1map_defs.b1acq.TM=hMRI_get_extended_hdr_val(hdr{1},'B1mapMixingTime');
+        b1map_defs.b1acq.nPEacq=hMRI_get_extended_hdr_val(hdr{1},'MeasuredPELines');%hdr{1}.acqpar.Columns/hmri_get_defaults('b1map.i3D_EPI.b1acq.phaseGRAPPA');
+        if hdr{1}.acqpar.PixelBandwidth==2300% not ideal...
+            b1map_defs.b1acq.EchoSpacing=540e-3;
+        elseif hdr{1}.acqpar.PixelBandwidth==3600
+            b1map_defs.b1acq.EchoSpacing=330e-3;
+        end
+        b1map_defs.b1acq.blipDIR=hMRI_get_extended_hdr_val(hdr{1},'PhaseEncodingDirectionSign');        
+        b1map_defs.b1proc=hmri_get_defaults('b1map.i3D_EPI.b1proc');
+%         b1map_defs.T1=hmri_get_defaults(['b1map.',b1_prot,'.b1proc' '.T1']);
+%         b1map_defs.Nonominalvalues=hmri_get_defaults(['b1map.',b1_prot,'.b1proc' '.Nonominalvalues']);
+%         b1map_defs.eps=hmri_get_defaults(['b1map.',b1_prot,'.b1proc' '.eps']);
+    end
+end
 P_trans = [];
 
 if ~b1map_defs.avail
@@ -143,17 +161,10 @@ n = numel(V);
 Y_tmptmp = zeros([V(1).dim(1:2) n]);
 Y_ab = zeros(V(1).dim(1:3));
 Y_cd = zeros(V(1).dim(1:3));
-Index_Matrix = zeros([V(1).dim(1:3) b1map_defs.Nonominalvalues]);
-real_Y_tmp = zeros([V(1).dim(1:2) 2*b1map_defs.Nonominalvalues]);
-Y_tmp = zeros([V(1).dim(1:2) 2*b1map_defs.Nonominalvalues]);
+Index_Matrix = zeros([V(1).dim(1:3) b1map_defs.b1proc.Nonominalvalues]);
+real_Y_tmp = zeros([V(1).dim(1:2) 2*b1map_defs.b1proc.Nonominalvalues]);
 
-Temp_matrix = zeros([V(1).dim(1:3) n/2]);
-Ssq_matrix = zeros(V(1).dim(1:3));
-
-for i=1:n/2
-    Temp_matrix(:,:,:,i)=spm_read_vols(V(2*(i-1)+1));
-end
-Ssq_matrix=sqrt(sum(Temp_matrix.^2,4));
+Ssq_matrix=sqrt(sum(spm_read_vols(V(1:2:end)).^2,4));
 
 %-Start progress plot
 %-----------------------------------------------------------------------
@@ -162,23 +173,23 @@ spm_progress_bar('Init',V(1).dim(3),'B1 map fit','planes completed');
 %-Loop over planes computing result Y
 %-----------------------------------------------------------------------
 clear Temp_mat;
-corr_fact = exp(b1map_defs.TM/b1map_defs.T1);
+corr_fact = exp(b1map_defs.b1acq.TM/b1map_defs.b1proc.T1);
 for p = 1:V(1).dim(3),%loop over the partition dimension of the data set
     B = spm_matrix([0 0 -p 0 0 0 1 1 1]);
     for i = 1:n/2
         M = inv(B*inv(V(1).mat)*V(1).mat); %#ok<*MINV>
         Y_tmptmp(:,:,((i-1)*2+1))  = real( ...
             acos(corr_fact*spm_slice_vol(V((i-1)*2+2),M,V(1).dim(1:2),0) ./ ...
-            (spm_slice_vol(V((i-1)*2+1),M,V(1).dim(1:2),0)+b1map_defs.eps))/pi*180/b1map_defs.beta(i) ...
+            (spm_slice_vol(V((i-1)*2+1),M,V(1).dim(1:2),0)+b1map_defs.b1proc.eps))/pi*180/b1map_defs.b1acq.beta(i) ...
             ); % nearest neighbor interpolation
-        Y_tmptmp(:,:,((i-1)*2+2))  = 180/b1map_defs.beta(i) - Y_tmptmp(:,:,((i-1)*2+1));
+        Y_tmptmp(:,:,((i-1)*2+2))  = 180/b1map_defs.b1acq.beta(i) - Y_tmptmp(:,:,((i-1)*2+1));
         Temp_mat(:,:,i) = spm_slice_vol(V((i-1)*2+1),M,V(1).dim(1:2),0); %#ok<*AGROW>
     end
     
     [~,indexes] = sort(Temp_mat,3);
     for x_nr = 1:V(1).dim(1)
         for y_nr = 1:V(1).dim(2)
-            for k=1:b1map_defs.Nonominalvalues
+            for k=1:b1map_defs.b1proc.Nonominalvalues
                 real_Y_tmp(x_nr,y_nr,2*k-1) = Y_tmptmp(x_nr,y_nr,2*indexes(x_nr,y_nr,n/2-k+1)-1);
                 real_Y_tmp(x_nr,y_nr,2*k)   = Y_tmptmp(x_nr,y_nr,2*indexes(x_nr,y_nr,n/2-k+1));
                 Index_Matrix(x_nr,y_nr,p,k) = indexes(x_nr,y_nr,indexes(x_nr,y_nr,n/2-k+1));
@@ -187,11 +198,11 @@ for p = 1:V(1).dim(3),%loop over the partition dimension of the data set
     end
     
     Y_tmp = sort(real(real_Y_tmp), 3); % take the real value due to noise problems
-    Y_sd  = zeros([V(1).dim(1:2) (b1map_defs.Nonominalvalues+1)]);
-    Y_mn  = zeros([V(1).dim(1:2) (b1map_defs.Nonominalvalues+1)]);
-    for i = 1:(b1map_defs.Nonominalvalues+1)
-        Y_sd(:,:,i) = std(Y_tmp(:,:,i:(i + b1map_defs.Nonominalvalues-1)), [], 3);
-        Y_mn(:,:,i) = mean(Y_tmp(:,:,i:(i + b1map_defs.Nonominalvalues-1)), 3);
+    Y_sd  = zeros([V(1).dim(1:2) (b1map_defs.b1proc.Nonominalvalues+1)]);
+    Y_mn  = zeros([V(1).dim(1:2) (b1map_defs.b1proc.Nonominalvalues+1)]);
+    for i = 1:(b1map_defs.b1proc.Nonominalvalues+1)
+        Y_sd(:,:,i) = std(Y_tmp(:,:,i:(i + b1map_defs.b1proc.Nonominalvalues-1)), [], 3);
+        Y_mn(:,:,i) = mean(Y_tmp(:,:,i:(i + b1map_defs.b1proc.Nonominalvalues-1)), 3);
     end
     
     [~,min_index] = min(Y_sd,[],3); % !! min_index is a 2D array. Size given by resolution along read and phase directions
@@ -212,47 +223,91 @@ if isfield(jobsubj.output,'indir')
 else
     outpath = jobsubj.output.outdir{1};
 end
+Output_hdr_B1=struct('history',struct('procstep',[],'input',[],'output',[]));
+Output_hdr_B1.history.procstep.version='TBD';
+Output_hdr_B1.history.procstep.descrip='B1 mapping calculation';
+Output_hdr_B1.history.procstep.procpar=b1map_defs;
+% Output_hdr_B1.history.input=jobsubj.raw_fld.b1;
+Input=jobsubj.raw_fld.b1;
+% Input=cat(1,jobsubj.raw_fld.b1,jobsubj.raw_fld.b0);
+for ctr=1:numel(Input)
+    Output_hdr_B1.history.input{ctr}.filename=Input{ctr};
+    input_hdr=hMRI_get_extended_hdr(Input{ctr});
+    if ~isempty(input_hdr{1})
+        Output_hdr_B1.history.input{ctr}.history=input_hdr{1}.history;
+    else
+        Output_hdr_B1.history.input{ctr}.history='';
+    end
+end
+Output_hdr_B1.history.output.imtype='B1 map';
+Output_hdr_B1.history.output.units='percent (%)';
+Output_hdr_SD=Output_hdr_B1;Output_hdr_SSQ=Output_hdr_B1;
+Output_hdr_SD.history.output.imtype='SD (error) map';
+Output_hdr_SSQ.history.output.imtype='SSQ image';
+Output_hdr_SSQ.history.output.units='A.U.';
 
 V_save = struct('fname',V(1).fname,'dim',V(1).dim,'mat',V(1).mat,'dt',V(1).dt,'descrip','B1 map [%]');
 [~,name,e] = fileparts(V_save.fname);
-P_B1 = fullfile(outpath,['B1map_' name e]);
-V_save.fname = P_B1;
+V_save.fname = fullfile(outpath,['B1map_' name e]);
 V_save = spm_write_vol(V_save,Y_ab*100);
+hMRI_set_extended_hdr(V_save.fname,Output_hdr_B1)
 
 W_save = struct('fname',V(1).fname,'dim',V(1).dim,'mat',V(1).mat,'dt',V(1).dt,'descrip','SD [%]');
-P_SDB1 = fullfile(outpath,['SDmap_' name e]);
-W_save.fname = P_SDB1;
+W_save.fname = fullfile(outpath,['SDmap_' name e]);
 W_save = spm_write_vol(W_save,Y_cd*100);
+hMRI_set_extended_hdr(W_save.fname,Output_hdr_SD)
 
 X_save = struct('fname',V(1).fname,'dim',V(1).dim,'mat',V(1).mat,'dt',V(1).dt,'descrip','SE SSQ matrix');
-P_SsqMat = fullfile(outpath,['SumOfSq' e]);
-X_save.fname = P_SsqMat;
+X_save.fname = fullfile(outpath,['SumOfSq' e]);
 X_save = spm_write_vol(X_save,Ssq_matrix); %#ok<*NASGU>
+hMRI_set_extended_hdr(X_save.fname,Output_hdr_SSQ)
+
+
 
 
 %-B0 undistortion
 %-----------------------------------------------------------------------
 % load default parameters and customize...
-b1_prot = hmri_get_defaults('b1_type.val');
-% load the resulting default parameters:
-b0proc_defs = hmri_get_defaults(['b1map.',b1_prot,'.b0proc']);
 
+%         b1map_defs.b1proc=hmri_get_defaults('b1map.i3D_EPI.b1proc');
+
+
+% b1_prot = hmri_get_defaults('b1_type.val');
+% load the resulting default parameters:
+
+[hdr,IsExtended]=hMRI_get_extended_hdr(jobsubj.raw_fld.b0{1});
+b1_prot = jobsubj.b1_type;
+if (~IsExtended)
+    b0proc_defs = hmri_get_defaults('b1map.i3D_EPI.b0acq');
+else
+%     [hdr,~]=hMRI_get_extended_hdr(jobsubj.raw_fld.b0{1});
+    TEs=hMRI_get_extended_hdr_val(hdr{1},'EchoTime');
+    b0proc_defs.shortTE=TEs(1);    b0proc_defs.longTE=TEs(2);
+%     b0proc_defs.HZTHRESH = hmri_get_defaults(['b1map.',b1_prot,'.b0proc' '.HZTHRESH']);
+%     b0proc_defs.SDTHRESH = hmri_get_defaults(['b1map.',b1_prot,'.b0proc' '.SDTHRESH']);
+%     b0proc_defs.ERODEB1 = hmri_get_defaults(['b1map.',b1_prot,'.b0proc' '.ERODEB1']);
+%     b0proc_defs.PADB1 = hmri_get_defaults(['b1map.',b1_prot,'.b0proc' '.PADB1']);
+%     b0proc_defs.B1FWHM = hmri_get_defaults(['b1map.',b1_prot,'.b0proc' '.B1FWHM']);
+%     b0proc_defs.match_vdm = hmri_get_defaults(['b1map.',b1_prot,'.b0proc' '.match_vdm']);
+%     b0proc_defs.b0maskbrain = hmri_get_defaults(['b1map.',b1_prot,'.b0proc' '.b0maskbrain']);
+end
 pm_defaults;
 pm_defs = pm_def;
-pm_defs.SHORT_ECHO_TIME = b0proc_defs.shorTE;
+pm_defs.SHORT_ECHO_TIME = b0proc_defs.shortTE;
 pm_defs.LONG_ECHO_TIME = b0proc_defs.longTE;
-pm_defs.blipdir = b1map_defs.blipDIR;
-pm_defs.TOTAL_EPI_READOUT_TIME = b1map_defs.EchoSpacing*b1map_defs.nPEacq;
-pm_defs.MASKBRAIN = b0proc_defs.b0maskbrain;
-pm_defs.STDTHRESH = 5;
-pm_defs.HZTHRESH = b0proc_defs.HZTHRESH;
-pm_defs.ERODEB1 = b0proc_defs.ERODEB1;
-pm_defs.PADB1 = b0proc_defs.PADB1 ;
-pm_defs.B1FWHM = b0proc_defs.B1FWHM; %For smoothing. FWHM in mm - i.e. it is divided by voxel resolution to get FWHM in voxels
-pm_defs.match_vdm = b0proc_defs.match_vdm;
-if ~strcmp(b1_prot,'i3D_EPI_v2b') % also necessary for other sequences?
-    pm_defs.pedir = b1map_defs.PEDIR;
-end
+pm_defs.blipdir = b1map_defs.b1acq.blipDIR;
+pm_defs.TOTAL_EPI_READOUT_TIME = b1map_defs.b1acq.EchoSpacing*b1map_defs.b1acq.nPEacq;
+pm_defs.MASKBRAIN = b1map_defs.b1proc.b0maskbrain;
+pm_defs.STDTHRESH = b1map_defs.b1proc.SDTHRESH;
+pm_defs.HZTHRESH = b1map_defs.b1proc.HZTHRESH;
+pm_defs.ERODEB1 = b1map_defs.b1proc.ERODEB1;
+pm_defs.PADB1 = b1map_defs.b1proc.PADB1 ;
+pm_defs.B1FWHM = b1map_defs.b1proc.B1FWHM; %For smoothing. FWHM in mm - i.e. it is divided by voxel resolution to get FWHM in voxels
+pm_defs.match_vdm = b1map_defs.b1proc.match_vdm;
+% USE OF PEDIR NOT CLEAR - WAIT FOR EB'S FEEDBACK
+% if ~strcmp(b1_prot,'i3D_EPI_v2b') % also necessary for other sequences?
+%     pm_defs.pedir = b1map_defs.PEDIR;
+% end
 
 mag1 = spm_vol(Q(1,:));
 mag = mag1.fname;
@@ -270,7 +325,8 @@ end
 scphase.fname = fullfile(outpath,[name e]);
 fm_imgs = char(scphase.fname,mag);
 
-anat_img1 = spm_vol(P_SsqMat);
+% anat_img1 = spm_vol(P_SsqMat);
+anat_img1 = spm_vol(X_save.fname);
 
 [path,name,e] = fileparts(anat_img1.fname);
 anat_img = {strcat(path,filesep,name,e)};
@@ -281,6 +337,56 @@ other_img{2} = char(W_save.fname);
 uanat_img{1}=unwarp_img{1}.fname;
 ub1_img{1} = unwarp_img{2}.fname;
 ustd_img{1} = unwarp_img{3}.fname;
+
+Output_hdr_B1=struct('history',struct('procstep',[],'input',[],'output',[]));
+Output_hdr_B1.history.procstep.version='TBD';
+Output_hdr_B1.history.procstep.descrip='B1 map - unwarping';
+Output_hdr_B1.history.procstep.procpar=b0proc_defs;
+Input=cat(1,anat_img,{fm_imgs(2,:)},other_img{1},other_img{2});
+for ctr=1:numel(Input)
+    Output_hdr_B1.history.input{ctr}.filename=Input{ctr};
+    input_hdr=hMRI_get_extended_hdr(Input{ctr});
+    if ~isempty(input_hdr{1})
+        Output_hdr_B1.history.input{ctr}.history=input_hdr{1}.history;
+    else
+        Output_hdr_B1.history.input{ctr}.history='';
+    end
+%     Output_hdr_B1.history.input{ctr}.history=input_hdr{1}.history;
+end
+Output_hdr_B1.history.output.imtype='unwarped B1 map';
+Output_hdr_B1.history.output.units='percent (%)';
+Output_hdr_SD=Output_hdr_B1;Output_hdr_SSQ=Output_hdr_B1;
+Output_hdr_SD.history.output.imtype='unwarped SD (error) map';
+Output_hdr_SSQ.history.output.imtype='unwarped SSQ image';
+Output_hdr_SSQ.history.output.units='A.U.';
+
+hMRI_set_extended_hdr(ub1_img{1},Output_hdr_B1);
+hMRI_set_extended_hdr(ustd_img{1},Output_hdr_SD);
+hMRI_set_extended_hdr(uanat_img{1},Output_hdr_SSQ);
+
+Output_hdr_Others=struct('history',struct('procstep',[],'input',[],'output',[]));
+Output_hdr_Others.history.procstep.version='TBD';
+Output_hdr_Others.history.procstep.descrip='Fieldmap toolbox outputs';
+Output_hdr_Others.history.procstep.procpar=b0proc_defs;
+Input=cat(1,{mag1.fname},{phase1.fname});
+for ctr=1:numel(Input)
+    Output_hdr_Others.history.input{ctr}.filename=Input{ctr};
+    input_hdr=hMRI_get_extended_hdr(Input{ctr});
+    if ~isempty(input_hdr{1})
+        Output_hdr_B1.history.input{ctr}.history=input_hdr{1}.history;
+    else
+        Output_hdr_B1.history.input{ctr}.history='';
+    end
+%     Output_hdr_Others.history.input{ctr}.history=input_hdr{1}.history;
+end
+Output_hdr_Others.history.output.imtype='See FieldMap Toolbox';
+Output_hdr_Others.history.output.units='See FieldMap Toolbox';
+
+hMRI_set_extended_hdr(fmap_img{1}.fname,Output_hdr_Others);
+hMRI_set_extended_hdr(fmap_img{2}.fname,Output_hdr_Others);
+hMRI_set_extended_hdr(fm_imgs(1,:),Output_hdr_Others);
+
+
 fpm_img{1} = fmap_img{1};
 vdm_img{1} = fmap_img{2};
 [allub1_img] = hmri_B1Map_process(uanat_img,ub1_img,ustd_img,vdm_img,fpm_img,pm_defs);

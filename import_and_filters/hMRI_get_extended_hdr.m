@@ -1,4 +1,4 @@
-function hdr = hMRI_get_extended_hdr(filelist)
+function [hdr,HdrFlag] = hMRI_get_extended_hdr(filelist)
 % To retrieve JSON-encoded metadata from nifti images.
 %__________________________________________________________________________
 % FORMAT hdr = get_extended_hdr(filelist)
@@ -19,6 +19,13 @@ function hdr = hMRI_get_extended_hdr(filelist)
 % - Evelyne Balteau, Cyclotron Research Centre, Liège, Belgium
 % - Enrico Reimer, Max Planck Institute for Human Cognitive and Brain Sciences, Leipzig, Germany
 %__________________________________________________________________________
+
+% Antoine Lutti 28/11/2016
+% HdrFlag output to allow by map calculation code to determine if map
+% calculation parameters should be extracted from extended header or
+% defaults. HdrFlag is 1/0 if extender header is present/absent.
+% Assumption: the presence/absence of extended header is consistent for all
+% files of a dataset
 
 % Must strip the ',1' (at the end of the file extension '.nii,1') 
 % if the name has been collected using e.g. spm_select:
@@ -49,5 +56,5 @@ for cfile = 1:size(filelist,1)
     end
     fclose(fid);
 end
-
+HdrFlag=isHdrExtended(1);
 end

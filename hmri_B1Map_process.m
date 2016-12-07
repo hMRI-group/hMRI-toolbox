@@ -85,6 +85,26 @@ Vpadb1.fname=fullfile(pth,['m' fname ext]);
 Vpadb1.descrip='Masked padded unwarped B1 map';
 allub1_img{1}=spm_write_vol(Vpadb1,padb1map);
 
+Output_hdr_B1=struct('history',struct('procstep',[],'input',[],'output',[]));
+Output_hdr_B1.history.procstep.version='TBD';
+Output_hdr_B1.history.procstep.descrip='B1 map - masking & padding';
+Output_hdr_B1.history.procstep.procpar=pm_defs;
+Input=cat(1,ub1_img,ustd_img,fpm_img{1}.fname);
+for ctr=1:numel(Input)
+    Output_hdr_B1.history.input{ctr}.filename=Input{ctr};
+    input_hdr=hMRI_get_extended_hdr(Input{ctr});
+    if ~isempty(input_hdr{1})
+        Output_hdr_B1.history.input{ctr}.history=input_hdr{1}.history;
+    else
+        Output_hdr_B1.history.input{ctr}.history='';
+    end
+%     Output_hdr_B1.history.input{ctr}.history=input_hdr{1}.history;
+end
+Output_hdr_B1.history.output.imtype=' masked, padded & unwarped B1 map';
+Output_hdr_B1.history.output.units='percent (%)';
+hMRI_set_extended_hdr(allub1_img{1}.fname,Output_hdr_B1)
+
+
 % Smooth padded B1 map
 spadb1map=zeros(size(padb1map));
 smth=pm_defs.B1FWHM./pxs;
@@ -95,5 +115,24 @@ Vspadb1=rmfield(Vspadb1,'pinfo');
 Vspadb1.fname=fullfile(pth,['sm' fname ext]);
 Vspadb1.descrip=sprintf('Smoothed (%dmm) masked padded unwarped B1 map',pm_defs.B1FWHM(1));
 allub1_img{2}=spm_write_vol(Vspadb1,spadb1map);
-  
+
+Output_hdr_B1=struct('history',struct('procstep',[],'input',[],'output',[]));
+Output_hdr_B1.history.procstep.version='TBD';
+Output_hdr_B1.history.procstep.descrip='B1 map - smoothing';
+Output_hdr_B1.history.procstep.procpar=pm_defs.B1FWHM;
+Input={allub1_img{1}.fname};
+for ctr=1:numel(Input)
+    Output_hdr_B1.history.input{ctr}.filename=Input{ctr};
+    input_hdr=hMRI_get_extended_hdr(Input{ctr});
+    if ~isempty(input_hdr{1})
+        Output_hdr_B1.history.input{ctr}.history=input_hdr{1}.history;
+    else
+        Output_hdr_B1.history.input{ctr}.history='';
+    end
+%     Output_hdr_B1.history.input{ctr}.history=input_hdr{1}.history;
+end
+Output_hdr_B1.history.output.imtype=' smoothed, masked, padded & unwarped B1 map';
+Output_hdr_B1.history.output.units='percent (%)';
+hMRI_set_extended_hdr(allub1_img{1,2}.fname,Output_hdr_B1)
+
 end

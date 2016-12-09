@@ -1,4 +1,4 @@
-function varargout = spm_jsonwrite(varargin)
+function varargout = hmri_jsonwrite(varargin)
 % Serialize a JSON (JavaScript Object Notation) structure
 % FORMAT spm_jsonwrite(filename,json)
 % filename - JSON filename
@@ -20,6 +20,15 @@ function varargout = spm_jsonwrite(varargin)
 % Guillaume Flandin
 % $Id: spm_jsonwrite.m 6947 2016-11-23 16:12:12Z guillaume $
 
+%=========================================================================%
+% Version slightly modified for better formatting and readability of the
+% JSON metadata (when opts.compact = false):
+% - tabs used instead of spaces when opt.compact = false
+% - arrays containing numerical values are kept on a single line (rather
+%   than fully developed with new line for each element in the array)
+%=========================================================================%
+% Adapted by Evelyne Balteau - Cyclotron Research Centre - December 2016
+%=========================================================================%
 
 %-Input parameters
 %--------------------------------------------------------------------------
@@ -97,25 +106,44 @@ if numel(json) == 1
     S = ['{' fmt('\n',tab)];
     for i=1:numel(fn)
         if isstruct(json), val = json.(fn{i}); else val = json(fn{i}); end
-        S = [S fmt((tab+1)*2) jsonwrite_char(fn{i}) ':' fmt(~isnan(tab)) ...
-            jsonwrite_var(val,tab+1)];
+        % hmri changes: tabs instead of spaces when ~isnan(tab)
+        if ~isnan(tab)
+            S = [S repmat(fmt('\t',0),1,tab+1) jsonwrite_char(fn{i}) ':' fmt(~isnan(tab)) ...
+                jsonwrite_var(val,tab+1)];
+        else
+            S = [S fmt((tab+1)*2) jsonwrite_char(fn{i}) ':' fmt(~isnan(tab)) ...
+                jsonwrite_var(val,tab+1)];
+        end
         if i ~= numel(fn), S = [S ',']; end
         S = [S fmt('\n',tab)];
     end
-    S = [S fmt(2*tab) '}'];
+    % hmri changes: tabs instead of spaces when ~isnan(tab)
+    if ~isnan(tab)
+        S = [S repmat(fmt('\t',0),1,tab) '}'];
+    else
+        S = [S fmt(2*tab) '}'];
+    end
 else
     S = jsonwrite_cell(arrayfun(@(x) {x},json),tab);
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function S = jsonwrite_cell(json,tab)
-S = ['[' fmt('\n',tab)];
 for i=1:numel(json)
-    S = [S fmt((tab+1)*2) jsonwrite_var(json{i},tab+1)];
-    if i ~= numel(json), S = [S ',']; end
-    S = [S fmt('\n',tab)];
+    % hmri changes: tabs instead of spaces and special case for numerical
+    % values so arrays are not fully developped (better readability):
+    if isnumeric(json{i}) || islogical(json{i})
+        if i==1, S = '[';end
+        S = [S jsonwrite_var(json{i},tab+1)];
+        if i~=numel(json), S = [S ',']; end
+        if i==numel(json), S = [S ']']; end
+    else
+        if i==1, S = ['[' fmt('\n',tab)];end
+        S = [S repmat(fmt('\t',0),1,tab+1) jsonwrite_var(json{i},tab+1)];
+        if i~=numel(json), S = [S ',' fmt('\n',tab)]; end
+        if i==numel(json), S = [S fmt('\n',tab) repmat(fmt('\t',0),1,tab) ']']; end
+    end
 end
-S = [S fmt(2*tab) ']'];
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function S = jsonwrite_char(json)

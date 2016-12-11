@@ -26,6 +26,8 @@ function varargout = hmri_jsonwrite(varargin)
 % - tabs used instead of spaces when opt.compact = false
 % - arrays containing numerical values are kept on a single line (rather
 %   than fully developed with new line for each element in the array)
+% - keeps the full precision of the numerical values found in the input
+%   structure. 
 %=========================================================================%
 % Adapted by Evelyne Balteau - Cyclotron Research Centre - December 2016
 %=========================================================================%
@@ -167,7 +169,11 @@ end
 if islogical(json)
     if json, S = 'true'; else S = 'false'; end
 else
-    S = num2str(json);
+    % hmri changes: added N=16, so the precision of numerical values is not
+    % reduced when printed in the *.json output file (16 is likely to be
+    % more than the maximum precision found in the DICOM headers, and the
+    % following does not add extra zeros when not required):
+    S = num2str(json, 16);
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

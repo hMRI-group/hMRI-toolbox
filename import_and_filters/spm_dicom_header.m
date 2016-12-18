@@ -599,7 +599,11 @@ function ascout = read_ASCII(ascin)
 ENABLE_DEBUG = false;
 
 % split ascin into lines
-asclines = strsplit(ascin,'\n');
+% asclines = strsplit(ascin,'\n'); % ok for Matlab 2013 and later versions
+% replaced by textscan (with delimiter '\n') for compatibility with
+% Matlab 2012 and earlier :/...
+tmp = textscan(ascin,'%s','delimiter','\n');
+asclines = tmp{1};
 
 % initialise variables
 ascout = [];

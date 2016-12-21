@@ -65,9 +65,10 @@ try
     end
 
     hdr.Filename = fopen(fp);
-catch
+catch MExc
     problem = lasterror;
     fprintf('%s: Trouble reading DICOM file (%s), skipping.\n', fopen(fp), problem.message);
+    fprintf(1,'\n%s\n', MExc.getReport);
 end
 fclose(fp);
 
@@ -103,7 +104,20 @@ while len<lim
                 ret.SizeOfCSAData = tag.length;
                 fseek(fp,tag.length,'cof');
             case {'CSAImageHeaderInfo', 'CSASeriesHeaderInfo','CSANonImageHeaderInfoVA','CSAMiscProtocolHeaderInfoVA','CSANonImageHeaderInfoVB','CSAMiscProtocolHeaderInfoVB'},
+                % ebalteau - Note: might be necessary to as cases
+                % 'Private_0029_1110' and 'Private_0029_1210' for
+                % spectroscopy data (see spm_dicom_essentials.m)
                 dat  = decode_csa(fp,tag.length);
+                % ebalteau - to further decode the ASCII part of the DICOM
+                % header, usually contained in CSASeriesHeaderInfo: read it
+                % and rearrange it as matlab structure as well: 
+                if isfield(dat,'MrPhoenixProtocol')
+                    % works for Siemens VB and VD DICOM format:
+                    dat.MrPhoenixProtocol = read_ASCII(dat.MrPhoenixProtocol);
+                elseif isfield(dat,'MrProtocol')
+                    % works for Siemens VA DICOM format:
+                    dat.MrProtocol = read_ASCII(dat.MrProtocol);
+                end
                 ret.(tag.name) = dat;
             case {'TransferSyntaxUID'},
                 dat = char(fread(fp,tag.length,'uint8')');
@@ -440,7 +454,10 @@ if strcmp(fmt,'ieee-be') || strcmp(fmt,'ieee-be.l64')
 end
 fseek(fp,pos+lim,'bof');
 
-t = tidycsa(t);
+% if the csa field was decodable, tidy it up: 
+if isfield(t,'nitems')
+    t = tidycsa(t);
+end
 
 
 %==========================================================================
@@ -560,30 +577,26 @@ for ccsa = 1:length(csahdr)
     if ~isempty(val)
         % if only alphanumeric characters (no letters) we can assume that
         % the value is actually an array of numbers - let's convert them to
-        % numbers:
-        if (ischar(val) && ~sum(isletter(val(:))))
+        % numbers (NB: '*' is present in field 'AcquisitionMatrixText'
+        % which must not be converted into numbers otherwise the result of
+        % the multiplication and not the matrix dimensions are saved!)
+        if (ischar(val) && ~any(isletter(val(:))) && ~any(val(:)=='*'))
             tmp = str2num(val);
             if ~isempty(tmp);val = tmp;end
         end
         tdyhdr.(csahdr(ccsa).name) = val;
     end
 end
-% if there are fields containing the ASCII part of the DICOM header, read
-% it and rearrange it as matlab structure as well:
-if isfield(tdyhdr,'MrPhoenixProtocol')
-    % works for Siemens VB and VD DICOM format:
-    tdyhdr.MrPhoenixProtocol = read_ASCII(tdyhdr.MrPhoenixProtocol);
-elseif isfield(tdyhdr,'MrProtocol')
-    % works for Siemens VA DICOM format:
-    tdyhdr.MrProtocol = read_ASCII(tdyhdr.MrProtocol);
-end
+
 
 %==========================================================================
 % function ascout = read_ASCII(ascin)
+%
 % DESCRIPTION:
 % To parse the content of the ASCII part of the DICOM header (Siemens
 % specific) and convert it into a matlab structure. Compatible with VA, VB,
 % VD and also reading *.SR files (PhoenixProtocols).
+%
 % USAGE:
 % ascout = read_ASCII(ascin)
 % where ascin is the char content of either
@@ -591,12 +604,19 @@ end
 % hdr.CSASeriesHeaderInfo.MrProtocol according to Siemens software version,
 % and asc is a matlab structure containing the information contained in the
 % ASCCONV BEGIN - ASCCONV END part of the DICOM header. 
+%
+% NOTE: formatting slightly different from read_ascconv in
+% spm_dicom_convert...
+%
 % WRITTEN BY: Evelyne Balteau - Cyclotron Research Centre
 %==========================================================================
 function ascout = read_ASCII(ascin)
 
 % only for debugging purpose
 ENABLE_DEBUG = false;
+
+% extract the portion between ### ASCCONV BEGIN ### and ### ASCCONV END ###
+ascin = regexprep(ascin,'^.*### ASCCONV BEGIN [^#]*###(.*)### ASCCONV END ###.*$','$1');
 
 % split ascin into lines
 % asclines = strsplit(ascin,'\n'); % ok for Matlab 2013 and later versions
@@ -605,10 +625,17 @@ ENABLE_DEBUG = false;
 tmp = textscan(ascin,'%s','delimiter','\n');
 asclines = tmp{1};
 
+% do a first cleaning pass over the data:
+% - replace indexes [] by () + increment index
+% - replace double "" by single "
+% - replace hexadecimal values (e.g. "0x01") by decimal value
+% - delete lines where a field starts or ends by "_"
+% - delete end of lines after "#"
+asclines = regexprep(asclines,{'\[([0-9]*)\]','""','^([^"]*)0x([0-9a-fA-F]*)','#.*','^.*\._.*$'},{'($1+1)','"','$1hex2dec(''$2'')','',''});
+    
 % initialise variables
 ascout = [];
 clinenum = 1;
-isasciihdr = 0;
 
 while clinenum<length(asclines)
     
@@ -616,39 +643,12 @@ while clinenum<length(asclines)
     
     if ENABLE_DEBUG; disp(['Line #' num2str(clinenum) ' - [' cline ']']); end
     
-    idx_asconv_begin = strfind(cline,'### ASCCONV BEGIN'); % for Prisma data
-    if ~isempty(idx_asconv_begin)
-        isasciihdr = 1;
-        clinenum = clinenum+1; % go to next line where ascii header starts
-        cline = asclines{clinenum};
-    end
-    idx_asconv_end = strfind(cline,'### ASCCONV END ###');
-    if ~isempty(idx_asconv_end); isasciihdr = 0; end
-    
-    if isasciihdr
+    if ~isempty(cline)
         [hdrnam, hdrval] = strtok(cline,'=');
         hdrval = strtok(hdrval,'=');
         hdrval = strtrim(hdrval); % to remove leading and trailing white space from string
         
         % first process hdrnam
-        % skip if contains '_' characters (usually parameter attribute
-        % in Prisma data)
-        if isempty(strfind(hdrnam,'_'))
-            % convert indexes if any: C++ [0],[1],... -> matlab (1),(2),...
-            idx = [strfind(hdrnam,'[');strfind(hdrnam,']')];
-            if ~isempty(idx)
-                % remplace [] by ()
-                hdrnam(idx(1,:)) = '('; hdrnam(idx(2,:)) = ')';
-                % increment indexes
-                for in = 1:(size(idx,2))
-                    oldidx = hdrnam(idx(1,in)+1:idx(2,in)-1);
-                    newidx = num2str(str2double(oldidx)+1);
-                    hdrnam = [hdrnam(1:idx(1,in)) newidx hdrnam(idx(2,in):end)];
-                    if (length(newidx)>length(oldidx) && in<size(idx,2))
-                        idx(:,in+1:end) = idx(:,in+1:end)+1;
-                    end
-                end
-            end
             % check whether any field starts with a number
             idx = strfind(hdrnam, '.');
             okidx = idx;
@@ -666,6 +666,7 @@ while clinenum<length(asclines)
                 end
             end
             % now process hdrval
+            hdrval = strtrim(hdrval(1:idx(cidx)-1));
             idx = strfind(hdrval, '#'); % remove trailing comments if any (following #)
             if ~isempty(idx)
                 hdrval = strtrim(hdrval(1:idx(cidx)-1));

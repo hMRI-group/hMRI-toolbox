@@ -1,6 +1,6 @@
-function out = spm_dicom_convert(hdr,opts,root_dir,format,out_dir)
+function out = spm_dicom_convert(hdr,opts,root_dir,format,out_dir,json)
 % Convert DICOM images into something that SPM can use (e.g. NIfTI)
-% FORMAT spm_dicom_convert(hdr,opts,root_dir,format,out_dir)
+% FORMAT spm_dicom_convert(hdr,opts,root_dir,format,out_dir,json)
 % Inputs:
 % hdr      - a cell array of DICOM headers from spm_dicom_headers
 % opts     - options:
@@ -23,15 +23,19 @@ function out = spm_dicom_convert(hdr,opts,root_dir,format,out_dir)
 %                           creating patient folders
 % format   - output format:
 %              'nii'      - Single file NIfTI format [default]
-%              'niix'     - Single file NIfTI format with extended header (hMRI) 
-%              'nii+'     - Single file NIfTI format + separate JSON file
-%                           with acquisition parameters (hMRI, BIDS-compatible)
-%              'nii+x'    - both extended header and side-car JSON file
-%                           (using either 'nii+x' or 'niix+' is equivalent)
 %              'img'      - Two file (hdr+img) NIfTI format
 %            All images will contain a single 3D dataset, 4D images will
 %            not be created.
 % out_dir  - output directory name.
+%
+% json     - structure giving the format of the json metadata and
+%                   anonymisation options: 
+%              json.extended    - extended nii header included in the
+%                                 nii image [default: false]
+%              json.separate    - metadata stored in separate json file
+%                                 [default: false]
+%              NB: both can be simultaneously true or false.
+%              json.anonym      - 'basic' (default), 'full', 'none' 
 %
 % Output:
 % out      - a struct with a single field .files. out.files contains a
@@ -50,7 +54,8 @@ if nargin<2, opts     = 'all';  end
 if nargin<3, root_dir = 'flat'; end
 if nargin<4, format   = spm_get_defaults('images.format'); end
 if nargin<5, out_dir  = pwd;    end
-
+if nargin<6, json.extended = false; json.separate = false; end
+    
 %-Select files
 %--------------------------------------------------------------------------
 [images, other]     = select_tomographic_images(hdr);
@@ -69,16 +74,16 @@ fmos = {};
 fstd = {};
 fspe = {};
 if (strcmp(opts,'all') || strcmp(opts,'mosaic')) && ~isempty(mosaic)
-    fmos = convert_mosaic(mosaic,root_dir,format,out_dir);
+    fmos = convert_mosaic(mosaic,root_dir,format,out_dir,json);
 end
 if (strcmp(opts,'all') || strcmp(opts,'standard')) && ~isempty(standard)
-    fstd = convert_standard(standard,root_dir,format,out_dir);
+    fstd = convert_standard(standard,root_dir,format,out_dir,json);
 end
 if (strcmp(opts,'all') || strcmp(opts,'spect')) && ~isempty(spect)
-    fspe = convert_spectroscopy(spect,root_dir,format,out_dir);
+    fspe = convert_spectroscopy(spect,root_dir,format,out_dir,json);
 end
 if (strcmp(opts,'all') || strcmp(opts,'multiframe')) && ~isempty(multiframe)
-    fspe = convert_multiframes(multiframe,root_dir,format,out_dir);
+    fspe = convert_multiframes(multiframe,root_dir,format,out_dir,json);
 end
 out.files = [fmos(:); fstd(:); fspe(:)];
 if isempty(out.files)
@@ -87,9 +92,9 @@ end
 
 
 %==========================================================================
-% function fnames = convert_mosaic(hdr,root_dir,format,out_dir)
+% function fnames = convert_mosaic(hdr,root_dir,format,out_dir,json)
 %==========================================================================
-function fnames = convert_mosaic(hdr,root_dir,format,out_dir)
+function fnames = convert_mosaic(hdr,root_dir,format,out_dir,json)
 spm_progress_bar('Init',length(hdr),'Writing Mosaic', 'Files written');
 
 fnames = cell(length(hdr),1);
@@ -236,13 +241,10 @@ for i=1:length(hdr)
     create(N);
 
     % ebalteau - for JSON metadata
-    if strfind(format,'x')
-        N = init_extended_hdr(N,hdr{i});
-    elseif strfind(format,'+')
-        [pth,fnam,~] = fileparts(fnames{i});
-        spm_jsonwrite(fullfile(pth,[fnam '.json']),hdr{i},struct('indent','\n'));
+    if json.extended || json.separate
+        N = init_metadata(N,hdr{i},json);
     end
-    
+
     % Write the data unscaled
     dat           = N.dat;
     dat.scl_slope = [];
@@ -256,13 +258,13 @@ spm_progress_bar('Clear');
 
 
 %==========================================================================
-% function fnames = convert_standard(hdr,root_dir,format,out_dir)
+% function fnames = convert_standard(hdr,root_dir,format,out_dir,json)
 %==========================================================================
-function fnames = convert_standard(hdr,root_dir,format,out_dir)
+function fnames = convert_standard(hdr,root_dir,format,out_dir,json)
 hdr = sort_into_volumes(hdr);
 fnames = cell(length(hdr),1);
 for i=1:length(hdr)
-    fnames{i} = write_volume(hdr{i},root_dir,format,out_dir);
+    fnames{i} = write_volume(hdr{i},root_dir,format,out_dir,json);
 end
 
 
@@ -281,10 +283,11 @@ for i=2:length(hdr)
    %orient = reshape(hdr{i}.ImageOrientationPatient,[3 2]);
    %xy1    = hdr{i}.ImagePositionPatient(:)*orient;
     match  = 0;
-    if isfield(hdr{i},'CSAImageHeaderInfo') && isfield(hdr{i}.CSAImageHeaderInfo,'name')
+    % ebalteau: CSA headers have changed with CSA tidying up in spm_dicom_header...
+    if isfield(hdr{i},'CSAImageHeaderInfo') && isfield(hdr{i}.CSAImageHeaderInfo,'ICE_Dims')
         ice1 = sscanf( ...
-            strrep(get_numaris4_val(hdr{i}.CSAImageHeaderInfo,'ICE_Dims'), ...
-            'X', '-1'), '%i_%i_%i_%i_%i_%i_%i_%i_%i')';
+            strrep(hdr{i}.CSAImageHeaderInfo.ICE_Dims, 'X', '-1'), ...
+            '%i_%i_%i_%i_%i_%i_%i_%i_%i')';
         dimsel = logical([1 1 1 1 1 1 0 0 1]);
     else
         ice1 = [];
@@ -303,10 +306,11 @@ for i=2:length(hdr)
                 strcmp(vol{j}{1}.Modality,'CT') % Our CT seems to have shears in slice positions
             dist2 = 0;
         end
-        if ~isempty(ice1) && isfield(vol{j}{1},'CSAImageHeaderInfo') && numel(vol{j}{1}.CSAImageHeaderInfo)>=1 && isfield(vol{j}{1}.CSAImageHeaderInfo(1),'name')
+        % ebalteau: CSA headers have changed with CSA tidying up in spm_dicom_header...
+        if ~isempty(ice1) && isfield(vol{j}{1},'CSAImageHeaderInfo') && isfield(hdr{i}.CSAImageHeaderInfo,'ICE_Dims')
             % Replace 'X' in ICE_Dims by '-1'
             ice2 = sscanf( ...
-                strrep(get_numaris4_val(vol{j}{1}.CSAImageHeaderInfo,'ICE_Dims'), ...
+                strrep(vol{j}{1}.CSAImageHeaderInfo.ICE_Dims, ...
                 'X', '-1'), '%i_%i_%i_%i_%i_%i_%i_%i_%i')';
             if ~isempty(ice2)
                 identical_ice_dims=all(ice1(dimsel)==ice2(dimsel));
@@ -523,9 +527,9 @@ end
 
 
 %==========================================================================
-% function fname = write_volume(hdr,root_dir,format,out_dir)
+% function fname = write_volume(hdr,root_dir,format,out_dir,json)
 %==========================================================================
-function fname = write_volume(hdr,root_dir,format,out_dir)
+function fname = write_volume(hdr,root_dir,format,out_dir,json)
 
 % Output filename
 %--------------------------------------------------------------------------
@@ -696,9 +700,9 @@ N.mat0_intent = 'Scanner';
 N.descrip     = descrip;
 create(N);
 
-% ebalteau - for extended header (hMRI)
-if strcmp(format,'nii+')
-    N = init_extended_hdr(N,hdr{1});
+% ebalteau - for JSON metadata
+if json.extended || json.separate
+    N = init_metadata(N,hdr{1},json);
 end
 
 N.dat(:,:,:) = volume;
@@ -706,19 +710,19 @@ spm_progress_bar('Clear');
 
 
 %==========================================================================
-% function fnames = convert_spectroscopy(hdr,root_dir,format,out_dir)
+% function fnames = convert_spectroscopy(hdr,root_dir,format,out_dir,json)
 %==========================================================================
-function fnames = convert_spectroscopy(hdr,root_dir,format,out_dir)
+function fnames = convert_spectroscopy(hdr,root_dir,format,out_dir,json)
 fnames = cell(length(hdr),1);
 for i=1:length(hdr)
-    fnames{i} = write_spectroscopy_volume(hdr(i),root_dir,format,out_dir);
+    fnames{i} = write_spectroscopy_volume(hdr(i),root_dir,format,out_dir,json);
 end
 
 
 %==========================================================================
-% function fname = write_spectroscopy_volume(hdr,root_dir,format,out_dir)
+% function fname = write_spectroscopy_volume(hdr,root_dir,format,out_dir,json)
 %==========================================================================
-function fname = write_spectroscopy_volume(hdr,root_dir,format,out_dir)
+function fname = write_spectroscopy_volume(hdr,root_dir,format,out_dir,json)
 % Output filename
 %-------------------------------------------------------------------
 fname = getfilelocation(hdr{1}, root_dir,'S',format,out_dir);
@@ -878,9 +882,9 @@ N.extras      = struct('MagneticFieldStrength',...
                        get_numaris4_numval(privdat,'RealDwellTime'));
 create(N);
 
-% ebalteau - for extended header (hMRI)
-if strcmp(format,'nii+')
-    N = init_extended_hdr(N,hdr{1});
+% ebalteau - for json metadata
+if json.extended || json.separate
+    N = init_metadata(N,hdr{1},json);
 end
 
 % Read data, swap dimensions
@@ -1165,30 +1169,40 @@ fclose(fp);
 % function nrm = read_SliceNormalVector(hdr)
 %==========================================================================
 function nrm = read_SliceNormalVector(hdr)
-str = hdr.CSAImageHeaderInfo;
-val = get_numaris4_val(str,'SliceNormalVector');
-for i=1:3,
-    nrm(i,1) = sscanf(val(i,:),'%g');
-end
+% ebalteau: CSA headers have changed with CSA tidying up in spm_dicom_header...
+% str = hdr.CSAImageHeaderInfo;
+% val = get_numaris4_val(str,'SliceNormalVector');
+% for i=1:3,
+%     nrm(i,1) = sscanf(val(i,:),'%g');
+% end
+nrm = hdr.CSAImageHeaderInfo.SliceNormalVector;
 
 
 %==========================================================================
 % function n = read_NumberOfImagesInMosaic(hdr)
 %==========================================================================
 function n = read_NumberOfImagesInMosaic(hdr)
-str = hdr.CSAImageHeaderInfo;
-val = get_numaris4_val(str,'NumberOfImagesInMosaic');
-n   = sscanf(val','%d');
-if isempty(n), n=[]; end
+% ebalteau: CSA headers have changed with CSA tidying up in spm_dicom_header...
+% str = hdr.CSAImageHeaderInfo;
+% val = get_numaris4_val(str,'NumberOfImagesInMosaic');
+% n   = sscanf(val','%d');
+% if isempty(n), n=[]; end
+try 
+    n = hdr.CSAImageHeaderInfo.NumberOfImagesInMosaic;
+catch
+    n=[];
+end
 
 
 %==========================================================================
 % function dim = read_AcquisitionMatrixText(hdr)
 %==========================================================================
 function dim = read_AcquisitionMatrixText(hdr)
-str = hdr.CSAImageHeaderInfo;
-val = get_numaris4_val(str,'AcquisitionMatrixText');
-dim = sscanf(val','%d*%d')';
+% ebalteau: CSA headers have changed with CSA tidying up in spm_dicom_header...
+% str = hdr.CSAImageHeaderInfo;
+% val = get_numaris4_val(str,'AcquisitionMatrixText');
+% dim = sscanf(val','%d*%d')';
+dim = hdr.CSAImageHeaderInfo.AcquisitionMatrixText;
 if length(dim)==1
     dim = sscanf(val','%dp*%d')';
 end
@@ -1438,20 +1452,20 @@ else
 end
 
 %==========================================================================
-% function fspe = convert_multiframes(hdr,root_dir,format,out_dir)
+% function fspe = convert_multiframes(hdr,root_dir,format,out_dir,json)
 %==========================================================================
-function fspe = convert_multiframes(hdr,root_dir,format,out_dir)
+function fspe = convert_multiframes(hdr,root_dir,format,out_dir,json)
 fspe = {};
 dict = load('spm_dicom_dict.mat');
 for i=1:numel(hdr)
-    out  = convert_multiframe(hdr{i}, dict, root_dir, format,out_dir);
+    out  = convert_multiframe(hdr{i}, dict, root_dir, format,out_dir,json);
     fspe = [fspe(:); out(:)];
 end
 
 %==========================================================================
-% function out = convert_multiframe(H, dict, root_dir, format,out_dir)
+% function out = convert_multiframe(H, dict, root_dir, format,out_dir,json)
 %==========================================================================
-function out = convert_multiframe(H, dict, root_dir, format,out_dir)
+function out = convert_multiframe(H, dict, root_dir, format,out_dir,json)
 out      = {};
 diminfo  = read_DimOrg(H,dict);
 dat      = read_FGS(H,diminfo);

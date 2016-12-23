@@ -608,7 +608,9 @@ end
 % NOTE: formatting slightly different from read_ascconv in
 % spm_dicom_convert...
 %
-% WRITTEN BY: Evelyne Balteau - Cyclotron Research Centre
+% WRITTEN BY: Evelyne Balteau - Cyclotron Research Centre and improved
+% thanks to the read_ascconv implementation in spm_dicom_convert (thank
+% you, John?)
 %==========================================================================
 function ascout = read_ASCII(ascin)
 
@@ -626,12 +628,12 @@ tmp = textscan(ascin,'%s','delimiter','\n');
 asclines = tmp{1};
 
 % do a first cleaning pass over the data:
-% - replace indexes [] by () + increment index
-% - replace double "" by single "
+% - replace indexes [] by () + increment index +1 (C>Matlab indexing)
+% - replace double "" by single '
 % - replace hexadecimal values (e.g. "0x01") by decimal value
 % - delete lines where a field starts or ends by "_"
 % - delete end of lines after "#"
-asclines = regexprep(asclines,{'\[([0-9]*)\]','""','^([^"]*)0x([0-9a-fA-F]*)','#.*','^.*\._.*$'},{'($1+1)','"','$1hex2dec(''$2'')','',''});
+asclines = regexprep(asclines,{'\[([0-9]*)\]','""','^([^"]*)0x([0-9a-fA-F]*)','#.*','^.*\._.*$'},{'($1+1)','''','$1hex2dec(''$2'')','',''});
     
 % initialise variables
 ascout = [];
@@ -639,54 +641,35 @@ clinenum = 1;
 
 while clinenum<length(asclines)
     
-    cline = asclines{clinenum};
-    
-    if ENABLE_DEBUG; disp(['Line #' num2str(clinenum) ' - [' cline ']']); end
-    
-    if ~isempty(cline)
-        [hdrnam, hdrval] = strtok(cline,'=');
-        hdrval = strtok(hdrval,'=');
-        hdrval = strtrim(hdrval); % to remove leading and trailing white space from string
-        
-        % first process hdrnam
-            % check whether any field starts with a number
-            idx = strfind(hdrnam, '.');
-            okidx = idx;
-            for cidx = 1:length(idx)
-                if isstrprop(hdrnam(idx(cidx)+1), 'digit')
-                    okidx(cidx) = 0;
-                else
-                    okidx(cidx) = 1;
+    if ENABLE_DEBUG; fprintf(1,'Line #%d - [%s]\n', clinenum, asclines{clinenum}); end
+    if ~isempty(asclines{clinenum})
+        try
+            [tlhrh,~] = regexp(asclines{clinenum}, '(?:=)+', 'split', 'match');
+            % first process the name of the parameter (hdrnam)
+            % split into fields
+            [hdrnam,~] = regexp(tlhrh{1}, '(?:\.)+', 'split', 'match');
+            % check whether any field starts with a number and if so,
+            % replace it by "index<number>..."
+            isfirstdigit = cellfun(@(x) isstrprop(x(1),'digit'),hdrnam);
+            if any(isfirstdigit)
+                for cfield=1:length(hdrnam)
+                    if isfirstdigit(cfield)
+                        hdrnam{cfield} = ['index' hdrnam{cfield}];
+                    end
                 end
             end
-            if ~isempty(find(okidx==0,1))
-                idx = idx(okidx==0);
-                for cidx = length(idx):-1:1
-                    hdrnam = [hdrnam(1:idx(cidx)) 'index' hdrnam(idx(cidx)+1:end)];
-                end
-            end
-            % now process hdrval
-            hdrval = strtrim(hdrval(1:idx(cidx)-1));
-            idx = strfind(hdrval, '#'); % remove trailing comments if any (following #)
-            if ~isempty(idx)
-                hdrval = strtrim(hdrval(1:idx(cidx)-1));
-            end
-            idx = strfind(hdrval, '""'); % strings are surrounded by ""
-            if ~isempty(idx)
-                if ENABLE_DEBUG; disp(['ascout.' hdrnam ' = {' strrep(hdrval,'""','''') '};']); end
-                eval(['ascout.' hdrnam ' = {' strrep(hdrval,'""','''') '};']);
-            elseif ~isempty(strfind(hdrval, 'x')) 
-                % hexadecimal numbers stored as strings '0x...'
-                if ENABLE_DEBUG; disp(['ascout.' hdrnam ' = {''' hdrval '''};']); end
-                eval(['ascout.' hdrnam ' = {''' hdrval '''};']);
-            else
-                if ENABLE_DEBUG; disp(['ascout.' hdrnam ' = str2num(hdrval);']); end
-                eval(['ascout.' hdrnam ' = str2num(hdrval);']);
-            end
+            % concatenate back the fields
+            hdrnam = sprintf('.%s', hdrnam{:});
+            % now process the value (hdrval)
+            hdrval = strtrim(tlhrh{2});
+            % and eval the whole line
+            eval(sprintf('ascout%s = %s;', hdrnam, hdrval));
+            if ENABLE_DEBUG; fprintf(1,'ascout%s = %s;\n', hdrnam, hdrval); end
+        catch
+            disp(['AscConv: Error evaluating ''ascout.' asclines{clinenum} ''';']);
         end
     end
     clinenum = clinenum+1;
-    
 end
 
 

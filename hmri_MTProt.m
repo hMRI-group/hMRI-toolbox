@@ -49,7 +49,7 @@ if ~isempty(p)
     hmri_get_defaults('MPMacq.TR_mtw', p(1).tr);
     hmri_get_defaults('MPMacq.fa_mtw', p(1).fa);
 else
-    sprintf('No TE, TR, and FA values found for MTw images. Fallback to defaults.')
+    warning('No TE, TR, and FA values found for MTw images. Fallback to defaults.')
 end
 
 p = hmri_hinfo(P_pdw);
@@ -58,7 +58,7 @@ if ~isempty(p)
     hmri_get_defaults('MPMacq.TR_pdw', p(1).tr);
     hmri_get_defaults('MPMacq.fa_pdw', p(1).fa);
 else
-    sprintf('No TE, TR, and FA values found for PDw images. Fallback to defaults.')
+    warning('No TE, TR, and FA values found for PDw images. Fallback to defaults.')
 end
 
 p = hmri_hinfo(P_t1w);
@@ -67,7 +67,7 @@ if ~isempty(p)
     hmri_get_defaults('MPMacq.TR_t1w', p(1).tr);
     hmri_get_defaults('MPMacq.fa_t1w', p(1).fa);
 else
-    sprintf('No TE, TR, and FA values found for T1w images. Fallback to defaults.')    
+    warning('No TE, TR, and FA values found for T1w images. Fallback to defaults.')    
 end
 % retrieve acquisition parameters
 MPMacq = hmri_get_defaults('MPMacq');

@@ -20,10 +20,7 @@ else
             'TR=(?<tr>.+)ms/TE=(?<te>.+)ms/FA=(?<fa>.+)deg',...
             'names');
         if isempty(tmp)
-            p(ii).tr = [];
-            p(ii).te = [];
-            p(ii).fa = [];
-            
+            p = [];
 %             switch ii
 %                 case 1
 %                    prompt = strcat('Please enter the Echo Time (TE) of image #',...

@@ -24,7 +24,7 @@ global hmri_def
 
 %% %%%%%%%%%%%%%%%%%%%%% Global parameters %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Specifying the lab
-hmri_def.centre = 'lren' ; % can be 'fil', 'lren', 'crc', 'sciz' or 'cbs'
+hmri_def.centre = 'cbs' ; % can be 'fil', 'lren', 'crc', 'sciz' or 'cbs'
 
 %% %%%%%%%%%%%%%%%%% Common processing parameters %%%%%%%%%%%%%%%%%%%%%
 % These parameters are either parameters that are fixed for all sites or
@@ -40,13 +40,20 @@ hmri_def.PDproc.WMMaskTh = 0.95; % Threshold for calculation of white-matter mas
 hmri_def.PDproc.biasreg  = 10^(-5);
 hmri_def.PDproc.biasfwhm = 50;
 
+%% UNICORT processing
+hmri_def.unicort.reg = 10^-3;
+hmri_def.unicort.FWHM = 60;
+hmri_def.unicort.thr = 5; % TL: 2 for sciz & cbs with SIEMENS 3T Skyra
+                          % otherwise: 5
+
 %% Threshold values for saving of the qMRI maps
 hmri_def.qMRI_maps_thresh.R1       = 2000;
 hmri_def.qMRI_maps_thresh.A        = 10^5;
 hmri_def.qMRI_maps_thresh.R2s      = 10;
 hmri_def.qMRI_maps_thresh.MTR      = 50;
 hmri_def.qMRI_maps_thresh.MTR_synt = 50;
-hmri_def.qMRI_maps_thresh.MT       = 5; % TL: 15 for cbs & sciz; original: 5 
+hmri_def.qMRI_maps_thresh.MT       = 5; % TL: 15 for cbs & sciz with SIEMENS 3T Skyra
+                                         % original: 5 
 
 %% MPM acquisition parameters and RF spoiling correction parameters
 % these value are initialised with defaults (v2k protocol - Prisma) for the
@@ -268,7 +275,7 @@ hmri_def.b1map.i3D_EPI.b1proc.HZTHRESH = 110;
 hmri_def.b1map.i3D_EPI.b1proc.SDTHRESH = 5;
 hmri_def.b1map.i3D_EPI.b1proc.ERODEB1 = 1;
 hmri_def.b1map.i3D_EPI.b1proc.PADB1 = 3 ;
-hmri_def.b1map.i3D_EPI.b1proc.B1FWHM = 8; %For smoothing. FWHM in mm - i.e. it is divided by voxel resolution to get FWHM in voxels
+hmri_def.b1map.i3D_EPI.b1proc.B1FWHM = 8; % For smoothing. FWHM in mm - i.e. it is divided by voxel resolution to get FWHM in voxels
 hmri_def.b1map.i3D_EPI.b1proc.match_vdm = 1;
 hmri_def.b1map.i3D_EPI.b1proc.b0maskbrain = 1;
 

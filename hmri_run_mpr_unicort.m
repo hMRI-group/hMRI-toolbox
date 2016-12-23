@@ -64,8 +64,9 @@ for ip=1:numel(job.subj)
     % see Weiskopf et al., Neuroimage 2010
     
     
-    reg = 10^-3;
-    FWHM = 60;
+    reg = hmri_get_defaults('unicort.reg');
+    FWHM = hmri_get_defaults('unicort.FWHM');
+    thr_factor = hmri_get_defaults('unicort.thr');
     
     P_R1     = fR1;
     P_PDw    = PPDw;
@@ -86,7 +87,7 @@ for ip=1:numel(job.subj)
     % create head mask
     V_PDw = spm_vol(P_PDw);
     Y_PDw = spm_read_vols(V_PDw);
-    thresh = 5*mode(round(Y_PDw(:))); % TL: for sciz & cbs 2* instead of 5*
+    thresh = thr_factor*mode(round(Y_PDw(:))); 
     
     % mask R1 map with head/neck mask
     V_R1 = spm_vol(P_R1);
@@ -103,7 +104,12 @@ for ip=1:numel(job.subj)
     %% preparation of spm structure for "New Segment" tool
     
     % clear('matlabbatch');
-    tpm_nam = fullfile(spm('dir'),'tpm','TPM.nii');
+    tpm_nam = fullfile(spm('dir'),'tpm','TPM.nii'); % instead of TPM.nii
+    % see http://www.unil.ch/lren/home/menuinst/data--utilities.html
+    % Lorio S, Fresard S, Adaszewski S, Kherif F, Chowdhury R, Frackowiak RS, 
+    % Ashburner J, Helms G, Weiskopf N, Lutti A, Draganski B. New tissue priors 
+    % for improved automated classification of subcortical brain structures on MRI. 
+    % Neuroimage. 2016 Apr 15;130:157-66. doi: 10.1016/j.neuroimage.2016.01.062
     
     preproc8.channel.write = [1 1];
     preproc8.tissue(1).tpm = {[tpm_nam ',1']};

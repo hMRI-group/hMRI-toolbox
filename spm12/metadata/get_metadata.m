@@ -41,7 +41,7 @@ for cfile = 1:size(filelist,1)
     switch lower(ext)
         case '.nii'
             % open nifti file
-            fid = fopen(filelist(cfile,:),'r+');
+            fid = fopen(cfname,'r+');
             % standard header is always 348 bytes long, move first there:
             std_hdr_size = 348;
             fseek(fid, std_hdr_size, 'bof');
@@ -64,7 +64,7 @@ for cfile = 1:size(filelist,1)
                 % check whether there is a JSON file associated to the
                 % non-extended nii image:
                 if exist(fullfile(pth,[fnam '.json']),'file')
-                    tmp = hmri_get_metadata(fullfile(pth,[fnam '.json']));
+                    tmp = get_metadata(fullfile(pth,[fnam '.json']));
                     hdr{cfile} = tmp{1};
                 else
                     % fprintf(['\nINFO: No nifti header extension available in file \n%s' ...

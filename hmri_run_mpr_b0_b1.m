@@ -69,24 +69,6 @@ P_receiv = [];
 % run hmri_MTProt to evaluate the parameter maps
 [fR1, fR2s, fMT, fA, PPDw, PT1w]  = hmri_MTProt(P_mtw, P_pdw, P_t1w, P_trans, P_receiv);
 
-% % determine output directory path
-% % CASE INDIR
-% outpath = fileparts(fR1); 
-% % CASE OUTDIR
-% if isfield(job.subj.output,'outdir')
-%     if ~strcmp(outpath, job.subj.output.outdir{1})
-%         % MFC: Only move files if a different directory is chosen - can't
-%         % move a file to itself...
-%         outpath = job.subj.output.outdir{1};
-%         movefile(fR1,outpath);
-%         movefile(fR2s,outpath);
-%         movefile(fMT,outpath);
-%         movefile(fA,outpath);
-%         movefile(PPDw,outpath);
-%         movefile(PT1w,outpath);
-%     end
-% end
-
 out_loc.subj.R1  = {fullfile(outpath,spm_str_manip(fR1,'t'))};
 out_loc.subj.R2s = {fullfile(outpath,spm_str_manip(fR2s,'t'))};
 out_loc.subj.MT  = {fullfile(outpath,spm_str_manip(fMT,'t'))};
@@ -94,7 +76,7 @@ out_loc.subj.A   = {fullfile(outpath,spm_str_manip(fA,'t'))};
 out_loc.subj.T1w = {fullfile(outpath,spm_str_manip(PT1w,'t'))};
 
 % save processing params (hmri defaults) and job for the current subject:
-hmri_def = hmri_get_defaults; %#ok<*NASGU>
+hmri_def = hmri_get_defaults;
 save(fullfile(outpath, [spm_file(P_mtw(1,:),'basename') '_create_maps_hmridef.mat']),'hmri_def');
 save(fullfile(outpath, [spm_file(P_mtw(1,:),'basename') '_create_maps_job.mat']),'job');
 

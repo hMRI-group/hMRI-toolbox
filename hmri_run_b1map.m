@@ -20,24 +20,26 @@ function P_trans = hmri_run_b1map(jobsubj)
 
 % retrieve b1_type from job and pass it as default value for the current
 % processing:
-[hdr,IsExtended]=hMRI_get_extended_hdr(jobsubj.raw_fld.b1{1});
+[hdr,IsExtended] = hMRI_get_extended_hdr(jobsubj.raw_fld.b1{1});
 b1_prot = jobsubj.b1_type;
 hmri_get_defaults('b1_type.val',b1_prot);
 if (~IsExtended)
-    b1map_defs = hmri_get_defaults('b1map.i3D_EPI');
+    b1map_defs = hmri_get_defaults(['b1map.' b1_prot]);
 else
     if ~isempty(strfind(hdr{1}.acqpar.ProtocolName,'al_B1mapping'))
-        b1map_defs.data='EPI';b1map_defs.avail=true;b1map_defs.procreq=true;
-        b1map_defs.b1acq.beta=hMRI_get_extended_hdr_val(hdr{1},'B1mapNominalFAValues');
-        b1map_defs.b1acq.TM=hMRI_get_extended_hdr_val(hdr{1},'B1mapMixingTime');
-        b1map_defs.b1acq.nPEacq=hMRI_get_extended_hdr_val(hdr{1},'MeasuredPELines');%hdr{1}.acqpar.Columns/hmri_get_defaults('b1map.i3D_EPI.b1acq.phaseGRAPPA');
-        if hdr{1}.acqpar.PixelBandwidth==2300% not ideal...
-            b1map_defs.b1acq.EchoSpacing=540e-3;
-        elseif hdr{1}.acqpar.PixelBandwidth==3600
-            b1map_defs.b1acq.EchoSpacing=330e-3;
+        b1map_defs.data = 'EPI';
+        b1map_defs.avail = true;
+        b1map_defs.procreq = true;
+        b1map_defs.b1acq.beta = hMRI_get_extended_hdr_val(hdr{1},'B1mapNominalFAValues');
+        b1map_defs.b1acq.TM = hMRI_get_extended_hdr_val(hdr{1},'B1mapMixingTime');
+        b1map_defs.b1acq.nPEacq = hMRI_get_extended_hdr_val(hdr{1},'MeasuredPELines');%hdr{1}.acqpar.Columns/hmri_get_defaults('b1map.i3D_EPI.b1acq.phaseGRAPPA');
+        if hdr{1}.acqpar.PixelBandwidth == 2300 % not ideal...
+            b1map_defs.b1acq.EchoSpacing = 540e-3;
+        elseif hdr{1}.acqpar.PixelBandwidth == 3600
+            b1map_defs.b1acq.EchoSpacing = 330e-3;
         end
-        b1map_defs.b1acq.blipDIR=hMRI_get_extended_hdr_val(hdr{1},'PhaseEncodingDirectionSign');        
-        b1map_defs.b1proc=hmri_get_defaults('b1map.i3D_EPI.b1proc');
+        b1map_defs.b1acq.blipDIR = hMRI_get_extended_hdr_val(hdr{1},'PhaseEncodingDirectionSign');        
+        b1map_defs.b1proc = hmri_get_defaults('b1map.i3D_EPI.b1proc');
 %         b1map_defs.T1=hmri_get_defaults(['b1map.',b1_prot,'.b1proc' '.T1']);
 %         b1map_defs.Nonominalvalues=hmri_get_defaults(['b1map.',b1_prot,'.b1proc' '.Nonominalvalues']);
 %         b1map_defs.eps=hmri_get_defaults(['b1map.',b1_prot,'.b1proc' '.eps']);
@@ -174,7 +176,7 @@ spm_progress_bar('Init',V(1).dim(3),'B1 map fit','planes completed');
 %-----------------------------------------------------------------------
 clear Temp_mat;
 corr_fact = exp(b1map_defs.b1acq.TM/b1map_defs.b1proc.T1);
-for p = 1:V(1).dim(3),%loop over the partition dimension of the data set
+for p = 1:V(1).dim(3) %loop over the partition dimension of the data set
     B = spm_matrix([0 0 -p 0 0 0 1 1 1]);
     for i = 1:n/2
         M = inv(B*inv(V(1).mat)*V(1).mat); %#ok<*MINV>

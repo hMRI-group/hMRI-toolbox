@@ -69,6 +69,9 @@ if ~isempty(p)
 else
     warning('No TE, TR, and FA values found for T1w images. Fallback to defaults.')    
 end
+
+%json = hmri_get_defaults('json');
+
 % retrieve acquisition parameters
 MPMacq = hmri_get_defaults('MPMacq');
 % NB: for better readability, avoiding lengthy notations, the following
@@ -190,22 +193,23 @@ end
 spm_progress_bar('Clear');
 
 Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[]));
-Output_hdr.history.procstep.version = 'TBD';
+Output_hdr.history.procstep.version = hmri_get_version;
 Output_hdr.history.procstep.descrip = 'map creation';
 Output_hdr.history.procstep.procpar = prot_tag;
 for ctr = 1:numel(V_pdw)
     Output_hdr.history.input{ctr}.filename = V_pdw(ctr).fname;
-    input_hdr = hMRI_get_extended_hdr(V_pdw(ctr).fname);
+    input_hdr = get_metadata(V_pdw(ctr).fname);
     if ~isempty(input_hdr{1})
         Output_hdr.history.input{ctr}.history = input_hdr{1}.history;
     else
-        Output_hdr.history.input{ctr}.history = '';
+        Output_hdr.history.input{ctr}.history = 'No history available.';
     end
 %     Output_hdr.history.input{ctr}.history=input_hdr{1}.history;
 end
 Output_hdr.history.output.imtype = 'R2* map';
 Output_hdr.history.output.units = 'ms-1';
-hMRI_set_extended_hdr(fR2s,Output_hdr);
+json = struct('extended',true,'separate',true,'overwrite',true);
+set_metadata(fR2s,Output_hdr);
 
 % Average first few echoes for increased SNR and fit T2*
 disp('----- Reading and averaging the images -----');
@@ -340,22 +344,22 @@ if hmri_get_defaults('R2sOLS')
     end
     spm_progress_bar('Clear');
     Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[]));
-    Output_hdr.history.procstep.version = 'TBD';
+    Output_hdr.history.procstep.version = hmri_get_version;
     Output_hdr.history.procstep.descrip = 'map creation';
     Output_hdr.history.procstep.procpar = prot_tag;
     for ctr = 1:numel(V_pdw)
         Output_hdr.history.input{ctr}.filename = V_pdw(ctr).fname;
-        input_hdr = hMRI_get_extended_hdr(V_pdw(ctr).fname);
+        input_hdr = get_metadata(V_pdw(ctr).fname);
         if ~isempty(input_hdr{1})
             Output_hdr.history.input{ctr}.history = input_hdr{1}.history;
         else
-            Output_hdr.history.input{ctr}.history = '';
+            Output_hdr.history.input{ctr}.history = 'No history available.';
         end
         %         Output_hdr.history.input{ctr}.history=input_hdr{1}.history;
     end
     Output_hdr.history.output.imtype = 'R2*-OLS map';
     Output_hdr.history.output.units = 'ms-1';
-    hMRI_set_extended_hdr(fullfile(pth,[nam '_R2s_OLS' '.nii']),Output_hdr);
+    set_metadata(fullfile(pth,[nam '_R2s_OLS' '.nii']),Output_hdr);
         
 end % OLS code
 
@@ -540,27 +544,27 @@ for p=1:dm(3),
     tmp      = MTR_synt;
     Nmap(4).dat(:,:,p) = max(min(tmp,threshall.MTR_synt),-threshall.MTR_synt);
     spm_progress_bar('Set',p);
-        
 end
+
 Vtemp = cat(1,V_mtw,V_pdw,V_t1w);
 Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[]));
-Output_hdr.history.procstep.version = 'TBD';
+Output_hdr.history.procstep.version = hmri_get_version;
 Output_hdr.history.procstep.descrip = 'map creation';
 Output_hdr.history.procstep.procpar = prot_tag;
 for ctr = 1:numel(Vtemp)
     Output_hdr.history.input{ctr}.filename = Vtemp(ctr).fname;
-    input_hdr = hMRI_get_extended_hdr(Vtemp(ctr).fname);
+    input_hdr = get_metadata(Vtemp(ctr).fname);
     if ~isempty(input_hdr{1})
         Output_hdr.history.input{ctr}.history = input_hdr{1}.history;
     else
-        Output_hdr.history.input{ctr}.history = '';
+        Output_hdr.history.input{ctr}.history = 'No history available.';
     end
 %     Output_hdr.history.input{ctr}.history=input_hdr{1}.history;
 end
 for ctr = 1:size(nam2,2)
     Output_hdr.history.output.imtype = descrip(ctr);
     Output_hdr.history.output.units = units(ctr);
-    hMRI_set_extended_hdr(fullfile(pth,[nam '_' nam2{ctr} '.nii']),Output_hdr);
+    set_metadata(fullfile(pth,[nam '_' nam2{ctr} '.nii']),Output_hdr);
 end
 if ~isempty(f_T) && isempty(f_R) && PDproc.PDmap
     PDcalculation(pth)
@@ -574,7 +578,7 @@ function [] = coreg_mt(P_ref, P_src)
 % coregisters the structural images
 % for MT protocol
 
-for src_nr=1:size(P_src, 1)
+for src_nr = 1:size(P_src,1)
     P_src(src_nr,:);
     VG = spm_vol(P_ref);
     VF = spm_vol(P_src(src_nr,:));

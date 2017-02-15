@@ -32,6 +32,8 @@ hmri_def.centre = 'cbs' ; % can be 'fil', 'lren', 'crc', 'sciz' or 'cbs'
 % run-time.
 
 hmri_def.R2sOLS = 1; % Create an Ordinary Least Squares R2* map?
+hmri_def.json = struct('extended',true,'separate',true,'anonym','none',...
+    'overwrite',true); % settings for JSON metadata
 
 %% Processing of PD maps
 hmri_def.PDproc.PDmap    = 1;    % Calculation of PD maps requires a B1 map. Set to 0 if a B1 map is not available

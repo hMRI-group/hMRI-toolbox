@@ -6,13 +6,12 @@ N = nifti(P);
 nN = numel(N);
 p(nN) = struct('tr',[],'te',[],'fa',[]);
 
-[~,IsExtended] = hMRI_get_extended_hdr(P(1,:));
-if IsExtended
+hdr = get_metadata(P);
+if ~isempty(hdr{1})
     for ii = 1:numel(N)
-        hdr = hMRI_get_extended_hdr(P(ii,:));
-        p(ii).tr = hMRI_get_extended_hdr_val(hdr{1},'RepetitionTime');
-        p(ii).te = hMRI_get_extended_hdr_val(hdr{1},'EchoTime')';
-        p(ii).fa = hMRI_get_extended_hdr_val(hdr{1},'FlipAngle');
+        p(ii).tr = get_metadata_val(hdr{ii},'RepetitionTime');
+        p(ii).te = get_metadata_val(hdr{ii},'EchoTime')';
+        p(ii).fa = get_metadata_val(hdr{ii},'FlipAngle');
     end
 else
     for ii = 1:numel(N)

@@ -55,8 +55,17 @@ for ip=1:numel(job.subj)
     % save outpath as default for this job
     hmri_get_defaults('outdir',cwd);
     
-    
     [fR1, fR2s, fMT, fA, PPDw, PT1w]  = hmri_MTProt(P_mtw, P_pdw, P_t1w); 
+ 
+    % Retrieve the protocol tag
+    hdr = get_metadata(fR1);
+    if ~isempty(hdr{1})
+        prot_tag = hdr{1}.history.procstep.procpar;
+    else
+        prot_tag = 'Unknown';
+    end
+    % Set the tag for the MPMacq set.
+    hmri_get_defaults('MPMacq.tag',prot_tag);
     
     % Use default parameters of SPM8 "New Segment" toolbox except for
     % adapted regularization and smoothness of bias field
@@ -100,11 +109,30 @@ for ip=1:numel(job.subj)
     V_R1.descrip = 'Masked R1 map';
     V_R1_mask = spm_write_vol(V_R1_mask,Y_R1);
     
+    Vtemp = cat(1,V_PDw,V_R1);
+    Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[]));
+    Output_hdr.history.procstep.version = hmri_get_version;
+    Output_hdr.history.procstep.descrip = 'map creation';
+    Output_hdr.history.procstep.procpar = prot_tag;
+    for ctr = 1:numel(Vtemp)
+        Output_hdr.history.input{1}.filename = Vtemp(ctr).fname;
+        input_hdr = get_metadata(Vtemp(ctr).fname);
+        if ~isempty(input_hdr{1})
+            Output_hdr.history.input{1}.history = input_hdr{1}.history;
+        else
+            Output_hdr.history.input{1}.history = 'No history available.';
+        end
+    end
+    Output_hdr.history.output.imtype = 'Masked R1 map [1000/s]';
+    Output_hdr.history.output.units = 'ms-1';
+    json = struct('extended',true,'separate',true,'overwrite',true);
+    set_metadata(P_R1_mask,Output_hdr);
+    
     
     %% preparation of spm structure for "New Segment" tool
     
     % clear('matlabbatch');
-    tpm_nam = fullfile(spm('dir'),'tpm','TPM.nii'); % instead of TPM.nii
+    tpm_nam = fullfile(spm('dir'),'tpm','enhanced_TPM.nii'); % instead of TPM.nii
     % see http://www.unil.ch/lren/home/menuinst/data--utilities.html
     % Lorio S, Fresard S, Adaszewski S, Kherif F, Chowdhury R, Frackowiak RS, 
     % Ashburner J, Helms G, Weiskopf N, Lutti A, Draganski B. New tissue priors 
@@ -159,6 +187,22 @@ for ip=1:numel(job.subj)
         P_biasmap = spm_select('FPList',p,['^BiasField_' n '.nii']);
     end
     
+    Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[]));
+    Output_hdr.history.procstep.version = hmri_get_version;
+    Output_hdr.history.procstep.descrip = 'map creation';
+    Output_hdr.history.procstep.procpar = prot_tag;
+    Output_hdr.history.input{ctr}.filename = P_R1_mask;
+    input_hdr = get_metadata(P_R1_mask);
+    if ~isempty(input_hdr{1})
+        Output_hdr.history.input{ctr}.history = input_hdr{1}.history;
+    else
+        Output_hdr.history.input{ctr}.history = 'No history available.';
+    end
+    Output_hdr.history.output.imtype = 'Bias corrected R1 UNICORT map';
+    Output_hdr.history.output.units = 'ms-1';
+    json = struct('extended',true,'separate',true,'overwrite',true);
+    set_metadata(P_biasmap,Output_hdr);
+    
     %% create B1+ map from bias field
     V_biasmap = spm_vol(P_biasmap);
     Y_biasmap = spm_read_vols(V_biasmap);
@@ -169,9 +213,44 @@ for ip=1:numel(job.subj)
     V_B1.fname = P_B1;
     V_B1.descrip = 'B1+ map (p.u. nominal fa)';
     V_B1 = spm_write_vol(V_B1,Y_B1);
+
+    Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[]));
+    Output_hdr.history.procstep.version = hmri_get_version;
+    Output_hdr.history.procstep.descrip = 'map creation';
+    Output_hdr.history.procstep.procpar = prot_tag;
+    Output_hdr.history.input{1}.filename = V_biasmap.fname;
+    input_hdr = get_metadata(V_biasmap.fname);
+    if ~isempty(input_hdr{1})
+        Output_hdr.history.input{1}.history = input_hdr{1}.history;
+    else
+        Output_hdr.history.input{1}.history = 'No history available.';
+    end
+    Output_hdr.history.output.imtype = 'B1+ map';
+    Output_hdr.history.output.units = 'p.u. nominal FA';
+    json = struct('extended',true,'separate',true,'overwrite',true);
+    set_metadata(P_B1,Output_hdr);
     
     [p,n,e] = fileparts(P_R1_mask);
     P_R1_unicort = fullfile(p, ['m' n e]);
+    
+    Vtemp = cat(1,V_PDw,V_R1);
+    Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[]));
+    Output_hdr.history.procstep.version = hmri_get_version;
+    Output_hdr.history.procstep.descrip = 'map creation';
+    Output_hdr.history.procstep.procpar = prot_tag;
+    for ctr = 1:numel(Vtemp)
+        Output_hdr.history.input{ctr}.filename = Vtemp(ctr).fname;
+        input_hdr = get_metadata(Vtemp(ctr).fname);
+        if ~isempty(input_hdr{1})
+            Output_hdr.history.input{ctr}.history = input_hdr{1}.history;
+        else
+            Output_hdr.history.input{ctr}.history = 'No history available.';
+        end
+    end
+    Output_hdr.history.output.imtype = 'Bias corrected R1 UNICORT map';
+    Output_hdr.history.output.units = 'ms-1';
+    json = struct('extended',true,'separate',true,'overwrite',true);
+    set_metadata(P_R1_unicort,Output_hdr);
     
     out.subj(ip).R1={fullfile(cwd,spm_str_manip(fR1,'t'))};
     out.subj(ip).R1u={fullfile(cwd,spm_str_manip(P_R1_unicort,'t'))};

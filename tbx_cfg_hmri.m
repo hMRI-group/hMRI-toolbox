@@ -20,7 +20,7 @@ if ~isdeployed, addpath(fullfile(spm('Dir'),'toolbox','hmri')); end
 % hmri hMRI Tools
 % ---------------------------------------------------------------------
 hmri         = cfg_choice;
-hmri.tag     = 'hMRI';
+hmri.tag     = 'hmri';
 hmri.name    = 'hMRI Tools';
 hmri.help    = {
     ['This toolbox is based around the ``Regional specificity of MRI ',...

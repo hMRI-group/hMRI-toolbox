@@ -70,7 +70,7 @@ else
     warning('No TE, TR, and FA values found for T1w images. Fallback to defaults.')    
 end
 
-%json = hmri_get_defaults('json');
+json = hmri_get_defaults('json');
 
 % retrieve acquisition parameters
 MPMacq = hmri_get_defaults('MPMacq');
@@ -180,10 +180,10 @@ fR2s = fullfile(pth,[nam '_R2s' '.nii']);
 reg = [ones(numel(TE_pdw),1) TE_pdw(:)];
 W   = (reg'*reg)\reg';
 W   = -W(2,:)';
-for p = 1:dm(3),
+for p = 1:dm(3)
     M = spm_matrix([0 0 p 0 0 0 1 1 1]);
     Y = zeros(dm(1:2));
-    for i = 1:n,
+    for i = 1:n
         M1 = V_pdw(i).mat\V_pdw(1).mat*M;
         Y  = Y + W(i)*log(max(spm_slice_vol(V_pdw(i),M1,dm(1:2),1),1));
     end
@@ -208,8 +208,7 @@ for ctr = 1:numel(V_pdw)
 end
 Output_hdr.history.output.imtype = 'R2* map';
 Output_hdr.history.output.units = 'ms-1';
-json = struct('extended',true,'separate',true,'overwrite',true);
-set_metadata(fR2s,Output_hdr);
+set_metadata(fR2s,Output_hdr,json);
 
 % Average first few echoes for increased SNR and fit T2*
 disp('----- Reading and averaging the images -----');
@@ -220,7 +219,7 @@ avg_nr      = min([nr_c_echoes nr_TE_limit]);
 PP   = {P_mtw,P_pdw,P_t1w};
 nam1 = {'MTw','PDw','T1w'};
 avg  = [0 0 0];
-for ii=1:3,
+for ii=1:3
     V         = spm_vol(PP{ii});
     dm        = V(1).dim;
     Ni        = nifti;
@@ -231,10 +230,10 @@ for ii=1:3,
     create(Ni);
     spm_progress_bar('Init',dm(3),Ni.descrip,'planes completed');
     sm = 0;
-    for p=1:dm(3),
+    for p=1:dm(3)
         M = spm_matrix([0 0 p]);
         Y = zeros(dm(1:2));
-        for nr=1:avg_nr,
+        for nr=1:avg_nr
             M1 = V(nr).mat\V(1).mat*M;
             Y  = Y + spm_slice_vol(V(nr),M1,dm(1:2),1);
         end
@@ -244,14 +243,31 @@ for ii=1:3,
     end
     avg(ii) = sm/prod(dm);
     spm_progress_bar('Clear');
+    
+    Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[]));
+    Output_hdr.history.procstep.version = hmri_get_version;
+    Output_hdr.history.procstep.descrip = Ni.descrip;
+    Output_hdr.history.procstep.procpar = prot_tag;
+    for ctr = 1:numel(V)
+        Output_hdr.history.input{ctr}.filename = V(ctr).fname;
+        input_hdr = get_metadata(V(ctr).fname);
+        if ~isempty(input_hdr{1})
+            Output_hdr.history.input{ctr}.history = input_hdr{1}.history;
+        else
+            Output_hdr.history.input{ctr}.history = 'No history available.';
+        end
+    end
+    Output_hdr.history.output.imtype = Ni.descrip;
+    Output_hdr.history.output.units = 'a.u.';
+    set_metadata(fullfile(pth,[nam '_' nam1{ii} '.nii']),Output_hdr,json);
 end
-fPD = fullfile(pth,[nam '_' nam1{ii} '.nii']);
+fPD = fullfile(pth,[nam '_' nam1{ii} '.nii']); % TL: could this be deleted?
 
 PPDw = fullfile(pth,[nam '_PDw' '.nii']);
 PMTw = fullfile(pth,[nam '_MTw' '.nii']);
 PT1w = fullfile(pth,[nam '_T1w' '.nii']);
 
-if true,
+if true
     disp('----- Coregistering the images -----');
     coreg_mt(PPDw, PMTw);
     coreg_mt(PPDw, PT1w);
@@ -359,7 +375,7 @@ if hmri_get_defaults('R2sOLS')
     end
     Output_hdr.history.output.imtype = 'R2*-OLS map';
     Output_hdr.history.output.units = 'ms-1';
-    set_metadata(fullfile(pth,[nam '_R2s_OLS' '.nii']),Output_hdr);
+    set_metadata(fullfile(pth,[nam '_R2s_OLS' '.nii']),Output_hdr,json);
         
 end % OLS code
 
@@ -377,7 +393,7 @@ if (PDproc.PDmap)
     units = {units{:}, 'A.U.'};
 end
 Nmap    = nifti;
-for ii=1:numel(nam2),
+for ii=1:numel(nam2)
     V         = V_templ(1);
     dm        = V(1).dim;
     Ni        = nifti;
@@ -402,7 +418,7 @@ fa_t1w = fa_t1w * pi / 180;
 
 spm_progress_bar('Init',dm(3),'Calculating maps','planes completed');
 
-for p=1:dm(3),
+for p = 1:dm(3)
     M = M0*spm_matrix([0 0 p]);
 
     MTw = spm_slice_vol(VMTw,VMTw.mat\M,dm(1:2),3);
@@ -473,7 +489,7 @@ for p=1:dm(3),
                 max((T1w * fa_t1w / 2 / TR_t1w) - (PDw * fa_pdw / 2 / TR_pdw),eps))./f_T.^2);
         end
         
-        R1=1./T1*10^6;
+        R1 = 1./T1*10^6;
         
         %          R1App=f_T.^2.*(((T1w * (fa_t1w / 2 / TR_t1w)) - (PDw * fa_pdw / 2 / TR_pdw)) ./ ...
         %              max(((PDw / fa_pdw) - (T1w / fa_t1w)),eps));
@@ -485,7 +501,7 @@ for p=1:dm(3),
     T1       = max(T1,0);
 
     
-    R1(R1<0)=0;
+    R1(R1<0) = 0;
     tmp      = R1;
     Nmap(1).dat(:,:,p) = min(max(tmp,-threshall.R1),threshall.R1);
     % Truncating images to dynamic range. Originally 20000. Negative values are allowed or min(max(tmp,0),2000)
@@ -546,7 +562,7 @@ for p=1:dm(3),
     spm_progress_bar('Set',p);
 end
 
-Vtemp = cat(1,V_mtw,V_pdw,V_t1w);
+Vtemp = cat(1,VMTw,VPDw,VT1w);
 Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[]));
 Output_hdr.history.procstep.version = hmri_get_version;
 Output_hdr.history.procstep.descrip = 'map creation';
@@ -559,13 +575,13 @@ for ctr = 1:numel(Vtemp)
     else
         Output_hdr.history.input{ctr}.history = 'No history available.';
     end
-%     Output_hdr.history.input{ctr}.history=input_hdr{1}.history;
 end
 for ctr = 1:size(nam2,2)
     Output_hdr.history.output.imtype = descrip(ctr);
     Output_hdr.history.output.units = units(ctr);
-    set_metadata(fullfile(pth,[nam '_' nam2{ctr} '.nii']),Output_hdr);
+    set_metadata(fullfile(pth,[nam '_' nam2{ctr} '.nii']),Output_hdr,json);
 end
+
 if ~isempty(f_T) && isempty(f_R) && PDproc.PDmap
     PDcalculation(pth)
 end
@@ -649,11 +665,13 @@ P = spm_select('FPList',pth ,'^.*_A.(img|nii)$');
 Vsave = spm_vol(P);
 Vsave.fname = fullfile(spm_str_manip(Vsave.fname,'h'),['masked_' spm_str_manip(Vsave.fname,'t')]);
 Amap = spm_read_vols(spm_vol(P)).*WBmask;
-Amap(Amap==Inf)=0;Amap(isnan(Amap))=0;Amap(Amap==threshA) = 0;
+Amap(Amap==Inf) = 0;
+Amap(isnan(Amap)) = 0;
+Amap(Amap==threshA) = 0;
 spm_write_vol(Vsave,Amap);
 
 % Bias-field correction of masked A map
-P=spm_select('FPList',pth ,'^masked.*_A.(img|nii)$');
+P = spm_select('FPList',pth ,'^masked.*_A.(img|nii)$');
 clear matlabbatch
 matlabbatch{1}.spm.spatial.preproc.channel.vols = {P};
 matlabbatch{1}.spm.spatial.preproc.channel.biasreg = PDproc.biasreg;
@@ -662,8 +680,8 @@ matlabbatch{1}.spm.spatial.preproc.channel.write = [1 0]; % saving bias field
 % spm_jobman('initcfg');
 spm_jobman('run', matlabbatch);
 
-temp=spm_select('FPList',pth,'^(c|masked).*\_A');
-for counter=1:size(temp,1)
+temp = spm_select('FPList',pth,'^(c|masked).*\_A');
+for counter = 1:size(temp,1)
     delete(deblank(temp(counter,:)));
 end
 
@@ -671,7 +689,7 @@ end
 % the masked A map but we want to apply it on the unmasked A map. We
 % therefore need to explicitly load the bias field and apply it on the original A map instead of just
 % loading the bias-field corrected A map from the previous step
-P=spm_select('FPList',pth ,'^s.*_A.(img|nii)$');
+P = spm_select('FPList',pth ,'^s.*_A.(img|nii)$');
 bf = fullfile(pth, spm_select('List', pth, '^BiasField.*\.(img|nii)$'));
 BF = double(spm_read_vols(spm_vol(bf)));
 Y = BF.*spm_read_vols(spm_vol(P));
@@ -686,7 +704,7 @@ sprintf('SD White Matter intensity %04d',std(A_WM(A_WM~=0),[],1))
 Y( Y>200 ) = 0;
 % MFC: Estimating Error for data set to catch bias field issues:
 errorEstimate = std(A_WM(A_WM > 0))./mean(A_WM(A_WM > 0));
-Vsave=spm_vol(P);
+Vsave = spm_vol(P);
 Vsave.descrip = ['A Map.  Error Estimate: ', num2str(errorEstimate)];
 if errorEstimate > 0.06
     % MFC: Testing on 15 subjects showed 6% is a good cut-off:
@@ -697,7 +715,7 @@ end
 spm_write_vol(Vsave,Y);
 
 temp = spm_select('FPList',pth,'^Bias.*\_A');
-for counter=1:size(temp,1)
+for counter = 1:size(temp,1)
     delete(deblank(temp(counter,:)));
 end
 

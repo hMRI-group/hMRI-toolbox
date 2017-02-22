@@ -10,7 +10,8 @@ hdr = get_metadata(P);
 if ~isempty(hdr{1})
     for ii = 1:numel(N)
         p(ii).tr = get_metadata_val(hdr{ii},'RepetitionTime');
-        p(ii).te = get_metadata_val(hdr{ii},'EchoTime')';
+        te = get_metadata_val(hdr{ii},'EchoTime')';
+        p(ii).te = te(ii);
         p(ii).fa = get_metadata_val(hdr{ii},'FlipAngle');
     end
 else

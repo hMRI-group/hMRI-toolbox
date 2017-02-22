@@ -9,6 +9,8 @@ if nargin < 6
   error('Enter unwarped anatomical, B1, std map, matched VDM file, Hz fieldmap and defaults');
 end
 
+json = hmri_get_defaults('json');
+
 %----------------------------------------------------------------------
    % Make a thresholded mask of the B1 STD map
 %----------------------------------------------------------------------
@@ -102,7 +104,7 @@ for ctr = 1:numel(Input)
 end
 Output_hdr_B1.history.output.imtype=' masked, padded & unwarped B1 map';
 Output_hdr_B1.history.output.units='percent (%)';
-set_metadata(allub1_img{1}.fname,Output_hdr_B1)
+set_metadata(allub1_img{1}.fname,Output_hdr_B1,json)
 
 
 % Smooth padded B1 map
@@ -133,6 +135,6 @@ for ctr=1:numel(Input)
 end
 Output_hdr_B1.history.output.imtype=' smoothed, masked, padded & unwarped B1 map';
 Output_hdr_B1.history.output.units='percent (%)';
-set_metadata(allub1_img{1,2}.fname,Output_hdr_B1)
+set_metadata(allub1_img{1,2}.fname,Output_hdr_B1,json)
 
 end

@@ -238,6 +238,7 @@ hmri_def.lren.b1_type.val = hmri_def.lren.b1_type.labels(1);
 % -----------------------------------------------------------------
 hmri_def.sciz.b1_type.labels  = {
     'tfl_b1map'
+    'rf_map'
     'no_B1_provided'
     }';
 hmri_def.sciz.b1_type.val  = hmri_def.sciz.b1_type.labels(1);

@@ -20,13 +20,15 @@ function P_trans = hmri_run_b1map(jobsubj)
 
 % retrieve b1_type from job and pass it as default value for the current
 % processing:
-hdr = get_metadata(jobsubj.raw_fld.b1{1});
 b1_prot = jobsubj.b1_type;
 hmri_get_defaults('b1_type.val',b1_prot);
-if isempty(hdr{1})
-    b1map_defs = hmri_get_defaults(['b1map.' b1_prot]);
-else
-    if ~isempty(strfind(hdr{1}.acqpar.ProtocolName,'al_B1mapping'))
+b1map_defs = hmri_get_defaults(['b1map.' b1_prot]);
+
+% retrieve acquisition parameters, alternatively use defaults loaded above
+hdr = get_metadata(jobsubj.raw_fld.b1{1});
+
+if ~isempty(hdr{1})
+   if ~isempty(strfind(hdr{1}.acqpar.ProtocolName,'al_B1mapping'))
         b1map_defs.data = 'EPI';
         b1map_defs.avail = true;
         b1map_defs.procreq = true;
@@ -43,8 +45,24 @@ else
 %         b1map_defs.T1=hmri_get_defaults(['b1map.',b1_prot,'.b1proc' '.T1']);
 %         b1map_defs.Nonominalvalues=hmri_get_defaults(['b1map.',b1_prot,'.b1proc' '.Nonominalvalues']);
 %         b1map_defs.eps=hmri_get_defaults(['b1map.',b1_prot,'.b1proc' '.eps']);
-    end
+   elseif ~isempty(strfind(hdr{1}.acqpar.ProtocolName,'nw_b1map'))
+        b1map_defs.data = 'AFI';
+        b1map_defs.avail = true;
+        b1map_defs.procreq = true;
+        tr = get_metadata_val(hdr{1},'RepetitionTime');
+        b1map_defs.TR2TR1ratio = tr(2)/tr(1);
+        b1map_defs.alphanom = get_metadata_val(hdr{1},'FlipAngle');
+   elseif ~isempty(strfind(hdr{1}.acqpar.ProtocolName,'tfl_b1map'))
+        hmri_def.b1map.tfl_b1_map.data    = 'TFL'; 
+        hmri_def.b1map.tfl_b1_map.avail   = true; 
+        hmri_def.b1map.tfl_b1_map.procreq = true; 
+   elseif ~isempty(strfind(hdr{1}.acqpar.ProtocolName,'rf_map'))
+        hmri_def.b1map.rf_map.data    = 'RFmap'; 
+        hmri_def.b1map.rf_map.avail   = true; 
+        hmri_def.b1map.rf_map.procreq = true; 
+   end
 end
+
 P_trans = [];
 
 if ~b1map_defs.avail
@@ -83,6 +101,8 @@ end
 function P_trans = calc_AFI_b1map(jobsubj, b1map_defs)
 
 disp('----- Calculation of B1 map (AFI protocol) -----');
+
+json = hmri_get_defaults('json');
 
 % NB: both phase and magnitude images can be provided but only the
 % magnitude images (first series) are used. Phase images (second series)
@@ -142,6 +162,25 @@ VB1.pinfo = [max(smB1map_norm(:))/16384;0;0];
 VB1.fname = fullfile(outpath, [sname '_smB1map_norm.nii']);
 spm_write_vol(VB1,smB1map_norm);
 
+% set and write metadata
+Vtemp = cat(1,V2,V1);
+Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[]));
+Output_hdr.history.procstep.version = hmri_get_version;
+Output_hdr.history.procstep.descrip = 'B1+ map calculation';
+Output_hdr.history.procstep.procpar = b1map_defs;
+for ctr = 1:numel(Vtemp)
+    Output_hdr.history.input{ctr}.filename = Vtemp(ctr).fname;
+    input_hdr = get_metadata(Vtemp(ctr).fname);
+    if ~isempty(input_hdr{1})
+        Output_hdr.history.input{ctr}.history = input_hdr{1}.history;
+    else
+        Output_hdr.history.input{ctr}.history = 'No history available.';
+    end
+end
+Output_hdr.history.output.imtype = 'B1+ map';
+Output_hdr.history.output.units = 'p.u. nominal FA';
+set_metadata(VB1.fname,Output_hdr,json);
+
 % requires anatomic image + map
 P_trans  = char(char(fileTR1),char(VB1.fname));
 
@@ -154,6 +193,8 @@ end
 function P_trans = calc_SESTE_b1map(jobsubj, b1map_defs)
 
 disp('----- Calculation of B1 map (SE/STE EPI protocol) -----');
+
+json = hmri_get_defaults('json');
 
 P    = char(jobsubj.raw_fld.b1); % B1 data - 11 pairs
 Q    = char(jobsubj.raw_fld.b0); % B0 data - 3 volumes
@@ -252,17 +293,17 @@ V_save = struct('fname',V(1).fname,'dim',V(1).dim,'mat',V(1).mat,'dt',V(1).dt,'d
 [~,name,e] = fileparts(V_save.fname);
 V_save.fname = fullfile(outpath,['B1map_' name e]);
 V_save = spm_write_vol(V_save,Y_ab*100);
-set_metadata(V_save.fname,Output_hdr_B1)
+set_metadata(V_save.fname,Output_hdr_B1,json)
 
 W_save = struct('fname',V(1).fname,'dim',V(1).dim,'mat',V(1).mat,'dt',V(1).dt,'descrip','SD [%]');
 W_save.fname = fullfile(outpath,['SDmap_' name e]);
 W_save = spm_write_vol(W_save,Y_cd*100);
-set_metadata(W_save.fname,Output_hdr_SD)
+set_metadata(W_save.fname,Output_hdr_SD,json)
 
 X_save = struct('fname',V(1).fname,'dim',V(1).dim,'mat',V(1).mat,'dt',V(1).dt,'descrip','SE SSQ matrix');
 X_save.fname = fullfile(outpath,['SumOfSq' e]);
 X_save = spm_write_vol(X_save,Ssq_matrix); %#ok<*NASGU>
-set_metadata(X_save.fname,Output_hdr_SSQ)
+set_metadata(X_save.fname,Output_hdr_SSQ,json)
 
 
 
@@ -362,9 +403,9 @@ Output_hdr_SD.history.output.imtype = 'unwarped SD (error) map';
 Output_hdr_SSQ.history.output.imtype = 'unwarped SSQ image';
 Output_hdr_SSQ.history.output.units = 'A.U.';
 
-set_metadata(ub1_img{1},Output_hdr_B1);
-set_metadata(ustd_img{1},Output_hdr_SD);
-set_metadata(uanat_img{1},Output_hdr_SSQ);
+set_metadata(ub1_img{1},Output_hdr_B1,json);
+set_metadata(ustd_img{1},Output_hdr_SD,json);
+set_metadata(uanat_img{1},Output_hdr_SSQ,json);
 
 Output_hdr_Others = struct('history',struct('procstep',[],'input',[],'output',[]));
 Output_hdr_Others.history.procstep.version = hmri_get_version;
@@ -383,9 +424,9 @@ end
 Output_hdr_Others.history.output.imtype = 'See FieldMap Toolbox';
 Output_hdr_Others.history.output.units = 'See FieldMap Toolbox';
 
-set_metadata(fmap_img{1}.fname,Output_hdr_Others);
-set_metadata(fmap_img{2}.fname,Output_hdr_Others);
-set_metadata(fm_imgs(1,:),Output_hdr_Others);
+set_metadata(fmap_img{1}.fname,Output_hdr_Others,json);
+set_metadata(fmap_img{2}.fname,Output_hdr_Others,json);
+set_metadata(fm_imgs(1,:),Output_hdr_Others,json);
 
 
 fpm_img{1} = fmap_img{1};
@@ -401,6 +442,8 @@ end
 function P_trans = calc_tfl_b1map(jobsubj, b1map_defs)
 
 disp('----- Calculation of B1 map (SIEMENS tfl_b1map protocol) -----');
+
+json = hmri_get_defaults('json');
 
 P = char(jobsubj.raw_fld.b1); % scaled FA map from tfl_b1map sequence
 Q = char(jobsubj.raw_fld.b0); % FLASH like anatomical from tfl_b1map sequence
@@ -439,11 +482,12 @@ VB1.pinfo = [max(smB1map_norm(:))/16384;0;0]; % what is this for? (TL)
 VB1.fname = fullfile(outpath, [sname '_smB1map_norm.nii']);
 spm_write_vol(VB1,smB1map_norm);
 
+% set and write metadata
 Vtemp = cat(1,V2,V1);
 Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[]));
 Output_hdr.history.procstep.version = hmri_get_version;
-Output_hdr.history.procstep.descrip = 'map creation';
-Output_hdr.history.procstep.procpar = 'TBD';
+Output_hdr.history.procstep.descrip = 'B1+ map calculation';
+Output_hdr.history.procstep.procpar = b1map_defs;
 for ctr = 1:numel(Vtemp)
     Output_hdr.history.input{ctr}.filename = Vtemp(ctr).fname;
     input_hdr = get_metadata(Vtemp(ctr).fname);
@@ -456,7 +500,7 @@ end
 Output_hdr.history.output.imtype = 'B1+ map';
 Output_hdr.history.output.units = 'p.u. nominal FA';
 json = struct('extended',true,'separate',true,'overwrite',true);
-set_metadata(VB1.fname,Output_hdr);
+set_metadata(VB1.fname,Output_hdr,json);
 
 % requires anatomic image + map
 P_trans  = char(Q,char(VB1.fname));
@@ -467,6 +511,8 @@ end
 function P_trans = calc_rf_map(jobsubj, b1map_defs)
 
 disp('----- Calculation of B1 map (SIEMENS rf_map protocol) -----');
+
+json = hmri_get_defaults('json');
 
 P = char(jobsubj.raw_fld.b1); % scaled FA map from rf_map sequence
 Q = char(jobsubj.raw_fld.b0); % anatomical image from rf_map sequence
@@ -503,11 +549,12 @@ VB1.pinfo = [max(smB1map_norm(:))/16384;0;0]; % what is this for? (TL)
 VB1.fname = fullfile(outpath, [sname '_smB1map_norm.nii']);
 spm_write_vol(VB1,smB1map_norm);
 
+% set and write metadata
 Vtemp = cat(1,V2,V1);
 Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[]));
 Output_hdr.history.procstep.version = hmri_get_version;
-Output_hdr.history.procstep.descrip = 'map creation';
-Output_hdr.history.procstep.procpar = 'TBD';
+Output_hdr.history.procstep.descrip = 'B1+ map calculation';
+Output_hdr.history.procstep.procpar = b1map_defs;
 for ctr = 1:numel(Vtemp)
     Output_hdr.history.input{ctr}.filename = Vtemp(ctr).fname;
     input_hdr = get_metadata(Vtemp(ctr).fname);
@@ -520,7 +567,7 @@ end
 Output_hdr.history.output.imtype = 'B1+ map';
 Output_hdr.history.output.units = 'p.u. nominal FA';
 json = struct('extended',true,'separate',true,'overwrite',true);
-set_metadata(VB1.fname,Output_hdr);
+set_metadata(VB1.fname,Output_hdr,json);
 
 % requires anatomic image + map
 P_trans  = char(Q,char(VB1.fname));

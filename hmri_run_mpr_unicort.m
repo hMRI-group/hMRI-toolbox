@@ -126,7 +126,7 @@ for ip=1:numel(job.subj)
     Output_hdr.history.output.imtype = 'Masked R1 map [1000/s]';
     Output_hdr.history.output.units = 'ms-1';
     json = struct('extended',true,'separate',true,'overwrite',true);
-    set_metadata(P_R1_mask,Output_hdr);
+    set_metadata(P_R1_mask,Output_hdr,json);
     
     
     %% preparation of spm structure for "New Segment" tool
@@ -201,7 +201,7 @@ for ip=1:numel(job.subj)
     Output_hdr.history.output.imtype = 'Bias corrected R1 UNICORT map';
     Output_hdr.history.output.units = 'ms-1';
     json = struct('extended',true,'separate',true,'overwrite',true);
-    set_metadata(P_biasmap,Output_hdr);
+    set_metadata(P_biasmap,Output_hdr,json);
     
     %% create B1+ map from bias field
     V_biasmap = spm_vol(P_biasmap);
@@ -228,7 +228,7 @@ for ip=1:numel(job.subj)
     Output_hdr.history.output.imtype = 'B1+ map';
     Output_hdr.history.output.units = 'p.u. nominal FA';
     json = struct('extended',true,'separate',true,'overwrite',true);
-    set_metadata(P_B1,Output_hdr);
+    set_metadata(P_B1,Output_hdr,json);
     
     [p,n,e] = fileparts(P_R1_mask);
     P_R1_unicort = fullfile(p, ['m' n e]);
@@ -250,7 +250,7 @@ for ip=1:numel(job.subj)
     Output_hdr.history.output.imtype = 'Bias corrected R1 UNICORT map';
     Output_hdr.history.output.units = 'ms-1';
     json = struct('extended',true,'separate',true,'overwrite',true);
-    set_metadata(P_R1_unicort,Output_hdr);
+    set_metadata(P_R1_unicort,Output_hdr,json);
     
     out.subj(ip).R1={fullfile(cwd,spm_str_manip(fR1,'t'))};
     out.subj(ip).R1u={fullfile(cwd,spm_str_manip(P_R1_unicort,'t'))};

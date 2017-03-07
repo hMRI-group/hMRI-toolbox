@@ -54,7 +54,7 @@ filelist = spm_file(filelist,'number','');
 opts.indent = '\t';
 
 for cfile = 1:size(filelist,1)
-    [pth, fnam, ~] = fileparts(filelist(cfile,:));
+    [pth, fnam, ext] = fileparts(filelist(cfile,:)); %#ok<ASGLU>
     
     % check status for current file (exisiting json/nii files, nii file
     % with extended or not extended header...)

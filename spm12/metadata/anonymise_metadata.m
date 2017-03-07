@@ -11,6 +11,9 @@ function hdrout = anonymise_metadata(hdr, opts)
 %                       patient name, date of birth and DICOM filename
 %                       (often containing the patient name) are removed.
 %                     
+% !!! IMPORTANT WARNING: EFFEVTIVE ANONYMISATION IS NOT GUARANTEED !!!
+% The anonymisation implemented here depends on the structure and content
+% of the DICOM header and might not be effective in many cases. 
 %=========================================================================%
 % Evelyne Balteau - Cyclotron Research Centre - May 2016
 %=========================================================================%

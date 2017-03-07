@@ -24,7 +24,7 @@ global hmri_def
 
 %% %%%%%%%%%%%%%%%%%%%%% Global parameters %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Specifying the lab
-hmri_def.centre = 'lren' ; % can be 'fil', 'lren', 'crc', 'sciz' or 'cbs'
+hmri_def.centre = 'cbs' ; % can be 'fil', 'lren', 'crc', 'sciz' or 'cbs'
 
 %% %%%%%%%%%%%%%%%%% Common processing parameters %%%%%%%%%%%%%%%%%%%%%
 % These parameters are either parameters that are fixed for all sites or
@@ -32,6 +32,8 @@ hmri_def.centre = 'lren' ; % can be 'fil', 'lren', 'crc', 'sciz' or 'cbs'
 % run-time.
 
 hmri_def.R2sOLS = 1; % Create an Ordinary Least Squares R2* map?
+hmri_def.json = struct('extended',true,'separate',true,'anonym','none',...
+    'overwrite',true); % settings for JSON metadata
 
 %% Processing of PD maps
 hmri_def.PDproc.PDmap    = 1;    % Calculation of PD maps requires a B1 map. Set to 0 if a B1 map is not available
@@ -40,13 +42,20 @@ hmri_def.PDproc.WMMaskTh = 0.95; % Threshold for calculation of white-matter mas
 hmri_def.PDproc.biasreg  = 10^(-5);
 hmri_def.PDproc.biasfwhm = 50;
 
+%% UNICORT processing
+hmri_def.unicort.reg = 10^-3;
+hmri_def.unicort.FWHM = 60;
+hmri_def.unicort.thr = 2; % TL: 2 for sciz & cbs with SIEMENS 3T Skyra fit
+                          % otherwise: 5
+
 %% Threshold values for saving of the qMRI maps
 hmri_def.qMRI_maps_thresh.R1       = 2000;
 hmri_def.qMRI_maps_thresh.A        = 10^5;
 hmri_def.qMRI_maps_thresh.R2s      = 10;
 hmri_def.qMRI_maps_thresh.MTR      = 50;
 hmri_def.qMRI_maps_thresh.MTR_synt = 50;
-hmri_def.qMRI_maps_thresh.MT       = 5; % TL: 15 for cbs & sciz; original: 5 
+hmri_def.qMRI_maps_thresh.MT       = 15; % TL: 15 for cbs & sciz with SIEMENS 3T Skyra
+                                         % original: 5 
 
 %% MPM acquisition parameters and RF spoiling correction parameters
 % these value are initialised with defaults (v2k protocol - Prisma) for the
@@ -229,6 +238,7 @@ hmri_def.lren.b1_type.val = hmri_def.lren.b1_type.labels(1);
 % -----------------------------------------------------------------
 hmri_def.sciz.b1_type.labels  = {
     'tfl_b1map'
+    'rf_map'
     'no_B1_provided'
     }';
 hmri_def.sciz.b1_type.val  = hmri_def.sciz.b1_type.labels(1);
@@ -268,7 +278,7 @@ hmri_def.b1map.i3D_EPI.b1proc.HZTHRESH = 110;
 hmri_def.b1map.i3D_EPI.b1proc.SDTHRESH = 5;
 hmri_def.b1map.i3D_EPI.b1proc.ERODEB1 = 1;
 hmri_def.b1map.i3D_EPI.b1proc.PADB1 = 3 ;
-hmri_def.b1map.i3D_EPI.b1proc.B1FWHM = 8; %For smoothing. FWHM in mm - i.e. it is divided by voxel resolution to get FWHM in voxels
+hmri_def.b1map.i3D_EPI.b1proc.B1FWHM = 8; % For smoothing. FWHM in mm - i.e. it is divided by voxel resolution to get FWHM in voxels
 hmri_def.b1map.i3D_EPI.b1proc.match_vdm = 1;
 hmri_def.b1map.i3D_EPI.b1proc.b0maskbrain = 1;
 
@@ -282,13 +292,13 @@ hmri_def.b1map.i3D_EPI.b0acq.shortTE = 10; % ms
 hmri_def.b1map.i3D_EPI.b0acq.longTE = 12.46; % ms
 
 % 13) 'tfl_b1_map'
-hmri_def.b1map.tfl_b1_map.b1proc.data    = 'TFL'; 
-hmri_def.b1map.tfl_b1_map.b1proc.avail   = true; 
-hmri_def.b1map.tfl_b1_map.b1proc.procreq = true; 
+hmri_def.b1map.tfl_b1_map.data    = 'TFL'; 
+hmri_def.b1map.tfl_b1_map.avail   = true; 
+hmri_def.b1map.tfl_b1_map.procreq = true; 
 % 14) 'rf_map'
-hmri_def.b1map.rf_map.b1proc.data    = 'RFmap'; 
-hmri_def.b1map.rf_map.b1proc.avail   = true; 
-hmri_def.b1map.rf_map.b1proc.procreq = true; 
+hmri_def.b1map.rf_map.data    = 'RFmap'; 
+hmri_def.b1map.rf_map.avail   = true; 
+hmri_def.b1map.rf_map.procreq = true; 
 
 end
 

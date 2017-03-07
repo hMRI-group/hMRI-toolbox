@@ -1,41 +1,219 @@
-function proc = tbx_scfg_hmri_proc
-% Configuration file for the "histological MRI" (hMRI) toolbox
-% Previously named "Voxel-Based Quantification" (VBQ)
-% -> Dealing with the processign of the maps
-% This include 3 main processing steps:
-% - Unified Segmentation (US) -> produces individual tissue maps + warping 
-%   into MNI space
-% - DARTEL -> improves the warping into a common space of multiple
-%   subjects, based on their tissue maps
-% - Smoothing -> tissue specific weighted averaging
-% These steps are split into 3 sub-modules
+function proc_smooth = tbx_sscfg_hmri_smooth
+% Configuration file for the "smoothing", weighted averaging, of
+% quantitative maps
 %_______________________________________________________________________
-% Copyright (C) 2017 Cyclotron Research Centre
+% Copyright (C) 2017 Cyclotron Research Center
 
 % Written by Christophe Phillips
 
+% NOTE:
+% data are selected in a 'many subject' style, i.e. all the images of one
+% type are selected from many subjects at once!
 
 % ---------------------------------------------------------------------
-% proc Preprocess maps
+% vols_pm Parametric volumes
 % ---------------------------------------------------------------------
-proc         = cfg_choice;
-proc.tag     = 'proc';
-proc.name    = 'Process hMRI maps';
-proc.help    = {
-    ['Parameter maps are spatially processed and brought into standard space',...
-    'for furhter statistical analysis.']
-    ['This include 3 main processing steps:']
-    ['- Unified Segmentation (US) -> produces individual tissue maps' ...
-    '+ warping into MNI space']
-    ['- DARTEL -> improves the warping into a common space of multiple' ...
-    'subjects, based on their tissue maps']
-    ['- Smoothing -> tissue specific weighted averaging']
-    }'; %#ok<*NBRAK>
-% proc.values  = {tbx_sscfg_hmri_US tbx_sscfg_hmri_dartel tbx_sscfg_hmri_smooth};
-proc.values  = {tbx_sscfg_hmri_smooth};
+vols_pm         = cfg_files;
+vols_pm.tag     = 'vols_mp';
+vols_pm.name    = 'Volumes';
+vols_pm.help    = {['Select whole brain parameter maps (e.g. MT, R2*, ',...
+    'FA etc) for processing.']};
+vols_pm.filter  = 'image';
+vols_pm.ufilter = '^w.*';
+vols_pm.num     = [1 Inf];
+
+% ---------------------------------------------------------------------
+% m_pams Parameter maps, used for 'many subjects'
+% ---------------------------------------------------------------------
+m_pams            = cfg_repeat;
+m_pams.tag        = 'm_pams';
+m_pams.name       = 'Parameter maps';
+m_pams.values     = {vols_pm };
+m_pams.val        = {vols_pm };
+m_pams.num = [1 Inf];
+m_pams.help       = {['Select whole brain parameter maps (e.g. MT, ',...
+    'R2*, FA etc) for processing.']};
+
+% ---------------------------------------------------------------------
+% vols_tc Parametric volumes
+% ---------------------------------------------------------------------
+vols_tc         = cfg_files;
+vols_tc.tag     = 'vols_tc';
+vols_tc.name    = 'Tissue class';
+vols_tc.help    = {'Select the modulated warped tissue classes (TC)'};
+vols_tc.filter  = 'image';
+vols_tc.ufilter = '^mwc.*';
+vols_tc.num     = [1 Inf];
+
+% ---------------------------------------------------------------------
+% m_TCs Tissue class (TC) maps, used for 'many subjects'
+% ---------------------------------------------------------------------
+m_TCs            = cfg_repeat;
+m_TCs.tag        = 'maps';
+m_TCs.name       = 'Parameter maps';
+m_TCs.values     = {vols_tc };
+m_TCs.val        = {vols_tc };
+m_TCs.num = [1 Inf];
+m_TCs.help       = {['Select the modulated warped tissue classes (TC) ',...
+    'of interest from all subjects. This ould typically be the mwc1* ',...
+    'and mwc2* images for GM and WM.']};
+
+% ---------------------------------------------------------------------
+% tpm Tissue Probability Maps
+% ---------------------------------------------------------------------
+tpm         = cfg_files;
+tpm.tag     = 'tpm';
+tpm.name    = 'Tissue probability maps';
+tpm.help    = {'Select the TPM used for the segmentation.'};
+tpm.filter  = 'image';
+tpm.ufilter = '.*';
+tpm.num     = [1 1];
+% tpm.def     = fullfile(spm('dir'),'toolbox','hMRI','tpm','unwTPM_sl2.nii');
+tpm.val     = {{fullfile(spm('dir'),'toolbox','hMRI','tpm','unwTPM_sl2.nii,1')}};
+
+% ---------------------------------------------------------------------
+% Gaussian FWHM
+% ---------------------------------------------------------------------
+fwhm         = cfg_entry;
+fwhm.tag     = 'fwhm';
+fwhm.name    = 'Gaussian FWHM';
+fwhm.val     = {[6 6 6]};
+fwhm.strtype = 'e';
+fwhm.num     = [1 3];
+fwhm.help    = {['Specify the full-width at half maximum (FWHM) of the ',...
+    'Gaussian blurring kernel in mm. Three values should be entered',...
+    'denoting the FWHM in the x, y and z directions.']};
+
+%% EXEC function
+% ---------------------------------------------------------------------
+% proc_smooth Processing hMRI -> smoothing
+% ---------------------------------------------------------------------
+proc_smooth         = cfg_exbranch;
+proc_smooth.tag     = 'proc_smooth';
+proc_smooth.name    = 'Processing hMRI -> smoothing';
+proc_smooth.val     = {m_pams m_TCs tpm fwhm};
+% proc_smooth.check   = @check_proc_smooth;
+proc_smooth.help    = { 
+    'Applying tissue specific smoothing, aka. weighted averaging, ', ...
+    'in order to limit partial volume effect.'};
+proc_smooth.prog = @hmri_run_smooth;
+proc_smooth.vout = @vout_smooth;
+
+end
+%%
+% SUBFUNCTIONS
+
+% Collect and prepare output
+function dep = vout_smooth(job)
+% This depends on job contents, which may not be present when virtual
+% outputs are calculated.
+% There should be one series of images per parametric map and tissue class,
+% e.g. in the usual case of 4 MPMs and GM/WM -> 8 series of image
+
+cdep = cfg_dep;
+cdep(2) = cfg_dep;
+
+dep = cdep(2:end);
 
 end
 
+% function dep = vout_preproc(job)
+% % This depends on job contents, which may not be present when virtual
+% % outputs are calculated.
+% 
+% cdep = cfg_dep;
+% 
+% if isfield(job, 'many_few_sdatas')
+%     if isfield(job.many_few_sdatas, 'subjc')
+%         job.subjc = job.many_few_sdatas.subjc;
+%     else
+%         for i=1:numel(job.tissue)
+%             if job.tissue(i).native(1)
+%                 cdep(end+1) = cfg_dep;
+%                 cdep(end).sname = sprintf('c%d Images', i);
+%                 cdep(end).src_output = substruct('.', 'tiss', '()', {i}, '.', 'c', '()', {':'});
+%                 cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
+%             end
+%             if job.tissue(i).native(2)
+%                 cdep(end+1) = cfg_dep;
+%                 cdep(end).sname = sprintf('rc%d Images', i);
+%                 cdep(end).src_output = substruct('.', 'tiss', '()', {i}, '.', 'rc', '()', {':'});
+%                 cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
+%             end
+%         end
+%         
+%         disp(job.many_few_sdatas);
+%         for i=1:numel(job.many_few_sdatas.many_sdatas.mp_vols)
+%             cdep(end+1) = cfg_dep;
+%             cdep(end).sname = sprintf('%d Parameter Volumes', i);
+%             cdep(end).src_output = substruct('.', 'maps', '()', {i}, '.', 'mp_vols', '()', {':'});
+%             cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
+%         end
+%         
+%         dep = cdep(2:end);
+%         return;
+%     end
+% end
+% for nm=1:numel(job.subjc)
+%     for i=1:numel(job.tissue),
+%         if job.tissue(i).native(1),
+%             cdep(end+1)          = cfg_dep; %#ok<*AGROW>
+%             cdep(end).sname      = sprintf('c%d_subj%d Images',i,nm);
+%             cdep(end).src_output = substruct('.','subjc','()',{nm},'.','tiss','()',{i},'.','c','()',{':'});
+%             cdep(end).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
+%         end
+%         if job.tissue(i).native(2),
+%             cdep(end+1)          = cfg_dep;
+%             cdep(end).sname      = sprintf('rc%d_subj%d Images',i,nm);
+%             cdep(end).src_output = substruct('.','subjc','()',{nm},'.','tiss','()',{i},'.','rc','()',{':'});
+%             cdep(end).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
+%         end
+%     end
+%     for i=1:numel(job.subjc(nm).maps.mp_vols)
+%         cdep(end+1)          = cfg_dep;
+%         cdep(end).sname      = sprintf('%d_subj%d Parameter Volumes',i,nm);
+%         cdep(end).src_output = substruct('.','subjc','()',{nm},'.','maps','.','mp_vols','()',{i});
+%         cdep(end).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
+%     end
+%     
+% end
+% 
+% dep = cdep(2:end);
+% 
+% end
+
+% Check number of files match
+% -> ensure they are the same for each list of files, i.e. one of each per
+% subject.
+function chk = check_proc_smooth(job)
+n_pams = numel(job.m_pams);
+n_TCs = numel(job.m_TCs);
+chk = '';
+if n_pams>1
+    ni_pams = numel(job.m_pams{1});
+    for ii=2:ni_pams
+        if ni_pams ~= numel(job.m_pams{ii})
+            chk = [chk 'Incompatible number of maps. '];
+            break
+        end
+    end
+end
+if n_TCs>1
+    ni_TC = numel(job.m_TCs{1});
+    for ii=2:ni_TCs
+        if ni_TC ~= numel(job.m_TCs{ii})
+            chk = [chk 'Incompatible number of TCs. ']; %#ok<*AGROW>
+            break
+        end
+    end
+end
+if n_pams>0 && n_TC>0
+    if numel(job.m_pams{1}) ~= numel(job.m_TCs{1})
+        chk = [chk 'Incompatible number of maps & TCs. '];
+    end
+end
+
+end
 
 % 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -601,4 +779,4 @@ end
 % eval([expr '.val={varargin{end}};']);
 % end
 % %_______________________________________________________________________
-
+% 

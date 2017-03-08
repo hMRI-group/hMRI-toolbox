@@ -6,7 +6,7 @@ function out = hmri_run_smooth(job)
 
 % grab a few numbers, assuming data have been checked before
 n_pams = numel(job.vols_mp);     % #parametric image types
-n_TCs = numel(job.vols_tc);       % #tissue classes
+n_TCs = numel(job.vols_tc);      % #tissue classes
 n_subj = numel(job.vols_mp{1});  % #subjects
 
 % disp([n_pams n_TCs n_subj])
@@ -40,13 +40,17 @@ for i_subj = 1:n_subj
     
     for jj = 1:n_TCs
         for kk = 1:n_pams
-            out.tc(jj).map{kk}{i_subj} = fn_out{kk}(jj,:); %#ok<*STRNU>
+            out.tc(jj).map(kk).fn{i_subj,1} = fn_out{kk}(jj,:); %#ok<*STRNU>
         end
     end
     
 end
 
-% out = fn_out;
+% The 'out' structure is organized as a structure out.tc.map.fn where
+% - tc is an array (1 x n_TCs) with 1 element per tissue class considered
+% - map is an array (1 x n_pams) with 1 element per parametric map
+% - fn is a cell array (n_subj x 1) with each subject's smoothed data for 
+%   the i^th TC and j^th MPM.
 
 end
 

@@ -52,6 +52,14 @@ function fn_out = hmri_MPMsmooth(fn_wMPM, fn_mwTC, fn_TPM, fwhm, l_TC)
 %   the 1st and 2nd tissue class are used from the TPM
 % - Just pass the full name of the TPM, without subvolume index, the exact 
 %   TC used is defined by the fn_mwTC
+%
+% FUTURE:
+% With present computer having large amounts of RAM, we could do most of
+% the image calculation direction by loading the nifti files directly. This
+% would eschew the use of spm_imcalc and its annoying messages...) and
+% possibly be a bit faster. 
+% Not sure how to perform the Gaussian smoothingn though. Probably some
+% re-implementation could do the trick.
 
 if nargin<4, fwhm = 6; end
 if nargin<3,

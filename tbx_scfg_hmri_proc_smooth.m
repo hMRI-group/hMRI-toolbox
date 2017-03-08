@@ -1,4 +1,4 @@
-function proc_smooth = tbx_sscfg_hmri_smooth
+function proc_smooth = tbx_scfg_hmri_proc_smooth
 % Configuration file for the "smoothing", weighted averaging, of
 % quantitative maps
 %_______________________________________________________________________
@@ -9,6 +9,9 @@ function proc_smooth = tbx_sscfg_hmri_smooth
 % NOTE:
 % data are selected in a 'many subject' style, i.e. all the images of one
 % type are selected from many subjects at once!
+% 
+% It could be advantageous to define the TPM in a definition file and use
+% it when ever we need it. Right now, this is hard-coded in the cfg file!
 
 % ---------------------------------------------------------------------
 % vols_pm Parametric volumes

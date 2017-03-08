@@ -31,8 +31,8 @@ proc.help    = {
     'subjects, based on their tissue maps']
     ['- Smoothing -> tissue specific weighted averaging']
     }'; %#ok<*NBRAK>
-% proc.values  = {tbx_sscfg_hmri_US tbx_sscfg_hmri_dartel tbx_sscfg_hmri_smooth};
-proc.values  = {tbx_sscfg_hmri_smooth};
+% proc.values  = {tbx_scfg_hmri_proc_US tbx_scfg_hmri_proc_dartel tbx_scfg_hmri_proc_smooth};
+proc.values  = {tbx_scfg_hmri_proc_US tbx_scfg_hmri_proc_smooth};
 
 end
 

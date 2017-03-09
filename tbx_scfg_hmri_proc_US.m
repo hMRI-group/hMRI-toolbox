@@ -43,8 +43,10 @@ indir.tag     = 'indir';
 indir.name    = 'Input directory';
 indir.help    = {['Output files will be written to the same folder as ',...
     'each corresponding input file.']};
-indir.labels = {'Yes'};
-indir.values = {1};
+indir.labels  = {'Yes'};
+indir.values  = {1};
+indir.val     = {1};
+
 
 % ---------------------------------------------------------------------
 % outdir Output directory
@@ -107,7 +109,7 @@ many_pams.help       = {['Select whole brain parameter maps (e.g. MT, ',...
 % ---------------------------------------------------------------------
 many_sdatas = cfg_branch;
 many_sdatas.tag = 'many_sdatas';
-many_sdatas.name = 'Many Subjects';
+many_sdatas.name = 'Data & options';
 many_sdatas.val = {output many_pams unlimit(rstruct)};
 many_sdatas.help = {'Specify images for many subjects'};
 
@@ -115,31 +117,29 @@ many_sdatas.help = {'Specify images for many subjects'};
 % preproc8 Segment MT/T1w data
 % ---------------------------------------------------------------------
 proc_us = preproc8;
-proc_us.name = 'Maps preprocessing - Segmentation';
+proc_us.name = 'Proc. hMRI -> Segmentation';
 proc_us.tag  = 'proc_us';
-% Combine data defintion (local) with the tissue specs & other parameters 
+% Combine data defintion (local) with the tissue specs & other parameters
 % from preproc8 (these 2 are the last elements in preproc8.val)
 proc_us.val = [{many_sdatas} preproc8.val(2:end)];
 
 % set the output for the 6 tissue classes to
-% - 1st 3 -> write warped, mod+unmod, and native, native+dartelImp. 
-% - last 3 -> nothing
+% - GM/WM/CSF -> write warped, mod+unmod, and native, native+dartelImp.
+% - others -> nothing
 % plus update tpm with the hMRI specific
 w_native = [[1 1];[1 1];[1 1];[0 0];[0 0];[0 0]];
 w_warped = [[1 1];[1 1];[1 1];[0 0];[0 0];[0 0]];
 fn_tpm = fullfile(spm('dir'),'toolbox','hMRI','tpm','unwTPM_sl2.nii');
 for ii=1:size(w_native,1)
     proc_us = cfg_set_val(proc_us, 'tissues', ii, 'native', w_native(ii,:));
-    proc_us = cfg_set_val(proc_us, 'tissues', ii, 'native', w_warped(ii,:));
+    proc_us = cfg_set_val(proc_us, 'tissues', ii, 'warped', w_warped(ii,:));
     proc_us = cfg_set_val(proc_us, 'tissues', ii, 'tpm', ...
         {spm_file(fn_tpm,'number',ii)});
-    
 end
-
-% set the output to write out the forward deformation field 
+% set the output to write out the forward deformation field
 proc_us = cfg_set_val(proc_us, 'warp', 'write', [0 1]);
 
-proc_us.prog = @hmri_run_local_preproc;
+proc_us.prog = @hmri_run_local_procUS;
 proc_us.vout = @vout_preproc;
 
 end
@@ -161,94 +161,54 @@ function dep = vout_preproc(job)
 
 cdep = cfg_dep;
 
-% if isfield(job, 'many_few_sdatas')
-%     if isfield(job.many_few_sdatas, 'subjc')
-%         job.subjc = job.many_few_sdatas.subjc;
-%     else
-        for i=1:numel(job.tissue)
-            if job.tissue(i).native(1)
-                cdep(end+1) = cfg_dep;
-                cdep(end).sname = sprintf('c%d Images', i);
-                cdep(end).src_output = substruct('.', 'tiss', '()', {i}, '.', 'c', '()', {':'});
-                cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
-            end
-            if job.tissue(i).native(2)
-                cdep(end+1) = cfg_dep;
-                cdep(end).sname = sprintf('rc%d Images', i);
-                cdep(end).src_output = substruct('.', 'tiss', '()', {i}, '.', 'rc', '()', {':'});
-                cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
-            end
-        end
-        
-%         disp(job.many_few_sdatas);
-%         for i=1:numel(job.many_few_sdatas.many_sdatas.mp_vols)
-        for i=1:numel(job.many_sdatas.mp_vols)
-            cdep(end+1) = cfg_dep;
-            cdep(end).sname = sprintf('%d Parameter Volumes', i);
-            cdep(end).src_output = substruct('.', 'maps', '()', {i}, '.', 'mp_vols', '()', {':'});
-            cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
-        end
-        
-        dep = cdep(2:end);
+% Collect tissue class images (4 of them)
+for i=1:numel(job.tissue)
+    if job.tissue(i).native(1)
+        cdep(end+1) = cfg_dep;
+        cdep(end).sname = sprintf('c%d Images', i);
+        cdep(end).src_output = substruct('.', 'tiss', '()', {i}, '.', 'c', '()', {':'});
+        cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
+    end
+    if job.tissue(i).native(2)
+        cdep(end+1) = cfg_dep;
+        cdep(end).sname = sprintf('rc%d Images', i);
+        cdep(end).src_output = substruct('.', 'tiss', '()', {i}, '.', 'rc', '()', {':'});
+        cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
+    end
+    if job.tissue(i).warped(1)
+        cdep(end+1) = cfg_dep;
+        cdep(end).sname = sprintf('wc%d Images', i);
+        cdep(end).src_output = substruct('.', 'tiss', '()', {i}, '.', 'wc', '()', {':'});
+        cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
+    end
+    if job.tissue(i).warped(2)
+        cdep(end+1) = cfg_dep;
+        cdep(end).sname = sprintf('mwc%d Images', i);
+        cdep(end).src_output = substruct('.', 'tiss', '()', {i}, '.', 'mwc', '()', {':'});
+        cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
+    end
 end
-%         return;
-%     end
-% end
-% for nm=1:numel(job.subjc)
-%     for i=1:numel(job.tissue),
-%         if job.tissue(i).native(1),
-%             cdep(end+1)          = cfg_dep; %#ok<*AGROW>
-%             cdep(end).sname      = sprintf('c%d_subj%d Images',i,nm);
-%             cdep(end).src_output = substruct('.','subjc','()',{nm},'.','tiss','()',{i},'.','c','()',{':'});
-%             cdep(end).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
-%         end
-%         if job.tissue(i).native(2),
-%             cdep(end+1)          = cfg_dep;
-%             cdep(end).sname      = sprintf('rc%d_subj%d Images',i,nm);
-%             cdep(end).src_output = substruct('.','subjc','()',{nm},'.','tiss','()',{i},'.','rc','()',{':'});
-%             cdep(end).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
-%         end
-%     end
-%     for i=1:numel(job.subjc(nm).maps.mp_vols)
-%         cdep(end+1)          = cfg_dep;
-%         cdep(end).sname      = sprintf('%d_subj%d Parameter Volumes',i,nm);
-%         cdep(end).src_output = substruct('.','subjc','()',{nm},'.','maps','.','mp_vols','()',{i});
-%         cdep(end).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
-%     end
-%     
-% end
-% 
-% dep = cdep(2:end);
-% 
-% end
 
+% Collect warped parametric maps
+for i=1:numel(job.many_sdatas.mp_vols)
+    cdep(end+1) = cfg_dep;
+    cdep(end).sname = sprintf('Warped par. vols #%d', i);
+    cdep(end).src_output = substruct('.', 'maps', '()', {i}, '.', 'wmp_vols', '()', {':'});
+    cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
+end
+
+% Collect the deformation fields
+cdep(end+1) = cfg_dep;
+cdep(end).sname = 'Def. fields';
+cdep(end).src_output = substruct('.', 'def', '.', 'fn', '()', {':'});
+cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
+
+dep = cdep(2:end);
+end
 
 %% =======================================================================
 % SUBFUNCTIONS to handle matlabbatch structure and fields
 % ========================================================================
-
-% function expr = cfg_expr_values(c, varargin) %#ok<INUSL>
-% % Extracting the 'values' field with index matching the input argument and
-% % 'tag' of the matlabbatch structure.
-% 
-% expr = 'c';
-% for i=1:size(varargin,2)
-%     %         if strcmp(class(varargin{i}), 'double')
-%     if isa(varargin{i}, 'double')
-%         expr = [expr '.values{' num2str(varargin{i}) '}']; 
-%     else
-%         v = eval([expr ';']);
-%         for j=1:size(v.values,2)
-%             if strcmp(v.values{j}.tag, varargin{i})
-%                 break
-%             end
-%         end
-%         expr = [expr '.values{' num2str(j) '}']; 
-%     end
-% end
-% expr = expr(2:end);
-% end
-%_______________________________________________________________________
 
 function expr = cfg_expr(c, varargin) %#ok<INUSL>
 expr = 'c';
@@ -263,7 +223,7 @@ for i=1:size(varargin,2)
                 break
             end
         end
-        expr = [expr '.val{' num2str(j) '}']; 
+        expr = [expr '.val{' num2str(j) '}'];
     end
 end
 expr = expr(2:end);

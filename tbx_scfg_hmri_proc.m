@@ -8,12 +8,15 @@ function proc = tbx_scfg_hmri_proc
 % - DARTEL -> improves the warping into a common space of multiple
 %   subjects, based on their tissue maps
 % - Smoothing -> tissue specific weighted averaging
-% These steps are split into 3 sub-modules
+% These steps are split into 3 sub-modules.
 %_______________________________________________________________________
 % Copyright (C) 2017 Cyclotron Research Centre
 
 % Written by Christophe Phillips
 
+% NOTE:
+% Only the Dartel tool is made available. Shoot could be added later on if
+% needed or wanted...
 
 % ---------------------------------------------------------------------
 % proc Preprocess maps

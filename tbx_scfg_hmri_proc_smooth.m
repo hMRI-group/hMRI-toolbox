@@ -12,6 +12,9 @@ function proc_smooth = tbx_scfg_hmri_proc_smooth
 % 
 % It could be advantageous to define the TPM in a definition file and use
 % it when ever we need it. Right now, this is hard-coded in the cfg file!
+% Same goes for a bunch of parameters for each tissue class (e.g. number of
+% Guassians, what is written out, bias correction, etc.) which ar enow +/-
+% hard-coded in this file.
 
 % ---------------------------------------------------------------------
 % vols_pm Parametric volumes
@@ -20,7 +23,7 @@ vols_pm         = cfg_files;
 vols_pm.tag     = 'vols_mp';
 vols_pm.name    = 'Volumes';
 vols_pm.help    = {['Select whole brain parameter maps (e.g. MT, R2*, ',...
-    'FA etc) for processing.']};
+    'FA etc) warped into MNI space.']};
 vols_pm.filter  = 'image';
 vols_pm.ufilter = '^w.*';
 vols_pm.num     = [1 Inf];
@@ -30,20 +33,20 @@ vols_pm.num     = [1 Inf];
 % ---------------------------------------------------------------------
 m_pams            = cfg_repeat;
 m_pams.tag        = 'm_pams';
-m_pams.name       = 'Parameter maps';
+m_pams.name       = 'Warped parameter maps';
 m_pams.values     = {vols_pm };
 m_pams.val        = {vols_pm };
 m_pams.num = [1 Inf];
 m_pams.help       = {['Select whole brain parameter maps (e.g. MT, ',...
-    'R2*, FA etc) for processing.']};
+    'R2*, FA etc) warped into MNI space.']};
 
 % ---------------------------------------------------------------------
 % vols_tc Parametric volumes
 % ---------------------------------------------------------------------
 vols_tc         = cfg_files;
 vols_tc.tag     = 'vols_tc';
-vols_tc.name    = 'Tissue class';
-vols_tc.help    = {'Select the modulated warped tissue classes (TC)'};
+vols_tc.name    = 'mwTC images';
+vols_tc.help    = {'Select the modulated warped tissue classes (mwc*)'};
 vols_tc.filter  = 'image';
 vols_tc.ufilter = '^mwc.*';
 vols_tc.num     = [1 Inf];
@@ -53,7 +56,7 @@ vols_tc.num     = [1 Inf];
 % ---------------------------------------------------------------------
 m_TCs            = cfg_repeat;
 m_TCs.tag        = 'maps';
-m_TCs.name       = 'Parameter maps';
+m_TCs.name       = 'Modulated warped tissue class';
 m_TCs.values     = {vols_tc };
 m_TCs.val        = {vols_tc };
 m_TCs.num = [1 Inf];
@@ -71,7 +74,6 @@ tpm.help    = {'Select the TPM used for the segmentation.'};
 tpm.filter  = 'image';
 tpm.ufilter = '.*';
 tpm.num     = [1 1];
-% tpm.def     = fullfile(spm('dir'),'toolbox','hMRI','tpm','unwTPM_sl2.nii');
 tpm.val     = {{fullfile(spm('dir'),'toolbox','hMRI','tpm','unwTPM_sl2.nii,1')}};
 
 % ---------------------------------------------------------------------
@@ -93,7 +95,7 @@ fwhm.help    = {['Specify the full-width at half maximum (FWHM) of the ',...
 % ---------------------------------------------------------------------
 proc_smooth         = cfg_exbranch;
 proc_smooth.tag     = 'proc_smooth';
-proc_smooth.name    = 'Proc. hMRI -> smoothing';
+proc_smooth.name    = 'Proc. hMRI -> Smoothing';
 proc_smooth.val     = {m_pams m_TCs tpm fwhm};
 proc_smooth.check   = @check_proc_smooth;
 proc_smooth.help    = { 

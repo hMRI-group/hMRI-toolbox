@@ -105,7 +105,11 @@ eval(['nrm = nrm_tmp', ...
     cfg_expr_values(nrm_tmp, 'mni_norm'),';']);
 
 eval(['nrm' cfg_expr(nrm, 'data') '= multsdata;']); %#ok<NODEF>
+% Drop out 2 fields:
+% - the 'preserve' field, as this is fixed in the run function
+% - the 'fwhm' field, as no smoothin applied here
 eval(['nrm' regexprep(cfg_expr(nrm, 'preserve'), '{([0-9]+)}$', '($1)') '=[];']);
+eval(['nrm' regexprep(cfg_expr(nrm, 'fwhm'), '{([0-9]+)}$', '($1)') '=[];']);
 
 nrm.prog  = @hmri_run_local_dartel_norm_fun;
 nrm.vout  = @vout_norm_fun;

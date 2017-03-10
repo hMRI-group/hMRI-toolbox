@@ -27,8 +27,8 @@ vols.num        = [1 Inf];
 % vols_pm Parametric maps
 % ---------------------------------------------------------------------
 vols_pm         = cfg_files;
-vols_pm.tag     = 'mp_vols';
-vols_pm.name    = 'Volumes';
+vols_pm.tag     = 'vols_pm';
+vols_pm.name    = 'Parametric maps';
 vols_pm.help    = {['Select whole brain parameter maps (e.g. MT, R2*, ',...
     'FA etc) for processing.']};
 vols_pm.filter  = 'image';
@@ -167,41 +167,47 @@ for i=1:numel(job.tissue)
         cdep(end+1) = cfg_dep;
         cdep(end).sname = sprintf('c%d Images', i);
         cdep(end).src_output = substruct('.', 'tiss', '()', {i}, '.', 'c', '()', {':'});
-        cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
+        cdep(end).tgt_spec = cfg_findspec({{'filter','nifti'}});
+%         cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}}); % cfg_findspec({{'filter','nifti'}});
     end
     if job.tissue(i).native(2)
         cdep(end+1) = cfg_dep;
         cdep(end).sname = sprintf('rc%d Images', i);
         cdep(end).src_output = substruct('.', 'tiss', '()', {i}, '.', 'rc', '()', {':'});
-        cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
+        cdep(end).tgt_spec = cfg_findspec({{'filter','nifti'}});
+%         cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
     end
     if job.tissue(i).warped(1)
         cdep(end+1) = cfg_dep;
         cdep(end).sname = sprintf('wc%d Images', i);
         cdep(end).src_output = substruct('.', 'tiss', '()', {i}, '.', 'wc', '()', {':'});
-        cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
+        cdep(end).tgt_spec = cfg_findspec({{'filter','nifti'}});
+%         cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
     end
     if job.tissue(i).warped(2)
         cdep(end+1) = cfg_dep;
         cdep(end).sname = sprintf('mwc%d Images', i);
         cdep(end).src_output = substruct('.', 'tiss', '()', {i}, '.', 'mwc', '()', {':'});
-        cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
+        cdep(end).tgt_spec = cfg_findspec({{'filter','nifti'}});
+%         cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
     end
 end
 
 % Collect warped parametric maps
-for i=1:numel(job.many_sdatas.mp_vols)
+for i=1:numel(job.many_sdatas.vols_pm)
     cdep(end+1) = cfg_dep;
     cdep(end).sname = sprintf('Warped par. vols #%d', i);
-    cdep(end).src_output = substruct('.', 'maps', '()', {i}, '.', 'wmp_vols', '()', {':'});
-    cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
+    cdep(end).src_output = substruct('.', 'maps', '()', {i}, '.', 'wvols_pm', '()', {':'});
+    cdep(end).tgt_spec = cfg_findspec({{'filter','nifti'}});
+%     cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
 end
 
 % Collect the deformation fields
 cdep(end+1) = cfg_dep;
 cdep(end).sname = 'Def. fields';
 cdep(end).src_output = substruct('.', 'def', '.', 'fn', '()', {':'});
-cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
+cdep(end).tgt_spec = cfg_findspec({{'filter','nifti'}});
+% cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
 
 dep = cdep(2:end);
 end

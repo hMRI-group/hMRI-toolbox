@@ -117,9 +117,9 @@ function dep = vout_smooth(job)
 % There should be one series of images per parametric map and tissue class,
 % e.g. in the usual case of 4 MPMs and GM/WM -> 8 series of image
 
-n_pams = numel(job.vols_mp);     % #parametric image types
+n_pams = numel(job.vols_pm);     % #parametric image types
 n_TCs = numel(job.vols_tc);      % #tissue classes
-% n_subj = numel(job.vols_mp{1});  % #subjects
+% n_subj = numel(job.vols_pm{1});  % #subjects
 
 cdep = cfg_dep;
 for ii=1:n_TCs
@@ -139,14 +139,14 @@ end
 function chk = check_proc_smooth(job)
 % ensure they are the same for each list of files, one of each per subject.
 
-n_pams = numel(job.vols_mp);
+n_pams = numel(job.vols_pm);
 n_TCs = numel(job.vols_tc);
 chk = '';
 
 if n_pams>1
-    ni_pams = numel(job.vols_mp{1});
+    ni_pams = numel(job.vols_pm{1});
     for ii=2:n_pams
-        if ni_pams ~= numel(job.vols_mp{ii})
+        if ni_pams ~= numel(job.vols_pm{ii})
             chk = [chk 'Incompatible number of maps. '];
             break
         end
@@ -162,7 +162,7 @@ if n_TCs>1
     end
 end
 if n_pams>0 && n_TCs>0
-    if numel(job.vols_mp{1}) ~= numel(job.vols_tc{1})
+    if numel(job.vols_pm{1}) ~= numel(job.vols_tc{1})
         chk = [chk 'Incompatible number of maps & TCs.'];
     end
 end

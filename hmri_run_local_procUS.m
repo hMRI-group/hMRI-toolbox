@@ -18,7 +18,7 @@ job = preproc_perimage_to_persubject(job);
 %           .c and .rc, for the native and Dartel imported
 %           .wc and .mwc, for the warped and modulated
 %          tissue class images
-% .maps : struct-array with subfields 'wmp_vols' for the warped parametric
+% .maps : struct-array with subfields 'wvols_pm' for the warped parametric
 %         maps
 % .def  : cell-array with the deformations for each subject.
 for i=1:numel(job.tissue)
@@ -27,8 +27,8 @@ for i=1:numel(job.tissue)
     out.tiss(i).wc = {};
     out.tiss(i).mwc = {};
 end
-for i=1:numel(job.subjc(1).maps.mp_vols)
-    out.maps(i).wmp_vols = {};
+for i=1:numel(job.subjc(1).maps.vols_pm)
+    out.maps(i).wvols_pm = {};
 end
 out.def.fn = {};
 
@@ -45,10 +45,10 @@ for nm = 1:length(job.subjc)
     defs.comp{1}.def = spm_file(job.subjc(nm).struct(1).s_vols, ...
         'prefix', 'y_', 'ext', '.nii'); % def map fname
     % defs.ofname = '';
-    defs.out{1}.pull.fnames = cellstr(char(char(job.subjc(nm).maps.mp_vols{:})));
+    defs.out{1}.pull.fnames = cellstr(char(char(job.subjc(nm).maps.vols_pm{:})));
     if isfield(job.subjc(nm).output,'indir') && job.subjc(nm).output.indir == 1
         defs.out{1}.pull.savedir.saveusr{1} = ...
-            spm_file(job.subjc(nm).maps.mp_vols{1},'path');
+            spm_file(job.subjc(nm).maps.vols_pm{1},'path');
     else
         defs.out{1}.pull.savedir.saveusr{1} = job.subjc(nm).output.outdir{1};
     end
@@ -74,7 +74,7 @@ for nm = 1:length(job.subjc)
         end
     end
     for i=1:numel(outdef.warped)
-        out.maps(i).wmp_vols{end+1,1} = outdef.warped{i};
+        out.maps(i).wvols_pm{end+1,1} = outdef.warped{i};
     end
     out.def.fn{end+1,1} = defs.comp{1}.def{1};
 end
@@ -90,10 +90,10 @@ for i = 1:numel(job.many_sdatas.rstruct.s_vols)
     job.subjc(i).struct = job.many_sdatas.rstruct;
     job.subjc(i).struct.s_vols = ...
         job.many_sdatas.rstruct.s_vols(i);
-    job.subjc(i).maps.mp_vols = {};
-    for k = 1:numel(job.many_sdatas.mp_vols)
-        job.subjc(i).maps.mp_vols{end+1,1} = ...
-            job.many_sdatas.mp_vols{k}{i};
+    job.subjc(i).maps.vols_pm = {};
+    for k = 1:numel(job.many_sdatas.vols_pm)
+        job.subjc(i).maps.vols_pm{end+1,1} = ...
+            job.many_sdatas.vols_pm{k}{i};
     end
 end
 end

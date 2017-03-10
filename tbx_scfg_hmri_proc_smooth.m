@@ -20,7 +20,7 @@ function proc_smooth = tbx_scfg_hmri_proc_smooth
 % vols_pm Parametric volumes
 % ---------------------------------------------------------------------
 vols_pm         = cfg_files;
-vols_pm.tag     = 'vols_mp';
+vols_pm.tag     = 'vols_pm';
 vols_pm.name    = 'Volumes';
 vols_pm.help    = {['Select whole brain parameter maps (e.g. MT, R2*, ',...
     'FA etc) warped into MNI space.']};

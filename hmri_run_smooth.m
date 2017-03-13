@@ -5,9 +5,9 @@ function out = hmri_run_smooth(job)
 % type are selected from many subjects at once!
 
 % grab a few numbers, assuming data have been checked before
-n_pams = numel(job.vols_mp);     % #parametric image types
+n_pams = numel(job.vols_pm);     % #parametric image types
 n_TCs = numel(job.vols_tc);      % #tissue classes
-n_subj = numel(job.vols_mp{1});  % #subjects
+n_subj = numel(job.vols_pm{1});  % #subjects
 
 % disp([n_pams n_TCs n_subj])
 
@@ -29,7 +29,7 @@ fn_TPM = char(fn_TPM_i);
 for i_subj = 1:n_subj
     fn_wMPM = cell(n_pams,1);
     for jj = 1:n_pams
-        fn_wMPM{jj} = job.vols_mp{jj}{i_subj};
+        fn_wMPM{jj} = job.vols_pm{jj}{i_subj};
     end
     fn_mwTC = cell(n_TCs,1);
     for jj = 1:n_TCs

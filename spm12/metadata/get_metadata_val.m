@@ -81,7 +81,8 @@ if ischar(mstruc)
     mstruc = mstruc{1};
 end
 
-parLocation = {};
+parValue = [];
+parLocation = [];
 nFieldFound = 0;
 
 switch inParName
@@ -358,13 +359,13 @@ switch inParName
                     % scan with direction (0,0,0)).
                     ndir = eval(['mstruc.' nam{1} '.sFreeDiffusionData.lDiffDirections']);
                     parLocation{cRes} = [nam{1} '.sFreeDiffusionData.asDiffDirVector'];
-                    parValueCell = eval(['mstruc.' nam{1} '.sFreeDiffusionData.asDiffDirVector']);
+                    parValueSagCorTra = eval(['mstruc.' nam{1} '.sFreeDiffusionData.asDiffDirVector']);
                     parValue{cRes} = zeros(3,ndir);
-                    for cdir = 1:length(parValueCell)
-                        if isempty(parValueCell{cdir}.dSag);parValueCell{cdir}.dSag = 0;end
-                        if isempty(parValueCell{cdir}.dCor);parValueCell{cdir}.dCor = 0;end
-                        if isempty(parValueCell{cdir}.dTra);parValueCell{cdir}.dTra = 0;end
-                        parValue{cRes}(:,cdir) = [parValueCell{cdir}.dSag; parValueCell{cdir}.dCor; parValueCell{cdir}.dTra];
+                    for cdir = 1:length(parValueSagCorTra)
+                        if isempty(parValueSagCorTra(cdir).dSag);parValueSagCorTra(cdir).dSag = 0;end
+                        if isempty(parValueSagCorTra(cdir).dCor);parValueSagCorTra(cdir).dCor = 0;end
+                        if isempty(parValueSagCorTra(cdir).dTra);parValueSagCorTra(cdir).dTra = 0;end
+                        parValue{cRes}(:,cdir) = [parValueSagCorTra(cdir).dSag; parValueSagCorTra(cdir).dCor; parValueSagCorTra(cdir).dTra];
                     end
                 end
                 
@@ -401,6 +402,7 @@ switch inParName
                 cRes = 1;
                 parLocation{cRes} = 'B0Image';
                 parValue{cRes} = [0;0;0];
+                warning('Diffusion direction not defined for DWImage %s. Assuming b=0.', inParName);
             end
         end
         
@@ -585,7 +587,7 @@ end
 if ~nFieldFound
     warning('No %s found in the extended header', inParName);
     parValue = [];
-    parLocation = {};
+    parLocation = [];
 end
 
 % returns cell array only if necessary (non-unique result)

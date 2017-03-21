@@ -76,10 +76,10 @@ m_pams.help   = {['Select whole brain parameter maps (e.g. MT, ',...
 % ---------------------------------------------------------------------
 vols_tc         = cfg_files;
 vols_tc.tag     = 'vols_tc';
-vols_tc.name    = 'rc* images';
-vols_tc.help    = {'Select the Dartel imported tissue classes (rc*)'};
+vols_tc.name    = 'c* images';
+vols_tc.help    = {'Select the tissue classes images (c*)'};
 vols_tc.filter  = 'image';
-vols_tc.ufilter = '^rc.*';
+vols_tc.ufilter = '^c[\d].*';
 vols_tc.num     = [1 Inf];
 
 % ---------------------------------------------------------------------
@@ -87,13 +87,13 @@ vols_tc.num     = [1 Inf];
 % ---------------------------------------------------------------------
 m_TCs            = cfg_repeat;
 m_TCs.tag        = 'maps';
-m_TCs.name       = 'Dartel imported tissue class';
+m_TCs.name       = 'Segemented tissue class';
 m_TCs.values     = {vols_tc };
 m_TCs.val        = {vols_tc };
 m_TCs.num = [1 Inf];
-m_TCs.help       = {['Select the modulated warped tissue classes (TC) ',...
-    'of interest from all subjects. This ould typically be the mwc1* ',...
-    'and mwc2* images for GM and WM.']};
+m_TCs.help       = {['Select the tissue class (TC) images',...
+    'of interest from all subjects. This should typically be the c1* ',...
+    'and c2* images for GM and WM.']};
 
 % ---------------------------------------------------------------------
 % multsdata Data
@@ -186,7 +186,23 @@ end
 %_______________________________________________________________________
 
 function dep = vout_norm_fun(job) %#ok<*INUSD>
-dep = cfg_dep;
+cdep = cfg_dep;
+% deal with mwTC's
+for ii=1:numel(job.multsdata.vols_tc)
+    cdep(end+1) = cfg_dep;
+    cdep(end).sname      = sprintf('mw TC #%d',ii);
+    cdep(end).src_output = substruct('.','vols_mwtc','()',{':',ii});
+    cdep(end).tgt_spec   = cfg_findspec({{'filter','nifti'}});
+end
+%deal with wPM's
+for ii=1:numel(job.multsdata.vols_pm)
+    cdep(end+1) = cfg_dep;
+    cdep(end).sname      = sprintf('warped Param Map #%d',ii);
+    cdep(end).src_output = substruct('.','vols_wpm','()',{':',ii});
+    cdep(end).tgt_spec   = cfg_findspec({{'filter','nifti'}});
+end
+dep = cdep(2:end);
+
 end
 %_______________________________________________________________________
 

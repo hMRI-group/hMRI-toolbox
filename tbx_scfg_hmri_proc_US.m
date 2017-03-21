@@ -17,8 +17,10 @@ function proc_us = tbx_scfg_hmri_proc_US
 % ---------------------------------------------------------------------
 vols            = cfg_files;
 vols.tag        = 's_vols';
-vols.name       = 'Reference (T1w or MT) images';
-vols.help       = {'Select reference images, i.e. T1w or MT, for "unified segmentation".'};
+vols.name       = 'Structural images (T1w or MT) for segmentation';
+vols.help       = {['Select structural images, i.e. T1w or MT, for ',...
+    '"unified segmentation". They are used to create the individuam ',...
+    'tissue class maps, e.g. GM and WM posterior probability maps']};
 vols.filter     = 'image';
 vols.ufilter    = '.*';
 vols.num        = [1 Inf];
@@ -46,7 +48,6 @@ indir.help    = {['Output files will be written to the same folder as ',...
 indir.labels  = {'Yes'};
 indir.values  = {1};
 indir.val     = {1};
-
 
 % ---------------------------------------------------------------------
 % outdir Output directory
@@ -76,10 +77,6 @@ output.values  = {indir outdir };
 preproc8 = spm_cfg_preproc8;
 % set the data->channel->vols to here defined 'vols'
 eval(['preproc8',cfg_expr(preproc8, 'data', 'channel', 'vols'),' = vols;']);
-% % set the output for first 3 tissue classes to write warped, mod & unmod.
-% for i=1:3
-%     eval(['preproc8',cfg_expr(preproc8, 'tissues', i, 'warped'),'.val{1}=[1 1];']);
-% end
 
 % ---------------------------------------------------------------------
 % struct Structurals
@@ -98,7 +95,7 @@ rstruct = cfg_set_val(rstruct, 'biasfwhm', Inf);
 many_pams            = cfg_repeat;
 many_pams.tag        = 'maps';
 many_pams.name       = 'Parameter maps';
-many_pams.values        = {vols_pm };
+many_pams.values     = {vols_pm };
 many_pams.val        = {vols_pm };
 many_pams.num = [1 Inf];
 many_pams.help       = {['Select whole brain parameter maps (e.g. MT, ',...
@@ -126,7 +123,7 @@ proc_us.val = [{many_sdatas} preproc8.val(2:end)];
 % set the output for the 6 tissue classes to
 % - GM/WM/CSF -> write warped, mod+unmod, and native, native+dartelImp.
 % - others -> nothing
-% plus update tpm with the hMRI specific
+% plus use the hMRI specific TPMs.
 w_native = [[1 1];[1 1];[1 1];[0 0];[0 0];[0 0]];
 w_warped = [[1 1];[1 1];[1 1];[0 0];[0 0];[0 0]];
 fn_tpm = fullfile(spm('dir'),'toolbox','hMRI','tpm','unwTPM_sl2.nii');

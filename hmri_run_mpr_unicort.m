@@ -181,7 +181,7 @@ for ip = 1:numel(job.subj)
     Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[]));
     Output_hdr.history.procstep.version = hmri_get_version;
     Output_hdr.history.procstep.descrip = 'map creation';
-    Output_hdr.history.procstep.procpar = preproc8;
+    Output_hdr.history.procstep.procpar = struct('preproc8',preproc8);
     Output_hdr.history.input{ctr}.filename = P_R1_mask;
     input_hdr = get_metadata(P_R1_mask);
     if ~isempty(input_hdr{1})
@@ -207,7 +207,7 @@ for ip = 1:numel(job.subj)
     Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[]));
     Output_hdr.history.procstep.version = hmri_get_version;
     Output_hdr.history.procstep.descrip = 'map creation';
-    Output_hdr.history.procstep.procpar = preproc8;
+    Output_hdr.history.procstep.procpar = struct('preproc8',preproc8);
     Output_hdr.history.input{1}.filename = V_biasmap.fname;
     input_hdr = get_metadata(V_biasmap.fname);
     if ~isempty(input_hdr{1})
@@ -226,7 +226,7 @@ for ip = 1:numel(job.subj)
     Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[]));
     Output_hdr.history.procstep.version = hmri_get_version;
     Output_hdr.history.procstep.descrip = 'map creation';
-    Output_hdr.history.procstep.procpar = preproc8;
+    Output_hdr.history.procstep.procpar = struct('preproc8',preproc8);
     for ctr = 1:numel(Vtemp)
         Output_hdr.history.input{ctr}.filename = Vtemp(ctr).fname;
         input_hdr = get_metadata(Vtemp(ctr).fname);

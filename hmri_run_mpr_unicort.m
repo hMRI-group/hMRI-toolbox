@@ -31,7 +31,7 @@ function out = hmri_run_mpr_unicort(job)
 
 %%
 
-job=hmri_process_data_spec(job);
+job = hmri_process_data_spec(job);
 
 out.R1 = {};
 out.R1u = {};
@@ -40,7 +40,9 @@ out.A = {};
 out.MT = {};
 out.T1w = {};
 
-for ip=1:numel(job.subj)
+json = hmri_get_defaults('json');
+
+for ip = 1:numel(job.subj)
     P_mtw    = char(job.subj(ip).raw_mpm.MT);
     P_pdw    = char(job.subj(ip).raw_mpm.PD);
     P_t1w    = char(job.subj(ip).raw_mpm.T1);
@@ -57,25 +59,15 @@ for ip=1:numel(job.subj)
     
     [fR1, fR2s, fMT, fA, PPDw, PT1w]  = hmri_MTProt(P_mtw, P_pdw, P_t1w); 
  
-    % Retrieve the protocol tag
-    hdr = get_metadata(fR1);
-    if ~isempty(hdr{1})
-        prot_tag = hdr{1}.history.procstep.procpar;
-    else
-        prot_tag = 'Unknown';
-    end
-    % Set the tag for the MPMacq set.
-    hmri_get_defaults('MPMacq.tag',prot_tag);
-    
     % Use default parameters of SPM8 "New Segment" toolbox except for
     % adapted regularization and smoothness of bias field
     % as determined for 3T Magnetom Tim Trio (Siemens Healthcare, Erlangen, Germany)
     % see Weiskopf et al., Neuroimage 2010
     
-    
-    reg = hmri_get_defaults('unicort.reg');
-    FWHM = hmri_get_defaults('unicort.FWHM');
-    thr_factor = hmri_get_defaults('unicort.thr');
+    unicort_procpar = hmri_get_defaults('unicort');
+    reg = unicort_procpar.reg;
+    FWHM = unicort_procpar.FWHM;
+    thr_factor = unicort_procpar.thr;
     
     P_R1     = fR1;
     P_PDw    = PPDw;
@@ -113,7 +105,7 @@ for ip=1:numel(job.subj)
     Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[]));
     Output_hdr.history.procstep.version = hmri_get_version;
     Output_hdr.history.procstep.descrip = 'map creation';
-    Output_hdr.history.procstep.procpar = prot_tag;
+    Output_hdr.history.procstep.procpar = unicort_procpar;
     for ctr = 1:numel(Vtemp)
         Output_hdr.history.input{1}.filename = Vtemp(ctr).fname;
         input_hdr = get_metadata(Vtemp(ctr).fname);
@@ -125,7 +117,6 @@ for ip=1:numel(job.subj)
     end
     Output_hdr.history.output.imtype = 'Masked R1 map [1000/s]';
     Output_hdr.history.output.units = 'ms-1';
-    json = struct('extended',true,'separate',true,'overwrite',true);
     set_metadata(P_R1_mask,Output_hdr,json);
     
     
@@ -190,7 +181,7 @@ for ip=1:numel(job.subj)
     Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[]));
     Output_hdr.history.procstep.version = hmri_get_version;
     Output_hdr.history.procstep.descrip = 'map creation';
-    Output_hdr.history.procstep.procpar = prot_tag;
+    Output_hdr.history.procstep.procpar = struct('preproc8',preproc8);
     Output_hdr.history.input{ctr}.filename = P_R1_mask;
     input_hdr = get_metadata(P_R1_mask);
     if ~isempty(input_hdr{1})
@@ -200,7 +191,6 @@ for ip=1:numel(job.subj)
     end
     Output_hdr.history.output.imtype = 'Bias corrected R1 UNICORT map';
     Output_hdr.history.output.units = 'ms-1';
-    json = struct('extended',true,'separate',true,'overwrite',true);
     set_metadata(P_biasmap,Output_hdr,json);
     
     %% create B1+ map from bias field
@@ -217,7 +207,7 @@ for ip=1:numel(job.subj)
     Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[]));
     Output_hdr.history.procstep.version = hmri_get_version;
     Output_hdr.history.procstep.descrip = 'map creation';
-    Output_hdr.history.procstep.procpar = prot_tag;
+    Output_hdr.history.procstep.procpar = struct('preproc8',preproc8);
     Output_hdr.history.input{1}.filename = V_biasmap.fname;
     input_hdr = get_metadata(V_biasmap.fname);
     if ~isempty(input_hdr{1})
@@ -227,7 +217,6 @@ for ip=1:numel(job.subj)
     end
     Output_hdr.history.output.imtype = 'B1+ map';
     Output_hdr.history.output.units = 'p.u. nominal FA';
-    json = struct('extended',true,'separate',true,'overwrite',true);
     set_metadata(P_B1,Output_hdr,json);
     
     [p,n,e] = fileparts(P_R1_mask);
@@ -237,7 +226,7 @@ for ip=1:numel(job.subj)
     Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[]));
     Output_hdr.history.procstep.version = hmri_get_version;
     Output_hdr.history.procstep.descrip = 'map creation';
-    Output_hdr.history.procstep.procpar = prot_tag;
+    Output_hdr.history.procstep.procpar = struct('preproc8',preproc8);
     for ctr = 1:numel(Vtemp)
         Output_hdr.history.input{ctr}.filename = Vtemp(ctr).fname;
         input_hdr = get_metadata(Vtemp(ctr).fname);
@@ -249,7 +238,6 @@ for ip=1:numel(job.subj)
     end
     Output_hdr.history.output.imtype = 'Bias corrected R1 UNICORT map';
     Output_hdr.history.output.units = 'ms-1';
-    json = struct('extended',true,'separate',true,'overwrite',true);
     set_metadata(P_R1_unicort,Output_hdr,json);
     
     out.subj(ip).R1={fullfile(cwd,spm_str_manip(fR1,'t'))};

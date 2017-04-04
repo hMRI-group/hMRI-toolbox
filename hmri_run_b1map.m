@@ -499,7 +499,6 @@ for ctr = 1:numel(Vtemp)
 end
 Output_hdr.history.output.imtype = 'B1+ map';
 Output_hdr.history.output.units = 'p.u. nominal FA';
-json = struct('extended',true,'separate',true,'overwrite',true);
 set_metadata(VB1.fname,Output_hdr,json);
 
 % requires anatomic image + map
@@ -566,7 +565,6 @@ for ctr = 1:numel(Vtemp)
 end
 Output_hdr.history.output.imtype = 'B1+ map';
 Output_hdr.history.output.units = 'p.u. nominal FA';
-json = struct('extended',true,'separate',true,'overwrite',true);
 set_metadata(VB1.fname,Output_hdr,json);
 
 % requires anatomic image + map

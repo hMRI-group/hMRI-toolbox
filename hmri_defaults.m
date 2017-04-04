@@ -32,7 +32,7 @@ hmri_def.centre = 'cbs' ; % can be 'fil', 'lren', 'crc', 'sciz' or 'cbs'
 % run-time.
 
 hmri_def.R2sOLS = 1; % Create an Ordinary Least Squares R2* map?
-hmri_def.json = struct('extended',true,'separate',true,'anonym','none',...
+hmri_def.json = struct('extended',false,'separate',true,'anonym','none',...
     'overwrite',true); % settings for JSON metadata
 
 %% Processing of PD maps

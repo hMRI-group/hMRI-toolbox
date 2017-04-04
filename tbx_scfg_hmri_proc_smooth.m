@@ -101,7 +101,7 @@ proc_smooth.check   = @check_proc_smooth;
 proc_smooth.help    = { 
     'Applying tissue specific smoothing, aka. weighted averaging, ', ...
     'in order to limit partial volume effect.'};
-proc_smooth.prog = @hmri_run_smooth;
+proc_smooth.prog = @hmri_run_proc_smooth;
 proc_smooth.vout = @vout_smooth;
 
 end

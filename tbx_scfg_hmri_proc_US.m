@@ -136,7 +136,7 @@ end
 % set the output to write out the forward deformation field
 proc_us = cfg_set_val(proc_us, 'warp', 'write', [0 1]);
 
-proc_us.prog = @hmri_run_local_procUS;
+proc_us.prog = @hmri_run_proc_US;
 proc_us.vout = @vout_preproc;
 
 end

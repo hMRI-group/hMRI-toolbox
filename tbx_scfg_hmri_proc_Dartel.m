@@ -115,7 +115,7 @@ eval(['nrm' cfg_expr(nrm, 'data') '= multsdata;']); %#ok<NODEF>
 eval(['nrm' regexprep(cfg_expr(nrm, 'preserve'), '{([0-9]+)}$', '($1)') '=[];']);
 eval(['nrm' regexprep(cfg_expr(nrm, 'fwhm'), '{([0-9]+)}$', '($1)') '=[];']);
 
-nrm.prog  = @hmri_run_local_dartel_norm_fun;
+nrm.prog  = @hmri_run_proc_dartel_norm;
 nrm.vout  = @vout_norm_fun;
 nrm.check = [];
 

@@ -183,6 +183,15 @@ for filenum=1:numel(other_img)
    % Outputs -> uNAME-OF-EPI.img
    %----------------------------------------------------------------------
    unwarp_info=sprintf('Unwarped image:echo time difference=%2.2fms, EPI readout time=%2.2fms, Jacobian=%d',IP.uflags.etd, IP.tert,IP.ajm);    
+   OrigMat=spm_read_vols(IP.epiP);NewMat=IP.uepiP.dat;
+   %    AL - 05/10/2016
+   %    In the unwarped images, replaces voxels set to zero by the Fieldmap toolbox by
+   %    their original values in the warped data. It's a fudge but:
+   % 1. Not expected to do any harm in normal circumstances (voxels set to 0 are outside the brain)
+   % 2. Helps when fieldmap data doesn't quite cover the whole brain due to
+   % FOV restrictions: in this case, the voxels in the B1 (and SD) maps
+   % outside the fieldmap FOV are set to 0
+   NewMat(NewMat==0)=OrigMat(NewMat==0);IP.uepiP.dat=NewMat;
    unwarp_img{1+filenum}=hmri_FieldMap('Write',IP.epiP,IP.uepiP.dat,'u',IP.epiP.dt(1),unwarp_info);
    fmap_img{2}=IP.vdmP;
    %IPcell{1}=IP;

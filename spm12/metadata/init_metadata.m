@@ -9,7 +9,7 @@ function N = init_metadata(N, hdr, json)
 % is returned so the data can be written in it according to the new offset
 % (in spm_dicom_convert). In case of a separate JSON file, N is returned
 % unchanged and the JSON metadata are written in a separate file (same file
-% name as the nifti image, with .json extension). 
+% name as the nifti image, with .json extension).
 %__________________________________________________________________________
 % FORMAT N = init_metadata(N, hdr, json)
 % hdr       a single matlab structure containing the header (from
@@ -39,8 +39,14 @@ else
     metadata.history.output = struct('imtype','Unprocessed MR image', 'units','a.u.');
 end
 
+% Tidy up and rearrange CSA fields in the header, including formatting the
+% ASCII part into proper Matlab structure (Note: this is specific to
+% Siemens DICOM format)
+hdr = reformat_spm_dicom_header(hdr);
+
+% NB: Anonymisation is only basic and might not be effective!!!
 hdr = anonymise_metadata(hdr,struct('anonym',json.anonym));
-metadata.acqpar = hdr;        
+metadata.acqpar = hdr;
 
 if json.extended
     % JSONify the header and calculate the required offset
@@ -48,7 +54,7 @@ if json.extended
     % modify the offset of the nifti
     N.dat.offset = offset;
     % make the offset modification effective by rewriting the standard
-    % nifti header, including the offset: 
+    % nifti header, including the offset:
     create(N);
     % write the extended header (can be done before data are written or
     % after, does not matter:
@@ -56,6 +62,6 @@ if json.extended
 end
 
 if json.separate
-    [pth,fnam,~] = fileparts(N.dat.fname);
+    [pth,fnam,ext] = fileparts(N.dat.fname);
     spm_jsonwrite(fullfile(pth,[fnam '.json']),metadata, struct('indent','\t'));
 end

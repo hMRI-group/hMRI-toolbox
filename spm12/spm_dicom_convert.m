@@ -1,6 +1,6 @@
 function out = spm_dicom_convert(hdr,opts,root_dir,format,out_dir,json)
 % Convert DICOM images into something that SPM can use (e.g. NIfTI)
-% FORMAT spm_dicom_convert(hdr,opts,root_dir,format,out_dir,json)
+% FORMAT spm_dicom_convert(hdr,opts,root_dir,format,out_dir)
 % Inputs:
 % hdr      - a cell array of DICOM headers from spm_dicom_headers
 % opts     - options:
@@ -32,10 +32,12 @@ function out = spm_dicom_convert(hdr,opts,root_dir,format,out_dir,json)
 %               extended -> metadata stored as extended nii header included
 %                           in the nii image [default: false]
 %               separate -> metadata stored in separate json file [default:
-%                           false]  
+%                           false]
+%               Note: extended and separate fields can be simultaneously 
+%                           true or false.
 %               anonym   -> 'basic' (default), 'full', 'none' 
-%               NB: extended and separate fields can be simultaneously true
-%               or false. 
+%               Important note: anonymisation depends on input headers and
+%                           cannot be guaranteed.
 %              
 % Output:
 % out      - a struct with a single field .files. out.files contains a
@@ -248,7 +250,7 @@ for i=1:length(hdr)
     N.descrip     = descrip;
     create(N);
 
-    % ebalteau - for JSON metadata
+    % for JSON metadata
     if json.extended || json.separate
         N = init_metadata(N,hdr{i},json);
     end
@@ -291,11 +293,12 @@ for i=2:length(hdr)
    %orient = reshape(hdr{i}.ImageOrientationPatient,[3 2]);
    %xy1    = hdr{i}.ImagePositionPatient(:)*orient;
     match  = 0;
-    % ebalteau: CSA headers have changed with CSA tidying up in spm_dicom_header... 
-    try 
-        ice1 = sscanf(strrep(hdr{i}.CSAImageHeaderInfo.ICE_Dims,'X','-1'), '%i_%i_%i_%i_%i_%i_%i_%i_%i')';
+    if isfield(hdr{i},'CSAImageHeaderInfo') && isfield(hdr{i}.CSAImageHeaderInfo,'name')
+        ice1 = sscanf( ...
+            strrep(get_numaris4_val(hdr{i}.CSAImageHeaderInfo,'ICE_Dims'), ...
+            'X', '-1'), '%i_%i_%i_%i_%i_%i_%i_%i_%i')';
         dimsel = logical([1 1 1 1 1 1 0 0 1]);
-    catch
+    else
         ice1 = [];
     end
     for j=1:length(vol)
@@ -312,15 +315,17 @@ for i=2:length(hdr)
                 strcmp(vol{j}{1}.Modality,'CT') % Our CT seems to have shears in slice positions
             dist2 = 0;
         end
-        % ebalteau: CSA headers have changed with CSA tidying up in spm_dicom_header...
-        if ~isempty(ice1) 
-            try
-                % Replace 'X' in ICE_Dims by '-1'
-                ice2 = sscanf(strrep(vol{j}{1}.CSAImageHeaderInfo.ICE_Dims,'X','-1'), '%i_%i_%i_%i_%i_%i_%i_%i_%i')';
-                identical_ice_dims = all(ice1(dimsel)==ice2(dimsel));
-            catch
-                identical_ice_dims = 0; % have ice1 but not ice2 -> something must be different
-            end            
+        if ~isempty(ice1) && isfield(vol{j}{1},'CSAImageHeaderInfo') && numel(vol{j}{1}.CSAImageHeaderInfo)>=1 && isfield(vol{j}{1}.CSAImageHeaderInfo(1),'name')
+            % Replace 'X' in ICE_Dims by '-1'
+            ice2 = sscanf( ...
+                strrep(get_numaris4_val(vol{j}{1}.CSAImageHeaderInfo,'ICE_Dims'), ...
+                'X', '-1'), '%i_%i_%i_%i_%i_%i_%i_%i_%i')';
+            if ~isempty(ice2)
+                identical_ice_dims=all(ice1(dimsel)==ice2(dimsel));
+            else
+                identical_ice_dims = 0; % have ice1 but not ice2, ->
+                % something must be different
+            end
         else
             identical_ice_dims = 1; % No way of knowing if there is no CSAImageHeaderInfo
         end
@@ -703,7 +708,7 @@ N.mat0_intent = 'Scanner';
 N.descrip     = descrip;
 create(N);
 
-% ebalteau - for JSON metadata
+% for JSON metadata
 if json.extended || json.separate
     N = init_metadata(N,hdr{1},json);
 end
@@ -743,26 +748,13 @@ end
 
 % Image dimensions
 %--------------------------------------------------------------------------
-% ebalteau: CSA & ASCII headers have changed with CSA & ASCII tidying up in
-% spm_dicom_header...  
-nc = privdat.Columns;
-nr = privdat.Rows;
+nc = get_numaris4_numval(privdat,'Columns');
+nr = get_numaris4_numval(privdat,'Rows');
 % Guess number of timepoints in file - I don't know for sure whether this should be
 % 'DataPointRows'-by-'DataPointColumns', 'SpectroscopyAcquisitionDataColumns'
 % or sSpecPara.lVectorSize from SIEMENS ASCII header
-% ntp = privdat.DataPointRows*privdat.DataPointColumns;
-
-% ebalteau: try and get ASCII header if any:
-[~,CSAMiscField] = get_metadata_val(hdr{1},'CSAMiscProtocolHeaderInfo');
-ac = [];
-if ~isempty(CSAMiscField)
-    if isfield(hdr{1}.(CSAMiscField),'MrPhoenixProtocol')
-        ac = hdr{1}.(CSAMiscField).MrPhoenixProtocol;
-    elseif isfield(hdr{1}.(CSAMiscField),'MrProtocol')
-        ac = hdr{1}.(CSAMiscField).MrProtocol;
-    end
-end
-
+% ntp = get_numaris4_numval(privdat,'DataPointRows')*get_numaris4_numval(privdat,'DataPointColumns');
+ac = read_ascconv(hdr{1});
 try
     ntp = ac.sSpecPara.lVectorSize;
 catch
@@ -794,10 +786,9 @@ analyze_to_dicom = [diag([1 -1 1]) [0 (dim(2)+1) 0]'; 0 0 0 1]; % Flip voxels in
 patient_to_tal   = diag([-1 -1 1 1]); % Flip mm coords in x and y directions
 shift_vx         = [eye(4,3) [.5; .5; 0; 1]];
 
-
-% ebalteau: CSA headers have changed with CSA tidying up in spm_dicom_header...  
-orient           = reshape(privdat.ImageOrientationPatient,[3 2]);
-ps               = privdat.PixelSpacing;
+orient           = reshape(get_numaris4_numval(privdat,...
+                                               'ImageOrientationPatient'),[3 2]);
+ps               = get_numaris4_numval(privdat,'PixelSpacing');
 if nc*nr == 1
     % Single Voxel Spectroscopy (based on the following information from SIEMENS)
     %----------------------------------------------------------------------
@@ -816,15 +807,17 @@ if nc*nr == 1
     % non-zero. This may indicate more fundamental problems with
     % orientation decoding.
     if ps(1) == 0 % row
-        ps(1) = privdat.VoiPhaseFoV;
+        ps(1) = get_numaris4_numval(privdat,...
+                                    'VoiPhaseFoV');
         shift_vx(1,4) = 0;
     end
     if ps(2) == 0 % col
-        ps(2) = privdat.VoiReadoutFoV;
+        ps(2) = get_numaris4_numval(privdat,...
+                                    'VoiReadoutFoV');
         shift_vx(2,4) = 0;
     end
 end
-pos = privdat.ImagePositionPatient;
+pos = get_numaris4_numval(privdat,'ImagePositionPatient');
 % for some reason, pixel spacing needs to be swapped
 R  = [orient*diag(ps([2 1])); 0 0];
 x1 = [1;1;1;1];
@@ -836,10 +829,11 @@ if length(hdr)>1
 else
     orient(:,3)      = null(orient');
     if det(orient)<0, orient(:,3) = -orient(:,3); end
-    try
-        z = privdat.VoiThickness;
-    catch
-        z = privdat.SliceThickness;
+    z = get_numaris4_numval(privdat,...
+        'VoiThickness');
+    if isempty(z)
+        z = get_numaris4_numval(privdat,...
+            'SliceThickness');
     end
     if isempty(z)
         warning('spm_dicom_convert:spectroscopy',...
@@ -884,34 +878,19 @@ N.mat_intent  = 'Scanner';
 N.mat0_intent = 'Scanner';
 N.descrip     = descrip;
 % Store LCMODEL control/raw info in N.extras
-try 
-    N.extras.MagneticFieldStrength = privdat.MagneticFieldStrength;
-catch
-    N.extras.MagneticFieldStrength = [];
-end
-try 
-    N.extras.TransmitterReferenceAmplitude = privdat.TransmitterReferenceAmplitude;
-catch
-    N.extras.TransmitterReferenceAmplitude = [];
-end
-try 
-    N.extras.ImagingFrequency = privdat.ImagingFrequency;
-catch
-    N.extras.ImagingFrequency = [];
-end
-try 
-    N.extras.EchoTime = privdat.EchoTime;
-catch
-    N.extras.EchoTime = [];
-end
-try 
-    N.extras.RealDwellTime = privdat.RealDwellTime;
-catch
-    N.extras.RealDwellTime = [];
-end
+N.extras      = struct('MagneticFieldStrength',...
+                       get_numaris4_numval(privdat,'MagneticFieldStrength'),...
+                       'TransmitterReferenceAmplitude',...
+                       get_numaris4_numval(privdat,'TransmitterReferenceAmplitude'),...
+                       'ImagingFrequency',...
+                       get_numaris4_numval(privdat,'ImagingFrequency'),...
+                       'EchoTime',...
+                       get_numaris4_numval(privdat,'EchoTime'),...
+                       'RealDwellTime',...
+                       get_numaris4_numval(privdat,'RealDwellTime'));
 create(N);
 
-% ebalteau - for json metadata
+% for json metadata
 if json.extended || json.separate
     N = init_metadata(N,hdr{1},json);
 end
@@ -1199,8 +1178,10 @@ fclose(fp);
 %==========================================================================
 function nrm = read_SliceNormalVector(hdr)
 str = hdr.CSAImageHeaderInfo;
-% ebalteau: CSA headers have changed with CSA tidying up in spm_dicom_header...  
-nrm = str.SliceNormalVector;
+val = get_numaris4_val(str,'SliceNormalVector');
+for i=1:3,
+    nrm(i,1) = sscanf(val(i,:),'%g');
+end
 
 
 %==========================================================================
@@ -1208,12 +1189,9 @@ nrm = str.SliceNormalVector;
 %==========================================================================
 function n = read_NumberOfImagesInMosaic(hdr)
 str = hdr.CSAImageHeaderInfo;
-% ebalteau: CSA headers have changed with CSA tidying up in spm_dicom_header...  
-try
-    n = str.NumberOfImagesInMosaic;
-catch
-    n = [];
-end
+val = get_numaris4_val(str,'NumberOfImagesInMosaic');
+n   = sscanf(val','%d');
+if isempty(n), n=[]; end
 
 
 %==========================================================================
@@ -1221,15 +1199,41 @@ end
 %==========================================================================
 function dim = read_AcquisitionMatrixText(hdr)
 str = hdr.CSAImageHeaderInfo;
-% ebalteau: CSA headers have changed with CSA tidying up in spm_dicom_header...  
-try
-    val = str.AcquisitionMatrixText;
-    dim = sscanf(val','%d*%d')';
-    if length(dim)==1
-        dim = sscanf(val','%dp*%d')';
+val = get_numaris4_val(str,'AcquisitionMatrixText');
+dim = sscanf(val','%d*%d')';
+if length(dim)==1
+    dim = sscanf(val','%dp*%d')';
+end
+if isempty(dim), dim=[]; end
+
+
+%==========================================================================
+% function val = get_numaris4_val(str,name)
+%==========================================================================
+function val = get_numaris4_val(str,name)
+name = deblank(name);
+val  = {};
+for i=1:length(str)
+    if strcmp(deblank(str(i).name),name)
+        for j=1:str(i).nitems
+            if  str(i).item(j).xx(1)
+                val = [val {str(i).item(j).val}];
+            end
+        end
+        break;
     end
-catch
-    dim=[];
+end
+val = strvcat(val{:});
+
+
+%==========================================================================
+% function val = get_numaris4_numval(str,name)
+%==========================================================================
+function val = get_numaris4_numval(str,name)
+val1 = get_numaris4_val(str,name);
+val  = zeros(size(val1,1),1);
+for k = 1:size(val1,1)
+    val(k)=str2num(val1(k,:));
 end
 
 
@@ -1250,7 +1254,7 @@ if strncmp(root_dir,'ice',3)
     catch
         imtype = '';
     end
-    prefix = [prefix imtype hdr.CSAImageHeaderInfoICE_Dims];
+    prefix = [prefix imtype get_numaris4_val(hdr.CSAImageHeaderInfo,'ICE_Dims')];
 end
 
 if isfield(hdr,'PatientID'),         PatientID         = deblank(hdr.PatientID); else PatientID         = 'anon'; end
@@ -1273,11 +1277,11 @@ if isfield(hdr,'GE_ImageType')
     end
 end
 
-% ebalteau added the following (to use ICE Dims systematically in
-% file names in order to avoid overwriting uncombined coil images, which
-% have identical file name otherwise) - 20150513
+% To use ICE Dims systematically in file names in order to avoid
+% overwriting uncombined coil images, which have identical file name
+% otherwise)
 try 
-    ICE_Dims = hdr.CSAImageHeaderInfo.ICE_Dims;
+    ICE_Dims = get_numaris4_val(hdr.CSAImageHeaderInfo,'ICE_Dims');
     % extract ICE dims as an array of numbers (replace 'X' which is for
     % combined images by '-1' first): 
     CHA = sscanf(strrep(ICE_Dims,'X','-1'), '%i_%i_%i_%i_%i_%i_%i_%i_%i')';
@@ -1391,6 +1395,63 @@ suc = zeros(1,length(pos));
 for g=2:length(pos)
     if ~exist(str(1:pos(g)-1),'dir')
         suc(g) = mkdir(str(1:pos(g-1)-1),str(pos(g-1)+1:pos(g)-1));
+    end
+end
+
+
+%==========================================================================
+% function ret = read_ascconv(hdr)
+%==========================================================================
+function ret = read_ascconv(hdr)
+% In SIEMENS data, there is an ASCII text section with
+% additional information items. This section starts with a code
+% ### ASCCONV BEGIN <some version string> ###
+% and ends with
+% ### ASCCONV END ###
+% It is read by spm_dicom_headers into an entry 'MrProtocol' in
+% CSASeriesHeaderInfo or into an entry 'MrPhoenixProtocol' in
+% CSAMiscProtocolHeaderInfoVA or CSAMiscProtocolHeaderVB.
+% The additional items are assignments in C syntax, here they are just
+% translated according to
+% [] -> ()
+% "  -> '
+% 0xX -> hex2dec('X')
+% and collected in a struct.
+% In addition, there seems to be "__attribute__" meta information for some
+% items. All "field names" starting with "_" are currently silently ignored.
+ret=struct;
+
+% get ascconv data
+if isfield(hdr, 'CSAMiscProtocolHeaderInfoVA')
+    X = get_numaris4_val(hdr.CSAMiscProtocolHeaderInfoVA,'MrProtocol');
+elseif isfield(hdr, 'CSAMiscProtocolHeaderInfoVB')
+    X = get_numaris4_val(hdr.CSAMiscProtocolHeaderInfoVB,'MrPhoenixProtocol');
+elseif isfield(hdr, 'CSASeriesHeaderInfo')
+    X = get_numaris4_val(hdr.CSASeriesHeaderInfo,'MrProtocol');
+else
+    return;
+end
+
+X = regexprep(X,'^.*### ASCCONV BEGIN [^#]*###(.*)### ASCCONV END ###.*$','$1');
+
+if ~isempty(X)
+    tokens = textscan(char(X),'%s', ...
+        'delimiter',char(10));
+    tokens{1}=regexprep(tokens{1},{'\[([0-9]*)\]','"(.*)"','^([^"]*)0x([0-9a-fA-F]*)','#.*','^.*\._.*$'},{'($1+1)','''$1''','$1hex2dec(''$2'')','',''});
+    % If everything would evaluate correctly, we could use
+    % eval(sprintf('ret.%s;\n',tokens{1}{:}));
+    for k = 1:numel(tokens{1})
+        if ~isempty(tokens{1}{k})
+            try
+                [tlhrh, un] = regexp(tokens{1}{k}, '(?:=)+', 'split', 'match');
+                [tlh, un]   = regexp(tlhrh{1}, '(?:\.)+', 'split', 'match');
+                tlh = cellfun(@genvarname, tlh, 'UniformOutput',false);
+                tlh = sprintf('.%s', tlh{:});
+                eval(sprintf('ret%s = %s;', tlh, tlhrh{2}));
+            catch
+                disp(['AscConv: Error evaluating ''ret.' tokens{1}{k} ''';']);
+            end
+        end
     end
 end
 
@@ -1676,7 +1737,7 @@ for n=1:size(ord,2),
     Nii.descrip     = descrip;
     create(Nii);
 
-    % ebalteau - for json metadata
+    % for json metadata
     if json.extended || json.separate
         Nii = init_metadata(Nii,H,json);
     end

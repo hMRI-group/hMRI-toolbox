@@ -81,12 +81,13 @@ if ischar(mstruc)
     mstruc = mstruc{1};
 end
 
-parLocation = {};
+parValue = [];
+parLocation = [];
 nFieldFound = 0;
 
 switch inParName
     case 'RepetitionTime' % [ms]
-        [nFieldFound, fieldList] = findFieldName(mstruc, 'alTR', 'caseSens','sensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc, 'alTR', 'caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
         % Repetition time is given in us, we want it in ms
@@ -97,7 +98,7 @@ switch inParName
         end
         
     case 'EchoTime' % [ms]
-        [nFieldFound, fieldList] = findFieldName(mstruc, 'alTE', 'caseSens','sensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc, 'alTE', 'caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
         % Echo time is given in us, we want it in ms
@@ -108,8 +109,8 @@ switch inParName
         end
         
     case 'FlipAngle' % [deg]
-        [nFieldFound, fieldList] = findFieldName(mstruc, 'FlipAngle', 'caseSens','sensitive','matchType','exact');
-        %[nFieldFound, fieldList] = findFieldName(mstruc, 'adFlipAngleDegree', 'caseSens','sensitive','matchType','exact'); % equivalent
+        [nFieldFound, fieldList] = find_field_name(mstruc, 'FlipAngle', 'caseSens','sensitive','matchType','exact');
+        %[nFieldFound, fieldList] = find_field_name(mstruc, 'adFlipAngleDegree', 'caseSens','sensitive','matchType','exact'); % equivalent
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
         % Keep only first value if many - no scaling necessary
@@ -120,7 +121,7 @@ switch inParName
         end
         
     case 'ProtocolName'
-        [nFieldFound, fieldList] = findFieldName(mstruc, 'ProtocolName','caseSens','sensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc, 'ProtocolName','caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
         % Keep only first value if many
@@ -131,7 +132,7 @@ switch inParName
         end
         
     case 'SequenceName'
-        [nFieldFound, fieldList] = findFieldName(mstruc, 'SequenceName','caseSens','sensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc, 'SequenceName','caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
         % Keep only first value if many
@@ -147,8 +148,8 @@ switch inParName
         % no MT pulse is applied. If applied, parameter
         % acqpar.CSASeriesHeaderInfo.MrPhoenixProtocol.sPrepPulses.ucMTC
         % takes the hexadecimal value '0x1' = 1.
-        [nFieldFound, fieldList] = findFieldName(mstruc, 'ucMTC','caseSens','sensitive','matchType','exact');
-        [~,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
+        [nFieldFound, fieldList] = find_field_name(mstruc, 'ucMTC','caseSens','sensitive','matchType','exact');
+        [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList); %#ok<ASGLU>
         % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
         % Keep only first value if many
         if nFieldFound
@@ -164,9 +165,9 @@ switch inParName
         
     case 'FieldStrength' % [T]
         % NB: flNominalB0 returns ~2.8936 for a 3T magnet
-        [nFieldFound, fieldList] = findFieldName(mstruc, 'flNominalB0','caseSens','sensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc, 'flNominalB0','caseSens','sensitive','matchType','exact');
         % while MagneticFieldStrength returns 3 for a 3T magnet
-        % [nFieldFound, fieldList] = findFieldName(mstruc, 'MagneticFieldStrength','caseSens','sensitive','matchType','exact');
+        % [nFieldFound, fieldList] = find_field_name(mstruc, 'MagneticFieldStrength','caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
         % Keep only first value if many
@@ -178,9 +179,9 @@ switch inParName
         
     case 'Frequency' % [Hz]
         % NB: lFrequency returns 123255074 Hz
-        [nFieldFound, fieldList] = findFieldName(mstruc, 'lFrequency','caseSens','sensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc, 'lFrequency','caseSens','sensitive','matchType','exact');
         % while ImagingFrequency returns 123.2551 MHz
-        % [nFieldFound, fieldList] = findFieldName(mstruc, 'MagneticFieldStrength','caseSens','sensitive','matchType','exact');
+        % [nFieldFound, fieldList] = find_field_name(mstruc, 'MagneticFieldStrength','caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
         % Keep only first value if many
@@ -191,7 +192,7 @@ switch inParName
         end
         
     case 'ScanningSequence' % e.g. 'EP' for EPI...
-        [nFieldFound, fieldList] = findFieldName(mstruc, 'ScanningSequence','caseSens','sensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc, 'ScanningSequence','caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
         % Keep only first value if many
@@ -202,7 +203,7 @@ switch inParName
         end
         
     case 'BandwidthPerPixelRO' % e.g. 'EP' for EPI...
-        [nFieldFound, fieldList] = findFieldName(mstruc, 'PixelBandwidth','caseSens','sensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc, 'PixelBandwidth','caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
         % Keep only first value if many
@@ -213,7 +214,7 @@ switch inParName
         end
         
     case 'BandwidthPerPixelPE' % e.g. 'EP' for EPI...
-        [nFieldFound, fieldList] = findFieldName(mstruc, 'BandwidthPerPixelPhaseEncode','caseSens','sensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc, 'BandwidthPerPixelPhaseEncode','caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
         % Keep only first value if many
@@ -224,10 +225,10 @@ switch inParName
         end
         
     case 'MeasuredPELines' % taking PAT acceleration factor into account
-        [nFieldFound, fieldList] = findFieldName(mstruc, 'lPhaseEncodingLines','caseSens','sensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc, 'lPhaseEncodingLines','caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
-        [nFieldFoundPAT, fieldListPAT] = findFieldName(mstruc, 'lAccelFactPE','caseSens','sensitive','matchType','exact');
-        [valPAT,~] = get_val_nam_list(mstruc, nFieldFoundPAT, fieldListPAT);
+        [nFieldFoundPAT, fieldListPAT] = find_field_name(mstruc, 'lAccelFactPE','caseSens','sensitive','matchType','exact');
+        [valPAT,namPAT] = get_val_nam_list(mstruc, nFieldFoundPAT, fieldListPAT); %#ok<ASGLU>
         if nFieldFound
             cRes = 1;
             parLocation{cRes} = nam{1};
@@ -236,7 +237,7 @@ switch inParName
         end
         
     case 'PhaseEncodingDirectionSign'
-        [nFieldFound, fieldList] = findFieldName(mstruc, 'PhaseEncodingDirectionPositive','caseSens','sensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc, 'PhaseEncodingDirectionPositive','caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
         % Keep only first value if many
@@ -252,7 +253,7 @@ switch inParName
         end
         
     case 'PhaseEncodingDirection' % 'COL' (A>>P/P>>A) or 'ROW' (R>>L/L>>R)
-        [nFieldFound, fieldList] = findFieldName(mstruc, 'InPlanePhaseEncodingDirection','caseSens','sensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc, 'InPlanePhaseEncodingDirection','caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
         % Keep only first value if many
@@ -263,7 +264,7 @@ switch inParName
         end
         
     case 'NumberOfMeasurements'
-        [nFieldFound, fieldList] = findFieldName(mstruc, 'lRepetitions','caseSens','sensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc, 'lRepetitions','caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
         % Keep only first value if many
@@ -279,7 +280,7 @@ switch inParName
         end
         
     case 'PATparameters'
-        [nFieldFound, fieldList] = findFieldName(mstruc, 'sPat','caseSens','sensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc, 'sPat','caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
         % Keep only first value if many
@@ -290,7 +291,7 @@ switch inParName
         end
         
     case 'AccelFactorPE'
-        [nFieldFound, fieldList] = findFieldName(mstruc, 'lAccelFactPE','caseSens','sensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc, 'lAccelFactPE','caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
         % Keep only first value if many
@@ -301,7 +302,7 @@ switch inParName
         end
         
     case 'AccelFactor3D'
-        [nFieldFound, fieldList] = findFieldName(mstruc, 'lAccelFact3D','caseSens','sensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc, 'lAccelFact3D','caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
         % Keep only first value if many
@@ -312,7 +313,7 @@ switch inParName
         end
         
     case 'WipParameters'
-        [nFieldFound, fieldList] = findFieldName(mstruc, 'sWipMemBlock','caseSens','sensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc, 'sWipMemBlock','caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
         % Keep only first value if many
@@ -324,7 +325,7 @@ switch inParName
         
     case 'AllDiffusionDirections'
         if get_metadata_val(mstruc,'isDWI')
-            [nFieldFound, fieldList] = findFieldName(mstruc, 'sDiffusion','caseSens','sensitive','matchType','exact');
+            [nFieldFound, fieldList] = find_field_name(mstruc, 'sDiffusion','caseSens','sensitive','matchType','exact');
             [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
             % sDiffusion is the field containing series diffusion information.
             % Example:
@@ -358,13 +359,13 @@ switch inParName
                     % scan with direction (0,0,0)).
                     ndir = eval(['mstruc.' nam{1} '.sFreeDiffusionData.lDiffDirections']);
                     parLocation{cRes} = [nam{1} '.sFreeDiffusionData.asDiffDirVector'];
-                    parValueCell = eval(['mstruc.' nam{1} '.sFreeDiffusionData.asDiffDirVector']);
+                    parValueSagCorTra = eval(['mstruc.' nam{1} '.sFreeDiffusionData.asDiffDirVector']);
                     parValue{cRes} = zeros(3,ndir);
-                    for cdir = 1:length(parValueCell)
-                        if isempty(parValueCell{cdir}.dSag);parValueCell{cdir}.dSag = 0;end
-                        if isempty(parValueCell{cdir}.dCor);parValueCell{cdir}.dCor = 0;end
-                        if isempty(parValueCell{cdir}.dTra);parValueCell{cdir}.dTra = 0;end
-                        parValue{cRes}(:,cdir) = [parValueCell{cdir}.dSag; parValueCell{cdir}.dCor; parValueCell{cdir}.dTra];
+                    for cdir = 1:length(parValueSagCorTra)
+                        if isempty(parValueSagCorTra(cdir).dSag);parValueSagCorTra(cdir).dSag = 0;end
+                        if isempty(parValueSagCorTra(cdir).dCor);parValueSagCorTra(cdir).dCor = 0;end
+                        if isempty(parValueSagCorTra(cdir).dTra);parValueSagCorTra(cdir).dTra = 0;end
+                        parValue{cRes}(:,cdir) = [parValueSagCorTra(cdir).dSag; parValueSagCorTra(cdir).dCor; parValueSagCorTra(cdir).dTra];
                     end
                 end
                 
@@ -373,7 +374,7 @@ switch inParName
         
     case 'AllBValues'
         if get_metadata_val(mstruc,'isDWI')
-            [nFieldFound, fieldList] = findFieldName(mstruc, 'alBValue','caseSens','sensitive','matchType','exact');
+            [nFieldFound, fieldList] = find_field_name(mstruc, 'alBValue','caseSens','sensitive','matchType','exact');
             [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
             if nFieldFound
                 cRes = 1;
@@ -384,7 +385,7 @@ switch inParName
         
     case 'DiffusionDirection'
         if get_metadata_val(mstruc,'isDWI')
-            [nFieldFound, fieldList] = findFieldName(mstruc, 'DiffusionGradientDirection','caseSens','sensitive','matchType','exact');
+            [nFieldFound, fieldList] = find_field_name(mstruc, 'DiffusionGradientDirection','caseSens','sensitive','matchType','exact');
             [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
             if nFieldFound
                 cRes = 1;
@@ -401,12 +402,13 @@ switch inParName
                 cRes = 1;
                 parLocation{cRes} = 'B0Image';
                 parValue{cRes} = [0;0;0];
+                warning('Diffusion direction not defined for DWImage %s. Assuming b=0.', inParName);
             end
         end
         
     case 'BValue'
         if get_metadata_val(mstruc,'isDWI')
-            [nFieldFound, fieldList] = findFieldName(mstruc, 'B_value','caseSens','sensitive','matchType','exact');
+            [nFieldFound, fieldList] = find_field_name(mstruc, 'B_value','caseSens','sensitive','matchType','exact');
             [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
             if nFieldFound
                 cRes = 1;
@@ -416,7 +418,7 @@ switch inParName
         end
         
     case 'isDWI'
-        [nFieldFound, fieldList] = findFieldName(mstruc, 'sDiffusion','caseSens','sensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc, 'sDiffusion','caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         if nFieldFound
             cRes = 1;
@@ -447,7 +449,7 @@ switch inParName
         % resolution :/...
         
         % first check whether BandwidthPerPixelPhaseEncode is defined
-        [nFieldFound, fieldList] = findFieldName(mstruc, 'BandwidthPerPixelPhaseEncode','caseSens','sensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc, 'BandwidthPerPixelPhaseEncode','caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
         % Keep only first value if many
@@ -490,7 +492,7 @@ switch inParName
         % the header... 
         
         % first check whether BandwidthPerPixelPhaseEncode is defined
-        [nFieldFound, fieldList] = findFieldName(mstruc, 'BandwidthPerPixelPhaseEncode','caseSens','sensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc, 'BandwidthPerPixelPhaseEncode','caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
         % Keep only first value if many
@@ -512,7 +514,7 @@ switch inParName
     case 'B1mapNominalFAValues' % [deg] for al_B1mapping - version dependent!!
         valSEQ = get_metadata_val(mstruc, 'SequenceName');
         valPROT = get_metadata_val(mstruc, 'ProtocolName');
-        [nFieldFound, fieldList] = findFieldName(mstruc, 'sWipMemBlock','caseSens','sensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc, 'sWipMemBlock','caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         if nFieldFound
             cRes = 1;
@@ -535,7 +537,7 @@ switch inParName
     case 'RFSpoilingPhaseIncrement' % [Hz] defined in al_B1mapping and mtflash3d sequences - version dependent!!
         valSEQ = get_metadata_val(mstruc, 'SequenceName');
         valPROT = get_metadata_val(mstruc, 'ProtocolName');
-        [nFieldFound, fieldList] = findFieldName(mstruc, 'sWipMemBlock','caseSens','sensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc, 'sWipMemBlock','caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         if nFieldFound
             cRes = 1;
@@ -560,7 +562,7 @@ switch inParName
     case 'B1mapMixingTime' % [ms] for al_B1mapping - version dependent!!
         valSEQ = get_metadata_val(mstruc, 'SequenceName');
         valPROT = get_metadata_val(mstruc, 'ProtocolName');
-        [nFieldFound, fieldList] = findFieldName(mstruc, 'sWipMemBlock','caseSens','sensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc, 'sWipMemBlock','caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         if nFieldFound
             cRes = 1;
@@ -577,7 +579,7 @@ switch inParName
         end
         
     otherwise
-        [nFieldFound, fieldList] = findFieldName(mstruc, inParName, 'caseSens','insensitive','matchType','partial');
+        [nFieldFound, fieldList] = find_field_name(mstruc, inParName, 'caseSens','insensitive','matchType','partial');
         [parValue,parLocation] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         
 end
@@ -585,7 +587,7 @@ end
 if ~nFieldFound
     warning('No %s found in the extended header', inParName);
     parValue = [];
-    parLocation = {};
+    parLocation = [];
 end
 
 % returns cell array only if necessary (non-unique result)

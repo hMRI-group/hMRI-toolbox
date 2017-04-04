@@ -42,6 +42,24 @@ vols_pm.ufilter = '.*';
 vols_pm.num     = [1 Inf];
 
 % ---------------------------------------------------------------------
+% pipe_c Pipeline choice
+% ---------------------------------------------------------------------
+pipe_c        = cfg_menu;
+pipe_c.tag    = 'pipe_c';
+pipe_c.name   = 'Pipeline';
+pipe_c.help   = {
+    'Chose the predefined pipeline that you prefer:'
+    '- US+Smooth -> applies US, warps into MNI, then smoothes (weighted-average)'
+    ['- US+Dartel+Smooth -> applies US, builds Dartel template and warps into' ...
+      'MNI, then smoothes (weighted-average)']
+    }';
+pipe_c.labels = {
+                 'US+smooth'
+                 'US+Dartel+smooth'}';
+pipe_c.values = {1 2};
+pipe_c.val    = {1};
+
+% ---------------------------------------------------------------------
 % Gaussian FWHM
 % ---------------------------------------------------------------------
 fwhm         = cfg_entry;
@@ -69,7 +87,7 @@ proc_pipel.help    = {
     ['US+Dartel+Smooth -> applies US, builds Dartel template and warps' ...
     'into MNI, then smoothes (weighted-average)']
     }'; %#ok<*NBRAK>
-proc_pipel.values  = {vols vols_pm fwhm};
+proc_pipel.val  = {vols vols_pm pipe_c fwhm};
 proc_pipel.prog = @hmri_run_local_proc_pipeline;
 proc_pipel.vout = @vout_preproc;
 
@@ -90,55 +108,56 @@ function dep = vout_preproc(job)
 % This depends on job contents, which may not be present when virtual
 % outputs are calculated.
 
-cdep = cfg_dep;
+% cdep = cfg_dep;
+dep = cfg_dep;
 
-% Collect tissue class images (4 of them)
-for i=1:numel(job.tissue)
-    if job.tissue(i).native(1)
-        cdep(end+1) = cfg_dep; %#ok<*AGROW>
-        cdep(end).sname = sprintf('c%d Images', i);
-        cdep(end).src_output = substruct('.', 'tiss', '()', {i}, '.', 'c', '()', {':'});
-        cdep(end).tgt_spec = cfg_findspec({{'filter','nifti'}});
-%         cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}}); % cfg_findspec({{'filter','nifti'}});
-    end
-    if job.tissue(i).native(2)
-        cdep(end+1) = cfg_dep;
-        cdep(end).sname = sprintf('rc%d Images', i);
-        cdep(end).src_output = substruct('.', 'tiss', '()', {i}, '.', 'rc', '()', {':'});
-        cdep(end).tgt_spec = cfg_findspec({{'filter','nifti'}});
-%         cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
-    end
-    if job.tissue(i).warped(1)
-        cdep(end+1) = cfg_dep;
-        cdep(end).sname = sprintf('wc%d Images', i);
-        cdep(end).src_output = substruct('.', 'tiss', '()', {i}, '.', 'wc', '()', {':'});
-        cdep(end).tgt_spec = cfg_findspec({{'filter','nifti'}});
-%         cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
-    end
-    if job.tissue(i).warped(2)
-        cdep(end+1) = cfg_dep;
-        cdep(end).sname = sprintf('mwc%d Images', i);
-        cdep(end).src_output = substruct('.', 'tiss', '()', {i}, '.', 'mwc', '()', {':'});
-        cdep(end).tgt_spec = cfg_findspec({{'filter','nifti'}});
-%         cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
-    end
-end
-
-% Collect warped parametric maps
-for i=1:numel(job.many_sdatas.vols_pm)
-    cdep(end+1) = cfg_dep;
-    cdep(end).sname = sprintf('Warped par. vols #%d', i);
-    cdep(end).src_output = substruct('.', 'maps', '()', {i}, '.', 'wvols_pm', '()', {':'});
-    cdep(end).tgt_spec = cfg_findspec({{'filter','nifti'}});
-%     cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
-end
-
-% Collect the deformation fields
-cdep(end+1) = cfg_dep;
-cdep(end).sname = 'Def. fields';
-cdep(end).src_output = substruct('.', 'def', '.', 'fn', '()', {':'});
-cdep(end).tgt_spec = cfg_findspec({{'filter','nifti'}});
-% cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
-
-dep = cdep(2:end);
+% % Collect tissue class images (4 of them)
+% for i=1:numel(job.tissue)
+%     if job.tissue(i).native(1)
+%         cdep(end+1) = cfg_dep; %#ok<*AGROW>
+%         cdep(end).sname = sprintf('c%d Images', i);
+%         cdep(end).src_output = substruct('.', 'tiss', '()', {i}, '.', 'c', '()', {':'});
+%         cdep(end).tgt_spec = cfg_findspec({{'filter','nifti'}});
+% %         cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}}); % cfg_findspec({{'filter','nifti'}});
+%     end
+%     if job.tissue(i).native(2)
+%         cdep(end+1) = cfg_dep;
+%         cdep(end).sname = sprintf('rc%d Images', i);
+%         cdep(end).src_output = substruct('.', 'tiss', '()', {i}, '.', 'rc', '()', {':'});
+%         cdep(end).tgt_spec = cfg_findspec({{'filter','nifti'}});
+% %         cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
+%     end
+%     if job.tissue(i).warped(1)
+%         cdep(end+1) = cfg_dep;
+%         cdep(end).sname = sprintf('wc%d Images', i);
+%         cdep(end).src_output = substruct('.', 'tiss', '()', {i}, '.', 'wc', '()', {':'});
+%         cdep(end).tgt_spec = cfg_findspec({{'filter','nifti'}});
+% %         cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
+%     end
+%     if job.tissue(i).warped(2)
+%         cdep(end+1) = cfg_dep;
+%         cdep(end).sname = sprintf('mwc%d Images', i);
+%         cdep(end).src_output = substruct('.', 'tiss', '()', {i}, '.', 'mwc', '()', {':'});
+%         cdep(end).tgt_spec = cfg_findspec({{'filter','nifti'}});
+% %         cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
+%     end
+% end
+% 
+% % Collect warped parametric maps
+% for i=1:numel(job.many_sdatas.vols_pm)
+%     cdep(end+1) = cfg_dep;
+%     cdep(end).sname = sprintf('Warped par. vols #%d', i);
+%     cdep(end).src_output = substruct('.', 'maps', '()', {i}, '.', 'wvols_pm', '()', {':'});
+%     cdep(end).tgt_spec = cfg_findspec({{'filter','nifti'}});
+% %     cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
+% end
+% 
+% % Collect the deformation fields
+% cdep(end+1) = cfg_dep;
+% cdep(end).sname = 'Def. fields';
+% cdep(end).src_output = substruct('.', 'def', '.', 'fn', '()', {':'});
+% cdep(end).tgt_spec = cfg_findspec({{'filter','nifti'}});
+% % cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
+% 
+% dep = cdep(2:end);
 end

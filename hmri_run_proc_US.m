@@ -1,4 +1,4 @@
-function out = hmri_run_local_procUS(job)
+function out = hmri_run_proc_US(job)
 % Deal with the spatial preprocessing, 1 subject at a time: segmentation of
 % the MT and T1 images
 %_______________________________________________________________________

@@ -88,7 +88,7 @@ proc_pipel.help    = {
     'into MNI, then smoothes (weighted-average)']
     }'; %#ok<*NBRAK>
 proc_pipel.val  = {vols vols_pm pipe_c fwhm};
-proc_pipel.prog = @hmri_run_local_proc_pipeline;
+proc_pipel.prog = @hmri_run_proc_pipeline;
 proc_pipel.vout = @vout_preproc;
 
 end

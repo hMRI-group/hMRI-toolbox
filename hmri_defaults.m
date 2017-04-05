@@ -41,6 +41,7 @@ hmri_def.PDproc.WBMaskTh = 0.1;  % Threshold for calculation of whole-brain mask
 hmri_def.PDproc.WMMaskTh = 0.95; % Threshold for calculation of white-matter mask from TPMs
 hmri_def.PDproc.biasreg  = 10^(-5);
 hmri_def.PDproc.biasfwhm = 50;
+hmri_def.PDproc.nr_echoes_forA =1;
 
 %% UNICORT processing
 hmri_def.unicort.reg = 10^-3;

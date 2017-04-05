@@ -223,7 +223,7 @@ disp('----- Reading and averaging the images -----');
 
 nr_TE_limit = find(TE_mtw > TE_limit,1);
 avg_nr      = min([nr_c_echoes nr_TE_limit]);
-
+PDproc.nr_echoes_forA
 PP   = {P_mtw,P_pdw,P_t1w};
 nam1 = {'MTw','PDw','T1w'};
 avg  = [0 0 0];
@@ -269,16 +269,41 @@ for ii=1:3
     Output_hdr.history.output.units = 'a.u.';
     set_metadata(fullfile(pth,[nam '_' nam1{ii} '.nii']),Output_hdr,json);
 end
+V         = spm_vol(PP{3});
+dm        = V(1).dim;
+Ni        = nifti;
+Ni.mat    = V(1).mat;
+Ni.mat0   = V(1).mat;
+Ni.descrip= sprintf('Averaged %s images', 'T1w_forA');
+Ni.dat    = file_array(fullfile(MPMcalcFolder,[nam '_' 'T1w_forA.nii']),dm,dt, 0,1,0);
+create(Ni);
+spm_progress_bar('Init',dm(3),Ni.descrip,'planes completed');
+sm = 0;
+for p=1:dm(3),
+    M = spm_matrix([0 0 p]);
+    Y = zeros(dm(1:2));
+    for nr=1:PDproc.nr_echoes_forA,
+        M1 = V(nr).mat\V(1).mat*M;
+        Y  = Y + spm_slice_vol(V(nr),M1,dm(1:2),1);
+    end
+    Ni.dat(:,:,p) = Y/PDproc.nr_echoes_forA;
+    sm = sm + sum(Y(:))/PDproc.nr_echoes_forA;
+    spm_progress_bar('Set',p);
+end
+
+
 fPD = fullfile(pth,[nam '_' nam1{ii} '.nii']); % TL: could this be deleted?
 
 PPDw = fullfile(pth,[nam '_PDw' '.nii']);
 PMTw = fullfile(pth,[nam '_MTw' '.nii']);
 PT1w = fullfile(pth,[nam '_T1w' '.nii']);
+PT1w_forA = fullfile(MPMcalcFolder,[nam '_T1w_forA' '.nii']);
 
 if true
     disp('----- Coregistering the images -----');
     coreg_mt(PPDw, PMTw);
     coreg_mt(PPDw, PT1w);
+    coreg_mt(PPDw, PT1w_forA);
     if ~isempty(V_trans)
         coreg_bias_map(PPDw, P_trans);
     end
@@ -290,6 +315,8 @@ end
 VPDw = spm_vol(PPDw);
 VMTw = spm_vol(PMTw);
 VT1w = spm_vol(PT1w);
+VT1w_forA = spm_vol(PT1w_forA);
+
 if ~isempty(V_trans)
     Vtrans = spm_vol(P_trans(2,:)); % map only, we do not need the T1w image any more
 else
@@ -428,6 +455,7 @@ for p = 1:dm(3)
     MTw = spm_slice_vol(VMTw,VMTw.mat\M,dm(1:2),3);
     PDw = spm_slice_vol(VPDw,VPDw.mat\M,dm(1:2),3);
     T1w = spm_slice_vol(VT1w,VT1w.mat\M,dm(1:2),3);
+    T1w_forA = spm_slice_vol(VT1w_forA,VT1w_forA.mat\M,dm(1:2),3);
     
     if ~isempty(Vtrans)
         f_T = spm_slice_vol(Vtrans,Vtrans.mat\M,dm(1:2),3)/100; % divide by 100, since p.u. maps
@@ -515,12 +543,12 @@ for p = 1:dm(3)
         % Transmit and receive bias corrected quantitative A values
         % again: correct A for transmit bias f_T and receive bias f_R
         % Acorr = A / f_T / f_R , proportional PD
-        A = (T1 .* (T1w * fa_t1w / 2 / TR_t1w) + (T1w / fa_t1w))./f_T./f_R;
+        A = (T1 .* (T1w_forA * fa_t1w / 2 / TR_t1w) + (T1w_forA / fa_t1w))./f_T./f_R;
     elseif(~isempty(f_T))&&(isempty(f_R))%&&(PDproc.PDmap)
-        A = T1 .* (T1w .*(fa_t1w*f_T) / 2 / TR_t1w) + (T1w ./ (fa_t1w*f_T));
+        A = T1 .* (T1w_forA .*(fa_t1w*f_T) / 2 / TR_t1w) + (T1w_forA ./ (fa_t1w*f_T));
     else
         % semi-quantitative A
-        A = T1 .* (T1w * fa_t1w / 2 / TR_t1w) + (T1w / fa_t1w);
+        A = T1 .* (T1w_forA * fa_t1w / 2 / TR_t1w) + (T1w_forA / fa_t1w);
     end
     
     A_forMT = T1_forMT .* (T1w * fa_t1w / 2 / TR_t1w) + (T1w / fa_t1w);
@@ -583,7 +611,7 @@ if (qMRIcalc.QA||(PDproc.PDmap))
     clear matlabbatch
     matlabbatch{1}.spm.spatial.preproc.channel.vols = {P};
     matlabbatch{1}.spm.spatial.preproc.channel.write = [0 0];
-    spm_jobman('initcfg');
+%     spm_jobman('initcfg');
     spm_jobman('run', matlabbatch);
 end
 
@@ -669,7 +697,7 @@ matlabbatch{1}.spm.spatial.preproc.channel.vols = {P};
 matlabbatch{1}.spm.spatial.preproc.channel.biasreg = PDproc.biasreg;
 matlabbatch{1}.spm.spatial.preproc.channel.biasfwhm = PDproc.biasfwhm;
 matlabbatch{1}.spm.spatial.preproc.channel.write = [1 0];
-spm_jobman('initcfg');
+% spm_jobman('initcfg');
 spm_jobman('run', matlabbatch);
 
 temp=spm_select('FPList',MPMcalcFolder,'^(c|masked).*\_A');

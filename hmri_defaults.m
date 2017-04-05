@@ -24,7 +24,7 @@ global hmri_def
 
 %% %%%%%%%%%%%%%%%%%%%%% Global parameters %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Specifying the lab
-hmri_def.centre = 'lren' ; % can be 'fil', 'lren', 'crc', 'sciz' or 'cbs'
+hmri_def.centre = 'cbs' ; % can be 'fil', 'lren', 'crc', 'sciz' or 'cbs'
 
 %% %%%%%%%%%%%%%%%%% Common processing parameters %%%%%%%%%%%%%%%%%%%%%
 % These parameters are either parameters that are fixed for all sites or
@@ -32,6 +32,8 @@ hmri_def.centre = 'lren' ; % can be 'fil', 'lren', 'crc', 'sciz' or 'cbs'
 % run-time.
 
 hmri_def.R2sOLS = 1; % Create an Ordinary Least Squares R2* map?
+hmri_def.json = struct('extended',false,'separate',true,'anonym','none',...
+    'overwrite',true); % settings for JSON metadata
 
 %% Processing of PD maps
 hmri_def.PDproc.PDmap    = 1;    % Calculation of PD maps requires a B1 map. Set to 0 if a B1 map is not available
@@ -39,6 +41,16 @@ hmri_def.PDproc.WBMaskTh = 0.1;  % Threshold for calculation of whole-brain mask
 hmri_def.PDproc.WMMaskTh = 0.95; % Threshold for calculation of white-matter mask from TPMs
 hmri_def.PDproc.biasreg  = 10^(-5);
 hmri_def.PDproc.biasfwhm = 50;
+hmri_def.PDproc.nr_echoes_forA =1;
+
+%% UNICORT processing
+hmri_def.unicort.reg = 10^-3;
+hmri_def.unicort.FWHM = 60;
+hmri_def.unicort.thr = 2; % TL: 2 for sciz & cbs with SIEMENS 3T Skyra fit
+                          % otherwise: 5
+
+hmri_def.qMRI_maps.QA          = 1;%creates a matlab structure containing markers of data quality
+hmri_def.qMRI_maps.ACPCrealign = 1;%realigns qMRI maps to MNI
 
 %% Threshold values for saving of the qMRI maps
 hmri_def.qMRI_maps_thresh.R1       = 2000;
@@ -46,7 +58,8 @@ hmri_def.qMRI_maps_thresh.A        = 10^5;
 hmri_def.qMRI_maps_thresh.R2s      = 10;
 hmri_def.qMRI_maps_thresh.MTR      = 50;
 hmri_def.qMRI_maps_thresh.MTR_synt = 50;
-hmri_def.qMRI_maps_thresh.MT       = 5; % TL: 15 for cbs & sciz; original: 5 
+hmri_def.qMRI_maps_thresh.MT       = 15; % TL: 15 for cbs & sciz with SIEMENS 3T Skyra
+                                         % original: 5 
 
 %% MPM acquisition parameters and RF spoiling correction parameters
 % these value are initialised with defaults (v2k protocol - Prisma) for the
@@ -189,11 +202,7 @@ hmri_def.rfcorr.Unknown.RFCorr = false;
 % List B1 protocols available at the CBS
 % --------------------------------------
 hmri_def.cbs.b1_type.labels  = {
-    'i3D_EPI_v2b'
-    'i3D_EPI_v2b_long'
-    'i3D_EPI_rect700'
-    'i3D_EPI_12ch'
-    'i3D_EPI_v2d'
+    'i3D_EPI'
     'tfl_b1_map'
     'rf_map'
     'no_B1_provided'
@@ -203,9 +212,7 @@ hmri_def.cbs.b1_type.val  = hmri_def.cbs.b1_type.labels(1);
 % List B1 protocols available at the CRC
 % --------------------------------------
 hmri_def.crc.b1_type.labels  = {
-    'i3D_EPI_v2b_prisma_crc' % added the 'i' before the '3' to start with a letter...
-    'i3D_EPI_v3a_allegra_crc'
-    'i3D_EPI_v4a_allegra_crc'
+    'i3D_EPI' % added the 'i' before the '3' to start with a letter...
     'i3D_AFI_v4b_n3_allegra_crc'
     'i3D_AFI_v4b_n5_allegra_crc'
     'pre_processed_B1'
@@ -216,9 +223,7 @@ hmri_def.crc.b1_type.val  = hmri_def.crc.b1_type.labels(1);
 % List B1 protocols available at the FIL
 % --------------------------------------
 hmri_def.fil.b1_type.labels = {
-    'i3D_EPI_v2b'
-    'i3D_EPI_v2b_long'
-    'i3D_EPI_rect700'
+    'i3D_EPI'
     'pre_processed_B1'
     'no_B1_provided'
     };
@@ -227,9 +232,7 @@ hmri_def.fil.b1_type.val = hmri_def.fil.b1_type.labels(1);
 % List B1 protocols available at the LREN
 % ---------------------------------------
 hmri_def.lren.b1_type.labels = {
-    'i3D_EPI_v2b'
-    'i3D_EPI_v2b_long'
-    'i3D_EPI_rect700'
+    'i3D_EPI'
     'pre_processed_B1'
     'no_B1_provided'
     };
@@ -239,6 +242,7 @@ hmri_def.lren.b1_type.val = hmri_def.lren.b1_type.labels(1);
 % -----------------------------------------------------------------
 hmri_def.sciz.b1_type.labels  = {
     'tfl_b1map'
+    'rf_map'
     'no_B1_provided'
     }';
 hmri_def.sciz.b1_type.val  = hmri_def.sciz.b1_type.labels(1);
@@ -248,115 +252,6 @@ hmri_def.sciz.b1_type.val  = hmri_def.sciz.b1_type.labels(1);
 % Each of the B1map protocols, for *all* the sites, are defined in a
 % separate substructure.
 %
-% 1) 'i3D_EPI_v3a_allegra_crc'
-hmri_def.b1map.i3D_EPI_v3a_allegra_crc.b1proc.data    = 'EPI'; 
-hmri_def.b1map.i3D_EPI_v3a_allegra_crc.b1proc.avail   = true; 
-hmri_def.b1map.i3D_EPI_v3a_allegra_crc.b1proc.procreq = true; 
-hmri_def.b1map.i3D_EPI_v3a_allegra_crc.b1proc.T1 = 1192; % ms, strictly valid only at 3T
-hmri_def.b1map.i3D_EPI_v3a_allegra_crc.b1proc.eps = 0.0001;
-hmri_def.b1map.i3D_EPI_v3a_allegra_crc.b1proc.beta = 115:-5:65;
-hmri_def.b1map.i3D_EPI_v3a_allegra_crc.b1proc.TM = 45;
-hmri_def.b1map.i3D_EPI_v3a_allegra_crc.b1proc.Nonominalvalues = 5;
-hmri_def.b1map.i3D_EPI_v3a_allegra_crc.b1proc.EchoSpacing = 540e-3;
-hmri_def.b1map.i3D_EPI_v3a_allegra_crc.b1proc.nPEacq = 36; % [36] if 75% FoV & PF phase; [48] if only one of these
-hmri_def.b1map.i3D_EPI_v3a_allegra_crc.b1proc.PEDIR = 2; % [2] for R>>L; [1] for A>>P
-hmri_def.b1map.i3D_EPI_v3a_allegra_crc.b1proc.blipDIR = 1; % +1 for R>>L; -1 for A>>P
-hmri_def.b1map.i3D_EPI_v3a_allegra_crc.b0proc.shorTE = 4.92; % ms
-hmri_def.b1map.i3D_EPI_v3a_allegra_crc.b0proc.longTE = 7.38; % ms
-% due to higher level of field inhomogeneity on the allegra,
-% the threshold must be set higher otherwise no B1 map for area
-% around the brain stem. Trio settings: 110Hz - Allegra
-% settings: 300 Hz (ebalteau 20120619)
-hmri_def.b1map.i3D_EPI_v3a_allegra_crc.b0proc.HZTHRESH = 300;
-hmri_def.b1map.i3D_EPI_v3a_allegra_crc.b0proc.ERODEB1 = 1;
-hmri_def.b1map.i3D_EPI_v3a_allegra_crc.b0proc.PADB1 = 3 ;
-hmri_def.b1map.i3D_EPI_v3a_allegra_crc.b0proc.B1FWHM = 8; %For smoothing. FWHM in mm - i.e. it is divided by voxel resolution to get FWHM in voxels
-hmri_def.b1map.i3D_EPI_v3a_allegra_crc.b0proc.match_vdm = 1;
-hmri_def.b1map.i3D_EPI_v3a_allegra_crc.b0proc.b0maskbrain = 0;
-% 2) 'i3D_EPI_v4a_allegra_crc'
-hmri_def.b1map.i3D_EPI_v4a_allegra_crc.b1proc.data    = 'EPI'; 
-hmri_def.b1map.i3D_EPI_v4a_allegra_crc.b1proc.avail   = true; 
-hmri_def.b1map.i3D_EPI_v4a_allegra_crc.b1proc.procreq = true; 
-hmri_def.b1map.i3D_EPI_v4a_allegra_crc.b1proc.T1 = 1192; % ms, strictly valid only at 3T
-hmri_def.b1map.i3D_EPI_v4a_allegra_crc.b1proc.eps = 0.0001;
-hmri_def.b1map.i3D_EPI_v4a_allegra_crc.b1proc.beta = 140:-7.5:65;
-hmri_def.b1map.i3D_EPI_v4a_allegra_crc.b1proc.TM = 40;
-hmri_def.b1map.i3D_EPI_v4a_allegra_crc.b1proc.Nonominalvalues = 5;
-hmri_def.b1map.i3D_EPI_v4a_allegra_crc.b1proc.EchoSpacing = 330e-3;
-hmri_def.b1map.i3D_EPI_v4a_allegra_crc.b1proc.nPEacq = 48; % [36] if 75% FoV & PF phase; [48] if only one of these
-hmri_def.b1map.i3D_EPI_v4a_allegra_crc.b1proc.PEDIR = 2; % [2] for R>>L; [1] for A>>P
-hmri_def.b1map.i3D_EPI_v4a_allegra_crc.b1proc.blipDIR = 1; % +1 for R>>L; -1 for A>>P
-hmri_def.b1map.i3D_EPI_v4a_allegra_crc.b0proc.shorTE = 4.92; % ms
-hmri_def.b1map.i3D_EPI_v4a_allegra_crc.b0proc.longTE = 7.38; % ms
-hmri_def.b1map.i3D_EPI_v4a_allegra_crc.b0proc.HZTHRESH = 300;
-hmri_def.b1map.i3D_EPI_v4a_allegra_crc.b0proc.ERODEB1 = 1;
-hmri_def.b1map.i3D_EPI_v4a_allegra_crc.b0proc.PADB1 = 3 ;
-hmri_def.b1map.i3D_EPI_v4a_allegra_crc.b0proc.B1FWHM = 8; %For smoothing. FWHM in mm - i.e. it is divided by voxel resolution to get FWHM in voxels
-hmri_def.b1map.i3D_EPI_v4a_allegra_crc.b0proc.match_vdm = 1;
-hmri_def.b1map.i3D_EPI_v4a_allegra_crc.b0proc.b0maskbrain = 0;
-% 3) 'i3D_EPI_v2b_prisma_crc' % used on the Prisma (Lausanne & Liege)
-% NB: in Liege, maskbrain is set to zero because segmentation
-% used in masking procedure diverges for unknown reason...
-hmri_def.b1map.i3D_EPI_v2b_prisma_crc.b1proc.data    = 'EPI'; 
-hmri_def.b1map.i3D_EPI_v2b_prisma_crc.b1proc.avail   = true; 
-hmri_def.b1map.i3D_EPI_v2b_prisma_crc.b1proc.procreq = true; 
-hmri_def.b1map.i3D_EPI_v2b_prisma_crc.b1proc.T1 = 1192; % ms, strictly valid only at 3T
-hmri_def.b1map.i3D_EPI_v2b_prisma_crc.b1proc.eps = 0.0001;
-hmri_def.b1map.i3D_EPI_v2b_prisma_crc.b1proc.beta = 115:-5:65;
-hmri_def.b1map.i3D_EPI_v2b_prisma_crc.b1proc.TM = 31.2;
-hmri_def.b1map.i3D_EPI_v2b_prisma_crc.b1proc.Nonominalvalues = 5;
-hmri_def.b1map.i3D_EPI_v2b_prisma_crc.b1proc.EchoSpacing = 540e-3;
-hmri_def.b1map.i3D_EPI_v2b_prisma_crc.b1proc.nPEacq = 24; % [36] if 75% FoV & PF phase; [48] if only one of these
-hmri_def.b1map.i3D_EPI_v2b_prisma_crc.b1proc.PEDIR = 2; % [2] for R>>L; [1] for A>>P
-hmri_def.b1map.i3D_EPI_v2b_prisma_crc.b1proc.blipDIR = 1; % +1 for R>>L; -1 for A>>P
-hmri_def.b1map.i3D_EPI_v2b_prisma_crc.b0proc.shorTE = 10; % ms
-hmri_def.b1map.i3D_EPI_v2b_prisma_crc.b0proc.longTE = 12.46; % ms
-hmri_def.b1map.i3D_EPI_v2b_prisma_crc.b0proc.HZTHRESH = 110;
-hmri_def.b1map.i3D_EPI_v2b_prisma_crc.b0proc.ERODEB1 = 1;
-hmri_def.b1map.i3D_EPI_v2b_prisma_crc.b0proc.PADB1 = 3 ;
-hmri_def.b1map.i3D_EPI_v2b_prisma_crc.b0proc.B1FWHM = 8; %For smoothing. FWHM in mm - i.e. it is divided by voxel resolution to get FWHM in voxels
-hmri_def.b1map.i3D_EPI_v2b_prisma_crc.b0proc.match_vdm = 1;
-hmri_def.b1map.i3D_EPI_v2b_prisma_crc.b0proc.b0maskbrain = 0;
-% 4) 'i3D_EPI_v2b_long'
-hmri_def.b1map.i3D_EPI_v2b_long.b1proc.data    = 'EPI'; 
-hmri_def.b1map.i3D_EPI_v2b_long.b1proc.avail   = true; 
-hmri_def.b1map.i3D_EPI_v2b_long.b1proc.procreq = true; 
-hmri_def.b1map.i3D_EPI_v2b_long.b1proc.T1 = 1192; % ms, strictly valid only at 3T
-hmri_def.b1map.i3D_EPI_v2b_long.b1proc.eps = 0.0001;
-hmri_def.b1map.i3D_EPI_v2b_long.b1proc.beta = 135:-5:65;
-hmri_def.b1map.i3D_EPI_v2b_long.b1proc.TM = 33.24;
-hmri_def.b1map.i3D_EPI_v2b_long.b1proc.Nonominalvalues = 5;
-hmri_def.b1map.i3D_EPI_v2b_long.b1proc.EchoSpacing = 540e-3;
-hmri_def.b1map.i3D_EPI_v2b_long.b1proc.nPEacq = 24; % [36] if 75% FoV & PF phase; [48] if only one of these
-hmri_def.b1map.i3D_EPI_v2b_long.b1proc.blipDIR = 1; % +1 for R>>L; -1 for A>>P
-hmri_def.b1map.i3D_EPI_v2b_long.b0proc.shorTE = 10; % ms
-hmri_def.b1map.i3D_EPI_v2b_long.b0proc.longTE = 12.46; % ms
-hmri_def.b1map.i3D_EPI_v2b_long.b0proc.HZTHRESH = 110;
-hmri_def.b1map.i3D_EPI_v2b_long.b0proc.ERODEB1 = 1;
-hmri_def.b1map.i3D_EPI_v2b_long.b0proc.PADB1 = 3 ;
-hmri_def.b1map.i3D_EPI_v2b_long.b0proc.B1FWHM = 8; %For smoothing. FWHM in mm - i.e. it is divided by voxel resolution to get FWHM in voxels
-hmri_def.b1map.i3D_EPI_v2b_long.b0proc.match_vdm = 1;
-hmri_def.b1map.i3D_EPI_v2b_long.b0proc.b0maskbrain = 1;
-% 5) 'i3D_EPI_rect700'
-hmri_def.b1map.i3D_EPI_rect700.b1proc.data    = 'EPI'; 
-hmri_def.b1map.i3D_EPI_rect700.b1proc.avail = true; 
-hmri_def.b1map.i3D_EPI_rect700.b1proc.procreq = true; 
-hmri_def.b1map.i3D_EPI_rect700.b1proc.T1 = 1192; % ms, strictly valid only at 3T
-hmri_def.b1map.i3D_EPI_rect700.b1proc.eps = 0.0001;
-hmri_def.b1map.i3D_EPI_rect700.b1proc.beta = 80:5:100;
-hmri_def.b1map.i3D_EPI_rect700.b1proc.TM = 33.53;
-hmri_def.b1map.i3D_EPI_rect700.b1proc.Nonominalvalues = 5;
-hmri_def.b1map.i3D_EPI_rect700.b1proc.EchoSpacing = 540e-3;
-hmri_def.b1map.i3D_EPI_rect700.b1proc.nPEacq = 24; % [36] if 75% FoV & PF phase; [48] if only one of these
-hmri_def.b1map.i3D_EPI_rect700.b1proc.blipDIR = 1; % +1 for R>>L; -1 for A>>P
-hmri_def.b1map.i3D_EPI_rect700.b0proc.shorTE = 10; % ms
-hmri_def.b1map.i3D_EPI_rect700.b0proc.longTE = 12.46; % ms
-hmri_def.b1map.i3D_EPI_rect700.b0proc.HZTHRESH = 110;
-hmri_def.b1map.i3D_EPI_rect700.b0proc.ERODEB1 = 1;
-hmri_def.b1map.i3D_EPI_rect700.b0proc.PADB1 = 3 ;
-hmri_def.b1map.i3D_EPI_rect700.b0proc.B1FWHM = 8; %For smoothing. FWHM in mm - i.e. it is divided by voxel resolution to get FWHM in voxels
-hmri_def.b1map.i3D_EPI_rect700.b0proc.match_vdm = 1;
-hmri_def.b1map.i3D_EPI_rect700.b0proc.b0maskbrain = 1;
 % 6) 'i3D_AFI_v4b_n5_allegra_crc'
 hmri_def.b1map.i3D_AFI_v4b_n5_allegra_crc.b1proc.data    = 'AFI'; 
 hmri_def.b1map.i3D_AFI_v4b_n5_allegra_crc.b1proc.avail   = true; 
@@ -375,66 +270,39 @@ hmri_def.b1map.pre_processed_B1.b1proc.procreq = false;
 %9) 'no_B1_provided'
 hmri_def.b1map.no_B1_provided.b1proc.procreq = false;
 hmri_def.b1map.no_B1_provided.b1proc.avail   = false;
-% 10) 'i3D_EPI_v2b'
-% Note: no PEDIR entry here since hmri_B1Map_unwarp calls FieldMap directly
-% with "UnwarpEPIxy" flag since phase-encoding is implemented RL.
-hmri_def.b1map.i3D_EPI_v2b.b1proc.data    = 'EPI'; 
-hmri_def.b1map.i3D_EPI_v2b.b1proc.avail   = true; 
-hmri_def.b1map.i3D_EPI_v2b.b1proc.procreq = true; 
-hmri_def.b1map.i3D_EPI_v2b.b1proc.T1 = 1192; % ms, strictly valid only at 3T
-hmri_def.b1map.i3D_EPI_v2b.b1proc.eps = 0.0001;
-hmri_def.b1map.i3D_EPI_v2b.b1proc.beta = 115:-5:65;
-hmri_def.b1map.i3D_EPI_v2b.b1proc.TM = 31.2;
-hmri_def.b1map.i3D_EPI_v2b.b1proc.Nonominalvalues = 5;
-hmri_def.b1map.i3D_EPI_v2b.b1proc.EchoSpacing = 540e-3;
-hmri_def.b1map.i3D_EPI_v2b.b1proc.nPEacq = 24;
-hmri_def.b1map.i3D_EPI_v2b.b1proc.blipDIR = 1;
-hmri_def.b1map.i3D_EPI_v2b.b0proc.shorTE = 10; % ms
-hmri_def.b1map.i3D_EPI_v2b.b0proc.longTE = 12.46; % ms
-hmri_def.b1map.i3D_EPI_v2b.b0proc.HZTHRESH = 110;
-hmri_def.b1map.i3D_EPI_v2b.b0proc.ERODEB1 = 1;
-hmri_def.b1map.i3D_EPI_v2b.b0proc.PADB1 = 3 ;
-hmri_def.b1map.i3D_EPI_v2b.b0proc.B1FWHM = 8; %For smoothing. FWHM in mm - i.e. it is divided by voxel resolution to get FWHM in voxels
-hmri_def.b1map.i3D_EPI_v2b.b0proc.match_vdm = 1;
-hmri_def.b1map.i3D_EPI_v2b.b0proc.b0maskbrain = 1;
-% 11) 'i3D_EPI_12ch'
-hmri_def.b1map.i3D_EPI_12ch.b1proc.data    = 'EPI'; 
-hmri_def.b1map.i3D_EPI_12ch.b1proc.avail   = true; 
-hmri_def.b1map.i3D_EPI_12ch.b1proc.procreq = true; 
-hmri_def.b1map.i3D_EPI_12ch.b1proc.beta = 115:-7.5:62.5;
-hmri_def.b1map.i3D_EPI_12ch.b1proc.TM = 31.2;
-hmri_def.b1map.i3D_EPI_12ch.b1proc.Nonominalvalues = 3;
-hmri_def.b1map.i3D_EPI_12ch.b1proc.T1 = 1192; % ms, strictly valid only at 3T
-hmri_def.b1map.i3D_EPI_12ch.b1proc.eps = 0.0001;
-% 12) 'i3D_EPI_v2d'
-hmri_def.b1map.i3D_EPI_v2d.b1proc.data    = 'EPI'; 
-hmri_def.b1map.i3D_EPI_v2d.b1proc.avail   = true; 
-hmri_def.b1map.i3D_EPI_v2d.b1proc.procreq = true; 
-hmri_def.b1map.i3D_EPI_v2d.b1proc.beta = 115:-5:65;
-hmri_def.b1map.i3D_EPI_v2d.b1proc.TM = 33.8;
-hmri_def.b1map.i3D_EPI_v2d.b1proc.Nonominalvalues=5;
-hmri_def.b1map.i3D_EPI_v2d.b1proc.T1 = 1192; %ms, strictly valid only at 3T
-hmri_def.b1map.i3D_EPI_v2d.b1proc.eps = 0.0001;
-hmri_def.b1map.i3D_EPI_v2d.b1proc.nPEacq = 24;
-hmri_def.b1map.i3D_EPI_v2d.b1proc.EchoSpacing = 540e-3;
-hmri_def.b1map.i3D_EPI_v2d.b1proc.blipDIR=1;
-hmri_def.b1map.i3D_EPI_v2d.b1proc.PEDIR = 2;
-hmri_def.b1map.i3D_EPI_v2d.b0proc.shorTE=10;
-hmri_def.b1map.i3D_EPI_v2d.b0proc.longTE=12.46;
-hmri_def.b1map.i3D_EPI_v2d.b0proc.b0maskbrain=1;
-hmri_def.b1map.i3D_EPI_v2d.b0proc.HZTHRESH=110;
-hmri_def.b1map.i3D_EPI_v2d.b0proc.ERODEB1=1;
-hmri_def.b1map.i3D_EPI_v2d.b0proc.PADB1=3 ;
-hmri_def.b1map.i3D_EPI_v2d.b0proc.B1FWHM=8; %For smoothing. FWHM in mm - i.e. it is divided by voxel resolution to get FWHM in voxels
-hmri_def.b1map.i3D_EPI_v2d.b0proc.match_vdm=1;
+% 10) 'i3D_EPI'
+hmri_def.b1map.i3D_EPI.data    = 'EPI'; 
+hmri_def.b1map.i3D_EPI.avail   = true; 
+hmri_def.b1map.i3D_EPI.procreq = true; 
+
+hmri_def.b1map.i3D_EPI.b1proc.T1 = 1192; % ms, strictly valid only at 3T
+hmri_def.b1map.i3D_EPI.b1proc.eps = 0.0001;
+hmri_def.b1map.i3D_EPI.b1proc.Nonominalvalues = 5;
+hmri_def.b1map.i3D_EPI.b1proc.HZTHRESH = 110;
+hmri_def.b1map.i3D_EPI.b1proc.SDTHRESH = 5;
+hmri_def.b1map.i3D_EPI.b1proc.ERODEB1 = 1;
+hmri_def.b1map.i3D_EPI.b1proc.PADB1 = 3 ;
+hmri_def.b1map.i3D_EPI.b1proc.B1FWHM = 8; % For smoothing. FWHM in mm - i.e. it is divided by voxel resolution to get FWHM in voxels
+hmri_def.b1map.i3D_EPI.b1proc.match_vdm = 1;
+hmri_def.b1map.i3D_EPI.b1proc.b0maskbrain = 1;
+
+hmri_def.b1map.i3D_EPI.b1acq.beta = 115:-5:65;
+hmri_def.b1map.i3D_EPI.b1acq.TM = 31.2;
+hmri_def.b1map.i3D_EPI.b1acq.EchoSpacing = 540e-3;
+hmri_def.b1map.i3D_EPI.b1acq.nPEacq = 24;
+hmri_def.b1map.i3D_EPI.b1acq.blipDIR = 1;
+
+hmri_def.b1map.i3D_EPI.b0acq.shortTE = 10; % ms
+hmri_def.b1map.i3D_EPI.b0acq.longTE = 12.46; % ms
+
 % 13) 'tfl_b1_map'
-hmri_def.b1map.tfl_b1_map.b1proc.data    = 'TFL'; 
-hmri_def.b1map.tfl_b1_map.b1proc.avail   = true; 
-hmri_def.b1map.tfl_b1_map.b1proc.procreq = true; 
+hmri_def.b1map.tfl_b1_map.data    = 'TFL'; 
+hmri_def.b1map.tfl_b1_map.avail   = true; 
+hmri_def.b1map.tfl_b1_map.procreq = true; 
 % 14) 'rf_map'
-hmri_def.b1map.rf_map.b1proc.data    = 'RFmap'; 
-hmri_def.b1map.rf_map.b1proc.avail   = true; 
-hmri_def.b1map.rf_map.b1proc.procreq = true; 
+hmri_def.b1map.rf_map.data    = 'RFmap'; 
+hmri_def.b1map.rf_map.avail   = true; 
+hmri_def.b1map.rf_map.procreq = true; 
 
 end
 

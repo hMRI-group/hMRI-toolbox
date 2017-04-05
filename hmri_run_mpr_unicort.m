@@ -31,7 +31,7 @@ function out = hmri_run_mpr_unicort(job)
 
 %%
 
-job=hmri_process_data_spec(job);
+job = hmri_process_data_spec(job);
 
 out.R1 = {};
 out.R1u = {};
@@ -40,7 +40,9 @@ out.A = {};
 out.MT = {};
 out.T1w = {};
 
-for ip=1:numel(job.subj)
+json = hmri_get_defaults('json');
+
+for ip = 1:numel(job.subj)
     P_mtw    = char(job.subj(ip).raw_mpm.MT);
     P_pdw    = char(job.subj(ip).raw_mpm.PD);
     P_t1w    = char(job.subj(ip).raw_mpm.T1);
@@ -55,17 +57,17 @@ for ip=1:numel(job.subj)
     % save outpath as default for this job
     hmri_get_defaults('outdir',cwd);
     
-    
     [fR1, fR2s, fMT, fA, PPDw, PT1w]  = hmri_MTProt(P_mtw, P_pdw, P_t1w); 
-    
+ 
     % Use default parameters of SPM8 "New Segment" toolbox except for
     % adapted regularization and smoothness of bias field
     % as determined for 3T Magnetom Tim Trio (Siemens Healthcare, Erlangen, Germany)
     % see Weiskopf et al., Neuroimage 2010
     
-    
-    reg = 10^-3;
-    FWHM = 60;
+    unicort_procpar = hmri_get_defaults('unicort');
+    reg = unicort_procpar.reg;
+    FWHM = unicort_procpar.FWHM;
+    thr_factor = unicort_procpar.thr;
     
     P_R1     = fR1;
     P_PDw    = PPDw;
@@ -86,7 +88,7 @@ for ip=1:numel(job.subj)
     % create head mask
     V_PDw = spm_vol(P_PDw);
     Y_PDw = spm_read_vols(V_PDw);
-    thresh = 5*mode(round(Y_PDw(:))); % TL: for sciz & cbs 2* instead of 5*
+    thresh = thr_factor*mode(round(Y_PDw(:))); 
     
     % mask R1 map with head/neck mask
     V_R1 = spm_vol(P_R1);
@@ -99,11 +101,34 @@ for ip=1:numel(job.subj)
     V_R1.descrip = 'Masked R1 map';
     V_R1_mask = spm_write_vol(V_R1_mask,Y_R1);
     
+    Vtemp = cat(1,V_PDw,V_R1);
+    Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[]));
+    Output_hdr.history.procstep.version = hmri_get_version;
+    Output_hdr.history.procstep.descrip = 'map creation';
+    Output_hdr.history.procstep.procpar = unicort_procpar;
+    for ctr = 1:numel(Vtemp)
+        Output_hdr.history.input{1}.filename = Vtemp(ctr).fname;
+        input_hdr = get_metadata(Vtemp(ctr).fname);
+        if ~isempty(input_hdr{1})
+            Output_hdr.history.input{1}.history = input_hdr{1}.history;
+        else
+            Output_hdr.history.input{1}.history = 'No history available.';
+        end
+    end
+    Output_hdr.history.output.imtype = 'Masked R1 map [1000/s]';
+    Output_hdr.history.output.units = 'ms-1';
+    set_metadata(P_R1_mask,Output_hdr,json);
+    
     
     %% preparation of spm structure for "New Segment" tool
     
     % clear('matlabbatch');
-    tpm_nam = fullfile(spm('dir'),'tpm','TPM.nii');
+    tpm_nam = fullfile(spm('dir'),'tpm','enhanced_TPM.nii'); % instead of TPM.nii
+    % see http://www.unil.ch/lren/home/menuinst/data--utilities.html
+    % Lorio S, Fresard S, Adaszewski S, Kherif F, Chowdhury R, Frackowiak RS, 
+    % Ashburner J, Helms G, Weiskopf N, Lutti A, Draganski B. New tissue priors 
+    % for improved automated classification of subcortical brain structures on MRI. 
+    % Neuroimage. 2016 Apr 15;130:157-66. doi: 10.1016/j.neuroimage.2016.01.062
     
     preproc8.channel.write = [1 1];
     preproc8.tissue(1).tpm = {[tpm_nam ',1']};
@@ -153,6 +178,21 @@ for ip=1:numel(job.subj)
         P_biasmap = spm_select('FPList',p,['^BiasField_' n '.nii']);
     end
     
+    Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[]));
+    Output_hdr.history.procstep.version = hmri_get_version;
+    Output_hdr.history.procstep.descrip = 'map creation';
+    Output_hdr.history.procstep.procpar = struct('preproc8',preproc8);
+    Output_hdr.history.input{ctr}.filename = P_R1_mask;
+    input_hdr = get_metadata(P_R1_mask);
+    if ~isempty(input_hdr{1})
+        Output_hdr.history.input{ctr}.history = input_hdr{1}.history;
+    else
+        Output_hdr.history.input{ctr}.history = 'No history available.';
+    end
+    Output_hdr.history.output.imtype = 'Bias corrected R1 UNICORT map';
+    Output_hdr.history.output.units = 'ms-1';
+    set_metadata(P_biasmap,Output_hdr,json);
+    
     %% create B1+ map from bias field
     V_biasmap = spm_vol(P_biasmap);
     Y_biasmap = spm_read_vols(V_biasmap);
@@ -163,9 +203,42 @@ for ip=1:numel(job.subj)
     V_B1.fname = P_B1;
     V_B1.descrip = 'B1+ map (p.u. nominal fa)';
     V_B1 = spm_write_vol(V_B1,Y_B1);
+
+    Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[]));
+    Output_hdr.history.procstep.version = hmri_get_version;
+    Output_hdr.history.procstep.descrip = 'map creation';
+    Output_hdr.history.procstep.procpar = struct('preproc8',preproc8);
+    Output_hdr.history.input{1}.filename = V_biasmap.fname;
+    input_hdr = get_metadata(V_biasmap.fname);
+    if ~isempty(input_hdr{1})
+        Output_hdr.history.input{1}.history = input_hdr{1}.history;
+    else
+        Output_hdr.history.input{1}.history = 'No history available.';
+    end
+    Output_hdr.history.output.imtype = 'B1+ map';
+    Output_hdr.history.output.units = 'p.u. nominal FA';
+    set_metadata(P_B1,Output_hdr,json);
     
     [p,n,e] = fileparts(P_R1_mask);
     P_R1_unicort = fullfile(p, ['m' n e]);
+    
+    Vtemp = cat(1,V_PDw,V_R1);
+    Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[]));
+    Output_hdr.history.procstep.version = hmri_get_version;
+    Output_hdr.history.procstep.descrip = 'map creation';
+    Output_hdr.history.procstep.procpar = struct('preproc8',preproc8);
+    for ctr = 1:numel(Vtemp)
+        Output_hdr.history.input{ctr}.filename = Vtemp(ctr).fname;
+        input_hdr = get_metadata(Vtemp(ctr).fname);
+        if ~isempty(input_hdr{1})
+            Output_hdr.history.input{ctr}.history = input_hdr{1}.history;
+        else
+            Output_hdr.history.input{ctr}.history = 'No history available.';
+        end
+    end
+    Output_hdr.history.output.imtype = 'Bias corrected R1 UNICORT map';
+    Output_hdr.history.output.units = 'ms-1';
+    set_metadata(P_R1_unicort,Output_hdr,json);
     
     out.subj(ip).R1={fullfile(cwd,spm_str_manip(fR1,'t'))};
     out.subj(ip).R1u={fullfile(cwd,spm_str_manip(P_R1_unicort,'t'))};

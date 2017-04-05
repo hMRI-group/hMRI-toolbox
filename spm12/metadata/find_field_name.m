@@ -1,4 +1,4 @@
-function [nFieldFound, fieldList] = findFieldName(inStruct, fieldName, varargin)
+function [nFieldFound, fieldList] = find_field_name(inStruct, fieldName, varargin)
 % PURPOSE
 % To search a structure recursively to retrieve fields with a
 % specific name (or part of that name). Returns the number of fields found
@@ -23,9 +23,9 @@ function [nFieldFound, fieldList] = findFieldName(inStruct, fieldName, varargin)
 % Except for the first two mandatory parameters which must be given in the
 % right order, the other arguments (varargin) are passed as pairs of
 % parameter name/parameter value, e.g.
-% [iFR, fL] = findFieldName(inStruct,'RepetitionTime','matchType','exact')
-% [iFR, fL] = findFieldName(inStruct,'Repet','matchType','partial','caseSens','sensitive')
-% [iFR, fL] = findFieldName(inStruct,'repet','caseSens','insensitive')
+% [iFR, fL] = find_field_name(inStruct,'RepetitionTime','matchType','exact')
+% [iFR, fL] = find_field_name(inStruct,'Repet','matchType','partial','caseSens','sensitive')
+% [iFR, fL] = find_field_name(inStruct,'repet','caseSens','insensitive')
 %
 %--------------------------------------------------------------------------
 % Written by Evelyne Balteau - November 2014 - Cyclotron Research Centre
@@ -68,12 +68,12 @@ for i=1:length(f)
     end
     if ok
         nFieldFound = nFieldFound + 1;
-        fieldList{end+1,1} = f{i};
+        fieldList{end+1,1} = f{i}; %#ok<*AGROW>
     end
     if iscell(inStruct(1).(f{i}))
         for cc =1:length(inStruct(1).(f{i}))
             if isstruct(inStruct(1).(f{i}){cc})
-                [iFR, fL] = findFieldName(inStruct(1).(f{i}){cc}, fieldName, ...
+                [iFR, fL] = find_field_name(inStruct(1).(f{i}){cc}, fieldName, ...
                     'matchType', matchType, 'caseSens', caseSens);
                 if iFR
                     nFieldFound = nFieldFound + iFR;
@@ -87,7 +87,7 @@ for i=1:length(f)
             end
         end
     elseif isstruct(inStruct(1).(f{i}))
-        [iFR, fL] = findFieldName(inStruct(1).(f{i}), fieldName, ...
+        [iFR, fL] = find_field_name(inStruct(1).(f{i}), fieldName, ...
             'matchType', matchType, 'caseSens', caseSens);
         if iFR
             nFieldFound = nFieldFound + iFR;

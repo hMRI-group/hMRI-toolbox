@@ -9,6 +9,8 @@ if nargin < 6
   error('Enter unwarped anatomical, B1, std map, matched VDM file, Hz fieldmap and defaults');
 end
 
+json = hmri_get_defaults('json');
+
 %----------------------------------------------------------------------
    % Make a thresholded mask of the B1 STD map
 %----------------------------------------------------------------------
@@ -42,14 +44,14 @@ if size(size(kernel),2)~=3
        kernel=kk;
        clear kk;
 end
-hzmask=spm_erode(double(hzmask),kernel);
+hzmask = spm_erode(double(hzmask),kernel);
 
 % Resample mask in space of b1map:
 [x,y,z] = ndgrid(1:Vb1.dim(1),1:Vb1.dim(2),1:Vb1.dim(3));
 xyz = [x(:) y(:) z(:)];
 
 % Need V.mat from the matched VDM file:
-Vvdm=spm_vol(vdm_img{1}(1,:));
+Vvdm = spm_vol(vdm_img{1}(1,:));
 tM = inv(Vb1.mat\Vvdm.mat);
 
 x2 = tM(1,1)*x + tM(1,2)*y + tM(1,3)*z + tM(1,4);
@@ -59,31 +61,51 @@ xyz2 = [x2(:) y2(:) z2(:)];
 rhzmask = double(reshape(spm_sample_vol(hzmask,xyz2(:,1),xyz2(:,2),xyz2(:,3),1),Vb1.dim(1:3))>0);
 
 % Multiply rhz mask by the the std mask
-fullmask=rhzmask.*stdmask; 
-nerode=pm_defs.PADB1;
+fullmask = rhzmask.*stdmask; 
+nerode = pm_defs.PADB1;
 ks = floor((nerode+1)*[1 1 1]./npxs);
 if ~mod(ks(1),2) ks(1) = ks(1)+1;end
 if ~mod(ks(2),2) ks(2) = ks(2)+1;end
 if ~mod(ks(3),2) ks(3) = ks(3)+1;end
 kernel = ones(ks);
 if size(size(kernel),2)~=3
-       kk(:,:,1)=kernel;
-       kk(:,:,2)=kernel;
-       kernel=kk;
+       kk(:,:,1) = kernel;
+       kk(:,:,2) = kernel;
+       kernel = kk;
        clear kk;
 end
 
 % Pad the masked B1 map
-b1map=spm_read_vols(Vb1);
-[padb1map,padmask]=pm_pad(b1map.*fullmask,fullmask,kernel);
-Vpadb1=Vb1;
+b1map = spm_read_vols(Vb1);
+[padb1map,padmask] = pm_pad(b1map.*fullmask,fullmask,kernel);
+Vpadb1 = Vb1;
 %Vpadb1=rmfield(Vpadb1,'pinfo');
-Vpadb1.pinfo(1:2)=Inf;
+Vpadb1.pinfo(1:2) = Inf;
 %Vpadb1.dt=[8 0];
 [pth,fname,ext]=fileparts(Vb1.fname);
 Vpadb1.fname=fullfile(pth,['m' fname ext]);
 Vpadb1.descrip='Masked padded unwarped B1 map';
 allub1_img{1}=spm_write_vol(Vpadb1,padb1map);
+
+Output_hdr_B1 = struct('history',struct('procstep',[],'input',[],'output',[]));
+Output_hdr_B1.history.procstep.version = hmri_get_version;
+Output_hdr_B1.history.procstep.descrip = 'B1 map - masking & padding';
+Output_hdr_B1.history.procstep.procpar=pm_defs;
+Input = cat(1,ub1_img,ustd_img,fpm_img{1}.fname);
+for ctr = 1:numel(Input)
+    Output_hdr_B1.history.input{ctr}.filename = Input{ctr};
+    input_hdr = get_metadata(Input{ctr});
+    if ~isempty(input_hdr{1})
+        Output_hdr_B1.history.input{ctr}.history = input_hdr{1}.history;
+    else
+        Output_hdr_B1.history.input{ctr}.history = '';
+    end
+%     Output_hdr_B1.history.input{ctr}.history=input_hdr{1}.history;
+end
+Output_hdr_B1.history.output.imtype=' masked, padded & unwarped B1 map';
+Output_hdr_B1.history.output.units='percent (%)';
+set_metadata(allub1_img{1}.fname,Output_hdr_B1,json)
+
 
 % Smooth padded B1 map
 spadb1map=zeros(size(padb1map));
@@ -95,5 +117,24 @@ Vspadb1=rmfield(Vspadb1,'pinfo');
 Vspadb1.fname=fullfile(pth,['sm' fname ext]);
 Vspadb1.descrip=sprintf('Smoothed (%dmm) masked padded unwarped B1 map',pm_defs.B1FWHM(1));
 allub1_img{2}=spm_write_vol(Vspadb1,spadb1map);
-  
+
+Output_hdr_B1 = struct('history',struct('procstep',[],'input',[],'output',[]));
+Output_hdr_B1.history.procstep.version = hmri_get_version;
+Output_hdr_B1.history.procstep.descrip = 'B1 map - smoothing';
+Output_hdr_B1.history.procstep.procpar = pm_defs.B1FWHM;
+Input={allub1_img{1}.fname};
+for ctr=1:numel(Input)
+    Output_hdr_B1.history.input{ctr}.filename=Input{ctr};
+    input_hdr=get_metadata(Input{ctr});
+    if ~isempty(input_hdr{1})
+        Output_hdr_B1.history.input{ctr}.history=input_hdr{1}.history;
+    else
+        Output_hdr_B1.history.input{ctr}.history='';
+    end
+%     Output_hdr_B1.history.input{ctr}.history=input_hdr{1}.history;
+end
+Output_hdr_B1.history.output.imtype=' smoothed, masked, padded & unwarped B1 map';
+Output_hdr_B1.history.output.units='percent (%)';
+set_metadata(allub1_img{1,2}.fname,Output_hdr_B1,json)
+
 end

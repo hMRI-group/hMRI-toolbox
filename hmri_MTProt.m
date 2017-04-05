@@ -160,6 +160,14 @@ tmp = hmri_get_defaults('outdir');
 if ~strcmp(pth, tmp)
   pth = tmp;
 end
+qMRIcalc=hmri_get_defaults('qMRI_maps');
+if (qMRIcalc.QA||PDproc.PDmap||qMRIcalc.ACPCrealign)
+    MPMcalcFolder=fullfile(pth,'MPMcalcFolder');
+    if(exist(MPMcalcFolder,'dir'))%in case a previous run was stopped prematurely
+        rmdir(MPMcalcFolder,'s')
+    end
+    mkdir(MPMcalcFolder)
+end
 
 
 %% calculate T2* map from PD echoes
@@ -387,11 +395,7 @@ if (TR_mtw == TR_pdw) & (fa_mtw == fa_pdw),
     descrip = {descrip{:}, 'Classic MTR image','Percent diff. MTR image (RD/BD)'};
     units = {units{:}, 'A.U.','A.U.'};
 end
-if (PDproc.PDmap)
-    nam2    = {nam2{:}, 'MTforA'};
-    descrip = {descrip{:}, 'B1-uncorrected MT map for A flattening'};
-    units = {units{:}, 'A.U.'};
-end
+
 Nmap    = nifti;
 for ii=1:numel(nam2)
     V         = V_templ(1);
@@ -512,7 +516,7 @@ for p = 1:dm(3)
         % again: correct A for transmit bias f_T and receive bias f_R
         % Acorr = A / f_T / f_R , proportional PD
         A = (T1 .* (T1w * fa_t1w / 2 / TR_t1w) + (T1w / fa_t1w))./f_T./f_R;
-    elseif(~isempty(f_T))&&(isempty(f_R))&&(PDproc.PDmap)
+    elseif(~isempty(f_T))&&(isempty(f_R))%&&(PDproc.PDmap)
         A = T1 .* (T1w .*(fa_t1w*f_T) / 2 / TR_t1w) + (T1w ./ (fa_t1w*f_T));
     else
         % semi-quantitative A
@@ -528,24 +532,6 @@ for p = 1:dm(3)
     MT       = ( (A_forMT * fa_mtw - MTw) ./ (MTw+eps) ./ (T1_forMT + eps) * TR_mtw - fa_mtw * fa_mtw / 2 ) * 100;
     if (~isempty(f_T))
         MT = MT .* (1 - 0.4) ./ (1 - 0.4 * f_T);
-    end
-    if (PDproc.PDmap)
-        % The two outer voxels in all directions are nulled in order to remove artefactual effects from the MT map
-        MTforA=MT;
-        % Set outer five planes to 0 to prevent errors with bias field
-        % estimation during segmentation:
-        if (p < 5) || (p > dm(3) - 5)
-            MTforA=zeros(size(MT,1),size(MT,2));
-        else
-            MTforA(1:5,:)=0; MTforA(end-5:end, :)=0;
-            MTforA(:, 1:5)=0; MTforA(:, end-5:end)=0;
-        end
-        tmp      = MTforA;
-        if (TR_mtw == TR_pdw) && (fa_mtw == fa_pdw)
-            Nmap(7).dat(:,:,p) = max(min(tmp,threshall.MT),-threshall.MT);
-        else
-            Nmap(5).dat(:,:,p) = max(min(tmp,threshall.MT),-threshall.MT);
-        end
     end
     
     tmp      = MT;
@@ -582,9 +568,33 @@ for ctr = 1:size(nam2,2)
     set_metadata(fullfile(pth,[nam '_' nam2{ctr} '.nii']),Output_hdr,json);
 end
 
-if ~isempty(f_T) && isempty(f_R) && PDproc.PDmap
-    PDcalculation(pth)
+if (qMRIcalc.QA||(PDproc.PDmap))
+    R = spm_select('FPList',pth,'^s.*_MT.(img|nii)$');
+    copyfile(R(1,:),MPMcalcFolder);
+    Vsave = spm_vol(spm_select('FPList',MPMcalcFolder,'^s.*_MT.(img|nii)$'));
+    MTtemp=spm_read_vols(Vsave);
+    %The 5 outer voxels in all directions are nulled in order to remove artefactual effects from the MT map on segmentation:
+    MTtemp(1:5,:,:)=0; MTtemp(end-5:end, :,:)=0;
+    MTtemp(:, 1:5,:)=0; MTtemp(:, end-5:end,:)=0;
+    MTtemp(:,:, 1:5)=0; MTtemp(:,:,end-5:end)=0;
+    spm_write_vol(Vsave,MTtemp);
+    
+    P = spm_select('FPList',MPMcalcFolder,'^s.*_MT.(img|nii)$');
+    clear matlabbatch
+    matlabbatch{1}.spm.spatial.preproc.channel.vols = {P};
+    matlabbatch{1}.spm.spatial.preproc.channel.write = [0 0];
+    spm_jobman('initcfg');
+    spm_jobman('run', matlabbatch);
 end
+
+if ~isempty(f_T) && isempty(f_R) && PDproc.PDmap
+%     PDcalculation(pth)
+    PDcalculation(pth,MPMcalcFolder)
+end
+if (qMRIcalc.QA||PDproc.PDmap||qMRIcalc.ACPCrealign)
+    rmdir(MPMcalcFolder,'s')
+end
+
 spm_progress_bar('Clear');
 
 end
@@ -632,56 +642,38 @@ spm_get_space(deblank(deblank(VF2.fname)), M*MM);
 end
 
 %++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-function PDcalculation(pth)
+function PDcalculation(pth,MPMcalcFolder)
 disp('----- Calculating Proton Density map -----');
 
-% get PD processing default settings
 PDproc = hmri_get_defaults('PDproc');
 threshA = hmri_get_defaults('qMRI_maps_thresh.A');
 
-% Creation of whole-brain and white-matter masks
-P = spm_select('FPList',pth ,'^.*_MTforA.(img|nii)$');
-clear matlabbatch
-matlabbatch{1}.spm.spatial.preproc.channel.vols = {P};
-matlabbatch{1}.spm.spatial.preproc.channel.write = [1 0]; % saving bias field
-% spm_jobman('initcfg');
-spm_jobman('run', matlabbatch);
-
-TPMs = spm_read_vols(spm_vol(spm_select('FPList',fileparts(P),'^c.*\.(img|nii)$')));
-%  Whole brain mask = WM + GM + bone but not the CSF! (CP: why?)
-WBmask = zeros(size(squeeze(TPMs(:,:,:,1))));
-WBmask(sum(cat(4,TPMs(:,:,:,1:2),TPMs(:,:,:,end)),4) >= PDproc.WBMaskTh) = 1;
-WMmask = zeros(size(squeeze(TPMs(:,:,:,1))));
-WMmask(squeeze(TPMs(:,:,:,2)) >= PDproc.WMMaskTh) = 1;
-
-temp=spm_select('FPList',pth,'^.*_MTforA');
-for counter=1:size(temp,1)
-    delete(deblank(temp(counter,:)));
-end
-% End of creation of whole-brain and white-matter masks
+TPMs=spm_read_vols(spm_vol(spm_select('FPList',MPMcalcFolder,'^c.*\.(img|nii)$')));
+WBmask=zeros(size(squeeze(TPMs(:,:,:,1))));
+WBmask(sum(cat(4,TPMs(:,:,:,1:2),TPMs(:,:,:,end)),4)>=PDproc.WBMaskTh)=1;
+WMmask=zeros(size(squeeze(TPMs(:,:,:,1))));
+WMmask(squeeze(TPMs(:,:,:,2))>=PDproc.WBMaskTh)=1;
 
 % Saves masked A map for bias-field correction later
-P = spm_select('FPList',pth ,'^.*_A.(img|nii)$');
-Vsave = spm_vol(P);
-Vsave.fname = fullfile(spm_str_manip(Vsave.fname,'h'),['masked_' spm_str_manip(Vsave.fname,'t')]);
-Amap = spm_read_vols(spm_vol(P)).*WBmask;
-Amap(Amap==Inf) = 0;
-Amap(isnan(Amap)) = 0;
-Amap(Amap==threshA) = 0;
+P=spm_select('FPList',pth ,'^.*_A.(img|nii)$');
+Vsave=spm_vol(P);
+Vsave.fname=fullfile(MPMcalcFolder,['masked_' spm_str_manip(Vsave.fname,'t')]);
+Amap=spm_read_vols(spm_vol(P)).*WBmask;
+Amap(Amap==Inf)=0;Amap(isnan(Amap))=0;Amap(Amap==threshA)=0;
 spm_write_vol(Vsave,Amap);
 
 % Bias-field correction of masked A map
-P = spm_select('FPList',pth ,'^masked.*_A.(img|nii)$');
+P=spm_select('FPList',MPMcalcFolder ,'^masked.*_A.(img|nii)$');
 clear matlabbatch
 matlabbatch{1}.spm.spatial.preproc.channel.vols = {P};
 matlabbatch{1}.spm.spatial.preproc.channel.biasreg = PDproc.biasreg;
 matlabbatch{1}.spm.spatial.preproc.channel.biasfwhm = PDproc.biasfwhm;
-matlabbatch{1}.spm.spatial.preproc.channel.write = [1 0]; % saving bias field
-% spm_jobman('initcfg');
+matlabbatch{1}.spm.spatial.preproc.channel.write = [1 0];
+spm_jobman('initcfg');
 spm_jobman('run', matlabbatch);
 
-temp = spm_select('FPList',pth,'^(c|masked).*\_A');
-for counter = 1:size(temp,1)
+temp=spm_select('FPList',MPMcalcFolder,'^(c|masked).*\_A');
+for counter=1:size(temp,1)
     delete(deblank(temp(counter,:)));
 end
 
@@ -689,33 +681,39 @@ end
 % the masked A map but we want to apply it on the unmasked A map. We
 % therefore need to explicitly load the bias field and apply it on the original A map instead of just
 % loading the bias-field corrected A map from the previous step
-P = spm_select('FPList',pth ,'^s.*_A.(img|nii)$');
-bf = fullfile(pth, spm_select('List', pth, '^BiasField.*\.(img|nii)$'));
+P=spm_select('FPList',pth ,'^s.*_A.(img|nii)$');
+bf = fullfile(MPMcalcFolder, spm_select('List', MPMcalcFolder, '^BiasField.*\.(img|nii)$'));
 BF = double(spm_read_vols(spm_vol(bf)));
 Y = BF.*spm_read_vols(spm_vol(P));
 
 % Calibration of flattened A map to % water content using typical white
 % matter value from the litterature (69%)
 
-A_WM = WMmask.*Y;
-Y = Y/mean(A_WM(A_WM~=0))*69;
+A_WM=WMmask.*Y;
+Y=Y/mean(A_WM(A_WM~=0))*69;
 sprintf('mean White Matter intensity: %04d',mean(A_WM(A_WM~=0)))
 sprintf('SD White Matter intensity %04d',std(A_WM(A_WM~=0),[],1))
-Y( Y>200 ) = 0;
+Y(Y>200)=0;
 % MFC: Estimating Error for data set to catch bias field issues:
 errorEstimate = std(A_WM(A_WM > 0))./mean(A_WM(A_WM > 0));
-Vsave = spm_vol(P);
+Vsave=spm_vol(P);
 Vsave.descrip = ['A Map.  Error Estimate: ', num2str(errorEstimate)];
 if errorEstimate > 0.06
     % MFC: Testing on 15 subjects showed 6% is a good cut-off:
     warning(['Error estimate is high: ', Vsave.fname]);
 end
-
+if vbq_get_defaults('QA')
+    if (exist(fullfile(pth,'QualityAssessment.mat'),'file')==2)
+        load(fullfile(pth,'QualityAssessment.mat'));
+    end
+    QA.PD.mean=mean(A_WM(A_WM > 0));QA.PD.SD=std(A_WM(A_WM > 0));
+    save(fullfile(pth,'QualityAssessment'),'QA')
+end
 % V.fname = P;
 spm_write_vol(Vsave,Y);
 
-temp = spm_select('FPList',pth,'^Bias.*\_A');
-for counter = 1:size(temp,1)
+temp=spm_select('FPList',MPMcalcFolder,'^Bias.*\_A');
+for counter=1:size(temp,1)
     delete(deblank(temp(counter,:)));
 end
 

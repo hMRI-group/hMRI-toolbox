@@ -48,6 +48,9 @@ hmri_def.unicort.FWHM = 60;
 hmri_def.unicort.thr = 2; % TL: 2 for sciz & cbs with SIEMENS 3T Skyra fit
                           % otherwise: 5
 
+hmri_def.qMRI_maps.QA          = 1;%creates a matlab structure containing markers of data quality
+hmri_def.qMRI_maps.ACPCrealign = 1;%realigns qMRI maps to MNI
+
 %% Threshold values for saving of the qMRI maps
 hmri_def.qMRI_maps_thresh.R1       = 2000;
 hmri_def.qMRI_maps_thresh.A        = 10^5;

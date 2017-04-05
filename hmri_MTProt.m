@@ -223,7 +223,6 @@ disp('----- Reading and averaging the images -----');
 
 nr_TE_limit = find(TE_mtw > TE_limit,1);
 avg_nr      = min([nr_c_echoes nr_TE_limit]);
-PDproc.nr_echoes_forA
 PP   = {P_mtw,P_pdw,P_t1w};
 nam1 = {'MTw','PDw','T1w'};
 avg  = [0 0 0];
@@ -301,14 +300,21 @@ PT1w_forA = fullfile(MPMcalcFolder,[nam '_T1w_forA' '.nii']);
 
 if true
     disp('----- Coregistering the images -----');
-    coreg_mt(PPDw, PMTw);
-    coreg_mt(PPDw, PT1w);
+    x_MT2PD=coreg_mt(PPDw, PMTw);
+    x_T12PD=coreg_mt(PPDw, PT1w);
     coreg_mt(PPDw, PT1w_forA);
     if ~isempty(V_trans)
         coreg_bias_map(PPDw, P_trans);
     end
     if ~isempty(V_receiv)
         coreg_bias_map(PPDw, P_receiv);
+    end
+    if qMRIcalc.QA
+        if (exist(fullfile(pth,'QualityAssessment.mat'),'file')==2)
+            load(fullfile(pth,'QualityAssessment.mat'));
+        end
+        QA.ContrastCoreg.MT2PD=x_MT2PD;QA.ContrastCoreg.T12PD=x_T12PD;
+        save(fullfile(pth,'QualityAssessment'),'QA')
     end
 end
 
@@ -326,6 +332,65 @@ if ~isempty(V_receiv)
     Vreceiv = spm_vol(P_receiv(2,:)); % map only, we do not need the T1w image any more
 else
     Vreceiv = [];
+end
+
+if qMRIcalc.QA
+    % multi-contrast R2s fitting
+    disp('----- multi-contrast R2* map -----');
+    
+    allTEs = {TE_mtw, TE_pdw, TE_t1w};
+    Suffix = {'MTw', 'PDw', 'T1w'};
+    V_all=[VMTw VPDw VT1w];V_PD = spm_vol(PP{2});
+    for ctr=1:size(PP,2)
+        dt        = [spm_type('float32'),spm_platform('bigend')];
+        Ni        = nifti;
+        Ni.mat    = V.mat;
+        Ni.mat0   = V.mat;
+        Ni.descrip='OLS R2* map [1/ms]';
+        %     Ni.dat    = file_array(fullfile(pth,[nam '_R2s_' num2str(ctr) '.nii']),dm,dt, 0,1,0);
+        Ni.dat    = file_array(fullfile(MPMcalcFolder,[nam '_R2s_' Suffix{ctr} '.nii']),dm,dt, 0,1,0);
+        create(Ni);
+        
+        TE=allTEs{ctr};
+        V_contrasts = spm_vol(PP{ctr});
+        % The assumption is that the result of co-registering the average
+        % weighted volumes is applicable for each of the echoes of that
+        % contrast => Replicate the mat field across contrasts for all echoes.
+
+%         matField = cat(3, repmat(VPDw.mat, [1, 1, nPD]), ...
+%         repmat(VMTw.mat, [1, 1, nMT]), repmat(VT1w.mat, [1, 1, nT1]));
+
+        
+        reg = [ones(size(TE)) TE(:)];
+        W   = (reg'*reg)\reg';
+        
+        spm_progress_bar('Init',dm(3),'multi-contrast R2* fit','planes completed');
+        for p = 1:dm(3),
+            M = spm_matrix([0 0 p 0 0 0 1 1 1]);
+            data = zeros([size(TE,1) dm(1:2)]);
+            
+            for e = 1:size(TE,1)
+                % Take slice p (defined in M) and map to a location in the
+                % appropriate contrast using the matField entry for that
+                % contrast, which has been co-registered to the PD-weighted
+                % data:
+                M1 = V_all(ctr).mat\V_PD(1).mat*M;
+                
+                % Third order B-spline interpolation for OLS R2* estimation
+                % since we no longer assume that the echoes are perfectly
+                % aligned as we do for the standard PDw derived R2* estimate.
+                data(e,:,:) = log(max(spm_slice_vol(V_contrasts(e),M1,dm(1:2),3),eps));
+            end
+            Y = W*reshape(data, [size(TE,1) prod(dm(1:2))]);
+            Y = -reshape(Y(2,:), dm(1:2));
+            
+            % Written out in Ni with mat field defined by V_templ => first PDw
+            % echo:
+            Ni.dat(:,:,p) = max(min(Y,threshall.R2s),-threshall.R2s); % threshold T2* at +/- 0.1ms or R2* at +/- 10000 *(1/sec), negative values are allowed to preserve Gaussian distribution
+            spm_progress_bar('Set',p);
+        end
+        spm_progress_bar('Clear');
+    end
 end
 
 %  --- BEING OLS R2s CODE MFC  ---
@@ -596,6 +661,42 @@ for ctr = 1:size(nam2,2)
     set_metadata(fullfile(pth,[nam '_' nam2{ctr} '.nii']),Output_hdr,json);
 end
 
+if qMRIcalc.ACPCrealign
+    Vsave=spm_vol(spm_select('FPList',pth,'^s.*_MT.(img|nii)$'));
+    MTimage=spm_read_vols(Vsave);    
+    Vsave.fname=fullfile(MPMcalcFolder,['masked_' spm_str_manip(Vsave.fname,'t')]);
+    PDWimage=spm_read_vols(spm_vol(spm_select('FPList',pth,'^s.*_PDw.(img|nii)$')));
+    MTimage(find(PDWimage<0.6*mean(PDWimage(:))))=0;
+    spm_write_vol(Vsave,MTimage);
+
+    MTimage=spm_select('FPList',MPMcalcFolder,'^masked.*_MT.(img|nii)$');    
+    [~,R]=vbq_comm_adjust(1,MTimage,MTimage,8,0,sprintf('%s//canonical//%s.nii',spm('Dir'),'avg152T1')); % Commissure adjustment to find a rigth image center and have good segmentation.
+    Vsave=spm_vol(MTimage);
+    Vsave.descrip=[Vsave.descrip ' - AC-PC realigned'];
+    spm_write_vol(Vsave,spm_read_vols(spm_vol(MTimage)));
+    ACPC_images = spm_select('FPList',pth,'^s.*_(MT||A||R1||R2s||R2s_OLS||MTR).(img|nii)$');
+    for i=1:size(ACPC_images,1)
+        spm_get_space(deblank(ACPC_images(i,:)),...
+            R*spm_get_space(deblank(ACPC_images(i,:))));
+        Vsave=spm_vol(ACPC_images(i,:));
+        Vsave.descrip=[Vsave.descrip ' - AC-PC realigned'];
+        spm_write_vol(Vsave,spm_read_vols(spm_vol(ACPC_images(i,:))));
+    end;
+    if qMRIcalc.QA
+        ACPC_images = spm_select('FPList',MPMcalcFolder,'^s.*_(PDw||T1w||MTw).(img|nii)$');
+        for i=1:size(ACPC_images,1)
+            spm_get_space(deblank(ACPC_images(i,:)),...
+                R*spm_get_space(deblank(ACPC_images(i,:))));
+            Vsave=spm_vol(ACPC_images(i,:));
+            Vsave.descrip=[Vsave.descrip ' - AC-PC realigned'];
+            spm_write_vol(Vsave,spm_read_vols(spm_vol(ACPC_images(i,:))));
+        end;
+    end
+    save(fullfile(pth,'ACPCrealign'),'R')
+    delete(deblank(spm_select('FPList',MPMcalcFolder,'^masked.*_MT.(img|nii)$')));
+end
+
+
 if (qMRIcalc.QA||(PDproc.PDmap))
     R = spm_select('FPList',pth,'^s.*_MT.(img|nii)$');
     copyfile(R(1,:),MPMcalcFolder);
@@ -615,8 +716,28 @@ if (qMRIcalc.QA||(PDproc.PDmap))
     spm_jobman('run', matlabbatch);
 end
 
+if qMRIcalc.QA
+    TPMs=spm_read_vols(spm_vol(spm_select('FPList',MPMcalcFolder,'^c.*\.(img|nii)$')));
+    WMmask=zeros(size(squeeze(TPMs(:,:,:,2))));
+    WMmask(squeeze(TPMs(:,:,:,2))>=PDproc.WMMaskTh)=1;        
+    WMmask=spm_erode(spm_erode(double(WMmask)));
+    R2s = spm_read_vols(spm_vol(spm_select('FPList',MPMcalcFolder,'^s.*_R2s_(MTw|PDw|T1w).(img|nii)$')));
+    R2s=R2s.*repmat(WMmask,[1 1 1 size(R2s,4)]);
+    SDR2s=zeros(1,size(R2s,4));
+    for ctr=1:size(R2s,4)
+        MaskedR2s=squeeze(R2s(:,:,:,ctr));
+        SDR2s(ctr)=std(MaskedR2s(MaskedR2s~=0),[],1);
+    end
+    if (exist(fullfile(pth,'QualityAssessment.mat'),'file')==2)
+        load(fullfile(pth,'QualityAssessment.mat'));
+    end
+    QA.SDR2s.MTw=SDR2s(1);QA.SDR2s.PDw=SDR2s(2);QA.SDR2s.T1w=SDR2s(3);
+    save(fullfile(pth,'QualityAssessment'),'QA')
+end
+
+
+
 if ~isempty(f_T) && isempty(f_R) && PDproc.PDmap
-%     PDcalculation(pth)
     PDcalculation(pth,MPMcalcFolder)
 end
 if (qMRIcalc.QA||PDproc.PDmap||qMRIcalc.ACPCrealign)
@@ -628,7 +749,7 @@ spm_progress_bar('Clear');
 end
 
 %++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-function [] = coreg_mt(P_ref, P_src)
+function [x] = coreg_mt(P_ref, P_src)
 % coregisters the structural images
 % for MT protocol
 
@@ -675,12 +796,13 @@ disp('----- Calculating Proton Density map -----');
 
 PDproc = hmri_get_defaults('PDproc');
 threshA = hmri_get_defaults('qMRI_maps_thresh.A');
+qMRIcalc=hmri_get_defaults('qMRI_maps');
 
 TPMs=spm_read_vols(spm_vol(spm_select('FPList',MPMcalcFolder,'^c.*\.(img|nii)$')));
 WBmask=zeros(size(squeeze(TPMs(:,:,:,1))));
 WBmask(sum(cat(4,TPMs(:,:,:,1:2),TPMs(:,:,:,end)),4)>=PDproc.WBMaskTh)=1;
 WMmask=zeros(size(squeeze(TPMs(:,:,:,1))));
-WMmask(squeeze(TPMs(:,:,:,2))>=PDproc.WBMaskTh)=1;
+WMmask(squeeze(TPMs(:,:,:,2))>=PDproc.WMMaskTh)=1;
 
 % Saves masked A map for bias-field correction later
 P=spm_select('FPList',pth ,'^.*_A.(img|nii)$');
@@ -730,7 +852,7 @@ if errorEstimate > 0.06
     % MFC: Testing on 15 subjects showed 6% is a good cut-off:
     warning(['Error estimate is high: ', Vsave.fname]);
 end
-if vbq_get_defaults('QA')
+if qMRIcalc.QA
     if (exist(fullfile(pth,'QualityAssessment.mat'),'file')==2)
         load(fullfile(pth,'QualityAssessment.mat'));
     end

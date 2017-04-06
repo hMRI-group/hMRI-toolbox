@@ -15,7 +15,7 @@ b1_choices = hmri_get_defaults('b1_type.labels');
 raws3           = cfg_files;
 raws3.tag       = 'T1';
 raws3.name      = 'T1 images';
-raws3.help      = {'Input T1 images in the same order.'};
+raws3.help      = {'Input T1 images.'};
 raws3.filter    = 'image';
 raws3.ufilter   = '.*';
 raws3.num       = [0 Inf];
@@ -26,7 +26,7 @@ raws3.val       = {''};
 raws2           = cfg_files;
 raws2.tag       = 'PD';
 raws2.name      = 'PD images';
-raws2.help      = {'Input PD images in the same order.'};
+raws2.help      = {'Input PD images.'};
 raws2.filter    = 'image';
 raws2.ufilter   = '.*';
 raws2.num       = [0 Inf];
@@ -37,7 +37,7 @@ raws2.val       = {''};
 raws1           = cfg_files;
 raws1.tag       = 'MT';
 raws1.name      = 'MT images';
-raws1.help      = {'Input MT images in the same order.'};
+raws1.help      = {'Input MT images.'};
 raws1.filter    = 'image';
 raws1.ufilter   = '.*';
 raws1.num       = [0 Inf];
@@ -48,7 +48,7 @@ raws1.val       = {''};
 raws            = cfg_branch;
 raws.tag        = 'raw_mpm';
 raws.name       = 'Raw multiparameter data';
-raws.help       = {'Input all the MT/PD/T1 images in this order.'};
+raws.help       = {'Input all the MT/PD/T1-weighted images.'};
 raws.val        = {raws1 raws2 raws3 };
 % ---------------------------------------------------------------------
 % menu type_b1
@@ -56,9 +56,25 @@ raws.val        = {raws1 raws2 raws3 };
 b1_type         = cfg_menu;
 b1_type.tag     = 'b1_type';
 b1_type.name    = 'Choose the B1map type';
-b1_type.help    = {'This is the option to choose the type of the B1 map ',...
-    'acquisition. If you use B1 maps other than the explicitly stated ',...
-    'versions the function will use the defaults for version 3D_EPI_v2b'};
+b1_type.help    = {
+    ['Various B1map types can be handled by the hMRI ', ...
+    'toolbox when creating the multiparameter maps. See list below for a ', ...
+    'brief description of each type. Note that all types may not be ', ...
+    'available at your site.']...
+    [' - i3D_EPI: B1map obtained from spin echo (SE) and stimulated echo ', ...
+    '(STE) images recorded with a 3D EPI scheme [Jiru F, Klose U, ', ...
+    'Magn Reson Med 2006;56:1375–1379].'] ...
+    [' - i3D_AFI: 3D actual flip angle imaging (AFI) method based on [Yarnykh VL, ', ...
+    'Magn Reson Med 2007;57:192–200].'] ...
+    [' - tfl_b1_map'] ...
+    [' - rf_map'] ...
+    [' - no_B1_correction: if selected no B1 bias correction will be applied.'] ...
+    [' - pre_processed_B1: B1 map pre-calculated out of the hMRI toolbox, must ', ...
+    'be expressed in percent units of the nominal flip angle value (percent bias).'] ...
+    [' - UNICORT: Use this option when B1 maps not available. ', ...
+    'Bias field estimation and correction will be performed', ...
+    'using the approach described in [Weiskopf et al., NeuroImage 2011; 54:2116–2124].']
+    };
 b1_type.labels  = b1_choices;
 b1_type.values = b1_choices;
 b1_type.val    = b1_choices(1);
@@ -68,10 +84,18 @@ b1_type.val    = b1_choices(1);
 braws2          = cfg_files;
 braws2.tag      = 'b1';
 braws2.name     = 'B1 images';
-braws2.help     = {'Select B1 images. For pre-processed B1 image, select ',...
-    'unprocessed magnitude image + B1 map in that order. For 3D EPI ',...
-    'protocols, select all pairs of SE/STE images. For AFI protocol, ',...
-    'select the TR2/TR1 pair of magnitude images.'};
+braws2.help     = {
+    'Select B1 images if available.' ...
+    ' - i3D_EPI: select all pairs of SE/STE images.' ...
+    ' - i3D_AFI: select a TR2/TR1 pair of magnitude images.' ...
+    ' - tfl_b1_map' ...
+    ' - rf_map' ...
+    ' - no_B1_correction: no B1 image required.' ...
+    [' - pre_processed_B1: select one unprocessed magnitude image from ', ...
+    'the B1map data set (for coregistration with the multiparameter maps) and ', ...
+    'the preprocessed B1map (in percent units), in that order.'] ...
+    ' - UNICORT: no B1 image required.' ...
+    };
 braws2.filter   = 'image';
 braws2.ufilter  = '.*';
 braws2.num      = [0 30];
@@ -82,7 +106,9 @@ braws2.val      = {''};
 braws1          = cfg_files;
 braws1.tag      = 'b0';
 braws1.name     = 'B0 images';
-braws1.help     = {'Select B0 images'};
+braws1.help     = {'Select B0 images.' ...
+    'Only required for distortion correction of EPI-based B1 maps.' ...
+    'Select both magnitude images and the presubtracted phase image, in that order.'};
 braws1.filter   = 'image';
 braws1.ufilter  = '.*';
 braws1.num      = [0 3];
@@ -93,7 +119,7 @@ braws1.val      = {''};
 braws           = cfg_branch;
 braws.tag       = 'raw_fld';
 braws.name      = 'Raw B0 & B1 data';
-braws.help      = {'Input all B0 & B1 images in this order.'};
+braws.help      = {'Input all B0 & B1 images required to create the multiparameter maps.'};
 braws.val       = {braws1 braws2};
 % ---------------------------------------------------------------------
 % subj Subject
@@ -162,11 +188,11 @@ data_spec.val = { sdata };
 data_spec.help = {'Specify data with either few or many subjects. The ',...
     'latter can be used with SmartDep toolbox.'};
 % ---------------------------------------------------------------------
-% create_B0B1 Create MPR maps with B0/B1 maps
+% create_mpr Create MPR maps (whether B0/B1 maps are available or not)
 % ---------------------------------------------------------------------
-create_B0B1         = cfg_exbranch;
-create_B0B1.tag     = 'mp_img_b_img';
-create_B0B1.name    = 'Multiparameter & B0/B1 images';
+create_mpr         = cfg_exbranch;
+create_mpr.tag     = 'create_mpr';
+create_mpr.name    = 'Multiparameter maps';
 raws.val        = {raws1 raws2 raws3 };
 braws.val       = {braws1 braws2};
 subj.val        = {output b1_type braws raws};
@@ -175,39 +201,39 @@ sdata.values    = {subj };
 sdata_multi.val  = { output unlimit(braws) unlimit(raws) };
 data_spec.values = { sdata sdata_multi };
 data_spec.val    = { sdata };
-create_B0B1.val     = { data_spec };
-create_B0B1.help    = {'Use this option when B0/B1 3D maps available.'};
-create_B0B1.prog    = @hmri_run_mpr_b0_b1;
-create_B0B1.vout    = @vout_crt_B0B1;
-% ---------------------------------------------------------------------
-% create_Unicort Create MPR maps with UNICORT B1
-% ---------------------------------------------------------------------
-create_Unicort          = cfg_exbranch;
-create_Unicort.tag      = 'mp_img_unicort';
-create_Unicort.name     = 'Multiparameter & UNICORT_B1 images';
-raws.val        = {raws1 raws2 raws3 };
-subj.val        = {output raws };
-sdata.val       = {subj };
-sdata.values    = {subj };
-sdata_multi.val = { output unlimit(raws) };
-data_spec.values = { sdata sdata_multi };
-data_spec.val = { sdata };
-create_Unicort.val      = { data_spec };
-create_Unicort.help     = {'Use this option when B0/B1 3D maps not available. ',...
-    'Bias field estimation and correction will be performed',...
-    'using the approach described in ''Unified segmentation based ',...
-    'correction... (UNICORT) paper by Weiskopf et al., 2011 '};
-create_Unicort.prog     = @hmri_run_mpr_unicort;
-create_Unicort.vout     = @vout_crt_Unicort;
+create_mpr.val     = { data_spec };
+create_mpr.help    = {'hMRI map creation can handle data sets with and without B0/B1 maps.'};
+create_mpr.prog    = @hmri_run_mpr_b0_b1;
+create_mpr.vout    = @vout_create_mpr;
+% % % % ---------------------------------------------------------------------
+% % % % create_Unicort Create MPR maps with UNICORT B1
+% % % % ---------------------------------------------------------------------
+% % % create_Unicort          = cfg_exbranch;
+% % % create_Unicort.tag      = 'mp_img_unicort';
+% % % create_Unicort.name     = 'Multiparameter & UNICORT_B1 images';
+% % % raws.val        = {raws1 raws2 raws3 };
+% % % subj.val        = {output raws };
+% % % sdata.val       = {subj };
+% % % sdata.values    = {subj };
+% % % sdata_multi.val = { output unlimit(raws) };
+% % % data_spec.values = { sdata sdata_multi };
+% % % data_spec.val = { sdata };
+% % % create_Unicort.val      = { data_spec };
+% % % create_Unicort.help     = {'Use this option when B0/B1 3D maps not available. ',...
+% % %     'Bias field estimation and correction will be performed',...
+% % %     'using the approach described in ''Unified segmentation based ',...
+% % %     'correction... (UNICORT) paper by Weiskopf et al., 2011 '};
+% % % create_Unicort.prog     = @hmri_run_mpr_unicort;
+% % % create_Unicort.vout     = @vout_crt_Unicort;
 % ---------------------------------------------------------------------
 % crm Create maps
 % ---------------------------------------------------------------------
 crm             = cfg_choice;
-crm.tag         = 'crt_maps';
+crm.tag         = 'crm';
 crm.name        = 'Create maps';
-crm.help        = {'You have the option to create B1 corrected ',...
-    'parameter maps estimated from dual flip angle FLASH experiment.'};
-crm.values      = {create_Unicort create_B0B1 };
+crm.help        = {'You have the option to create multiparameter maps, ',...
+    'whether B1 maps are available or not.'};
+crm.values      = {create_mpr};
 
 end
 %----------------------------------------------------------------------
@@ -312,7 +338,7 @@ end
 end
 %_______________________________________________________________________
 
-function dep = vout_crt_B0B1(job)
+function dep = vout_create_mpr(job)
 % This depends on job contents, which may not be present when virtual
 % outputs are calculated.
 

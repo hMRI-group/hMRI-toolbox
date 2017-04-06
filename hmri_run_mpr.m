@@ -54,7 +54,13 @@ P_receiv = [];
 % run hmri_MTProt to evaluate the parameter maps
 [fR1, fR2s, fMT, fA, PPDw, PT1w]  = hmri_MTProt(P_mtw, P_pdw, P_t1w, P_trans, P_receiv);
 
-out_loc.subj.R1  = {fullfile(outpath,spm_str_manip(fR1,'t'))};
+% apply UNICORT if required, and collect output:
+if strcmp(job.subj.b1_type,'UNICORT')
+    out_unicort = hmri_run_unicort(PPDw, fR1);
+    out_loc.subj.R1  = {fullfile(outpath,spm_str_manip(out_unicort.R1u,'t'))};
+else
+    out_loc.subj.R1  = {fullfile(outpath,spm_str_manip(fR1,'t'))};
+end
 out_loc.subj.R2s = {fullfile(outpath,spm_str_manip(fR2s,'t'))};
 out_loc.subj.MT  = {fullfile(outpath,spm_str_manip(fMT,'t'))};
 out_loc.subj.A   = {fullfile(outpath,spm_str_manip(fA,'t'))};

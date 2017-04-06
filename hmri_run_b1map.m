@@ -28,7 +28,8 @@ b1map_defs = hmri_get_defaults(['b1map.' b1_prot]);
 hdr = get_metadata(jobsubj.raw_fld.b1{1});
 
 if ~isempty(hdr{1})
-   if ~isempty(strfind(hdr{1}.acqpar.ProtocolName,'al_B1mapping'))
+    ProtocolName = get_metadata_val(hdr{1},'ProtocolName');
+   if ~isempty(strfind(ProtocolName,'al_B1mapping'))
         b1map_defs.data = 'EPI';
         b1map_defs.avail = true;
         b1map_defs.procreq = true;
@@ -45,28 +46,32 @@ if ~isempty(hdr{1})
 %         b1map_defs.T1=hmri_get_defaults(['b1map.',b1_prot,'.b1proc' '.T1']);
 %         b1map_defs.Nonominalvalues=hmri_get_defaults(['b1map.',b1_prot,'.b1proc' '.Nonominalvalues']);
 %         b1map_defs.eps=hmri_get_defaults(['b1map.',b1_prot,'.b1proc' '.eps']);
-   elseif ~isempty(strfind(hdr{1}.acqpar.ProtocolName,'nw_b1map'))
+   elseif ~isempty(strfind(ProtocolName,'nw_b1map'))
         b1map_defs.data = 'AFI';
         b1map_defs.avail = true;
         b1map_defs.procreq = true;
         tr = get_metadata_val(hdr{1},'RepetitionTime');
         b1map_defs.TR2TR1ratio = tr(2)/tr(1);
         b1map_defs.alphanom = get_metadata_val(hdr{1},'FlipAngle');
-   elseif ~isempty(strfind(hdr{1}.acqpar.ProtocolName,'tfl_b1map'))
-        hmri_def.b1map.tfl_b1_map.data    = 'TFL'; 
-        hmri_def.b1map.tfl_b1_map.avail   = true; 
-        hmri_def.b1map.tfl_b1_map.procreq = true; 
-   elseif ~isempty(strfind(hdr{1}.acqpar.ProtocolName,'rf_map'))
-        hmri_def.b1map.rf_map.data    = 'RFmap'; 
-        hmri_def.b1map.rf_map.avail   = true; 
-        hmri_def.b1map.rf_map.procreq = true; 
+   elseif ~isempty(strfind(ProtocolName,'tfl_b1map'))
+        b1map_defs.data    = 'TFL'; 
+        b1map_defs.avail   = true; 
+        b1map_defs.procreq = true; 
+   elseif ~isempty(strfind(ProtocolName,'rf_map'))
+        b1map_defs.data    = 'RFmap'; 
+        b1map_defs.avail   = true; 
+        b1map_defs.procreq = true; 
    end
 end
 
 P_trans = [];
 
 if ~b1map_defs.avail
-    disp('----- No B1 correction performed (semi-quantitative maps only) -----');
+    if b1map_defs.procreq
+        fprintf(1,'----- No B1 map available: UNICORT will be applied -----\n');
+    else
+        fprintf(1,'----- No B1 map available. No B1 correction applied (semi-quantitative maps only) -----\n');
+    end
     return;
 end
 
@@ -90,7 +95,7 @@ if b1map_defs.procreq
     end
 else
     % return pre-processed B1 map
-    disp('----- Loading pre-processed B1 map -----');
+    disp('----- Assuming pre-processed B1 map as input for B1 bias correction -----');
     P    = char(jobsubj.raw_fld.b1);   % the B1 map
     P_trans  = P(1:2,:);
 end
@@ -191,6 +196,23 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function P_trans = calc_SESTE_b1map(jobsubj, b1map_defs)
+% Calculation of B1 maps based on 3D EPI spin echo (SE) and stimulated
+% (STE) echo images (see Jiru and Klose MRM 2006).
+% Corresponding scanning protocol/sequence: al_B1mapping
+% Input: 11 pairs of (SE, STE) images for B1 map calculation and 3 images
+% for B0 map calculation.
+% This macro calls the functions hmri_B1Map_unwarp and hmri_B1Map_process
+% for correction of image distortions, padding and smoothing of the images.
+% Output:
+%     - distorted B1 (B1map_*) and error (SDmap_*) maps
+%     - undistorted B1 (uB1map_*) and error (uSDmap_*) maps
+%     - undistorted, masked and padded B1 maps (muB1map_*)
+%     - undistorted, masked, padded and smoothed B1 maps (smuB1map_*) i.e. FULLY PROCESSED
+% At each voxel, this macro selects the 5 pairs of (SE,STE image) (out of
+% 11) with maximum signal amplitude in the SE images.
+% The sum of square image of all SE images is created (SumOfSq) and
+% undistorted (uSumOfSq) for coregistration of the B1 map to an anatomical
+% dataset.
 
 disp('----- Calculation of B1 map (SE/STE EPI protocol) -----');
 

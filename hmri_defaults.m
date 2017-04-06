@@ -259,25 +259,33 @@ hmri_def.sciz.b1_type.val  = hmri_def.sciz.b1_type.labels(1);
 % Each of the B1map protocols, for *all* the sites, are defined in a
 % separate substructure.
 %
-% 6) 'i3D_AFI_v4b_n5_allegra_crc'
+% 'i3D_AFI_v4b_n5_allegra_crc'
 hmri_def.b1map.i3D_AFI_v4b_n5_allegra_crc.b1proc.data    = 'AFI'; 
 hmri_def.b1map.i3D_AFI_v4b_n5_allegra_crc.b1proc.avail   = true; 
 hmri_def.b1map.i3D_AFI_v4b_n5_allegra_crc.b1proc.procreq = true; 
 hmri_def.b1map.i3D_AFI_v4b_n5_allegra_crc.b1proc.TR2TR1ratio = 5;
 hmri_def.b1map.i3D_AFI_v4b_n5_allegra_crc.b1proc.alphanom = 60;
-% 7) 'i3D_AFI_v4b_n3_allegra_crc'
+
+% 'i3D_AFI_v4b_n3_allegra_crc'
 hmri_def.b1map.i3D_AFI_v4b_n3_allegra_crc.b1proc.data    = 'AFI'; 
 hmri_def.b1map.i3D_AFI_v4b_n3_allegra_crc.b1proc.avail   = true; 
 hmri_def.b1map.i3D_AFI_v4b_n3_allegra_crc.b1proc.procreq = true; 
 hmri_def.b1map.i3D_AFI_v4b_n3_allegra_crc.b1proc.TR2TR1ratio = 3;
 hmri_def.b1map.i3D_AFI_v4b_n3_allegra_crc.b1proc.alphanom = 60;
-% 8) 'pre_processed_B1'
+
+% 'pre_processed_B1'
 hmri_def.b1map.pre_processed_B1.b1proc.avail   = true;
 hmri_def.b1map.pre_processed_B1.b1proc.procreq = false;
-%9) 'no_B1_correction'
+
+% 'no_B1_correction'
 hmri_def.b1map.no_B1_correction.b1proc.procreq = false;
 hmri_def.b1map.no_B1_correction.b1proc.avail   = false;
-% 10) 'i3D_EPI'
+
+% UNICORT
+hmri_def.b1map.UNICORT.b1proc.procreq = true;
+hmri_def.b1map.UNICORT.b1proc.avail   = false;
+
+% 'i3D_EPI'
 hmri_def.b1map.i3D_EPI.data    = 'EPI'; 
 hmri_def.b1map.i3D_EPI.avail   = true; 
 hmri_def.b1map.i3D_EPI.procreq = true; 

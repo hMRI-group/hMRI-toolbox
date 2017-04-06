@@ -34,12 +34,25 @@ vols.num        = [1 Inf];
 % ---------------------------------------------------------------------
 vols_pm         = cfg_files;
 vols_pm.tag     = 'vols_pm';
-vols_pm.name    = 'Parametric maps';
+vols_pm.name    = 'Parametric maps (single type)';
 vols_pm.help    = {['Select whole brain parameter maps (e.g. MT, R2*, ',...
-    'FA etc) for processing.']};
+    'FA, etc.) from all subjects for processing.']};
 vols_pm.filter  = 'image';
 vols_pm.ufilter = '.*';
 vols_pm.num     = [1 Inf];
+
+% ---------------------------------------------------------------------
+% many_pams Parameter maps
+% ---------------------------------------------------------------------
+% used for 'many subjects', i.e. list the data per map type across subjects
+many_pams            = cfg_repeat;
+many_pams.tag        = 'maps';
+many_pams.name       = 'Parametric maps';
+many_pams.values     = {vols_pm };
+many_pams.val        = {vols_pm };
+many_pams.num = [1 Inf];
+many_pams.help       = {['Select whole brain parameter maps (e.g. MT, ',...
+    'R2*, FA, etc.) from all subjects for processing, one type at a time.']};
 
 % ---------------------------------------------------------------------
 % pipe_c Pipeline choice
@@ -77,7 +90,7 @@ fwhm.help    = {['Specify the full-width at half maximum (FWHM) of the ',...
 % ---------------------------------------------------------------------
 proc_pipel         = cfg_exbranch;
 proc_pipel.tag     = 'proc_pipel';
-proc_pipel.name    = 'Process hMRI maps with pipelines';
+proc_pipel.name    = 'Proc. hMRI -> Pipelines';
 proc_pipel.help    = {
     ['Parameter maps are spatially processed and brought into standard space',...
     'for furhter statistical analysis.']
@@ -87,7 +100,7 @@ proc_pipel.help    = {
     ['US+Dartel+Smooth -> applies US, builds Dartel template and warps' ...
     'into MNI, then smoothes (weighted-average)']
     }'; %#ok<*NBRAK>
-proc_pipel.val  = {vols vols_pm pipe_c fwhm};
+proc_pipel.val  = {vols many_pams fwhm pipe_c};
 proc_pipel.prog = @hmri_run_proc_pipeline;
 proc_pipel.vout = @vout_preproc;
 

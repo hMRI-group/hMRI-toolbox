@@ -1,4 +1,4 @@
-function out = hmri_run_smooth(job)
+function out = hmri_run_proc_smooth(job)
 % Function to run the smoothing/weighted averaging over a bunch of
 % subjects, as defined in the batch interface.
 % Data are selected in a 'many subject' style, i.e. all the images of one

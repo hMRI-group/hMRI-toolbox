@@ -32,7 +32,7 @@ vols_pm         = cfg_files;
 vols_pm.tag     = 'vols_pm';
 vols_pm.name    = 'Parametric maps';
 vols_pm.help    = {['Select whole brain parameter maps (e.g. MT, R2*, ',...
-    'FA etc) for processing.']};
+    'FA, etc.) from all subjects for processing.']};
 vols_pm.filter  = 'image';
 vols_pm.ufilter = '.*';
 vols_pm.num     = [1 Inf];
@@ -69,6 +69,7 @@ output.name    = 'Output choice';
 output.help    = {['Output directory can be the same as the input ',...
     'directory for each input file or user selected']};
 output.values  = {indir outdir };
+output.val     = {indir};
 
 % ---------------------------------------------------------------------
 % Get stuff from SPM-US config file & adapting it
@@ -94,12 +95,12 @@ rstruct = cfg_set_val(rstruct, 'biasfwhm', Inf);
 % used for 'many subjects', i.e. list the data per map type across subjects
 many_pams            = cfg_repeat;
 many_pams.tag        = 'maps';
-many_pams.name       = 'Parameter maps';
+many_pams.name       = 'Parametric maps';
 many_pams.values     = {vols_pm };
 many_pams.val        = {vols_pm };
 many_pams.num = [1 Inf];
 many_pams.help       = {['Select whole brain parameter maps (e.g. MT, ',...
-    'R2*, FA etc) for processing.']};
+    'R2*, FA, etc.) from all subjects for processing, one type at a time.']};
 
 % ---------------------------------------------------------------------
 % many_sdatas Many subjects data

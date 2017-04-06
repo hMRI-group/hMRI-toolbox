@@ -29,7 +29,7 @@ function proc = tbx_scfg_hmri_proc
 % ---------------------------------------------------------------------
 proc_modul         = cfg_choice;
 proc_modul.tag     = 'proc_modul';
-proc_modul.name    = 'Process hMRI maps with individual modules';
+proc_modul.name    = 'Proc. hMRI -> Individual modules';
 proc_modul.help    = {
     ['Parameter maps are spatially processed and brought into standard space',...
     'for furhter statistical analysis.']

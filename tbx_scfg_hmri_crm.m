@@ -203,28 +203,8 @@ data_spec.values = { sdata sdata_multi };
 data_spec.val    = { sdata };
 create_mpr.val     = { data_spec };
 create_mpr.help    = {'hMRI map creation can handle data sets with and without B0/B1 maps.'};
-create_mpr.prog    = @hmri_run_mpr_b0_b1;
+create_mpr.prog    = @hmri_run_mpr;
 create_mpr.vout    = @vout_create_mpr;
-% % % % ---------------------------------------------------------------------
-% % % % create_Unicort Create MPR maps with UNICORT B1
-% % % % ---------------------------------------------------------------------
-% % % create_Unicort          = cfg_exbranch;
-% % % create_Unicort.tag      = 'mp_img_unicort';
-% % % create_Unicort.name     = 'Multiparameter & UNICORT_B1 images';
-% % % raws.val        = {raws1 raws2 raws3 };
-% % % subj.val        = {output raws };
-% % % sdata.val       = {subj };
-% % % sdata.values    = {subj };
-% % % sdata_multi.val = { output unlimit(raws) };
-% % % data_spec.values = { sdata sdata_multi };
-% % % data_spec.val = { sdata };
-% % % create_Unicort.val      = { data_spec };
-% % % create_Unicort.help     = {'Use this option when B0/B1 3D maps not available. ',...
-% % %     'Bias field estimation and correction will be performed',...
-% % %     'using the approach described in ''Unified segmentation based ',...
-% % %     'correction... (UNICORT) paper by Weiskopf et al., 2011 '};
-% % % create_Unicort.prog     = @hmri_run_mpr_unicort;
-% % % create_Unicort.vout     = @vout_crt_Unicort;
 % ---------------------------------------------------------------------
 % crm Create maps
 % ---------------------------------------------------------------------

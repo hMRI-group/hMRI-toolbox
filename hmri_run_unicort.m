@@ -30,6 +30,10 @@ function out = hmri_run_unicort(P_PDw, P_R1)
 % 29 November 2010
 
 %%
+disp('----- Apply UNICORT correction to R1 map -----');
+
+% json metadata default options
+json = hmri_get_defaults('json');
 
 % Use default parameters of SPM8 "New Segment" toolbox except for
 % adapted regularization and smoothness of bias field
@@ -40,6 +44,9 @@ unicort_procpar = hmri_get_defaults('unicort');
 reg = unicort_procpar.reg;
 FWHM = unicort_procpar.FWHM;
 thr_factor = unicort_procpar.thr;
+
+% output directory
+outdir = hmri_get_defaults('outdir');
 
 % create head mask
 V_PDw = spm_vol(P_PDw);
@@ -79,7 +86,7 @@ set_metadata(P_R1_mask,Output_hdr,json);
 %% preparation of spm structure for "New Segment" tool
 
 % clear('matlabbatch');
-tpm_nam = fullfile(spm('dir'),'tpm','enhanced_TPM.nii'); % instead of TPM.nii
+tpm_nam = fullfile(spm('dir'),'tpm','eTPM.nii'); % instead of TPM.nii
 % see http://www.unil.ch/lren/home/menuinst/data--utilities.html
 % Lorio S, Fresard S, Adaszewski S, Kherif F, Chowdhury R, Frackowiak RS,
 % Ashburner J, Helms G, Weiskopf N, Lutti A, Draganski B. New tissue priors
@@ -196,9 +203,7 @@ Output_hdr.history.output.imtype = 'Bias corrected R1 UNICORT map';
 Output_hdr.history.output.units = 'ms-1';
 set_metadata(P_R1_unicort,Output_hdr,json);
 
-out.R1u={fullfile(cwd,spm_str_manip(P_R1_unicort,'t'))};
-out.B1u={fullfile(cwd,spm_str_manip(P_B1,'t'))};
+out.R1u={fullfile(outdir,spm_str_manip(P_R1_unicort,'t'))};
+out.B1u={fullfile(outdir,spm_str_manip(P_B1,'t'))};
 
-f = fopen(fullfile(cwd, '_finished_'), 'wb');
-fclose(f);
 end

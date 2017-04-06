@@ -260,30 +260,30 @@ hmri_def.sciz.b1_type.val  = hmri_def.sciz.b1_type.labels(1);
 % separate substructure.
 %
 % 'i3D_AFI_v4b_n5_allegra_crc'
-hmri_def.b1map.i3D_AFI_v4b_n5_allegra_crc.b1proc.data    = 'AFI'; 
-hmri_def.b1map.i3D_AFI_v4b_n5_allegra_crc.b1proc.avail   = true; 
-hmri_def.b1map.i3D_AFI_v4b_n5_allegra_crc.b1proc.procreq = true; 
+hmri_def.b1map.i3D_AFI_v4b_n5_allegra_crc.data    = 'AFI'; 
+hmri_def.b1map.i3D_AFI_v4b_n5_allegra_crc.avail   = true; 
+hmri_def.b1map.i3D_AFI_v4b_n5_allegra_crc.procreq = true; 
 hmri_def.b1map.i3D_AFI_v4b_n5_allegra_crc.b1proc.TR2TR1ratio = 5;
 hmri_def.b1map.i3D_AFI_v4b_n5_allegra_crc.b1proc.alphanom = 60;
 
 % 'i3D_AFI_v4b_n3_allegra_crc'
-hmri_def.b1map.i3D_AFI_v4b_n3_allegra_crc.b1proc.data    = 'AFI'; 
-hmri_def.b1map.i3D_AFI_v4b_n3_allegra_crc.b1proc.avail   = true; 
-hmri_def.b1map.i3D_AFI_v4b_n3_allegra_crc.b1proc.procreq = true; 
+hmri_def.b1map.i3D_AFI_v4b_n3_allegra_crc.data    = 'AFI'; 
+hmri_def.b1map.i3D_AFI_v4b_n3_allegra_crc.avail   = true; 
+hmri_def.b1map.i3D_AFI_v4b_n3_allegra_crc.procreq = true; 
 hmri_def.b1map.i3D_AFI_v4b_n3_allegra_crc.b1proc.TR2TR1ratio = 3;
 hmri_def.b1map.i3D_AFI_v4b_n3_allegra_crc.b1proc.alphanom = 60;
 
 % 'pre_processed_B1'
-hmri_def.b1map.pre_processed_B1.b1proc.avail   = true;
-hmri_def.b1map.pre_processed_B1.b1proc.procreq = false;
+hmri_def.b1map.pre_processed_B1.avail   = true;
+hmri_def.b1map.pre_processed_B1.procreq = false;
 
 % 'no_B1_correction'
-hmri_def.b1map.no_B1_correction.b1proc.procreq = false;
-hmri_def.b1map.no_B1_correction.b1proc.avail   = false;
+hmri_def.b1map.no_B1_correction.procreq = false;
+hmri_def.b1map.no_B1_correction.avail   = false;
 
 % UNICORT
-hmri_def.b1map.UNICORT.b1proc.procreq = true;
-hmri_def.b1map.UNICORT.b1proc.avail   = false;
+hmri_def.b1map.UNICORT.procreq = true;
+hmri_def.b1map.UNICORT.avail   = false;
 
 % 'i3D_EPI'
 hmri_def.b1map.i3D_EPI.data    = 'EPI'; 

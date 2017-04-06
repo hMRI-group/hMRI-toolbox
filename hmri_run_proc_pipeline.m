@@ -38,7 +38,24 @@ out_US = hmri_run_proc_US(job_US);
 % including tempalte create and warping into MNI space
 
 if job.pipe_c == 2
-    % DARTEM processing
+    % DARTEL processing: 
+    % a) warping with template creation
+    dartel_cfg = tbx_cfg_dartel;
+    warp_dartel_cr = dartel_cfg.values{2};
+%     Varient based on the tag of the exbranch
+%     warp_dartel_cr = tbx_cfg_dartel;
+%     eval(['warp_dartel_cr = warp_dartel_cr', ...
+%         cfg_expr_values(warp_dartel_cr, 'warp'),';']);
+    [~, job_Dwarp] = harvest(warp_dartel_cr, warp_dartel_cr, false, false);
+    
+    % Fill in the filenames for rc1 and rc2, i.e. GM and WM
+    for ii=1:2
+        job_Dwarp.images{ii} = spm_file(out_US.tiss(ii).rc,'number',1);
+    end
+    out_Dwarp = spm_dartel_template(job_Dwarp);
+    
+    % b) normalize to  MNI
+    
 end
 
 % 3/ Deal with smoothing, with hmri_run_proc_smooth
@@ -52,6 +69,7 @@ switch job.pipe_c
         job_smooth = fill_fn_from_US(job_smooth,out_US);
     case 2 % US+Dartel+smooth
         % Fit in DARTEL data
+        job_smooth = fill_fn_from_Dartel(job_smooth,out_Dnorm);
     otherwise
 end
 % Get the smoothing kernel
@@ -97,4 +115,34 @@ end
 % batch gui -> saty on the safe side and apply.
 
 end
+%_______________________________________________________________________
 
+function job_smooth = fill_fn_from_Dartel(job_smooth,out_Dnorm)
+% Fill in the filenames of images (parametric maps and tissue classes) for
+% the US+Dartel+smooth pipeline.
+
+end
+%_______________________________________________________________________
+
+% function expr = cfg_expr_values(c, varargin) %#ok<INUSL>
+% % Extracting the 'values' field with index matching the input argument and
+% % 'tag' of the matlabbatch structure.
+% 
+% expr = 'c';
+% for i=1:size(varargin,2)
+%     %         if strcmp(class(varargin{i}), 'double')
+%     if isa(varargin{i}, 'double')
+%         expr = [expr '.values{' num2str(varargin{i}) '}'];  %#ok<*AGROW>
+%     else
+%         v = eval([expr ';']);
+%         for j=1:size(v.values,2)
+%             if strcmp(v.values{j}.tag, varargin{i})
+%                 break
+%             end
+%         end
+%         expr = [expr '.values{' num2str(j) '}']; 
+%     end
+% end
+% expr = expr(2:end);
+% end
+% %_______________________________________________________________________

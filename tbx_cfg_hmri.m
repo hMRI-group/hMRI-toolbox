@@ -31,6 +31,7 @@ hmri.help    = {
     'and will include a number of (as yet unspecified) extensions in ',...
     'future updates.  Please report any bugs or problems to lreninfo@gmail.com.']
     }';
+% hmri.values  = {tbx_scfg_hmri_crm };
 hmri.values  = {tbx_scfg_hmri_crm tbx_scfg_hmri_proc };
 end
 

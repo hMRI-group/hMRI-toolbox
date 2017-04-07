@@ -481,19 +481,19 @@ if hmri_get_defaults('R2sOLS')
 end % OLS code
 
 if ~isempty(Vtrans) && isempty(Vreceiv) && PDproc.PDmap
-    nam2    = {'R1','PD','MT','MTR_synt'};
-    descrip = {'R1 map [1000/s]', 'Water concentration [%]','Delta MT map', 'Synthetic MTR image'};
-    units = {'1000/s', '%','A.U.', 'A.U.'};
+    nam2    = {'R1','PD','MT'};
+    descrip = {'R1 map [1000/s]', 'Water concentration [%]','Delta MT map'};
+    units = {'1000/s', '%','A.U.'};
 else
-    nam2    = {'R1','A','MT','MTR_synt'};
-    descrip = {'R1 map [1000/s]', 'Signal amplitude [A.U.]','Delta MT map', 'Synthetic MTR image'};
-    units = {'1000/s', 'A.U.','A.U.', 'A.U.'};
+    nam2    = {'R1','A','MT'};
+    descrip = {'R1 map [1000/s]', 'Signal amplitude [A.U.]','Delta MT map'};
+    units = {'1000/s', 'A.U.','A.U.'};
 end
 
 if (TR_mtw == TR_pdw) & (fa_mtw == fa_pdw),
-    nam2    = {nam2{:}, 'MTR','MTRdiff'};
-    descrip = {descrip{:}, 'Classic MTR image','Percent diff. MTR image (RD/BD)'};
-    units = {units{:}, 'A.U.','A.U.'};
+    nam2    = {nam2{:}, 'MTR'};
+    descrip = {descrip{:}, 'Classic MTR image'};
+    units = {units{:}, 'A.U.'};
 end
 
 Nmap    = nifti;
@@ -545,14 +545,14 @@ for p = 1:dm(3)
     % Standard magnetization transfer ratio (MTR) in percent units [p.u.]
     % only if  trpd = trmt and fapd = fmt
     % else calculate "synthetic MTR using A and T1 (see below)
-    if numel(Nmap)>4&&(TR_mtw == TR_pdw) && (fa_mtw == fa_pdw),
+    if numel(Nmap)>3&&(TR_mtw == TR_pdw) && (fa_mtw == fa_pdw),
         MTR = (PDw-MTw)./(PDw+eps) * 100;
         % write MTR image
-        Nmap(5).dat(:,:,p) = max(min(MTR,threshall.MTR),-threshall.MTR);
+        Nmap(4).dat(:,:,p) = max(min(MTR,threshall.MTR),-threshall.MTR);
         
-        % calculate a modified MTR map according to RD/BD
-        MTR = 100*(PDw-MTw)./(eps+PDw).*(MTw./(eps+PDw)<1.3&MTw./(eps+PDw)>0&PDw>25);
-        Nmap(6).dat(:,:,p) = max(min(MTR,threshall.MTR),-threshall.MTR);
+%         % calculate a modified MTR map according to RD/BD
+%         MTR = 100*(PDw-MTw)./(eps+PDw).*(MTw./(eps+PDw)<1.3&MTw./(eps+PDw)>0&PDw>25);
+%         Nmap(6).dat(:,:,p) = max(min(MTR,threshall.MTR),-threshall.MTR);
     end
     
     % calculating T1 and A from a rational approximation of the Ernst equation using radian units
@@ -638,15 +638,15 @@ for p = 1:dm(3)
     tmp      = MT;
     Nmap(3).dat(:,:,p) = max(min(tmp,threshall.MT),-threshall.MT);
     
-    % calculate synthetic reference signal at trmt and famt using the
-    % rational approximation of the Ernst equation
-    S_ref      = A_forMT .* fa_mtw * TR_mtw ./ (T1_forMT+eps) ./ ...
-                ( TR_mtw ./ (T1_forMT+eps) +  fa_mtw * fa_mtw / 2 );
-    % MTR_synt = (S_ref ./ MTw - 1) * 100;
-    MTR_synt   = (S_ref-MTw) ./ (S_ref+eps) * 100;
-    tmp      = MTR_synt;
-    Nmap(4).dat(:,:,p) = max(min(tmp,threshall.MTR_synt),-threshall.MTR_synt);
-    spm_progress_bar('Set',p);
+%     % calculate synthetic reference signal at trmt and famt using the
+%     % rational approximation of the Ernst equation
+%     S_ref      = A_forMT .* fa_mtw * TR_mtw ./ (T1_forMT+eps) ./ ...
+%                 ( TR_mtw ./ (T1_forMT+eps) +  fa_mtw * fa_mtw / 2 );
+%     % MTR_synt = (S_ref ./ MTw - 1) * 100;
+%     MTR_synt   = (S_ref-MTw) ./ (S_ref+eps) * 100;
+%     tmp      = MTR_synt;
+%     Nmap(4).dat(:,:,p) = max(min(tmp,threshall.MTR_synt),-threshall.MTR_synt);
+%     spm_progress_bar('Set',p);
 end
 
 Vtemp = cat(1,VMTw,VPDw,VT1w);
@@ -742,8 +742,6 @@ if qMRIcalc.QA
     QA.SDR2s.MTw=SDR2s(1);QA.SDR2s.PDw=SDR2s(2);QA.SDR2s.T1w=SDR2s(3);
     save(fullfile(pth,'QualityAssessment'),'QA')
 end
-
-
 
 if ~isempty(f_T) && isempty(f_R) && PDproc.PDmap
     PDcalculation(pth,MPMcalcFolder)

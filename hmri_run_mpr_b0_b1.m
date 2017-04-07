@@ -59,6 +59,12 @@ hmri_get_defaults('outdir',outpath);
 % run B1 map calculation for B1 bias correction
 P_trans = hmri_run_b1map(job.subj);
 
+% check, if RF sensitivity profile was acquired and do the recalculation
+% accordingly
+if ~isfield(job.subj.sensitivity,'RF_none')
+  job.subj = hmri_RFsens(job.subj);
+end
+
 % initialize file names for map creation
 P_mtw    = char(job.subj.raw_mpm.MT);
 P_pdw    = char(job.subj.raw_mpm.PD);

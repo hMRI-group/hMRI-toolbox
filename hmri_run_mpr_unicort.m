@@ -43,6 +43,13 @@ out.T1w = {};
 json = hmri_get_defaults('json');
 
 for ip = 1:numel(job.subj)
+    
+    % check, if RF sensitivity profile was acquired and do the recalculation
+    % accordingly
+    if ~isfield(job.subj.sensitivity,'RF_none')
+      job.subj = hmri_RFsens(job.subj);
+    end
+
     P_mtw    = char(job.subj(ip).raw_mpm.MT);
     P_pdw    = char(job.subj(ip).raw_mpm.PD);
     P_t1w    = char(job.subj(ip).raw_mpm.T1);

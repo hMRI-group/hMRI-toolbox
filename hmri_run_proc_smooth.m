@@ -3,6 +3,15 @@ function out = hmri_run_proc_smooth(job)
 % subjects, as defined in the batch interface.
 % Data are selected in a 'many subject' style, i.e. all the images of one
 % type are selected from many subjects at once!
+% 
+% The 'out' structure is organized as a structure out.tc where
+% - tc is a cell-array of size {n_TCs x n_pams}
+% - each element tc{ii,jj} is a cell array {n_subj x 1} with each subject's
+%   smoothed data for the ii^th TC and jj^th MPM
+%_______________________________________________________________________
+% Copyright (C) 2017 Cyclotron Research Centre
+
+% Written by Christophe Phillips
 
 % grab a few numbers, assuming data have been checked before
 n_pams = numel(job.vols_pm);     % #parametric image types
@@ -26,6 +35,8 @@ end
 fn_TPM = char(fn_TPM_i);
 
 % Loop over all the subjects and process them one at a time
+out.tc = cell(n_TCs,n_pams);
+
 for i_subj = 1:n_subj
     fn_wMPM = cell(n_pams,1);
     for jj = 1:n_pams
@@ -40,17 +51,11 @@ for i_subj = 1:n_subj
     
     for jj = 1:n_TCs
         for kk = 1:n_pams
-            out.tc(jj).map(kk).fn{i_subj,1} = fn_out{kk}(jj,:); %#ok<*STRNU>
+            out.tc{jj,kk}{i_subj,1} = fn_out{kk}(jj,:); %#ok<*STRNU>
         end
     end
     
 end
-
-% The 'out' structure is organized as a structure out.tc.map.fn where
-% - tc is an array (1 x n_TCs) with 1 element per tissue class considered
-% - map is an array (1 x n_pams) with 1 element per parametric map
-% - fn is a cell array (n_subj x 1) with each subject's smoothed data for 
-%   the i^th TC and j^th MPM.
 
 end
 

@@ -119,14 +119,13 @@ function dep = vout_smooth(job)
 
 n_pams = numel(job.vols_pm);     % #parametric image types
 n_TCs = numel(job.vols_tc);      % #tissue classes
-% n_subj = numel(job.vols_pm{1});  % #subjects
 
 cdep = cfg_dep;
 for ii=1:n_TCs
     for jj=1:n_pams
         cdep(end+1) = cfg_dep;
         cdep(end).sname = sprintf('TC #%d, pMap #%d', ii, jj);
-        cdep(end).src_output = substruct('.', 'tc', '()', {ii}, '.', 'map', '()', {jj}, '.', 'fn');
+        cdep(end).src_output = substruct('.', 'tc', '{}', {ii,jj});
         cdep(end).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
     end
 end

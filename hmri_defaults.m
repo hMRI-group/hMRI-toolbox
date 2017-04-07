@@ -47,6 +47,9 @@ hmri_def.unicort.reg = 10^-3;
 hmri_def.unicort.FWHM = 60;
 hmri_def.unicort.thr = 2; % TL: 2 for sciz & cbs with SIEMENS 3T Skyra fit
                           % otherwise: 5
+                          
+%% RF sensitivity processing
+hmri_def.RFsens.smooth_kernel = 12;
 
 %% Threshold values for saving of the qMRI maps
 hmri_def.qMRI_maps_thresh.R1       = 2000;

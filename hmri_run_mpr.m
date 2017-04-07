@@ -1,22 +1,7 @@
-function out = hmri_run_mpr_b0_b1(job)
-% Calculation of B1 mapping data 3D EPI spin echo (SE) and stimulated (STE) 
-% echo images (see Jiru and Klose MRM 2006).
-% Corresponding scanning protocol/sequence: al_B1mapping_v2a and
-% al_B1mapping_v2b
-% Input: 11 pairs of (SE, STE) images for B1 map calculation and 3 images
-% for B0 map calculation.
-% This macro calls the functions hmri_B1Map_unwarp and hmri_B1Map_process for
-% correction of image distortions, padding and smoothing of the images.
-% Output:
-%     - distorted B1 (B1map_----) and error (SDmap_----) maps
-%     - undistorted B1 (uB1map_----) and error (uSDmap_----) maps
-%     - undistorted, masked and padded B1 maps (muB1map_---------)
-%     - undistorted, masked, padded and smoothed B1 maps (smuB1map_---------) i.e. FULLY PROCESSED
-% At each voxel, this macro selects the 5 pairs of (SE,STE image) (out of
-% 11) with maximum signal amplitude in the SE images.
-% The sum of square image of all SE images is created (SumOfSq) and
-% undistorted (uSumOfSq) for coregistration of the B1 map to an anatomical dataset
-% former hmri_B1map_v2.m
+function out = hmri_run_mpr(job)
+% Calculation of multiparameter maps using B1 maps for B1 bias correction.
+% If no B1 maps available, one can choose not to correct for B1 bias or
+% apply UNICORT.
 
 job = hmri_process_data_spec(job);
 
@@ -30,7 +15,7 @@ out.T1w = {};
 % each subject:
 for in=1:numel(job.subj)
     local_job.subj = job.subj(in);
-    out_temp       = hmri_mpr_b0_b1_local(local_job);
+    out_temp       = hmri_mpr_local(local_job);
     out.subj(in)   = out_temp.subj(1);
     out.R1{end+1}  = out.subj(in).R1{1};
     out.R2s{end+1} = out.subj(in).R2s{1};
@@ -44,7 +29,7 @@ end
 %% SUBFUNCTION
 % ========================================================================
 
-function out_loc = hmri_mpr_b0_b1_local(job)
+function out_loc = hmri_mpr_local(job)
 
 % determine output directory path
 try 
@@ -69,7 +54,13 @@ P_receiv = [];
 % run hmri_MTProt to evaluate the parameter maps
 [fR1, fR2s, fMT, fA, PPDw, PT1w]  = hmri_MTProt(P_mtw, P_pdw, P_t1w, P_trans, P_receiv);
 
-out_loc.subj.R1  = {fullfile(outpath,spm_str_manip(fR1,'t'))};
+% apply UNICORT if required, and collect output:
+if strcmp(job.subj.b1_type,'UNICORT')
+    out_unicort = hmri_run_unicort(PPDw, fR1);
+    out_loc.subj.R1  = {fullfile(outpath,spm_str_manip(out_unicort.R1u,'t'))};
+else
+    out_loc.subj.R1  = {fullfile(outpath,spm_str_manip(fR1,'t'))};
+end
 out_loc.subj.R2s = {fullfile(outpath,spm_str_manip(fR2s,'t'))};
 out_loc.subj.MT  = {fullfile(outpath,spm_str_manip(fMT,'t'))};
 out_loc.subj.A   = {fullfile(outpath,spm_str_manip(fA,'t'))};

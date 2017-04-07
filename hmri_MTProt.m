@@ -670,7 +670,7 @@ if qMRIcalc.ACPCrealign
     spm_write_vol(Vsave,MTimage);
 
     MTimage=spm_select('FPList',MPMcalcFolder,'^masked.*_MT.(img|nii)$');    
-    [~,R]=vbq_comm_adjust(1,MTimage,MTimage,8,0,sprintf('%s//canonical//%s.nii',spm('Dir'),'avg152T1')); % Commissure adjustment to find a rigth image center and have good segmentation.
+    [~,R]=hmri_comm_adjust(1,MTimage,MTimage,8,0,sprintf('%s//canonical//%s.nii',spm('Dir'),'avg152T1')); % Commissure adjustment to find a rigth image center and have good segmentation.
     Vsave=spm_vol(MTimage);
     Vsave.descrip=[Vsave.descrip ' - AC-PC realigned'];
     spm_write_vol(Vsave,spm_read_vols(spm_vol(MTimage)));

@@ -6,5 +6,10 @@ The original maps provided at the time were not meeting SPM's requirements:
 	nwTPM_sl2.nii
 
 I fixed the TPM using the script: cp_update_TPM.m
-This lead to the currect TPM: 
-	unwTPM_sl2.nii
+This lead to the currect "extended TPM" : 
+	eTPM.nii
+
+
+Christophe Phillips
+University of Liège
+Belgium

@@ -127,7 +127,7 @@ proc_us.val = [{many_sdatas} preproc8.val(2:end)];
 % plus use the hMRI specific TPMs.
 w_native = [[1 1];[1 1];[1 1];[0 0];[0 0];[0 0]];
 w_warped = [[1 1];[1 1];[1 1];[0 0];[0 0];[0 0]];
-fn_tpm = fullfile(spm('dir'),'toolbox','hMRI','tpm','unwTPM_sl2.nii');
+fn_tpm = fullfile(spm('dir'),'toolbox','hMRI','etpm','eTPM.nii');
 for ii=1:size(w_native,1)
     proc_us = cfg_set_val(proc_us, 'tissues', ii, 'native', w_native(ii,:));
     proc_us = cfg_set_val(proc_us, 'tissues', ii, 'warped', w_warped(ii,:));

@@ -96,6 +96,93 @@ braws.name      = 'Raw B0 & B1 data';
 braws.help      = {'Input all B0 & B1 images in this order.'};
 braws.val       = {braws1 braws2};
 % ---------------------------------------------------------------------
+% vols Volumes
+% ---------------------------------------------------------------------
+sraws3MT          = cfg_files;
+sraws3MT.tag      = 'raw_sens_MT';
+sraws3MT.name     = 'MT coil sensitivity';
+sraws3MT.help     = {'Input low resolution images for MT', ...
+    'acquired with the head and body coil in this order.'};
+sraws3MT.filter   = 'image';
+sraws3MT.ufilter  = '.*';
+sraws3MT.num      = [2 2];
+sraws3MT.val      = {''};
+% ---------------------------------------------------------------------
+% vols Volumes
+% ---------------------------------------------------------------------
+sraws3PD          = cfg_files;
+sraws3PD.tag      = 'raw_sens_PD';
+sraws3PD.name     = 'PD coil sensitivity';
+sraws3PD.help     = {'Input low resolution images for PD', ...
+    'acquired with the head and body coil in this order.'};
+sraws3PD.filter   = 'image';
+sraws3PD.ufilter  = '.*';
+sraws3PD.num      = [2 2];
+sraws3PD.val      = {''};
+% ---------------------------------------------------------------------
+% vols Volumes
+% ---------------------------------------------------------------------
+sraws3T1          = cfg_files;
+sraws3T1.tag      = 'raw_sens_T1';
+sraws3T1.name     = 'T1 coil sensitivity';
+sraws3T1.help     = {'Input low resolution images for T1', ...
+    'acquired with the head and body coil in this order.'};
+sraws3T1.filter   = 'image';
+sraws3T1.ufilter  = '.*';
+sraws3T1.num      = [2 2];
+sraws3T1.val      = {''};
+% ---------------------------------------------------------------------
+% vols Volumes
+% ---------------------------------------------------------------------
+sraws3           = cfg_branch;
+sraws3.tag       = 'raw_sens3';
+sraws3.name      = 'Raw low res. coil sensitivity data per modality';
+sraws3.help      = {'Input low resolution images for each modality', ...
+    'acquired with the head and body coil in this order.'};
+sraws3.val       = {sraws3MT sraws3PD sraws3T1};
+% ---------------------------------------------------------------------
+% x0 No RF sensitivity
+% ---------------------------------------------------------------------
+x0         = cfg_menu;
+x0.tag     = 'RF_none';
+x0.name    = 'No RF sensitivity';
+x0.help    = {'Choose this option, if no RF sensitivity was acquired.'};
+x0.labels = {'Yes'};
+x0.values = {1};
+x0.val = {1};
+% ---------------------------------------------------------------------
+% x1 RF sensitivity acquired once 
+% ---------------------------------------------------------------------
+x1         = cfg_files;
+x1.tag     = 'RF_once';
+x1.name    = 'RF sensitivity acquired once';
+%x1.help    = {'Choose this option, if RF sensitivity was acquired once per subject.'};
+x1.help      = {'Input low resolution images for RF sensitivity', ...
+    'acquired with the head and body coil in this order.'};
+x1.filter   = 'image';
+x1.ufilter  = '.*';
+x1.num      = [2 2];
+x1.val      = {''};
+% ---------------------------------------------------------------------
+% x3 RF sensitivity acquired for each modality 
+% ---------------------------------------------------------------------
+x3         = cfg_branch;
+x3.tag     = 'RF_MPM';
+x3.name    = 'RF sensitivity acquired for each modality';
+x3.help    = {'Choose this option, if RF sensitivity was acquired for each modality,',...
+    'i.e. for T1-, PD- and MT-weighted images.'};
+x3.val  = {sraws3};
+% ---------------------------------------------------------------------
+% sensitivity Sensitivity choice
+% ---------------------------------------------------------------------
+sensitivity         = cfg_choice;
+sensitivity.tag     = 'sensitivity';
+sensitivity.name    = 'RF sensitivity';
+sensitivity.help    = {'Specify the kind of RF sensitivity acquired. ',...
+    'Could be none, once or per image modality.'};
+sensitivity.values  = {x0 x1 x3};
+sensitivity.val = {x0};
+% ---------------------------------------------------------------------
 % subj Subject
 % ---------------------------------------------------------------------
 subj            = cfg_branch;
@@ -169,7 +256,7 @@ create_B0B1.tag     = 'mp_img_b_img';
 create_B0B1.name    = 'Multiparameter & B0/B1 images';
 raws.val        = {raws1 raws2 raws3 };
 braws.val       = {braws1 braws2};
-subj.val        = {output b1_type braws raws};
+subj.val        = {output sensitivity b1_type braws raws};
 sdata.val       = {subj };
 sdata.values    = {subj };
 sdata_multi.val  = { output unlimit(braws) unlimit(raws) };
@@ -186,7 +273,7 @@ create_Unicort          = cfg_exbranch;
 create_Unicort.tag      = 'mp_img_unicort';
 create_Unicort.name     = 'Multiparameter & UNICORT_B1 images';
 raws.val        = {raws1 raws2 raws3 };
-subj.val        = {output raws };
+subj.val        = {output sensitivity raws };
 sdata.val       = {subj };
 sdata.values    = {subj };
 sdata_multi.val = { output unlimit(raws) };

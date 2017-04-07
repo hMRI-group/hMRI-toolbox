@@ -1,16 +1,20 @@
 function out = hmri_run_proc_pipeline(job)
-% Deal with the preprocessing pipelines.
+% Deal with the preprocessing pipelines. There are 2 options
+% 1/ US+Smooth
+% 2/ US+Dartel+Smooth
 %
 % Input include only some parametric maps, the structural maps (for
 % segmentation), the required smoothing and which pipeline to use. All
 % other options are hard-coded!
-%  For more flexibility, individual modules can be combined. :-)
+% By default, these pipelines focus only on the first 2 tissue classes,
+% i.e. GM and WM only.
+% 
+% For more flexibility, individual modules can be combined. :-)
+% 
 %_______________________________________________________________________
 % Copyright (C) 2017 Cyclotron Research Centre
 
 % Written by Christophe Phillips
-
-% proc_pipeline = tbx_scfg_hmri_proc_pipeline; [~, job_pipe] = harvest(proc_pipeline, proc_pipeline, false, false);
 
 % 1/ Setup the smoothing and execute hmri_run_proc_US
 %----------------------------------------------------
@@ -23,6 +27,7 @@ job_US.many_sdatas.vols_pm = job.vols_pm;
 job_US.many_sdatas.rstruct.s_vols = job.s_vols;
 
 % Run the *_proc_US
+fprintf('\nhMRI-pipeline: running the US module.\n')
 out_US = hmri_run_proc_US(job_US);
 % where the output structure 'out_US'
 % .tiss : struct-array with subfields
@@ -39,23 +44,37 @@ out_US = hmri_run_proc_US(job_US);
 
 if job.pipe_c == 2
     % DARTEL processing: 
+    proc_Dartel = tbx_scfg_hmri_proc_Dartel;
     % a) warping with template creation
-    dartel_cfg = tbx_cfg_dartel;
-    warp_dartel_cr = dartel_cfg.values{2};
-%     Varient based on the tag of the exbranch
-%     warp_dartel_cr = tbx_cfg_dartel;
-%     eval(['warp_dartel_cr = warp_dartel_cr', ...
-%         cfg_expr_values(warp_dartel_cr, 'warp'),';']);
-    [~, job_Dwarp] = harvest(warp_dartel_cr, warp_dartel_cr, false, false);
+    proc_Dwarp = proc_Dartel.values{1};
+    [~, job_Dwarp] = harvest(proc_Dwarp, proc_Dwarp, false, false);
     
     % Fill in the filenames for rc1 and rc2, i.e. GM and WM
     for ii=1:2
         job_Dwarp.images{ii} = spm_file(out_US.tiss(ii).rc,'number',1);
     end
+    % Run the Dartel-warp job
+    fprintf('\nhMRI-pipeline: running the Darte-warp module.\n')
     out_Dwarp = spm_dartel_template(job_Dwarp);
     
     % b) normalize to  MNI
+    proc_Dnorm = proc_Dartel.values{3};
+    [~, job_Dnorm] = harvest(proc_Dnorm, proc_Dnorm, false, false);
+    % get last tempalte
+    job_Dnorm.template = out_Dwarp.template(end);
+    % get GM and WM tissue class
+    for ii=1:2
+        job_Dnorm.multsdata.vols_tc{ii} = ...
+            spm_file(out_US.tiss(ii).c,'number',1);
+    end
+    % get the parametric maps
+    job_Dnorm.multsdata.vols_pm = job.vols_pm;
+    % get the warps
+    job_Dnorm.multsdata.vols_field = out_Dwarp.files;
     
+    % Run the Dartel-Normalize-to-MNI job
+    fprintf('\nhMRI-pipeline: running the Darte-normalize-to-MNI module.\n')
+    out_Dnorm = hmri_run_proc_dartel_norm(job_Dnorm);
 end
 
 % 3/ Deal with smoothing, with hmri_run_proc_smooth
@@ -69,19 +88,21 @@ switch job.pipe_c
         job_smooth = fill_fn_from_US(job_smooth,out_US);
     case 2 % US+Dartel+smooth
         % Fit in DARTEL data
-        job_smooth = fill_fn_from_Dartel(job_smooth,out_Dnorm);
+        job_smooth.vols_pm = out_Dnorm.vols_wpm;
+        job_smooth.vols_tc = out_Dnorm.vols_mwtc;
     otherwise
+        error('hmri:pipeline', 'Wrong hmri-pipeline option.');
 end
 % Get the smoothing kernel
 job_smooth.fwhm = job.fwhm;
 
-% run the *_proc_smooth
+% Run the *_proc_smooth
+fprintf('\nhMRI-pipeline: running the weighted-average (smoothing) module.\n')
 out_wa = hmri_run_proc_smooth(job_smooth);
-% where 'out_wa' structure is organized as a structure out.tc.map.fn where
-% - tc is an array (1 x n_TCs) with 1 element per tissue class considered
-% - map is an array (1 x n_pams) with 1 element per parametric map
-% - fn is a cell array (n_subj x 1) with each subject's smoothed data for 
-%   the i^th TC and j^th MPM.
+% where the 'out_wa' is organized as a structure out_wa.tc where
+% - tc is a cell-array of size {n_TCs x n_pams}
+% - each element tc{ii,jj} is a cell array {n_subj x 1} with each subject's
+%   smoothed data for the ii^th TC and jj^th MPM
 
 
 % 4/ Collect output and as needed
@@ -89,11 +110,10 @@ out = out_wa; % -> good enouh for the moment!
 
 end
 
-%%_________________________________________________________________________
+%% ________________________________________________________________________
 %
 % SUBFUNCTION
 %__________________________________________________________________________
-
 
 function job_smooth = fill_fn_from_US(job_smooth,out_US)
 % Fill in the filenames of images (parametric maps and tissue classes) for
@@ -116,33 +136,3 @@ end
 
 end
 %_______________________________________________________________________
-
-function job_smooth = fill_fn_from_Dartel(job_smooth,out_Dnorm)
-% Fill in the filenames of images (parametric maps and tissue classes) for
-% the US+Dartel+smooth pipeline.
-
-end
-%_______________________________________________________________________
-
-% function expr = cfg_expr_values(c, varargin) %#ok<INUSL>
-% % Extracting the 'values' field with index matching the input argument and
-% % 'tag' of the matlabbatch structure.
-% 
-% expr = 'c';
-% for i=1:size(varargin,2)
-%     %         if strcmp(class(varargin{i}), 'double')
-%     if isa(varargin{i}, 'double')
-%         expr = [expr '.values{' num2str(varargin{i}) '}'];  %#ok<*AGROW>
-%     else
-%         v = eval([expr ';']);
-%         for j=1:size(v.values,2)
-%             if strcmp(v.values{j}.tag, varargin{i})
-%                 break
-%             end
-%         end
-%         expr = [expr '.values{' num2str(j) '}']; 
-%     end
-% end
-% expr = expr(2:end);
-% end
-% %_______________________________________________________________________

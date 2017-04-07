@@ -102,7 +102,7 @@ proc_pipel.help    = {
     }'; %#ok<*NBRAK>
 proc_pipel.val  = {vols many_pams fwhm pipe_c};
 proc_pipel.prog = @hmri_run_proc_pipeline;
-proc_pipel.vout = @vout_preproc;
+proc_pipel.vout = @vout_proc_pipeline;
 
 end
 
@@ -117,60 +117,27 @@ end
 % Need for a check function to ensure the same number of files in each
 % series of maps + reference structural.
 
-function dep = vout_preproc(job)
+% Collect and prepare output
+function dep = vout_proc_pipeline(job)
 % This depends on job contents, which may not be present when virtual
 % outputs are calculated.
+% There should be one series of images per parametric map and tissue class,
+% e.g. in the usual case of 4 MPMs and GM/WM -> 8 series of image
 
-% cdep = cfg_dep;
-dep = cfg_dep;
+n_pams = numel(job.vols_pm); % #parametric image types
+n_TCs  = 2;                  % #tissue classes = 2, by default
 
-% % Collect tissue class images (4 of them)
-% for i=1:numel(job.tissue)
-%     if job.tissue(i).native(1)
-%         cdep(end+1) = cfg_dep; %#ok<*AGROW>
-%         cdep(end).sname = sprintf('c%d Images', i);
-%         cdep(end).src_output = substruct('.', 'tiss', '()', {i}, '.', 'c', '()', {':'});
-%         cdep(end).tgt_spec = cfg_findspec({{'filter','nifti'}});
-% %         cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}}); % cfg_findspec({{'filter','nifti'}});
-%     end
-%     if job.tissue(i).native(2)
-%         cdep(end+1) = cfg_dep;
-%         cdep(end).sname = sprintf('rc%d Images', i);
-%         cdep(end).src_output = substruct('.', 'tiss', '()', {i}, '.', 'rc', '()', {':'});
-%         cdep(end).tgt_spec = cfg_findspec({{'filter','nifti'}});
-% %         cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
-%     end
-%     if job.tissue(i).warped(1)
-%         cdep(end+1) = cfg_dep;
-%         cdep(end).sname = sprintf('wc%d Images', i);
-%         cdep(end).src_output = substruct('.', 'tiss', '()', {i}, '.', 'wc', '()', {':'});
-%         cdep(end).tgt_spec = cfg_findspec({{'filter','nifti'}});
-% %         cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
-%     end
-%     if job.tissue(i).warped(2)
-%         cdep(end+1) = cfg_dep;
-%         cdep(end).sname = sprintf('mwc%d Images', i);
-%         cdep(end).src_output = substruct('.', 'tiss', '()', {i}, '.', 'mwc', '()', {':'});
-%         cdep(end).tgt_spec = cfg_findspec({{'filter','nifti'}});
-% %         cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
-%     end
-% end
-% 
-% % Collect warped parametric maps
-% for i=1:numel(job.many_sdatas.vols_pm)
-%     cdep(end+1) = cfg_dep;
-%     cdep(end).sname = sprintf('Warped par. vols #%d', i);
-%     cdep(end).src_output = substruct('.', 'maps', '()', {i}, '.', 'wvols_pm', '()', {':'});
-%     cdep(end).tgt_spec = cfg_findspec({{'filter','nifti'}});
-% %     cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
-% end
-% 
-% % Collect the deformation fields
-% cdep(end+1) = cfg_dep;
-% cdep(end).sname = 'Def. fields';
-% cdep(end).src_output = substruct('.', 'def', '.', 'fn', '()', {':'});
-% cdep(end).tgt_spec = cfg_findspec({{'filter','nifti'}});
-% % cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
-% 
-% dep = cdep(2:end);
+cdep = cfg_dep;
+for ii=1:n_TCs
+    for jj=1:n_pams
+        cdep(end+1) = cfg_dep;
+        cdep(end).sname = sprintf('TC #%d, pMap #%d', ii, jj);
+        cdep(end).src_output = substruct('.', 'tc', '{}', {ii,jj});
+        cdep(end).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
+    end
 end
+    
+dep = cdep(2:end);
+
+end
+

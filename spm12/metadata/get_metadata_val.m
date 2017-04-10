@@ -95,6 +95,19 @@ switch inParName
             cRes = 1;
             parLocation{cRes} = nam{1};
             parValue{cRes} = val{1}*0.001;
+        else
+            % alTR is a Siemens-specific field which hold an array of
+            % values rather than a single value -> preferable if several
+            % TRs used for a given sequence (e.g. AFI). If not available
+            % (GE or Philips), let's get the standard DICOM field
+            % RepetitionTime (in ms):
+            [nFieldFound, fieldList] = find_field_name(mstruc, 'RepetitionTime', 'caseSens','sensitive','matchType','exact');
+            [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
+            if nFieldFound
+                cRes = 1;
+                parLocation{cRes} = nam{1};
+                parValue{cRes} = val{1};
+            end
         end
         
     case 'EchoTime' % [ms]
@@ -106,6 +119,19 @@ switch inParName
             cRes = 1;
             parLocation{cRes} = nam{1};
             parValue{cRes} = val{1}*0.001;
+        else
+            % alTE is a Siemens-specific field which holds an array of TE
+            % values rather than a single value -> preferable if several
+            % TEs used for a given sequence (e.g. multiecho sequences). If
+            % not available (GE or Philips), let's get the standard DICOM
+            % field EchoTime (in ms):
+            [nFieldFound, fieldList] = find_field_name(mstruc, 'EchoTime', 'caseSens','sensitive','matchType','exact');
+            [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
+            if nFieldFound
+                cRes = 1;
+                parLocation{cRes} = nam{1};
+                parValue{cRes} = val{1};
+            end
         end
         
     case 'FlipAngle' % [deg]

@@ -24,6 +24,17 @@ b1_prot = jobsubj.b1_type;
 hmri_get_defaults('b1_type.val',b1_prot);
 b1map_defs = hmri_get_defaults(['b1map.' b1_prot]);
 
+P_trans = [];
+
+if ~b1map_defs.avail
+    if b1map_defs.procreq
+        fprintf(1,'----- No B1 map available: UNICORT will be applied -----\n');
+    else
+        fprintf(1,'----- No B1 map available. No B1 correction applied (semi-quantitative maps only) -----\n');
+    end
+    return;
+end
+
 % retrieve acquisition parameters, alternatively use defaults loaded above
 hdr = get_metadata(jobsubj.raw_fld.b1{1});
 
@@ -64,17 +75,6 @@ try % if existing metadata only
     end
 catch
     fprintf(1,'INFO (hmri_run_b1map): no B1map available or no metadata associated.\n');
-end
-
-P_trans = [];
-
-if ~b1map_defs.avail
-    if b1map_defs.procreq
-        fprintf(1,'----- No B1 map available: UNICORT will be applied -----\n');
-    else
-        fprintf(1,'----- No B1 map available. No B1 correction applied (semi-quantitative maps only) -----\n');
-    end
-    return;
 end
 
 % calculate the B1 map if required
@@ -469,8 +469,9 @@ disp('----- Calculation of B1 map (SIEMENS tfl_b1map protocol) -----');
 
 json = hmri_get_defaults('json');
 
-P = char(jobsubj.raw_fld.b1); % scaled FA map from tfl_b1map sequence
-Q = char(jobsubj.raw_fld.b0); % FLASH like anatomical from tfl_b1map sequence
+VV = char(jobsubj.raw_fld.b1);
+P = VV(2,:); % scaled FA map from tfl_b1map sequence
+Q = VV(1,:); % FLASH like anatomical from tfl_b1map sequence
 
 % read header information and volumes
 V1 = spm_vol(P); % image volume information
@@ -537,8 +538,9 @@ disp('----- Calculation of B1 map (SIEMENS rf_map protocol) -----');
 
 json = hmri_get_defaults('json');
 
-P = char(jobsubj.raw_fld.b1); % scaled FA map from rf_map sequence
-Q = char(jobsubj.raw_fld.b0); % anatomical image from rf_map sequence
+VV = char(jobsubj.raw_fld.b1);
+P = VV(2,:); % scaled FA map from rf_map sequence
+Q = VV(1,:); % anatomical image from rf_map sequence
 
 % read header information and volumes
 V1 = spm_vol(P); % image volume information

@@ -61,7 +61,7 @@ try % if existing metadata only
         b1map_defs.data = 'AFI';
         b1map_defs.avail = true;
         b1map_defs.procreq = true;
-        tr = get_metadata_val(hdr{1},'RepetitionTime');
+        tr = get_metadata_val(hdr{1},'RepetitionTimes');
         b1map_defs.TR2TR1ratio = tr(2)/tr(1);
         b1map_defs.alphanom = get_metadata_val(hdr{1},'FlipAngle');
     elseif ~isempty(strfind(ProtocolName,'tfl_b1map'))
@@ -342,15 +342,15 @@ set_metadata(X_save.fname,Output_hdr_SSQ,json)
 % b1_prot = hmri_get_defaults('b1_type.val');
 % load the resulting default parameters:
 
-hdr = get_metadata(jobsubj.raw_fld.b0{1});
+hdr1 = get_metadata(jobsubj.raw_fld.b0{1});
+hdr2 = get_metadata(jobsubj.raw_fld.b0{2});
 b1_prot = jobsubj.b1_type;
-if isempty(hdr{1})
+if isempty(hdr1{1})
     b0proc_defs = hmri_get_defaults('b1map.i3D_EPI.b0acq');
 else
     %     [hdr,~]=get_metadata(jobsubj.raw_fld.b0{1});
-    TEs = get_metadata_val(hdr{1},'EchoTime');
-    b0proc_defs.shortTE = TEs(1);
-    b0proc_defs.longTE = TEs(2);
+    b0proc_defs.shortTE = get_metadata_val(hdr1{1},'EchoTime');
+    b0proc_defs.longTE = get_metadata_val(hdr2{1},'EchoTime');
     %     b0proc_defs.HZTHRESH = hmri_get_defaults(['b1map.',b1_prot,'.b0proc' '.HZTHRESH']);
     %     b0proc_defs.SDTHRESH = hmri_get_defaults(['b1map.',b1_prot,'.b0proc' '.SDTHRESH']);
     %     b0proc_defs.ERODEB1 = hmri_get_defaults(['b1map.',b1_prot,'.b0proc' '.ERODEB1']);

@@ -48,6 +48,9 @@ hmri_def.unicort.reg = 10^-3;
 hmri_def.unicort.FWHM = 60;
 hmri_def.unicort.thr = 2; % TL: 2 for sciz & cbs with SIEMENS 3T Skyra fit
                           % otherwise: 5
+                          
+%% RF sensitivity processing
+hmri_def.RFsens.smooth_kernel = 12;
 
 hmri_def.qMRI_maps.QA          = 1;%creates a matlab structure containing markers of data quality
 hmri_def.qMRI_maps.ACPCrealign = 1;%realigns qMRI maps to MNI
@@ -205,7 +208,9 @@ hmri_def.cbs.b1_type.labels  = {
     'i3D_EPI'
     'tfl_b1_map'
     'rf_map'
-    'no_B1_provided'
+    'no_B1_correction'
+    'pre_processed_B1'
+    'UNICORT'
     }';
 hmri_def.cbs.b1_type.val  = hmri_def.cbs.b1_type.labels(1);
 
@@ -215,8 +220,9 @@ hmri_def.crc.b1_type.labels  = {
     'i3D_EPI' % added the 'i' before the '3' to start with a letter...
     'i3D_AFI_v4b_n3_allegra_crc'
     'i3D_AFI_v4b_n5_allegra_crc'
+    'no_B1_correction'
     'pre_processed_B1'
-    'no_B1_provided'
+    'UNICORT'
     }';
 hmri_def.crc.b1_type.val  = hmri_def.crc.b1_type.labels(1);
 
@@ -224,8 +230,9 @@ hmri_def.crc.b1_type.val  = hmri_def.crc.b1_type.labels(1);
 % --------------------------------------
 hmri_def.fil.b1_type.labels = {
     'i3D_EPI'
+    'no_B1_correction'
     'pre_processed_B1'
-    'no_B1_provided'
+    'UNICORT'
     };
 hmri_def.fil.b1_type.val = hmri_def.fil.b1_type.labels(1);
 
@@ -233,8 +240,9 @@ hmri_def.fil.b1_type.val = hmri_def.fil.b1_type.labels(1);
 % ---------------------------------------
 hmri_def.lren.b1_type.labels = {
     'i3D_EPI'
+    'no_B1_correction'
     'pre_processed_B1'
-    'no_B1_provided'
+    'UNICORT'
     };
 hmri_def.lren.b1_type.val = hmri_def.lren.b1_type.labels(1);
 
@@ -243,7 +251,9 @@ hmri_def.lren.b1_type.val = hmri_def.lren.b1_type.labels(1);
 hmri_def.sciz.b1_type.labels  = {
     'tfl_b1map'
     'rf_map'
-    'no_B1_provided'
+    'no_B1_correction'
+    'pre_processed_B1'
+    'UNICORT'
     }';
 hmri_def.sciz.b1_type.val  = hmri_def.sciz.b1_type.labels(1);
 
@@ -252,25 +262,33 @@ hmri_def.sciz.b1_type.val  = hmri_def.sciz.b1_type.labels(1);
 % Each of the B1map protocols, for *all* the sites, are defined in a
 % separate substructure.
 %
-% 6) 'i3D_AFI_v4b_n5_allegra_crc'
-hmri_def.b1map.i3D_AFI_v4b_n5_allegra_crc.b1proc.data    = 'AFI'; 
-hmri_def.b1map.i3D_AFI_v4b_n5_allegra_crc.b1proc.avail   = true; 
-hmri_def.b1map.i3D_AFI_v4b_n5_allegra_crc.b1proc.procreq = true; 
+% 'i3D_AFI_v4b_n5_allegra_crc'
+hmri_def.b1map.i3D_AFI_v4b_n5_allegra_crc.data    = 'AFI'; 
+hmri_def.b1map.i3D_AFI_v4b_n5_allegra_crc.avail   = true; 
+hmri_def.b1map.i3D_AFI_v4b_n5_allegra_crc.procreq = true; 
 hmri_def.b1map.i3D_AFI_v4b_n5_allegra_crc.b1proc.TR2TR1ratio = 5;
 hmri_def.b1map.i3D_AFI_v4b_n5_allegra_crc.b1proc.alphanom = 60;
-% 7) 'i3D_AFI_v4b_n3_allegra_crc'
-hmri_def.b1map.i3D_AFI_v4b_n3_allegra_crc.b1proc.data    = 'AFI'; 
-hmri_def.b1map.i3D_AFI_v4b_n3_allegra_crc.b1proc.avail   = true; 
-hmri_def.b1map.i3D_AFI_v4b_n3_allegra_crc.b1proc.procreq = true; 
+
+% 'i3D_AFI_v4b_n3_allegra_crc'
+hmri_def.b1map.i3D_AFI_v4b_n3_allegra_crc.data    = 'AFI'; 
+hmri_def.b1map.i3D_AFI_v4b_n3_allegra_crc.avail   = true; 
+hmri_def.b1map.i3D_AFI_v4b_n3_allegra_crc.procreq = true; 
 hmri_def.b1map.i3D_AFI_v4b_n3_allegra_crc.b1proc.TR2TR1ratio = 3;
 hmri_def.b1map.i3D_AFI_v4b_n3_allegra_crc.b1proc.alphanom = 60;
-% 8) 'pre_processed_B1'
-hmri_def.b1map.pre_processed_B1.b1proc.avail   = true;
-hmri_def.b1map.pre_processed_B1.b1proc.procreq = false;
-%9) 'no_B1_provided'
-hmri_def.b1map.no_B1_provided.b1proc.procreq = false;
-hmri_def.b1map.no_B1_provided.b1proc.avail   = false;
-% 10) 'i3D_EPI'
+
+% 'pre_processed_B1'
+hmri_def.b1map.pre_processed_B1.avail   = true;
+hmri_def.b1map.pre_processed_B1.procreq = false;
+
+% 'no_B1_correction'
+hmri_def.b1map.no_B1_correction.procreq = false;
+hmri_def.b1map.no_B1_correction.avail   = false;
+
+% UNICORT
+hmri_def.b1map.UNICORT.procreq = true;
+hmri_def.b1map.UNICORT.avail   = false;
+
+% 'i3D_EPI'
 hmri_def.b1map.i3D_EPI.data    = 'EPI'; 
 hmri_def.b1map.i3D_EPI.avail   = true; 
 hmri_def.b1map.i3D_EPI.procreq = true; 

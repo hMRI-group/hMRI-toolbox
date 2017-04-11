@@ -1,13 +1,13 @@
 function p = hmri_hinfo(P)
 % Function to extract the TR/TE/FA values out of the descriptor field of 
-% the nifti header
+% the nifti header or the extended header/JSON metadata
 
 N = nifti(P);
 nN = numel(N);
 p(nN) = struct('tr',[],'te',[],'fa',[]);
 
 hdr = get_metadata(P);
-if ~isempty(hdr{1})
+if isfield(hdr{1},'acqpar')
     for ii = 1:numel(N)
         p(ii).tr = get_metadata_val(hdr{ii},'RepetitionTime');
         te = get_metadata_val(hdr{ii},'EchoTime')';

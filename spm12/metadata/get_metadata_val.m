@@ -122,6 +122,9 @@ switch inParName
         
     case 'ProtocolName'
         [nFieldFound, fieldList] = find_field_name(mstruc, 'ProtocolName','caseSens','sensitive','matchType','exact');
+        if nFieldFound==0 % may happen when Anonymous data, no exact match for ProtocolName (tProtocolName instead)
+            [nFieldFound, fieldList] = find_field_name(mstruc, 'ProtocolName','caseSens','sensitive');
+        end
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
         % Keep only first value if many

@@ -2,20 +2,20 @@ function P_trans = hmri_run_b1map(jobsubj)
 
 %% Processing of the B1 maps for B1 bias correction
 % FORMAT P_trans = hmri_run_b1map(jobsubj)
-%    jobsubj - are parameters for one subject out of the job list. 
-%    NB: ONE SINGLE DATA SET FROM ONE SINGLE SUBJECT IS PROCESSED HERE, 
-%    LOOP OVER SUBJECTS DONE AT HIGHER LEVEL. 
+%    jobsubj - are parameters for one subject out of the job list.
+%    NB: ONE SINGLE DATA SET FROM ONE SINGLE SUBJECT IS PROCESSED HERE,
+%    LOOP OVER SUBJECTS DONE AT HIGHER LEVEL.
 %    P_trans - a vector of file names with P_trans(1,:) = anatomical volume
 %        for coregistration and P_trans(2,:) = B1 map in percent units.
 %_______________________________________________________________________
 % Written by E. Balteau, 2014.
 % Cyclotron Research Centre, University of Liege, Belgium
 %_______________________________________________________________________
-% Modified by T. Leutritz in 2016 in order to use the SIEMENS product 
-% sequences 'rf_map' and 'tfl_b1map'. The latter produces essentially 
-% a FLASH like image and a flip angle map (multiplied by 10) based on 
-% Chung S. et al.: "Rapid B1+ Mapping Using a Preconditioning RF Pulse with 
-% TurboFLASH Readout", MRM 64:439-446 (2010). 
+% Modified by T. Leutritz in 2016 in order to use the SIEMENS product
+% sequences 'rf_map' and 'tfl_b1map'. The latter produces essentially
+% a FLASH like image and a flip angle map (multiplied by 10) based on
+% Chung S. et al.: "Rapid B1+ Mapping Using a Preconditioning RF Pulse with
+% TurboFLASH Readout", MRM 64:439-446 (2010).
 %_______________________________________________________________________
 
 % retrieve b1_type from job and pass it as default value for the current
@@ -27,8 +27,9 @@ b1map_defs = hmri_get_defaults(['b1map.' b1_prot]);
 % retrieve acquisition parameters, alternatively use defaults loaded above
 hdr = get_metadata(jobsubj.raw_fld.b1{1});
 
-if ~isempty(hdr{1})
-   if ~isempty(strfind(hdr{1}.acqpar.ProtocolName,'al_B1mapping'))
+try % if existing metadata only
+    ProtocolName = get_metadata_val(hdr{1},'ProtocolName');
+    if ~isempty(strfind(ProtocolName,'al_B1mapping'))
         b1map_defs.data = 'EPI';
         b1map_defs.avail = true;
         b1map_defs.procreq = true;
@@ -40,33 +41,39 @@ if ~isempty(hdr{1})
         elseif hdr{1}.acqpar.PixelBandwidth == 3600
             b1map_defs.b1acq.EchoSpacing = 330e-3;
         end
-        b1map_defs.b1acq.blipDIR = get_metadata_val(hdr{1},'PhaseEncodingDirectionSign');        
+        b1map_defs.b1acq.blipDIR = get_metadata_val(hdr{1},'PhaseEncodingDirectionSign');
         b1map_defs.b1proc = hmri_get_defaults('b1map.i3D_EPI.b1proc');
-%         b1map_defs.T1=hmri_get_defaults(['b1map.',b1_prot,'.b1proc' '.T1']);
-%         b1map_defs.Nonominalvalues=hmri_get_defaults(['b1map.',b1_prot,'.b1proc' '.Nonominalvalues']);
-%         b1map_defs.eps=hmri_get_defaults(['b1map.',b1_prot,'.b1proc' '.eps']);
-   elseif ~isempty(strfind(hdr{1}.acqpar.ProtocolName,'nw_b1map'))
+        %         b1map_defs.T1=hmri_get_defaults(['b1map.',b1_prot,'.b1proc' '.T1']);
+        %         b1map_defs.Nonominalvalues=hmri_get_defaults(['b1map.',b1_prot,'.b1proc' '.Nonominalvalues']);
+        %         b1map_defs.eps=hmri_get_defaults(['b1map.',b1_prot,'.b1proc' '.eps']);
+    elseif ~isempty(strfind(ProtocolName,'nw_b1map'))
         b1map_defs.data = 'AFI';
         b1map_defs.avail = true;
         b1map_defs.procreq = true;
         tr = get_metadata_val(hdr{1},'RepetitionTime');
         b1map_defs.TR2TR1ratio = tr(2)/tr(1);
         b1map_defs.alphanom = get_metadata_val(hdr{1},'FlipAngle');
-   elseif ~isempty(strfind(hdr{1}.acqpar.ProtocolName,'tfl_b1map'))
-        hmri_def.b1map.tfl_b1_map.data    = 'TFL'; 
-        hmri_def.b1map.tfl_b1_map.avail   = true; 
-        hmri_def.b1map.tfl_b1_map.procreq = true; 
-   elseif ~isempty(strfind(hdr{1}.acqpar.ProtocolName,'rf_map'))
-        hmri_def.b1map.rf_map.data    = 'RFmap'; 
-        hmri_def.b1map.rf_map.avail   = true; 
-        hmri_def.b1map.rf_map.procreq = true; 
-   end
+    elseif ~isempty(strfind(ProtocolName,'tfl_b1map'))
+        b1map_defs.data    = 'TFL';
+        b1map_defs.avail   = true;
+        b1map_defs.procreq = true;
+    elseif ~isempty(strfind(ProtocolName,'rf_map'))
+        b1map_defs.data    = 'RFmap';
+        b1map_defs.avail   = true;
+        b1map_defs.procreq = true;
+    end
+catch
+    fprintf(1,'INFO (hmri_run_b1map): no B1map available or no metadata associated.\n');
 end
 
 P_trans = [];
 
 if ~b1map_defs.avail
-    disp('----- No B1 correction performed (semi-quantitative maps only) -----');
+    if b1map_defs.procreq
+        fprintf(1,'----- No B1 map available: UNICORT will be applied -----\n');
+    else
+        fprintf(1,'----- No B1 map available. No B1 correction applied (semi-quantitative maps only) -----\n');
+    end
     return;
 end
 
@@ -90,7 +97,7 @@ if b1map_defs.procreq
     end
 else
     % return pre-processed B1 map
-    disp('----- Loading pre-processed B1 map -----');
+    disp('----- Assuming pre-processed B1 map as input for B1 bias correction -----');
     P    = char(jobsubj.raw_fld.b1);   % the B1 map
     P_trans  = P(1:2,:);
 end
@@ -191,6 +198,23 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function P_trans = calc_SESTE_b1map(jobsubj, b1map_defs)
+% Calculation of B1 maps based on 3D EPI spin echo (SE) and stimulated
+% (STE) echo images (see Jiru and Klose MRM 2006).
+% Corresponding scanning protocol/sequence: al_B1mapping
+% Input: 11 pairs of (SE, STE) images for B1 map calculation and 3 images
+% for B0 map calculation.
+% This macro calls the functions hmri_B1Map_unwarp and hmri_B1Map_process
+% for correction of image distortions, padding and smoothing of the images.
+% Output:
+%     - distorted B1 (B1map_*) and error (SDmap_*) maps
+%     - undistorted B1 (uB1map_*) and error (uSDmap_*) maps
+%     - undistorted, masked and padded B1 maps (muB1map_*)
+%     - undistorted, masked, padded and smoothed B1 maps (smuB1map_*) i.e. FULLY PROCESSED
+% At each voxel, this macro selects the 5 pairs of (SE,STE image) (out of
+% 11) with maximum signal amplitude in the SE images.
+% The sum of square image of all SE images is created (SumOfSq) and
+% undistorted (uSumOfSq) for coregistration of the B1 map to an anatomical
+% dataset.
 
 disp('----- Calculation of B1 map (SE/STE EPI protocol) -----');
 
@@ -323,17 +347,17 @@ b1_prot = jobsubj.b1_type;
 if isempty(hdr{1})
     b0proc_defs = hmri_get_defaults('b1map.i3D_EPI.b0acq');
 else
-%     [hdr,~]=get_metadata(jobsubj.raw_fld.b0{1});
+    %     [hdr,~]=get_metadata(jobsubj.raw_fld.b0{1});
     TEs = get_metadata_val(hdr{1},'EchoTime');
-    b0proc_defs.shortTE = TEs(1);    
+    b0proc_defs.shortTE = TEs(1);
     b0proc_defs.longTE = TEs(2);
-%     b0proc_defs.HZTHRESH = hmri_get_defaults(['b1map.',b1_prot,'.b0proc' '.HZTHRESH']);
-%     b0proc_defs.SDTHRESH = hmri_get_defaults(['b1map.',b1_prot,'.b0proc' '.SDTHRESH']);
-%     b0proc_defs.ERODEB1 = hmri_get_defaults(['b1map.',b1_prot,'.b0proc' '.ERODEB1']);
-%     b0proc_defs.PADB1 = hmri_get_defaults(['b1map.',b1_prot,'.b0proc' '.PADB1']);
-%     b0proc_defs.B1FWHM = hmri_get_defaults(['b1map.',b1_prot,'.b0proc' '.B1FWHM']);
-%     b0proc_defs.match_vdm = hmri_get_defaults(['b1map.',b1_prot,'.b0proc' '.match_vdm']);
-%     b0proc_defs.b0maskbrain = hmri_get_defaults(['b1map.',b1_prot,'.b0proc' '.b0maskbrain']);
+    %     b0proc_defs.HZTHRESH = hmri_get_defaults(['b1map.',b1_prot,'.b0proc' '.HZTHRESH']);
+    %     b0proc_defs.SDTHRESH = hmri_get_defaults(['b1map.',b1_prot,'.b0proc' '.SDTHRESH']);
+    %     b0proc_defs.ERODEB1 = hmri_get_defaults(['b1map.',b1_prot,'.b0proc' '.ERODEB1']);
+    %     b0proc_defs.PADB1 = hmri_get_defaults(['b1map.',b1_prot,'.b0proc' '.PADB1']);
+    %     b0proc_defs.B1FWHM = hmri_get_defaults(['b1map.',b1_prot,'.b0proc' '.B1FWHM']);
+    %     b0proc_defs.match_vdm = hmri_get_defaults(['b1map.',b1_prot,'.b0proc' '.match_vdm']);
+    %     b0proc_defs.b0maskbrain = hmri_get_defaults(['b1map.',b1_prot,'.b0proc' '.b0maskbrain']);
 end
 pm_defaults;
 pm_defs = pm_def;
@@ -360,12 +384,12 @@ phase = phase1.fname;
 scphase = FieldMap('Scale',phase);
 % try to move generated map to the outpath
 [~,name,e] = fileparts(scphase.fname);
-try                
-    movefile(scphase.fname,fullfile(outpath,[name e]));         
-catch MExc          
-    %fprintf(1,'\n%s\n', MExc.getReport);                  
-    fprintf(1,'Output directory is identical to input directory. File doesn''t need to be moved! :)\n');       
-end    
+try
+    movefile(scphase.fname,fullfile(outpath,[name e]));
+catch MExc
+    %fprintf(1,'\n%s\n', MExc.getReport);
+    fprintf(1,'Output directory is identical to input directory. File doesn''t need to be moved! :)\n');
+end
 scphase.fname = fullfile(outpath,[name e]);
 fm_imgs = char(scphase.fname,mag);
 
@@ -523,7 +547,7 @@ Vol1 = spm_read_vols(V1);
 Vol2 = spm_read_vols(V2);
 
 % generating the map
-B1map_norm = (abs(Vol1)-2048)*180*100/(90*2048); % *100/90 to get p.u. 
+B1map_norm = (abs(Vol1)-2048)*180*100/(90*2048); % *100/90 to get p.u.
 % the formula (abs(Vol1)-2048)*180/2048 would result in an absolute FA map
 
 % smoothed map

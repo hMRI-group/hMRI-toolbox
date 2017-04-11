@@ -161,11 +161,12 @@ if ~strcmp(pth, tmp)
   pth = tmp;
 end
 qMRIcalc=hmri_get_defaults('qMRI_maps');
+
+MPMcalcFolder=fullfile(pth,'MPMcalcFolder');
+if(exist(MPMcalcFolder,'dir'))%in case a previous run was stopped prematurely
+    rmdir(MPMcalcFolder,'s')
+end
 if (qMRIcalc.QA||PDproc.PDmap||qMRIcalc.ACPCrealign)
-    MPMcalcFolder=fullfile(pth,'MPMcalcFolder');
-    if(exist(MPMcalcFolder,'dir'))%in case a previous run was stopped prematurely
-        rmdir(MPMcalcFolder,'s')
-    end
     mkdir(MPMcalcFolder)
 end
 
@@ -479,13 +480,20 @@ if hmri_get_defaults('R2sOLS')
         
 end % OLS code
 
-nam2    = {'R1','A','MT','MTR_synt'};
-descrip = {'R1 map [1000/s]', 'A map','Delta MT map', 'Synthetic MTR image'};
-units = {'1000/s', '%','A.U.', 'A.U.'};
+if ~isempty(Vtrans) && isempty(Vreceiv) && PDproc.PDmap
+    nam2    = {'R1','PD','MT'};
+    descrip = {'R1 map [1000/s]', 'Water concentration [%]','Delta MT map'};
+    units = {'1000/s', '%','A.U.'};
+else
+    nam2    = {'R1','A','MT'};
+    descrip = {'R1 map [1000/s]', 'Signal amplitude [A.U.]','Delta MT map'};
+    units = {'1000/s', 'A.U.','A.U.'};
+end
+
 if (TR_mtw == TR_pdw) & (fa_mtw == fa_pdw),
-    nam2    = {nam2{:}, 'MTR','MTRdiff'};
-    descrip = {descrip{:}, 'Classic MTR image','Percent diff. MTR image (RD/BD)'};
-    units = {units{:}, 'A.U.','A.U.'};
+    nam2    = {nam2{:}, 'MTR'};
+    descrip = {descrip{:}, 'Classic MTR image'};
+    units = {units{:}, 'A.U.'};
 end
 
 Nmap    = nifti;
@@ -527,7 +535,7 @@ for p = 1:dm(3)
     else
         f_T = [];
     end
-    if ~isempty(Vreceiv)&~isempty(Vtrans)
+    if ~isempty(Vreceiv) && ~isempty(Vtrans)
         f_R = spm_slice_vol(Vreceiv,Vreceiv.mat\M,dm(1:2),3)/100; % divide by 100, since p.u. maps
         f_R = f_R .* f_T; % f_R is only the sensitivity map and not the true receive bias map, therefore needs to be multiplied by transmit bias (B1+ approx. B1- map)
     else
@@ -537,14 +545,14 @@ for p = 1:dm(3)
     % Standard magnetization transfer ratio (MTR) in percent units [p.u.]
     % only if  trpd = trmt and fapd = fmt
     % else calculate "synthetic MTR using A and T1 (see below)
-    if numel(Nmap)>4&&(TR_mtw == TR_pdw) && (fa_mtw == fa_pdw),
+    if numel(Nmap)>3 && (TR_mtw == TR_pdw) && (fa_mtw == fa_pdw),
         MTR = (PDw-MTw)./(PDw+eps) * 100;
         % write MTR image
-        Nmap(5).dat(:,:,p) = max(min(MTR,threshall.MTR),-threshall.MTR);
+        Nmap(4).dat(:,:,p) = max(min(MTR,threshall.MTR),-threshall.MTR);
         
-        % calculate a modified MTR map according to RD/BD
-        MTR = 100*(PDw-MTw)./(eps+PDw).*(MTw./(eps+PDw)<1.3&MTw./(eps+PDw)>0&PDw>25);
-        Nmap(6).dat(:,:,p) = max(min(MTR,threshall.MTR),-threshall.MTR);
+%         % calculate a modified MTR map according to RD/BD
+%         MTR = 100*(PDw-MTw)./(eps+PDw).*(MTw./(eps+PDw)<1.3&MTw./(eps+PDw)>0&PDw>25);
+%         Nmap(6).dat(:,:,p) = max(min(MTR,threshall.MTR),-threshall.MTR);
     end
     
     % calculating T1 and A from a rational approximation of the Ernst equation using radian units
@@ -630,15 +638,15 @@ for p = 1:dm(3)
     tmp      = MT;
     Nmap(3).dat(:,:,p) = max(min(tmp,threshall.MT),-threshall.MT);
     
-    % calculate synthetic reference signal at trmt and famt using the
-    % rational approximation of the Ernst equation
-    S_ref      = A_forMT .* fa_mtw * TR_mtw ./ (T1_forMT+eps) ./ ...
-                ( TR_mtw ./ (T1_forMT+eps) +  fa_mtw * fa_mtw / 2 );
-    % MTR_synt = (S_ref ./ MTw - 1) * 100;
-    MTR_synt   = (S_ref-MTw) ./ (S_ref+eps) * 100;
-    tmp      = MTR_synt;
-    Nmap(4).dat(:,:,p) = max(min(tmp,threshall.MTR_synt),-threshall.MTR_synt);
-    spm_progress_bar('Set',p);
+%     % calculate synthetic reference signal at trmt and famt using the
+%     % rational approximation of the Ernst equation
+%     S_ref      = A_forMT .* fa_mtw * TR_mtw ./ (T1_forMT+eps) ./ ...
+%                 ( TR_mtw ./ (T1_forMT+eps) +  fa_mtw * fa_mtw / 2 );
+%     % MTR_synt = (S_ref ./ MTw - 1) * 100;
+%     MTR_synt   = (S_ref-MTw) ./ (S_ref+eps) * 100;
+%     tmp      = MTR_synt;
+%     Nmap(4).dat(:,:,p) = max(min(tmp,threshall.MTR_synt),-threshall.MTR_synt);
+%     spm_progress_bar('Set',p);
 end
 
 Vtemp = cat(1,VMTw,VPDw,VT1w);
@@ -670,11 +678,11 @@ if qMRIcalc.ACPCrealign
     spm_write_vol(Vsave,MTimage);
 
     MTimage=spm_select('FPList',MPMcalcFolder,'^masked.*_MT.(img|nii)$');    
-    [~,R]=vbq_comm_adjust(1,MTimage,MTimage,8,0,sprintf('%s//canonical//%s.nii',spm('Dir'),'avg152T1')); % Commissure adjustment to find a rigth image center and have good segmentation.
+    [~,R]=hmri_comm_adjust(1,MTimage,MTimage,8,0,sprintf('%s//canonical//%s.nii',spm('Dir'),'avg152T1')); % Commissure adjustment to find a rigth image center and have good segmentation.
     Vsave=spm_vol(MTimage);
     Vsave.descrip=[Vsave.descrip ' - AC-PC realigned'];
     spm_write_vol(Vsave,spm_read_vols(spm_vol(MTimage)));
-    ACPC_images = spm_select('FPList',pth,'^s.*_(MT||A||R1||R2s||R2s_OLS||MTR).(img|nii)$');
+    ACPC_images = spm_select('FPList',pth,'^s.*_(MT||A||PD||R1||R2s||R2s_OLS||MTR).(img|nii)$');
     for i=1:size(ACPC_images,1)
         spm_get_space(deblank(ACPC_images(i,:)),...
             R*spm_get_space(deblank(ACPC_images(i,:))));
@@ -735,8 +743,6 @@ if qMRIcalc.QA
     save(fullfile(pth,'QualityAssessment'),'QA')
 end
 
-
-
 if ~isempty(f_T) && isempty(f_R) && PDproc.PDmap
     PDcalculation(pth,MPMcalcFolder)
 end
@@ -777,7 +783,7 @@ VG = spm_vol(P_ref);
 VF = spm_vol(P_src(1,:));
 %coregflags.sep = [2 1];
 coregflags.sep = [4 2];
-x = spm_coreg(VG,VF, coregflags);
+    x = spm_coreg(VG,VF, coregflags);
 %x  = spm_coreg(mireg(i).VG, mireg(i).VF,flags.estimate);
 M  = inv(spm_matrix(x));
 MM = spm_get_space(deblank(VF.fname));
@@ -805,7 +811,7 @@ WMmask=zeros(size(squeeze(TPMs(:,:,:,1))));
 WMmask(squeeze(TPMs(:,:,:,2))>=PDproc.WMMaskTh)=1;
 
 % Saves masked A map for bias-field correction later
-P=spm_select('FPList',pth ,'^.*_A.(img|nii)$');
+P=spm_select('FPList',pth ,'^.*_PD.(img|nii)$');
 Vsave=spm_vol(P);
 Vsave.fname=fullfile(MPMcalcFolder,['masked_' spm_str_manip(Vsave.fname,'t')]);
 Amap=spm_read_vols(spm_vol(P)).*WBmask;
@@ -813,7 +819,7 @@ Amap(Amap==Inf)=0;Amap(isnan(Amap))=0;Amap(Amap==threshA)=0;
 spm_write_vol(Vsave,Amap);
 
 % Bias-field correction of masked A map
-P=spm_select('FPList',MPMcalcFolder ,'^masked.*_A.(img|nii)$');
+P=spm_select('FPList',MPMcalcFolder ,'^masked.*_PD.(img|nii)$');
 clear matlabbatch
 matlabbatch{1}.spm.spatial.preproc.channel.vols = {P};
 matlabbatch{1}.spm.spatial.preproc.channel.biasreg = PDproc.biasreg;
@@ -822,7 +828,7 @@ matlabbatch{1}.spm.spatial.preproc.channel.write = [1 0];
 % spm_jobman('initcfg');
 spm_jobman('run', matlabbatch);
 
-temp=spm_select('FPList',MPMcalcFolder,'^(c|masked).*\_A');
+temp=spm_select('FPList',MPMcalcFolder,'^(c|masked).*\_PD');
 for counter=1:size(temp,1)
     delete(deblank(temp(counter,:)));
 end
@@ -831,7 +837,7 @@ end
 % the masked A map but we want to apply it on the unmasked A map. We
 % therefore need to explicitly load the bias field and apply it on the original A map instead of just
 % loading the bias-field corrected A map from the previous step
-P=spm_select('FPList',pth ,'^s.*_A.(img|nii)$');
+P=spm_select('FPList',pth ,'^s.*_PD.(img|nii)$');
 bf = fullfile(MPMcalcFolder, spm_select('List', MPMcalcFolder, '^BiasField.*\.(img|nii)$'));
 BF = double(spm_read_vols(spm_vol(bf)));
 Y = BF.*spm_read_vols(spm_vol(P));
@@ -847,7 +853,7 @@ Y(Y>200)=0;
 % MFC: Estimating Error for data set to catch bias field issues:
 errorEstimate = std(A_WM(A_WM > 0))./mean(A_WM(A_WM > 0));
 Vsave=spm_vol(P);
-Vsave.descrip = ['A Map.  Error Estimate: ', num2str(errorEstimate)];
+Vsave.descrip=[Vsave.descrip '. Error Estimate: ', num2str(errorEstimate)];
 if errorEstimate > 0.06
     % MFC: Testing on 15 subjects showed 6% is a good cut-off:
     warning(['Error estimate is high: ', Vsave.fname]);

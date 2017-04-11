@@ -535,7 +535,7 @@ for p = 1:dm(3)
     else
         f_T = [];
     end
-    if ~isempty(Vreceiv)&~isempty(Vtrans)
+    if ~isempty(Vreceiv) && ~isempty(Vtrans)
         f_R = spm_slice_vol(Vreceiv,Vreceiv.mat\M,dm(1:2),3)/100; % divide by 100, since p.u. maps
         f_R = f_R .* f_T; % f_R is only the sensitivity map and not the true receive bias map, therefore needs to be multiplied by transmit bias (B1+ approx. B1- map)
     else
@@ -545,7 +545,7 @@ for p = 1:dm(3)
     % Standard magnetization transfer ratio (MTR) in percent units [p.u.]
     % only if  trpd = trmt and fapd = fmt
     % else calculate "synthetic MTR using A and T1 (see below)
-    if numel(Nmap)>3&&(TR_mtw == TR_pdw) && (fa_mtw == fa_pdw),
+    if numel(Nmap)>3 && (TR_mtw == TR_pdw) && (fa_mtw == fa_pdw),
         MTR = (PDw-MTw)./(PDw+eps) * 100;
         % write MTR image
         Nmap(4).dat(:,:,p) = max(min(MTR,threshall.MTR),-threshall.MTR);
@@ -783,7 +783,7 @@ VG = spm_vol(P_ref);
 VF = spm_vol(P_src(1,:));
 %coregflags.sep = [2 1];
 coregflags.sep = [4 2];
-x = spm_coreg(VG,VF, coregflags);
+    x = spm_coreg(VG,VF, coregflags);
 %x  = spm_coreg(mireg(i).VG, mireg(i).VF,flags.estimate);
 M  = inv(spm_matrix(x));
 MM = spm_get_space(deblank(VF.fname));

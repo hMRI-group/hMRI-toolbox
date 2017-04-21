@@ -87,6 +87,15 @@ nFieldFound = 0;
 
 switch inParName
     case 'RepetitionTime' % [ms]
+            [nFieldFound, fieldList] = find_field_name(mstruc, 'RepetitionTime', 'caseSens','sensitive','matchType','exact');
+            [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
+            if nFieldFound
+                cRes = 1;
+                parLocation{cRes} = nam{1};
+                parValue{cRes} = val{1};
+            end
+            
+    case 'RepetitionTimes' % [ms]
         [nFieldFound, fieldList] = find_field_name(mstruc, 'alTR', 'caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
@@ -101,16 +110,19 @@ switch inParName
             % TRs used for a given sequence (e.g. AFI). If not available
             % (GE or Philips), let's get the standard DICOM field
             % RepetitionTime (in ms):
-            [nFieldFound, fieldList] = find_field_name(mstruc, 'RepetitionTime', 'caseSens','sensitive','matchType','exact');
-            [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
-            if nFieldFound
-                cRes = 1;
-                parLocation{cRes} = nam{1};
-                parValue{cRes} = val{1};
-            end
+            [parValue, parLocation] = get_metadata_val(mstruc, 'RepetitionTime');
         end
         
     case 'EchoTime' % [ms]
+        [nFieldFound, fieldList] = find_field_name(mstruc, 'EchoTime', 'caseSens','sensitive','matchType','exact');
+        [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
+        if nFieldFound
+            cRes = 1;
+            parLocation{cRes} = nam{1};
+            parValue{cRes} = val{1};
+        end
+        
+    case 'EchoTimes' % [ms]
         [nFieldFound, fieldList] = find_field_name(mstruc, 'alTE', 'caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
@@ -125,13 +137,7 @@ switch inParName
             % TEs used for a given sequence (e.g. multiecho sequences). If
             % not available (GE or Philips), let's get the standard DICOM
             % field EchoTime (in ms):
-            [nFieldFound, fieldList] = find_field_name(mstruc, 'EchoTime', 'caseSens','sensitive','matchType','exact');
-            [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
-            if nFieldFound
-                cRes = 1;
-                parLocation{cRes} = nam{1};
-                parValue{cRes} = val{1};
-            end
+            [parValue, parLocation] = get_metadata_val(mstruc, 'EchoTime');
         end
         
     case 'FlipAngle' % [deg]

@@ -62,18 +62,18 @@ b1_type.help    = {
     'brief description of each type. Note that all types may not be ', ...
     'available at your site.']...
     [' - i3D_EPI: B1map obtained from spin echo (SE) and stimulated echo ', ...
-    '(STE) images recorded with a 3D EPI scheme [Jiru F, Klose U, ', ...
-    'Magn Reson Med 2006;56:1375–1379].'] ...
+    '(STE) images recorded with a 3D EPI scheme [Lutti A et al., ', ...
+    'PLoS One 2012;7(3):e32379].'] ...
     [' - i3D_AFI: 3D actual flip angle imaging (AFI) method based on [Yarnykh VL, ', ...
-    'Magn Reson Med 2007;57:192–200].'] ...
-    [' - tfl_b1_map'] ...
-    [' - rf_map'] ...
+    'Magn Reson Med 2007;57:192-200].'] ...
+    [' - tfl_b1_map: Siemens product sequence for B1 mapping based on turbo FLASH.'] ...
+    [' - rf_map: Siemens product sequence for B1 mapping based on SE/STE.'] ...
     [' - no_B1_correction: if selected no B1 bias correction will be applied.'] ...
     [' - pre_processed_B1: B1 map pre-calculated out of the hMRI toolbox, must ', ...
     'be expressed in percent units of the nominal flip angle value (percent bias).'] ...
     [' - UNICORT: Use this option when B1 maps not available. ', ...
-    'Bias field estimation and correction will be performed', ...
-    'using the approach described in [Weiskopf et al., NeuroImage 2011; 54:2116–2124].']
+    'Bias field estimation and correction will be performed ', ...
+    'using the approach described in [Weiskopf et al., NeuroImage 2011; 54:2116-2124].']
     };
 b1_type.labels  = b1_choices;
 b1_type.values = b1_choices;
@@ -88,8 +88,8 @@ braws2.help     = {
     'Select B1 images if available.' ...
     ' - i3D_EPI: select all pairs of SE/STE images.' ...
     ' - i3D_AFI: select a TR2/TR1 pair of magnitude images.' ...
-    ' - tfl_b1_map' ...
-    ' - rf_map' ...
+    ' - tfl_b1_map: select the pair of anatomical and precalcuated B1 map.' ...
+    ' - rf_map: select the pair of anatomical and precalcuated B1 map.' ...
     ' - no_B1_correction: no B1 image required.' ...
     [' - pre_processed_B1: select one unprocessed magnitude image from ', ...
     'the B1map data set (for coregistration with the multiparameter maps) and ', ...
@@ -121,6 +121,93 @@ braws.tag       = 'raw_fld';
 braws.name      = 'Raw B0 & B1 data';
 braws.help      = {'Input all B0 & B1 images required to create the multiparameter maps.'};
 braws.val       = {braws1 braws2};
+% ---------------------------------------------------------------------
+% vols Volumes
+% ---------------------------------------------------------------------
+sraws3MT          = cfg_files;
+sraws3MT.tag      = 'raw_sens_MT';
+sraws3MT.name     = 'MT coil sensitivity';
+sraws3MT.help     = {'Input low resolution images for MT', ...
+    'acquired with the head and body coil in this order.'};
+sraws3MT.filter   = 'image';
+sraws3MT.ufilter  = '.*';
+sraws3MT.num      = [2 2];
+sraws3MT.val      = {''};
+% ---------------------------------------------------------------------
+% vols Volumes
+% ---------------------------------------------------------------------
+sraws3PD          = cfg_files;
+sraws3PD.tag      = 'raw_sens_PD';
+sraws3PD.name     = 'PD coil sensitivity';
+sraws3PD.help     = {'Input low resolution images for PD', ...
+    'acquired with the head and body coil in this order.'};
+sraws3PD.filter   = 'image';
+sraws3PD.ufilter  = '.*';
+sraws3PD.num      = [2 2];
+sraws3PD.val      = {''};
+% ---------------------------------------------------------------------
+% vols Volumes
+% ---------------------------------------------------------------------
+sraws3T1          = cfg_files;
+sraws3T1.tag      = 'raw_sens_T1';
+sraws3T1.name     = 'T1 coil sensitivity';
+sraws3T1.help     = {'Input low resolution images for T1', ...
+    'acquired with the head and body coil in this order.'};
+sraws3T1.filter   = 'image';
+sraws3T1.ufilter  = '.*';
+sraws3T1.num      = [2 2];
+sraws3T1.val      = {''};
+% ---------------------------------------------------------------------
+% vols Volumes
+% ---------------------------------------------------------------------
+sraws3           = cfg_branch;
+sraws3.tag       = 'raw_sens3';
+sraws3.name      = 'Raw low res. coil sensitivity data per modality';
+sraws3.help      = {'Input low resolution images for each modality', ...
+    'acquired with the head and body coil in this order.'};
+sraws3.val       = {sraws3MT sraws3PD sraws3T1};
+% ---------------------------------------------------------------------
+% x0 No RF sensitivity
+% ---------------------------------------------------------------------
+x0         = cfg_menu;
+x0.tag     = 'RF_none';
+x0.name    = 'No RF sensitivity';
+x0.help    = {'Choose this option, if no RF sensitivity was acquired.'};
+x0.labels = {'Yes'};
+x0.values = {1};
+x0.val = {1};
+% ---------------------------------------------------------------------
+% x1 RF sensitivity acquired once 
+% ---------------------------------------------------------------------
+x1         = cfg_files;
+x1.tag     = 'RF_once';
+x1.name    = 'RF sensitivity acquired once';
+%x1.help    = {'Choose this option, if RF sensitivity was acquired once per subject.'};
+x1.help      = {'Input low resolution images for RF sensitivity', ...
+    'acquired with the head and body coil in this order.'};
+x1.filter   = 'image';
+x1.ufilter  = '.*';
+x1.num      = [2 2];
+x1.val      = {''};
+% ---------------------------------------------------------------------
+% x3 RF sensitivity acquired for each modality 
+% ---------------------------------------------------------------------
+x3         = cfg_branch;
+x3.tag     = 'RF_MPM';
+x3.name    = 'RF sensitivity acquired for each modality';
+x3.help    = {'Choose this option, if RF sensitivity was acquired for each modality,',...
+    'i.e. for T1-, PD- and MT-weighted images.'};
+x3.val  = {sraws3};
+% ---------------------------------------------------------------------
+% sensitivity Sensitivity choice
+% ---------------------------------------------------------------------
+sensitivity         = cfg_choice;
+sensitivity.tag     = 'sensitivity';
+sensitivity.name    = 'RF sensitivity';
+sensitivity.help    = {'Specify the kind of RF sensitivity acquired. ',...
+    'Could be none, once or per image modality.'};
+sensitivity.values  = {x0 x1 x3};
+sensitivity.val = {x0};
 % ---------------------------------------------------------------------
 % subj Subject
 % ---------------------------------------------------------------------
@@ -195,7 +282,7 @@ create_mpr.tag     = 'create_mpr';
 create_mpr.name    = 'Multiparameter maps';
 raws.val        = {raws1 raws2 raws3 };
 braws.val       = {braws1 braws2};
-subj.val        = {output b1_type braws raws};
+subj.val        = {output sensitivity b1_type braws raws};
 sdata.val       = {subj };
 sdata.values    = {subj };
 sdata_multi.val  = { output unlimit(braws) unlimit(raws) };

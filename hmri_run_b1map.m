@@ -47,16 +47,20 @@ try % if existing metadata only
         b1map_defs.b1acq.beta = get_metadata_val(hdr{1},'B1mapNominalFAValues');
         b1map_defs.b1acq.TM = get_metadata_val(hdr{1},'B1mapMixingTime');
         b1map_defs.b1acq.nPEacq = get_metadata_val(hdr{1},'MeasuredPELines');%hdr{1}.acqpar.Columns/hmri_get_defaults('b1map.i3D_EPI.b1acq.phaseGRAPPA');
-        if hdr{1}.acqpar.PixelBandwidth == 2300 % not ideal...
-            b1map_defs.b1acq.EchoSpacing = 540e-3;
-        elseif hdr{1}.acqpar.PixelBandwidth == 3600
-            b1map_defs.b1acq.EchoSpacing = 330e-3;
+        % The echo spacing is not always available in the header, use the
+        % BandwidthPerPixel to determine the ES. Not ideal at all, but...
+        PixelBandwidth = get_metadata_val(hdr{1},'BandwidthPerPixelRO');
+        switch PixelBandwidth 
+            case 2300
+                b1map_defs.b1acq.EchoSpacing = 540e-3;
+            case 3600
+                b1map_defs.b1acq.EchoSpacing = 330e-3;
+            case 3550 % Allegra data
+                b1map_defs.b1acq.EchoSpacing = 330e-3;
         end
         b1map_defs.b1acq.blipDIR = get_metadata_val(hdr{1},'PhaseEncodingDirectionSign');
         b1map_defs.b1proc = hmri_get_defaults('b1map.i3D_EPI.b1proc');
-        %         b1map_defs.T1=hmri_get_defaults(['b1map.',b1_prot,'.b1proc' '.T1']);
-        %         b1map_defs.Nonominalvalues=hmri_get_defaults(['b1map.',b1_prot,'.b1proc' '.Nonominalvalues']);
-        %         b1map_defs.eps=hmri_get_defaults(['b1map.',b1_prot,'.b1proc' '.eps']);
+        b1map_defs.b0acq = ... to be continued
     elseif ~isempty(strfind(ProtocolName,'nw_b1map'))
         b1map_defs.data = 'AFI';
         b1map_defs.avail = true;

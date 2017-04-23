@@ -10,7 +10,7 @@ if nargin < 4
   error('Enter field map images, distorted anatomical image, images to unwarp and defaults');
 end
 
-IP = hmri_FieldMap('Initialise'); % Gets default params from pm_defaults
+IP = FieldMap('Initialise'); % Gets default params from pm_defaults
 
 % Define parameters for fieldmap creation
 
@@ -141,14 +141,14 @@ end
 % Write out field map
 % Outputs -> fpm_NAME-OF-FIRST-INPUT-IMAGE.img
 %----------------------------------------------------------------------  
-   fmap_img{1}=hmri_FieldMap('Write',IP.P{1},IP.fm.fpm,'fpm_',64,'Smoothed phase map');
+   fmap_img{1}=FieldMap('Write',IP.P{1},IP.fm.fpm,'fpm_',64,'Smoothed phase map');
 end
 %----------------------------------------------------------------------
 % Convert Hz to voxels and write voxel displacement map 
 % Outputs -> vdm_NAME-OF-FIRST-INPUT-IMAGE.img
 %----------------------------------------------------------------------
 
-[IP.vdm, IP.vdmP]=hmri_FieldMap('FM2VDM',IP);
+[IP.vdm, IP.vdmP]=FieldMap('FM2VDM',IP);
 
 %----------------------------------------------------------------------
 % Match voxel displacement map to distorted anatomical image
@@ -163,12 +163,12 @@ end
 IP.epiP = spm_vol(anat_img{1}(1,:));
 if isfield(pm_defs, 'match_vdm')
    if pm_defs.match_vdm
-          IP.vdmP = hmri_FieldMap('MatchVDMxy',IP);
+          IP.vdmP = FieldMap('MatchVDMxy',IP);
    end
 end
-IP.uepiP = hmri_FieldMap('UnwarpEPIxy',IP);
+IP.uepiP = FieldMap('UnwarpEPIxy',IP);
 unwarp_info=sprintf('Unwarped image:echo time difference=%2.2fms, EPI readout time=%2.2fms, Jacobian=%d',IP.uflags.etd, IP.tert,IP.ajm);    
-unwarp_img{1}=hmri_FieldMap('Write',IP.epiP,IP.uepiP.dat,'u',IP.epiP.dt(1),unwarp_info);
+unwarp_img{1}=FieldMap('Write',IP.epiP,IP.uepiP.dat,'u',IP.epiP.dt(1),unwarp_info);
 %----------------------------------------------------------------------
 % Unwarp the other images, it is assumed they are in same space as
 % anatomical
@@ -176,7 +176,7 @@ unwarp_img{1}=hmri_FieldMap('Write',IP.epiP,IP.uepiP.dat,'u',IP.epiP.dt(1),unwar
 for filenum=1:numel(other_img)
     
    IP.epiP = spm_vol(other_img{filenum}(1,:));
-   IP.uepiP = hmri_FieldMap('UnwarpEPIxy',IP);
+   IP.uepiP = FieldMap('UnwarpEPIxy',IP);
     
    %----------------------------------------------------------------------
    % Write unwarped EPI 
@@ -192,7 +192,7 @@ for filenum=1:numel(other_img)
    % FOV restrictions: in this case, the voxels in the B1 (and SD) maps
    % outside the fieldmap FOV are set to 0
    NewMat(NewMat==0)=OrigMat(NewMat==0);IP.uepiP.dat=NewMat;
-   unwarp_img{1+filenum}=hmri_FieldMap('Write',IP.epiP,IP.uepiP.dat,'u',IP.epiP.dt(1),unwarp_info);
+   unwarp_img{1+filenum}=FieldMap('Write',IP.epiP,IP.uepiP.dat,'u',IP.epiP.dt(1),unwarp_info);
    fmap_img{2}=IP.vdmP;
    %IPcell{1}=IP;
 

@@ -87,15 +87,6 @@ nFieldFound = 0;
 
 switch inParName
     case 'RepetitionTime' % [ms]
-            [nFieldFound, fieldList] = find_field_name(mstruc, 'RepetitionTime', 'caseSens','sensitive','matchType','exact');
-            [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
-            if nFieldFound
-                cRes = 1;
-                parLocation{cRes} = nam{1};
-                parValue{cRes} = val{1};
-            end
-            
-    case 'RepetitionTimes' % [ms]
         [nFieldFound, fieldList] = find_field_name(mstruc, 'alTR', 'caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
@@ -110,19 +101,16 @@ switch inParName
             % TRs used for a given sequence (e.g. AFI). If not available
             % (GE or Philips), let's get the standard DICOM field
             % RepetitionTime (in ms):
-            [parValue, parLocation] = get_metadata_val(mstruc, 'RepetitionTime');
+            [nFieldFound, fieldList] = find_field_name(mstruc, 'RepetitionTime', 'caseSens','sensitive','matchType','exact');
+            [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
+            if nFieldFound
+                cRes = 1;
+                parLocation{cRes} = nam{1};
+                parValue{cRes} = val{1};
+            end
         end
         
     case 'EchoTime' % [ms]
-        [nFieldFound, fieldList] = find_field_name(mstruc, 'EchoTime', 'caseSens','sensitive','matchType','exact');
-        [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
-        if nFieldFound
-            cRes = 1;
-            parLocation{cRes} = nam{1};
-            parValue{cRes} = val{1};
-        end
-        
-    case 'EchoTimes' % [ms]
         [nFieldFound, fieldList] = find_field_name(mstruc, 'alTE', 'caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
@@ -137,7 +125,13 @@ switch inParName
             % TEs used for a given sequence (e.g. multiecho sequences). If
             % not available (GE or Philips), let's get the standard DICOM
             % field EchoTime (in ms):
-            [parValue, parLocation] = get_metadata_val(mstruc, 'EchoTime');
+            [nFieldFound, fieldList] = find_field_name(mstruc, 'EchoTime', 'caseSens','sensitive','matchType','exact');
+            [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
+            if nFieldFound
+                cRes = 1;
+                parLocation{cRes} = nam{1};
+                parValue{cRes} = val{1};
+            end
         end
         
     case 'FlipAngle' % [deg]
@@ -549,13 +543,19 @@ switch inParName
     case 'B1mapNominalFAValues' % [deg] for al_B1mapping - version dependent!!
         valSEQ = get_metadata_val(mstruc, 'SequenceName');
         valPROT = get_metadata_val(mstruc, 'ProtocolName');
-        [nFieldFound, fieldList] = find_field_name(mstruc, 'sWipMemBlock','caseSens','sensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc, 'sWipMemBlock','caseSens','insensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         if nFieldFound
             cRes = 1;
-            switch valSEQ
-                case 'B1v2d3d2'
+            switch lower(valSEQ)
+                case 'b1v2d3d2' % VD13 Prisma data
                     % wip parameters are sorted as follows:
+                    % alFree: [Tmixing DurationPer5Deg BWT_SE/STE_factor CursherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
+                    % adFree: [RefocCorr ScaleSGrad MaxRefocAngle DecRefocAngle FAforReferScans RFSpoilIncr]
+                    parLocation{cRes} = [nam{1} '.adFree(3:4)'];
+                    parValue{cRes} = val{1}.adFree(3):-val{1}.adFree(4):0;
+                case 'b1epi4a3d2' % VA35 Allegra data
+                    % wip parameters are sorted as follows (not right, need to be checked):
                     % alFree: [Tmixing DurationPer5Deg BWT_SE/STE_factor CursherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
                     % adFree: [RefocCorr ScaleSGrad MaxRefocAngle DecRefocAngle FAforReferScans RFSpoilIncr]
                     parLocation{cRes} = [nam{1} '.adFree(3:4)'];
@@ -597,17 +597,23 @@ switch inParName
     case 'B1mapMixingTime' % [ms] for al_B1mapping - version dependent!!
         valSEQ = get_metadata_val(mstruc, 'SequenceName');
         valPROT = get_metadata_val(mstruc, 'ProtocolName');
-        [nFieldFound, fieldList] = find_field_name(mstruc, 'sWipMemBlock','caseSens','sensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc, 'sWipMemBlock','caseSens','insensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         if nFieldFound
             cRes = 1;
-            switch valSEQ
+            switch lower(valSEQ)
                 case 'B1v2d3d2'
                     % wip parameters are sorted as follows:
                     % alFree: [Tmixing DurationPer5Deg BWT_SE/STE_factor CursherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
                     % adFree: [RefocCorr ScaleSGrad MaxRefocAngle DecRefocAngle FAforReferScans RFSpoilIncr]
                     parLocation{cRes} = [nam{1} '.alFree(1)'];
                     parValue{cRes} = val{1}.alFree(1)*0.001; % in ms
+                case 'b1epi4a3d2' % VA35 Allegra data
+                    % wip parameters are sorted as follows (not right, need to be checked):
+                    % alFree: [Tmixing DurationPer5Deg BWT_SE/STE_factor CursherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
+                    % adFree: [RefocCorr ScaleSGrad MaxRefocAngle DecRefocAngle FAforReferScans RFSpoilIncr]
+                    parLocation{cRes} = [nam{1} '.alFree(2)'];
+                    parValue{cRes} = val{1}.alFree(2)*0.001; % in ms
                 otherwise
                     warning('B1mapping version unknown (%s / %s). Give up guessing TM value.', valSEQ, valPROT);
             end

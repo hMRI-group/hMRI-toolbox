@@ -1,17 +1,15 @@
 function VO = hmri_pm_segment(InputImage)
 
-% This function was developed to substitute the function pm_segment used in
-% FieldMap toolbox : ...\spm12b\toolbox\FieldMap\pm_segment.m
-% 
-%This functions replace line:
-% VO=pm_segment(P.fname,flags.template,seg_flags) in line 48 of function 'pm_brain_mask.m'
+% To segment the brain and extract a brain mask in the hMRI Toolbox
+% This function replaces pm_segment used in the FieldMap toolbox
+% (SPM12/toolbox/FieldMap). Used in hmri_pm_brain_mask.
 %
-% It will be:  VO = pm_segment_lren(P.fname). It could be improved
-% customizing the segmentation parameters. In this case the default values are taken.
+% FORMAT: VO = hmri_pm_segment(P.fname).
 %
-%% Lester Melie-Garcia
-% LREN, CHUV. 
-% Lausanne, October 2nd, 2014
+%========================================================================== 
+% Written by Lester Melie-Garcia
+% LREN, CHUV, Lausanne, October 2014
+%========================================================================== 
 
 [ImagePath,ImageName,ImageExt] = fileparts(InputImage);
 Vimg = spm_vol(InputImage);

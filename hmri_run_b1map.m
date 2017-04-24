@@ -60,7 +60,7 @@ try % if existing metadata only
         end
         b1map_defs.b1acq.blipDIR = get_metadata_val(hdr{1},'PhaseEncodingDirectionSign');
         b1map_defs.b1proc = hmri_get_defaults('b1map.i3D_EPI.b1proc');
-        b1map_defs.b0acq = ... to be continued
+        %b1map_defs.b0acq = ... to be continued
     elseif ~isempty(strfind(ProtocolName,'nw_b1map'))
         b1map_defs.data = 'AFI';
         b1map_defs.avail = true;

@@ -1,6 +1,6 @@
 function varargout = hmri_FieldMap(varargin)
 % This is a fraction of the FieldMap script (case 'createfieldmap')
-% rewritten for the hmri toolbox in order to make use of the original
+% rewritten for the hMRI toolbox in order to make use of the original
 % SPM12's FieldMap script wherever no modification is required.
 %
 % Implementation following FieldMap version:

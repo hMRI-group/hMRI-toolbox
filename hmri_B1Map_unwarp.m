@@ -12,6 +12,27 @@ end
 
 IP = FieldMap('Initialise'); % Gets default params from pm_defaults
 
+
+
+
+pm_defs = pm_defaults;
+pm_defs.SHORT_ECHO_TIME = b1map_eff.b0acq.shortTE;
+pm_defs.LONG_ECHO_TIME = b1map_eff.b0acq.shortTE;
+pm_defs.blipdir = b1map_eff.b1acq.blipDIR;
+pm_defs.TOTAL_EPI_READOUT_TIME = b1map_eff.b1acq.tert;
+pm_defs.MASKBRAIN = b1map_eff.b1proc.MASKBRAIN;
+pm_defs.STDTHRESH = b1map_eff.b1proc.SDTHRESH;
+pm_defs.HZTHRESH = b1map_eff.b1proc.HZTHRESH;
+pm_defs.ERODEB1 = b1map_eff.b1proc.ERODEB1;
+pm_defs.PADB1 = b1map_eff.b1proc.PADB1 ;
+pm_defs.B1FWHM = b1map_eff.b1proc.B1FWHM; %For smoothing. FWHM in mm - i.e. it is divided by voxel resolution to get FWHM in voxels
+pm_defs.match_vdm = b1map_eff.b1proc.match_vdm;
+% pm_defs.pedir - WARNING: assumed to be R>>L !!
+
+
+
+
+
 % Define parameters for fieldmap creation
 
 if ~isfield(pm_defs,'et')

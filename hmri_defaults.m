@@ -22,11 +22,11 @@ function hmri_defaults
 %%
 global hmri_def
 
-%% %%%%%%%%%%%%%%%%%%%%% Global parameters %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% ======================== Global parameters =============================
 %% Specifying the lab
 hmri_def.centre = 'cbs' ; % can be 'fil', 'lren', 'crc', 'sciz' or 'cbs'
 
-%% %%%%%%%%%%%%%%%%% Common processing parameters %%%%%%%%%%%%%%%%%%%%%
+%% ===================== Common processing parameters =====================
 % These parameters are either parameters that are fixed for all sites or
 % recommended values. They can also be changed in a site-specific way at
 % run-time.
@@ -52,8 +52,9 @@ hmri_def.unicort.thr = 2; % TL: 2 for sciz & cbs with SIEMENS 3T Skyra fit
 %% RF sensitivity processing
 hmri_def.RFsens.smooth_kernel = 12;
 
-hmri_def.qMRI_maps.QA          = 1;%creates a matlab structure containing markers of data quality
-hmri_def.qMRI_maps.ACPCrealign = 1;%realigns qMRI maps to MNI
+%% quantitative maps: quality evaluation and realignment to MNI
+hmri_def.qMRI_maps.QA          = 1; % creates a matlab structure containing markers of data quality
+hmri_def.qMRI_maps.ACPCrealign = 1; % realigns qMRI maps to MNI
 
 %% Threshold values for saving of the qMRI maps
 hmri_def.qMRI_maps_thresh.R1       = 2000;
@@ -64,7 +65,7 @@ hmri_def.qMRI_maps_thresh.MTR_synt = 50;
 hmri_def.qMRI_maps_thresh.MT       = 15; % TL: 15 for cbs & sciz with SIEMENS 3T Skyra
                                          % original: 5 
 
-%% MPM acquisition parameters and RF spoiling correction parameters
+%% === MPM acquisition parameters and RF spoiling correction parameters ===
 % these value are initialised with defaults (v2k protocol - Prisma) for the
 % first pass through this script only. They're updated at run-time with
 % actual acquisition values (see hmri_MTProt.m).
@@ -85,11 +86,10 @@ hmri_def.MPMacq.fa_t1w = 21;     % <-
 hmri_def.MPMacq.fa_pdw = 6;      % <-
 hmri_def.MPMacq.tag    = 'v2k';
 
-% Defining the MPMacq paramters distinguishing the different protocols
+%% Defining the MPMacq paramters distinguishing the different protocols
 %---------------------------------------------------------------------
 % Using the following parameter order: [TR_pdw TR_t1w fa_pdw fa_t1w]
-% NOTE: 
-% all the tags MUST 
+% NOTE: all tags MUST 
 % - start with a letter, and 
 % - include only letters, numbers or underscore, i.e. NO space.
 % as these names are used to define a structure fieldname with the protocol 
@@ -135,14 +135,14 @@ hmri_def.MPMacq_set.names{7} = 'v3star protocol';
 hmri_def.MPMacq_set.tags{7}  = 'v3star';
 hmri_def.MPMacq_set.vals{7}  = [25 25 6 21];
 
-% Defining the RFCorr parameters for the different protocols
+%% Defining the RFCorr parameters for the different protocols
 %---------------------------------------------------------------------
 % Antoine Lutti 15/01/09
 % Correction parameters used in hmri_MTProt to correct for imperfect RF
 % spoiling when a B1 map is loaded. Correction based on Preibisch and
 % Deichmann's paper MRM 61:125-135 (2009). The values for P2_a and P2_b
 % below were obtained using the code supplied by R. Deichmann with the
-% experimentalparameters used to get our PDw and T1w images. Correction
+% experimental parameters used to get our PDw and T1w images. Correction
 % parameters were calculated for the following parameter sets using
 % T2 = 64 ms at 3T.
 %
@@ -185,18 +185,16 @@ hmri_def.rfcorr.v3star.RFCorr = true;
 hmri_def.rfcorr.Unknown.tag = 'Unknown protocol. No spoiling correction defined.';
 hmri_def.rfcorr.Unknown.RFCorr = false;
 
-%% B1 mapping processing parameters
-
+%% ================== B1 mapping processing parameters ====================
 % For *each* site, the labels corresponding to the available B1 mapping
 % protocols must be specified so they are listed as available choices in
 % the batch GUI (see tbx_cfg_hmri_crm). Do NOT forget the 'crc'/'fil'/'lren'
 % field in the structure. :-)
 % The parameters of each of these B1map protocol should be specified in
-% their specific substructure, using the protocal name!
+% their specific substructure, using the protocol name!
 % NB: the first label in the list is the default one.
 %
-% NOTE: 
-% all the protocal names MUST 
+% NOTE: all protocol names MUST 
 % - start with a letter, 
 % - include only letters, numbers or underscores, i.e. NO space.
 % as these names are used to define a structure fieldname with the protocol 
@@ -217,7 +215,7 @@ hmri_def.cbs.b1_type.val  = hmri_def.cbs.b1_type.labels(1);
 % List B1 protocols available at the CRC
 % --------------------------------------
 hmri_def.crc.b1_type.labels  = {
-    'i3D_EPI' % added the 'i' before the '3' to start with a letter...
+    'i3D_EPI' 
     'i3D_AFI_v4b_n3_allegra_crc'
     'i3D_AFI_v4b_n5_allegra_crc'
     'no_B1_correction'
@@ -259,40 +257,30 @@ hmri_def.sciz.b1_type.val  = hmri_def.sciz.b1_type.labels(1);
 
 % B1 map protocol parameters
 % --------------------------
-% Each of the B1map protocols, for *all* the sites, are defined in a
-% separate substructure.
-%
-% 'i3D_AFI_v4b_n5_allegra_crc'
-hmri_def.b1map.i3D_AFI_v4b_n5_allegra_crc.data    = 'AFI'; 
-hmri_def.b1map.i3D_AFI_v4b_n5_allegra_crc.avail   = true; 
-hmri_def.b1map.i3D_AFI_v4b_n5_allegra_crc.procreq = true; 
-hmri_def.b1map.i3D_AFI_v4b_n5_allegra_crc.b1proc.TR2TR1ratio = 5;
-hmri_def.b1map.i3D_AFI_v4b_n5_allegra_crc.b1proc.alphanom = 60;
+% Default values that will be used when no metadata are available:
 
-% 'i3D_AFI_v4b_n3_allegra_crc'
-hmri_def.b1map.i3D_AFI_v4b_n3_allegra_crc.data    = 'AFI'; 
-hmri_def.b1map.i3D_AFI_v4b_n3_allegra_crc.avail   = true; 
-hmri_def.b1map.i3D_AFI_v4b_n3_allegra_crc.procreq = true; 
-hmri_def.b1map.i3D_AFI_v4b_n3_allegra_crc.b1proc.TR2TR1ratio = 3;
-hmri_def.b1map.i3D_AFI_v4b_n3_allegra_crc.b1proc.alphanom = 60;
+% 'i3D_AFI'
+hmri_def.b1map.i3D_AFI.b1avail   = true; 
+hmri_def.b1map.i3D_AFI.procreq = true; 
+hmri_def.b1map.i3D_AFI.b1proc.TR2TR1ratio = 5;
+hmri_def.b1map.i3D_AFI.b1proc.alphanom = 60;
 
 % 'pre_processed_B1'
-hmri_def.b1map.pre_processed_B1.avail   = true;
+hmri_def.b1map.pre_processed_B1.b1avail   = true;
 hmri_def.b1map.pre_processed_B1.procreq = false;
 
 % 'no_B1_correction'
+hmri_def.b1map.no_B1_correction.b1avail   = false;
 hmri_def.b1map.no_B1_correction.procreq = false;
-hmri_def.b1map.no_B1_correction.avail   = false;
 
 % UNICORT
 hmri_def.b1map.UNICORT.procreq = true;
-hmri_def.b1map.UNICORT.avail   = false;
+hmri_def.b1map.UNICORT.b1avail   = false;
 
 % 'i3D_EPI'
-hmri_def.b1map.i3D_EPI.data    = 'EPI'; 
-hmri_def.b1map.i3D_EPI.avail   = true; 
+hmri_def.b1map.i3D_EPI.b1avail   = true; 
 hmri_def.b1map.i3D_EPI.procreq = true; 
-
+% b0&b1-processing
 hmri_def.b1map.i3D_EPI.b1proc.T1 = 1192; % ms, strictly valid only at 3T
 hmri_def.b1map.i3D_EPI.b1proc.eps = 0.0001;
 hmri_def.b1map.i3D_EPI.b1proc.Nonominalvalues = 5;
@@ -303,64 +291,23 @@ hmri_def.b1map.i3D_EPI.b1proc.PADB1 = 3 ;
 hmri_def.b1map.i3D_EPI.b1proc.B1FWHM = 8; % For smoothing. FWHM in mm - i.e. it is divided by voxel resolution to get FWHM in voxels
 hmri_def.b1map.i3D_EPI.b1proc.match_vdm = 1;
 hmri_def.b1map.i3D_EPI.b1proc.b0maskbrain = 1;
-
+% b1-acquisition
 hmri_def.b1map.i3D_EPI.b1acq.beta = 115:-5:65;
 hmri_def.b1map.i3D_EPI.b1acq.TM = 31.2;
-hmri_def.b1map.i3D_EPI.b1acq.EchoSpacing = 540e-3;
-hmri_def.b1map.i3D_EPI.b1acq.nPEacq = 24;
+hmri_def.b1map.i3D_EPI.b1acq.tert = 540e-3*24; % EchoSpacing * numberPElines
 hmri_def.b1map.i3D_EPI.b1acq.blipDIR = 1;
-
+% b0-acquisition
 hmri_def.b1map.i3D_EPI.b0acq.shortTE = 10; % ms
 hmri_def.b1map.i3D_EPI.b0acq.longTE = 12.46; % ms
 
-% 13) 'tfl_b1_map'
+% 'tfl_b1_map'
 hmri_def.b1map.tfl_b1_map.data    = 'TFL'; 
 hmri_def.b1map.tfl_b1_map.avail   = true; 
 hmri_def.b1map.tfl_b1_map.procreq = true; 
-% 14) 'rf_map'
+
+% 'rf_map'
 hmri_def.b1map.rf_map.data    = 'RFmap'; 
 hmri_def.b1map.rf_map.avail   = true; 
 hmri_def.b1map.rf_map.procreq = true; 
 
 end
-
-%% %%%%%%%%%%%%%%%%% Centre specific parameters %%%%%%%%%%%%%%%%%%%%%%%
-%
-% Note the centre specific defaults structure
-% - they should all have the *same* organization, otherwise crashes could
-%    occure when trying to access the default value in the batch.
-% - they should NOT have anything similar with the 'global' defaults.
-%   For example do NOT define "hmri_def.TE = 20" and "hmri_def.fil.TE = 30"
-%   fields as the latter would NEVER be used
-
-%% Specific parameters, CRC
-% Examples:
-% hmri_def.crc.TR  = 3;  % in sec
-% hmri_def.crc.TE1 = 50; % in ms
-% hmri_def.crc.TE2 = 80; % in ms
-% hmri_def.crc.cset1.val1 = 12; % in ms
-% hmri_def.crc.cset1.val2 = 34; % in ms
-% hmri_def.crc.cset2.val1 = 56; % in ms
-% hmri_def.crc.cset2.val2 = 78; % in ms
-
-
-%% Specific parameters, FIL
-% % Examples:
-% hmri_def.fil.TR  = 2;  % in sec
-% hmri_def.fil.TE1 = 30; % in ms
-% hmri_def.fil.TE2 = 60; % in ms
-% hmri_def.fil.cset1.val1 = 21; % in ms
-% hmri_def.fil.cset1.val2 = 43; % in ms
-% hmri_def.fil.cset2.val1 = 65; % in ms
-% hmri_def.fil.cset2.val2 = 87; % in ms
-
-
-%% Specific parameters, LReN
-% % Examples:
-% hmri_def.lren.TR  = 2.5;  % in sec
-% hmri_def.lren.TE1 = 40; % in ms
-% hmri_def.lren.TE2 = 70; % in ms
-% hmri_def.lren.cset1.val1 = 13; % in ms
-% hmri_def.lren.cset1.val2 = 24; % in ms
-% hmri_def.lren.cset2.val1 = 47; % in ms
-% hmri_def.lren.cset2.val2 = 68; % in ms

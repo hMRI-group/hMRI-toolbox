@@ -1,5 +1,4 @@
 function VO = hmri_pm_segment(InputImage)
-
 % To segment the brain and extract a brain mask in the hMRI Toolbox
 % This function replaces pm_segment used in the FieldMap toolbox
 % (SPM12/toolbox/FieldMap). Used in hmri_pm_brain_mask.
@@ -37,7 +36,7 @@ VO(3).dat = spm_read_vols(spm_vol(CSFImage));
 
 delete(GMImage); delete(WMImage); delete(CSFImage);
 
-%% Parameters for spm_preproc.m. We are taking in this case the default parameters
+% % Parameters for spm_preproc.m. We are taking in this case the default parameters
 %  opts - options
 %  opts.tpm      - n tissue probability images for each class
 %  opts.ngaus    - number of Gaussians per class (n+1 classes)
@@ -49,7 +48,7 @@ delete(GMImage); delete(WMImage); delete(CSFImage);
 %  opts.fudge    - a fudge factor
 %  opts.msk      - unused
 
-%% Parameters coming from old pm_segment
+% % Parameters coming from old pm_segment
 %  flags.fwhm=5;
 %  flags.nerode=2;
 %  flags.ndilate=4;

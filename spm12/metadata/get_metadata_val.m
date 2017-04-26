@@ -1,5 +1,5 @@
 function [parValue, parLocation] = get_metadata_val(varargin)
-% This is hmri_get_metadata_val, part of the hMRI-Toolbox
+% This is get_metadata_val, part of the metadata library
 %
 % PURPOSE
 % To retrieve parameter values (mainly acquisition parameters, but this can
@@ -12,6 +12,11 @@ function [parValue, parLocation] = get_metadata_val(varargin)
 % a potential match for a given field in the metadata structure. The script
 % can therefore be used to efficiently search any (metadata) structure.
 %
+% IMPORTANT NOTE FOR FUTURE DEVELOPMENTS
+% Many cases below are "Siemens-specific", i.e. implemented for Siemens
+% data and only valid with Siemens data. Future development will aim at
+% making these cases valid for all vendors.
+%
 % USAGE AND EXAMPLES
 % [parValue, parLocation] = get_metadata_val(mstruc, inParName)
 % [parValue, parLocation] = get_metadata_val(filenam, inParName)
@@ -22,24 +27,30 @@ function [parValue, parLocation] = get_metadata_val(varargin)
 % - filenam is the name of a file containing or associated with JSON
 %   metadata (see above).
 % - inParName can be an arbitrary string that will be searched in the
-%   metadata structure or one of the following predefined parameter name:
-%    - 'RepetitionTime' TR [ms]
-%    - 'EchoTime' TE(s) [ms]
-%    - 'FlipAngle' [deg]
-%    - 'ProtocolName'
-%    - 'SequenceName'
+%   metadata structure or one of the following predefined parameter name.
+%   Names listed with an '=' are valid for all vendors, while '-' indicate
+%   Siemens-only:
+%    = 'RepetitionTime' TR [ms]
+%    = 'RepetitionTimes' TR [ms]
+%    = 'EchoTime' TE(s) [ms]
+%    = 'EchoTimes' TE(s) [ms]
+%    = 'FlipAngle' [deg]
+%    = 'ProtocolName'
+%    = 'SequenceName'
 %    - 'MT' (1/0 = ON/OFF)
-%    - 'FieldStrength' [T]
-%    - 'Frequency' [Hz]
-%    - 'ScanningSequence'
-%    - 'BandwidthPerPixelRO' [Hz/Px]
+%    = 'FieldStrength' [T]
+%    = 'Frequency' [Hz]
+%    = 'ScanningSequence'
+%    = 'BandwidthPerPixelRO' [Hz/Px]
 %    - 'BandwidthPerPixelPE' [Hz/Px]
 %    - 'PATparameters' [struct]
 %    - 'AccelFactorPE'
 %    - 'AccelFactor3D'
-%    - 'MeasuredPELines'
+%    - 'PELines'
+%    - 'PELinesPF'
+%    - 'PELinesPAT'
 %    - 'PhaseEncodingDirectionPositive' A>>P & R>>L = 1; P>>A & L>>R = 0.
-%    - 'PhaseEncodingDirection' A>>P/P>>A = 'COL' & R>>L/L>>R = 'ROW'
+%    = 'PhaseEncodingDirection' A>>P/P>>A = 'COL' & R>>L/L>>R = 'ROW'
 %    - 'NumberOfMeasurements'
 %    - 'epiReadoutDuration' [ms]
 %    - 'WipParameters' structure containing fields alFree & adFree
@@ -53,13 +64,15 @@ function [parValue, parLocation] = get_metadata_val(varargin)
 %
 % - parValue is the value of the parameter. The type of the output can vary
 %   according to the request (single real/char/complex value, an array, a
-%   cellarray, ...). If parName is not leading to a unique value, a cell
+%   cellarray, ...). If inParName is not leading to a unique value, a cell
 %   array of values is returned, each element corresponding to a different
 %   location in the header structure, as specified by the returned
 %   parLocation.
 % - parLocation is a string (or a cellarray of strings if the solution is
 %   not unique) giving the location of the retrieved value(s) in the
-%   metadata structure.
+%   metadata structure. For example, if 'RepetitionTime' value is found
+%   in the mstruc as mstruc.acqpar.RepetitionTime, parLocation =
+%   'acqpar.RepetitionTime'.
 %
 %==========================================================================
 % Written by Evelyne Balteau - June 2016 - Cyclotron Research Centre
@@ -87,65 +100,62 @@ nFieldFound = 0;
 
 switch inParName
     case 'RepetitionTime' % [ms]
-%         [nFieldFound, fieldList] = find_field_name(mstruc, 'alTR', 'caseSens','sensitive','matchType','exact');
-%         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
-%         % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
-%         % Repetition time is given in us, we want it in ms
-%         if nFieldFound
-%             cRes = 1;
-%             parLocation{cRes} = nam{1};
-%             parValue{cRes} = val{1}*0.001;
-%             else
-%             % alTR is a Siemens-specific field which hold an array of
-%             % values rather than a single value -> preferable if several
-%             % TRs used for a given sequence (e.g. AFI). If not available
-%             % (GE or Philips), let's get the standard DICOM field
-%             % RepetitionTime (in ms):
-            [nFieldFound, fieldList] = find_field_name(mstruc, 'RepetitionTime', 'caseSens','sensitive','matchType','exact');
-            [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
-            if nFieldFound
-                cRes = 1;
-                parLocation{cRes} = nam{1};
-                parValue{cRes} = val{1};
-            end
-            
+        % Valid for all vendors
+        [nFieldFound, fieldList] = find_field_name(mstruc, 'RepetitionTime', 'caseSens','sensitive','matchType','exact');
+        [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
+        if nFieldFound
+            cRes = 1;
+            parLocation{cRes} = nam{1};
+            parValue{cRes} = val{1};
+        end
+        
     case 'RepetitionTimes' % [ms]
+        % Siemens-specific but made valid for all vendors
         [nFieldFound, fieldList] = find_field_name(mstruc, 'alTR', 'caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
-        % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
-        % Repetition time is given in us, we want it in ms
+        % alTR is a Siemens-specific field which holds an array of
+        % values rather than a single value -> convenient when several
+        % TRs used for a given sequence (e.g. AFI). If not available
+        % (GE or Philips), let's get the standard DICOM field
+        % RepetitionTime instead (in ms):
         if nFieldFound
             cRes = 1;
             parLocation{cRes} = nam{1};
             parValue{cRes} = val{1}*0.001;
+        else
+            [parValue, parLocation] = get_metadata_val(mstruc, 'RepetitionTime');
         end
         
     case 'EchoTime' % [ms]
-%         [nFieldFound, fieldList] = find_field_name(mstruc, 'alTE', 'caseSens','sensitive','matchType','exact');
-%         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
-%         % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
-%         % Echo time is given in us, we want it in ms
-%         if nFieldFound
-%             cRes = 1;
-%             parLocation{cRes} = nam{1};
-%             parValue{cRes} = val{1}*0.001;
-%             else
-%             % alTE is a Siemens-specific field which holds an array of TE
-%             % values rather than a single value -> preferable if several
-%             % TEs used for a given sequence (e.g. multiecho sequences). If
-%             % not available (GE or Philips), let's get the standard DICOM
-%             % field EchoTime (in ms):
-            [nFieldFound, fieldList] = find_field_name(mstruc, 'EchoTime', 'caseSens','sensitive','matchType','exact');
-            [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
-            if nFieldFound
-                cRes = 1;
-                parLocation{cRes} = nam{1};
-                parValue{cRes} = val{1};
-            end
+        % Valid for all vendors
+        [nFieldFound, fieldList] = find_field_name(mstruc, 'EchoTime', 'caseSens','sensitive','matchType','exact');
+        [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
+        if nFieldFound
+            cRes = 1;
+            parLocation{cRes} = nam{1};
+            parValue{cRes} = val{1};
+        end
+            
+    case 'EchoTimes' % [ms]
+        % Siemens-specific but made valid for all vendors
+        [nFieldFound, fieldList] = find_field_name(mstruc, 'alTE', 'caseSens','sensitive','matchType','exact');
+        [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
+        % alTE is a Siemens-specific field which holds an array of TE
+        % values rather than a single value -> convenient if several
+        % TEs used for a given sequence (e.g. multiecho sequences). If
+        % not available (GE or Philips), let's get the standard DICOM
+        % field EchoTime instead (in ms):
+        if nFieldFound
+            cRes = 1;
+            parLocation{cRes} = nam{1};
+            parValue{cRes} = val{1}*0.001;
+        else
+            [parValue, parLocation] = get_metadata_val(mstruc, 'EchoTime');
+        end
         
     case 'FlipAngle' % [deg]
+        % Valid for all vendors
         [nFieldFound, fieldList] = find_field_name(mstruc, 'FlipAngle', 'caseSens','sensitive','matchType','exact');
-        %[nFieldFound, fieldList] = find_field_name(mstruc, 'adFlipAngleDegree', 'caseSens','sensitive','matchType','exact'); % equivalent
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
         % Keep only first value if many - no scaling necessary
@@ -156,6 +166,7 @@ switch inParName
         end
         
     case 'ProtocolName'
+        % Valid for all vendors
         [nFieldFound, fieldList] = find_field_name(mstruc, 'ProtocolName','caseSens','sensitive','matchType','exact');
         if nFieldFound==0 % may happen when Anonymous data, no exact match for ProtocolName (tProtocolName instead)
             [nFieldFound, fieldList] = find_field_name(mstruc, 'ProtocolName','caseSens','sensitive');
@@ -170,6 +181,7 @@ switch inParName
         end
         
     case 'SequenceName'
+        % Valid for all vendors
         [nFieldFound, fieldList] = find_field_name(mstruc, 'SequenceName','caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
@@ -181,6 +193,7 @@ switch inParName
         end
         
     case 'MT'
+        % Siemens-specific
         % NB: parameters set to 0 are usually omitted in the DICOM header.
         % Therefore, the absence of the parameter in the header means that
         % no MT pulse is applied. If applied, parameter
@@ -202,34 +215,50 @@ switch inParName
         end
         
     case 'FieldStrength' % [T]
-        % NB: flNominalB0 returns ~2.8936 for a 3T magnet
+        % Valid for all vendors
+        % NB: flNominalB0 returns ~2.8936 for a 3T magnet, but is Siemens
+        % specific so unusable with GE/Philips data. However, since more
+        % accurate, we first try and retrieve it:
         [nFieldFound, fieldList] = find_field_name(mstruc, 'flNominalB0','caseSens','sensitive','matchType','exact');
-        % while MagneticFieldStrength returns 3 for a 3T magnet
-        % [nFieldFound, fieldList] = find_field_name(mstruc, 'MagneticFieldStrength','caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
-        % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
-        % Keep only first value if many
         if nFieldFound
             cRes = 1;
             parLocation{cRes} = nam{1};
             parValue{cRes} = val{1};
+        else
+        % NB: MagneticFieldStrength returns 3 for a 3T magnet
+            [nFieldFound, fieldList] = find_field_name(mstruc, 'MagneticFieldStrength','caseSens','sensitive','matchType','exact');
+            [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
+            if nFieldFound
+                cRes = 1;
+                parLocation{cRes} = nam{1};
+                parValue{cRes} = val{1};
+            end
         end
         
+        
     case 'Frequency' % [Hz]
-        % NB: lFrequency returns 123255074 Hz
+        % Valid for all vendors
+        % NB: lFrequency returns 123255074 Hz and is Siemens-specific,
+        % while ImagingFrequency returns 123.2551 MHz. 
         [nFieldFound, fieldList] = find_field_name(mstruc, 'lFrequency','caseSens','sensitive','matchType','exact');
-        % while ImagingFrequency returns 123.2551 MHz
-        % [nFieldFound, fieldList] = find_field_name(mstruc, 'MagneticFieldStrength','caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
-        % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
-        % Keep only first value if many
         if nFieldFound
             cRes = 1;
             parLocation{cRes} = nam{1};
             parValue{cRes} = val{1};
+        else
+            [nFieldFound, fieldList] = find_field_name(mstruc, 'MagneticFieldStrength','caseSens','sensitive','matchType','exact');
+            [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
+            if nFieldFound
+                cRes = 1;
+                parLocation{cRes} = nam{1};
+                parValue{cRes} = val{1}*1000000;
+            end
         end
         
     case 'ScanningSequence' % e.g. 'EP' for EPI...
+        % Valid for all vendors
         [nFieldFound, fieldList] = find_field_name(mstruc, 'ScanningSequence','caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
@@ -240,7 +269,8 @@ switch inParName
             parValue{cRes} = val{1};
         end
         
-    case 'BandwidthPerPixelRO' % e.g. 'EP' for EPI...
+    case 'BandwidthPerPixelRO' 
+        % Valid for all vendors
         [nFieldFound, fieldList] = find_field_name(mstruc, 'PixelBandwidth','caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
@@ -251,18 +281,55 @@ switch inParName
             parValue{cRes} = val{1};
         end
         
-    case 'BandwidthPerPixelPE' % e.g. 'EP' for EPI...
+    case 'BandwidthPerPixelPE' % Siemens-specific header entry
         [nFieldFound, fieldList] = find_field_name(mstruc, 'BandwidthPerPixelPhaseEncode','caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
-        % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
-        % Keep only first value if many
         if nFieldFound
             cRes = 1;
             parLocation{cRes} = nam{1};
             parValue{cRes} = val{1};
         end
         
-    case 'MeasuredPELines' % taking PAT acceleration factor into account
+    case 'PELinesPF' 
+        % size of the k-space PE dimension, taking into account partial
+        % Fourier but not Parallel acceleration. Valid for all vendors.
+        [nFieldFound, fieldList] = find_field_name(mstruc, 'NumberOfPhaseEncodingSteps','caseSens','sensitive','matchType','exact');
+        [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
+        if nFieldFound
+            cRes = 1;
+            parLocation{cRes} = nam{1};
+            parValue{cRes} = val{1};
+        end
+        
+    case 'PELines' 
+        % size of the k-space PE dimension, without taking into account 
+        % Parallel acceleration nor partial Fourier. 
+        % Siemens-specific towards validation for all vendors...
+        [nFieldFound, fieldList] = find_field_name(mstruc, 'lPhaseEncodingLines','caseSens','sensitive','matchType','exact');
+        [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
+        if nFieldFound
+            cRes = 1;
+            parLocation{cRes} = nam{1};
+            parValue{cRes} = val{1};
+        else
+            % This variation is an attempt for compatibility for all
+            % vendors, but not tested thoroughly.
+            % PEdir = get_metadata_val(mstruc, 'InPlanePhaseEncodingDirection');
+            PEdir = get_metadata_val(mstruc, 'PhaseEncodingDirection');
+            if strcmp(deblank(PEdir),'ROW');
+                fieldName = 'Rows';
+            else
+                fieldName = 'Columns';
+            end
+            [parValue, parLocation] = get_metadata_val(mstruc,fieldName);
+            if ~isempty(parValue);nFieldFound = 1;end
+        end
+                
+    case 'PELinesPAT'
+        % size of the k-space PE dimension, taking into account Parallel 
+        % acceleration but not partial Fourier. Used to calculate the total
+        % EPI Readout duration for FieldMap undistortion.
+        % Siemens-specific.
         [nFieldFound, fieldList] = find_field_name(mstruc, 'lPhaseEncodingLines','caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         [nFieldFoundPAT, fieldListPAT] = find_field_name(mstruc, 'lAccelFactPE','caseSens','sensitive','matchType','exact');
@@ -275,10 +342,11 @@ switch inParName
         end
         
     case 'PhaseEncodingDirectionSign'
+        % Siemens-specific:
         [nFieldFound, fieldList] = find_field_name(mstruc, 'PhaseEncodingDirectionPositive','caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
-        % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
-        % Keep only first value if many
+        % PhaseEncodingDirectionPositive = 0/1 for -1/+1.
+        % Note that null parameters are not saved in the header.
         if nFieldFound
             cRes = 1;
             parLocation{cRes} = nam{1};
@@ -291,6 +359,7 @@ switch inParName
         end
         
     case 'PhaseEncodingDirection' % 'COL' (A>>P/P>>A) or 'ROW' (R>>L/L>>R)
+        % Valid for all vendors
         [nFieldFound, fieldList] = find_field_name(mstruc, 'InPlanePhaseEncodingDirection','caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
@@ -301,7 +370,7 @@ switch inParName
             parValue{cRes} = val{1};
         end
         
-    case 'NumberOfMeasurements'
+    case 'NumberOfMeasurements' % Siemens-specific
         [nFieldFound, fieldList] = find_field_name(mstruc, 'lRepetitions','caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
@@ -318,6 +387,7 @@ switch inParName
         end
         
     case 'PATparameters'
+        % Siemens-specific
         [nFieldFound, fieldList] = find_field_name(mstruc, 'sPat','caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
@@ -329,6 +399,7 @@ switch inParName
         end
         
     case 'AccelFactorPE'
+        % Siemens-specific
         [nFieldFound, fieldList] = find_field_name(mstruc, 'lAccelFactPE','caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
@@ -340,6 +411,7 @@ switch inParName
         end
         
     case 'AccelFactor3D'
+        % Siemens-specific
         [nFieldFound, fieldList] = find_field_name(mstruc, 'lAccelFact3D','caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
@@ -351,7 +423,9 @@ switch inParName
         end
         
     case 'WipParameters'
-        [nFieldFound, fieldList] = find_field_name(mstruc, 'sWipMemBlock','caseSens','sensitive','matchType','exact');
+        % Siemens-specific (NB: search made case insensitive since 
+        % sWiPMemBlock or sWipMemBlock depending on software version)
+        [nFieldFound, fieldList] = find_field_name(mstruc, 'sWipMemBlock','caseSens','insensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
         % Keep only first value if many
@@ -362,6 +436,7 @@ switch inParName
         end
         
     case 'AllDiffusionDirections'
+        % Siemens-specific 
         if get_metadata_val(mstruc,'isDWI')
             [nFieldFound, fieldList] = find_field_name(mstruc, 'sDiffusion','caseSens','sensitive','matchType','exact');
             [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
@@ -411,6 +486,7 @@ switch inParName
         end
         
     case 'AllBValues'
+        % Siemens-specific 
         if get_metadata_val(mstruc,'isDWI')
             [nFieldFound, fieldList] = find_field_name(mstruc, 'alBValue','caseSens','sensitive','matchType','exact');
             [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
@@ -422,6 +498,7 @@ switch inParName
         end
         
     case 'DiffusionDirection'
+        % Siemens-specific 
         if get_metadata_val(mstruc,'isDWI')
             [nFieldFound, fieldList] = find_field_name(mstruc, 'DiffusionGradientDirection','caseSens','sensitive','matchType','exact');
             [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
@@ -440,11 +517,12 @@ switch inParName
                 cRes = 1;
                 parLocation{cRes} = 'B0Image';
                 parValue{cRes} = [0;0;0];
-                warning('Diffusion direction not defined for DWImage %s. Assuming b=0.', inParName);
+                fprintf(1,'WARNING: Diffusion direction not defined for DWImage %s. Assuming b=0.\n', inParName);
             end
         end
         
     case 'BValue'
+        % Siemens-specific 
         if get_metadata_val(mstruc,'isDWI')
             [nFieldFound, fieldList] = find_field_name(mstruc, 'B_value','caseSens','sensitive','matchType','exact');
             [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
@@ -456,6 +534,7 @@ switch inParName
         end
         
     case 'isDWI'
+        % Siemens-specific 
         [nFieldFound, fieldList] = find_field_name(mstruc, 'sDiffusion','caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         if nFieldFound
@@ -473,18 +552,18 @@ switch inParName
             parValue{cRes} = 0;
         end
         if parValue{1}==0
-            warning('This is not a DWI sequence');
+            fprintf(1,'WARNING: This is not a DWI sequence.\n');
         end
         
         
     case 'epiReadoutDuration' % [ms]
+        % Siemens-specific 
         % This information is easily retrievable from standard EPI
         % sequences, where the "BandwidthPerPixelPhaseEncoding" is defined.
-        % For the 3D-EPI B1mapping sequence from Antoine, everything is
-        % hard coded in the sequence and not passed to the MrProt variable,
-        % therefore it is not available in the DICOM header. We have to
-        % work case by case, according to the sequence version and
-        % resolution :/...
+        % For the 3D-EPI B1mapping sequence, everything is hard coded in
+        % the sequence and not passed to the MrProt variable, therefore it
+        % is not available in the DICOM header. We have to work case by
+        % case, relying on sequence version, BWPP and resolution :/...
         
         % first check whether BandwidthPerPixelPhaseEncode is defined
         [nFieldFound, fieldList] = find_field_name(mstruc, 'BandwidthPerPixelPhaseEncode','caseSens','sensitive','matchType','exact');
@@ -496,34 +575,56 @@ switch inParName
             parLocation{cRes} = nam{1};
             parValue{cRes} = 1/val{1}*1000;
         else
-            warning(['BandwidthPerPixelPhaseEncode not defined for the current sequence\n' ...
+            fprintf(1,['WARNING: BandwidthPerPixelPhaseEncode not defined for the current sequence\n' ...
                 'For 3D-EPI B1 mapping sequences, values are deduced from the sequence\n' ...
-                'version. Be aware that it might not be correct if the version is unknown']);
+                'version. Be aware that it might not be correct if the version is unknown.\n']);
+            
             % check whether it is an EPI sequence (al_B1mapping is not defined as 'EP' but 'RM'):
             valEPI = get_metadata_val(mstruc, 'ScanningSequence');
             valSEQ = get_metadata_val(mstruc, 'SequenceName');
             valPROT = get_metadata_val(mstruc, 'ProtocolName');
-            if strcmp(valEPI,'EP')
-                warning('Sequence defined as EPI but BandwidthPerPixelPhaseEncode not defined. No value returned.');
-            elseif strfind(lower(valSEQ),'b1')
-                warning('Trying to derive the epiReadoutDuration from the Sequence version (%s / %s)',valSEQ,valPROT);
+            
+            % Case al_B1mapping
+            if strfind(lower(valPROT),'b1map')
+                fprintf(1,'Trying to derive the epiReadoutDuration from the Sequence version (%s/%s).\n',valSEQ,valPROT);
                 nFieldFound = 1;
-                switch valSEQ
-                    case 'B1v2d3d2'
-                        EchoSpacing = 2*140+260; % us
+                switch lower(valSEQ)
+                    case 'b1v2d3d2'
+                        EchoSpacing = 2*140+260; % 540 us - Prisma
+                    case 'b1epi4a3d2'
+                        EchoSpacing = 330; % 330 us - Allegra
                     otherwise
-                        warning('B1mapping version unknown, using default EchoSpacing value = 540 us.')
-                        EchoSpacing = 2*140+260; % us
+                        fprintf(1,'WARNING: B1mapping version unknown, trying to base our guess on PixelBandwidth.\n');
+                        PixelBandwidth = get_metadata_val(mstruc,'BandwidthPerPixelRO');
+                        switch PixelBandwidth
+                            case 2300
+                                EchoSpacing = 540e-3;
+                            case 3600
+                                EchoSpacing = 330e-3;
+                            case 3550 % Allegra data
+                                EchoSpacing = 330e-3;
+                            otherwise
+                                fprintf(1,'Giving up: using default EchoSpacing value = 540 us.\n');
+                                EchoSpacing = 2*140+260; % us
+                        end
                 end
-                measPElin = get_metadata_val(mstruc,'MeasuredPELines');
+                measPElin = get_metadata_val(mstruc,'PELinesPAT');
                 cRes = 1;
                 parLocation{cRes} = 'HardCodedParameter';
                 parValue{cRes} = EchoSpacing * measPElin * 0.001; % ms
+            else
+                if strcmp(valEPI,'EP')
+                    fprintf(1,['WARNING: Sequence defined as EPI but BandwidthPerPixelPhaseEncode\n' ...
+                        'not defined. No value returned.\n']);
+                else
+                    fprintf(1,['WARNING: This might not be an EPI sequence. \n' ...
+                        'Could not work ou EPI readout duration.\n']);
+                end
             end
         end
-       
         
     case 'EchoSpacing' % [ms]
+        % Siemens-specific
         % This information is easily retrievable from standard EPI
         % sequences, where the "BandwidthPerPixelPhaseEncoding" is defined.
         % In Customer-written sequences, this parameter might be missing in
@@ -538,33 +639,39 @@ switch inParName
             cRes = 1;
             parLocation{cRes} = nam{1};
             epiROduration = 1/val{1}*1000;
-            measPElin = get_metadata_val(mstruc,'MeasuredPELines');
+            measPElin = get_metadata_val(mstruc,'PELinesPAT');
             try
                 parValue{cRes} = epiROduration/measPElin;
             catch
-                warning('Cannot retrieve the EchoSpacing for the current sequence');
+                fprintf(1,'WARNING: Cannot retrieve the EchoSpacing for the current sequence.\n');
             end    
         else
-            warning(['BandwidthPerPixelPhaseEncode not defined for the current sequence\n' ...
-                'The echo spacing cannot be retrieved unambiguously.']);
+            fprintf(1,['WARNING: BandwidthPerPixelPhaseEncode not defined for the current sequence.\n' ...
+                'The echo spacing cannot be retrieved unambiguously.\n']);
         end
         
     case 'B1mapNominalFAValues' % [deg] for al_B1mapping - version dependent!!
         valSEQ = get_metadata_val(mstruc, 'SequenceName');
         valPROT = get_metadata_val(mstruc, 'ProtocolName');
-        [nFieldFound, fieldList] = find_field_name(mstruc, 'sWipMemBlock','caseSens','sensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc, 'sWipMemBlock','caseSens','insensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         if nFieldFound
             cRes = 1;
-            switch valSEQ
-                case 'B1v2d3d2'
+            switch lower(valSEQ)
+                case 'b1v2d3d2' % VD13 Prisma data
                     % wip parameters are sorted as follows:
-                    % alFree: [Tmixing DurationPer5Deg BWT_SE/STE_factor CursherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
+                    % alFree: [Tmixing DurationPer5Deg BWT_SE/STE_factor CrusherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
                     % adFree: [RefocCorr ScaleSGrad MaxRefocAngle DecRefocAngle FAforReferScans RFSpoilIncr]
                     parLocation{cRes} = [nam{1} '.adFree(3:4)'];
                     parValue{cRes} = val{1}.adFree(3):-val{1}.adFree(4):0;
+                case 'b1epi4a3d2' % VA35 Allegra data
+                    % wip parameters are sorted as follows (not right, need to be checked):
+                    % alFree: [EddyCurrentDelay MixingTime NoRefAverages DurationPer5Deg BWT_SE/STE_factor NoDummyScans CrusherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
+                    % adFree: [RefocCorr CrusherAmplitude MaxRefocAngle DecRefocAngle FAforReferScans RFSpoilIncr]
+                    parLocation{cRes} = [nam{1} '.adFree(3:4)'];
+                    parValue{cRes} = val{1}.adFree(3):-val{1}.adFree(4):0;
                 otherwise
-                    warning('B1mapping version unknown (%s / %s). Give up guessing FA values.', valSEQ, valPROT);
+                    fprintf(1,'B1mapping version unknown (%s/%s). Give up guessing FA values.\n', valSEQ, valPROT);
             end
             if ~isempty(parLocation)
                 nmeas = get_metadata_val(mstruc,'NumberOfMeasurements');
@@ -575,44 +682,81 @@ switch inParName
     case 'RFSpoilingPhaseIncrement' % [Hz] defined in al_B1mapping and mtflash3d sequences - version dependent!!
         valSEQ = get_metadata_val(mstruc, 'SequenceName');
         valPROT = get_metadata_val(mstruc, 'ProtocolName');
-        [nFieldFound, fieldList] = find_field_name(mstruc, 'sWipMemBlock','caseSens','sensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc, 'sWipMemBlock','caseSens','insensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         if nFieldFound
             cRes = 1;
-            switch valSEQ
-                case 'B1v2d3d2'
+            index = 0;
+            switch lower(valSEQ)
+                case 'b1v2d3d2' % VD13 Prisma
                     % wip parameters are sorted as follows:
                     % alFree: [Tmixing DurationPer5Deg BWT_SE/STE_factor CursherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
                     % adFree: [RefocCorr ScaleSGrad MaxRefocAngle DecRefocAngle FAforReferScans RFSpoilIncr]
-                    parLocation{cRes} = [nam{1} '.adFree(6)'];
-                    parValue{cRes} = val{1}.adFree(6); % in deg
-                case 'fl3d_2l3d8'
+                    index = 6;
+                case 'b1epi4a3d2' % VA35 Allegra data
+                    % wip parameters are sorted as follows:
+                    % alFree: [EddyCurrentDelay MixingTime NoRefAverages DurationPer5Deg BWT_SE/STE_factor NoDummyScans CrusherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
+                    % adFree: [RefocCorr CrusherAmplitude MaxRefocAngle DecRefocAngle FAforReferScans RFSpoilIncr]
+                    index = 6;
+                case 'fl3d_2l3d8' % VD13 Prisma
                     % wip parameters are sorted as follows:
                     % alFree: [RawDataExport(off/on=1/2) MTRepFactor DurationMTGaussianPulse FlatTopMTSpoiler DurPrewRamp DurPrewFlat DurRORamp RFExc(RectNonSel/SincNonSel/SincSlabSel = 1/2/3) RectFixedDur SincFixedDur BWTSinc]
                     % adFree: [MTGaussianFA OffResonanceMTGaussianPulse RFSpoilIncr]
-                    parLocation{cRes} = [nam{1} '.adFree(3)'];
-                    parValue{cRes} = val{1}.adFree(3); % in deg
+                    index = 3;
+                case 'fl3d_2d3d6' % VA35 Allegra
+                    % wip parameters are sorted as follows:
+                    % alFree: [MTSaturationMode (1/2 = Gaussian/Binomial) 
+                    %          MTRepFactor 
+                    %          BalancedMTSaturation (1/2 = false/true) 
+                    %          DurationMTGaussianPulse 
+                    %          RFExc(RectNonSel/SincNonSel/SincSlabSel = 1/2/3) 
+                    %          GRAPPA&RefScans (1/2 = false/true)
+                    %          DurPrewRamp 
+                    %          DurPrewFlat 
+                    %          DurRORamp 
+                    %          FlatTopSpoiler]
+                    % adFree: [MTGaussianFA OffResonanceMTGaussianPulse RFSpoilIncr SpoilerAmpl]
+                    index = 3;
                 otherwise
-                    warning('Sequence version unknown (%s / %s). Give up guessing RF spoiling increment.', valSEQ, valPROT);
+                    fprintf(1,'Sequence version unknown (%s/%s). Give up guessing RF spoiling increment.\n', valSEQ, valPROT);
+            end
+            if index
+                parLocation{cRes} = [nam{1} '.adFree(' num2str(index) ')'];
+                try
+                    parValue{cRes} = val{1}.adFree(index); % in deg
+                catch
+                    % if index^th element = 0, it is not specified in the
+                    % header and index exceeds matrix dimension: 
+                    parValue{cRes} = 0; 
+                end
             end
         end
         
     case 'B1mapMixingTime' % [ms] for al_B1mapping - version dependent!!
         valSEQ = get_metadata_val(mstruc, 'SequenceName');
         valPROT = get_metadata_val(mstruc, 'ProtocolName');
-        [nFieldFound, fieldList] = find_field_name(mstruc, 'sWipMemBlock','caseSens','sensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc, 'sWipMemBlock','caseSens','insensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         if nFieldFound
             cRes = 1;
-            switch valSEQ
-                case 'B1v2d3d2'
+            index = 0;
+            switch lower(valSEQ)
+                case 'b1v2d3d2'
                     % wip parameters are sorted as follows:
                     % alFree: [Tmixing DurationPer5Deg BWT_SE/STE_factor CursherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
                     % adFree: [RefocCorr ScaleSGrad MaxRefocAngle DecRefocAngle FAforReferScans RFSpoilIncr]
-                    parLocation{cRes} = [nam{1} '.alFree(1)'];
-                    parValue{cRes} = val{1}.alFree(1)*0.001; % in ms
+                    index = 1;
+                case 'b1epi4a3d2' % VA35 Allegra data
+                    % wip parameters are sorted as follows (not right, need to be checked):
+                    % alFree: [Tmixing DurationPer5Deg BWT_SE/STE_factor CursherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
+                    % adFree: [RefocCorr ScaleSGrad MaxRefocAngle DecRefocAngle FAforReferScans RFSpoilIncr]
+                    index = 2;
                 otherwise
-                    warning('B1mapping version unknown (%s / %s). Give up guessing TM value.', valSEQ, valPROT);
+                    fprintf(1,'B1mapping version unknown (%s/%s). Give up guessing TM value.\n', valSEQ, valPROT);
+            end
+            if index 
+                parLocation{cRes} = [nam{1} '.alFree(' num2str(index) ')'];
+                parValue{cRes} = val{1}.alFree(index)*0.001; % in ms
             end
         end
         
@@ -623,13 +767,13 @@ switch inParName
 end
 
 if ~nFieldFound
-    warning('No %s found in the extended header', inParName);
+    fprintf(1,'WARNING: No %s found in the extended header\n', inParName);
     parValue = [];
     parLocation = [];
 end
 
 % returns cell array only if necessary (non-unique result)
-if length(parValue) == 1
+if (length(parValue) == 1) && iscell(parValue)
     parValue = parValue{1};
     parLocation = parLocation{1};
 end

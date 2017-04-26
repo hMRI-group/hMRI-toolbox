@@ -23,8 +23,11 @@ function hmri_defaults
 global hmri_def
 
 %% ======================== Global parameters =============================
-%% Specifying the lab
-hmri_def.centre = 'cbs' ; % can be 'fil', 'lren', 'crc', 'sciz' or 'cbs'
+% Specifying the lab
+hmri_def.centre = 'centre' ; % 'fil', 'lren', 'crc', 'sciz', 'cbs', ...
+
+% Cleanup temporary directories 
+hmri_def.cleanup = false;
 
 %% ===================== Common processing parameters =====================
 % These parameters are either parameters that are fixed for all sites or
@@ -186,74 +189,32 @@ hmri_def.rfcorr.Unknown.tag = 'Unknown protocol. No spoiling correction defined.
 hmri_def.rfcorr.Unknown.RFCorr = false;
 
 %% ================== B1 mapping processing parameters ====================
-% For *each* site, the labels corresponding to the available B1 mapping
-% protocols must be specified so they are listed as available choices in
-% the batch GUI (see tbx_cfg_hmri_crm). Do NOT forget the 'crc'/'fil'/'lren'
-% field in the structure. :-)
-% The parameters of each of these B1map protocol should be specified in
-% their specific substructure, using the protocol name!
-% NB: the first label in the list is the default one.
+% Default parameters are set for each type of B1 processing.
+% Use of metadata is encouraged to retrieve site-specific parameters.
+% If this is not possible, default values can be modified by the user to
+% agree with local acquisition and processing parameters. Note that in that
+% case, the toolbox loses its integrity and leading to unexpected
+% behaviour. Only recommended for expert users.
 %
 % NOTE: all protocol names MUST 
 % - start with a letter, 
 % - include only letters, numbers or underscores, i.e. NO space.
 % as these names are used to define a structure fieldname with the protocol 
 % parameters.
-
-% List B1 protocols available at the CBS
-% --------------------------------------
-hmri_def.cbs.b1_type.labels  = {
+% - the first label in the list is the default one.
+%
+% List B1 protocols available
+% ---------------------------
+hmri_def.b1_type.labels  = {
     'i3D_EPI'
+    'i3D_AFI'
     'tfl_b1_map'
     'rf_map'
     'no_B1_correction'
     'pre_processed_B1'
     'UNICORT'
     }';
-hmri_def.cbs.b1_type.val  = hmri_def.cbs.b1_type.labels(1);
-
-% List B1 protocols available at the CRC
-% --------------------------------------
-hmri_def.crc.b1_type.labels  = {
-    'i3D_EPI' 
-    'i3D_AFI_v4b_n3_allegra_crc'
-    'i3D_AFI_v4b_n5_allegra_crc'
-    'no_B1_correction'
-    'pre_processed_B1'
-    'UNICORT'
-    }';
-hmri_def.crc.b1_type.val  = hmri_def.crc.b1_type.labels(1);
-
-% List B1 protocols available at the FIL
-% --------------------------------------
-hmri_def.fil.b1_type.labels = {
-    'i3D_EPI'
-    'no_B1_correction'
-    'pre_processed_B1'
-    'UNICORT'
-    };
-hmri_def.fil.b1_type.val = hmri_def.fil.b1_type.labels(1);
-
-% List B1 protocols available at the LREN
-% ---------------------------------------
-hmri_def.lren.b1_type.labels = {
-    'i3D_EPI'
-    'no_B1_correction'
-    'pre_processed_B1'
-    'UNICORT'
-    };
-hmri_def.lren.b1_type.val = hmri_def.lren.b1_type.labels(1);
-
-% List B1 protocols available at the Spinal Cord Injury Lab, Zurich
-% -----------------------------------------------------------------
-hmri_def.sciz.b1_type.labels  = {
-    'tfl_b1map'
-    'rf_map'
-    'no_B1_correction'
-    'pre_processed_B1'
-    'UNICORT'
-    }';
-hmri_def.sciz.b1_type.val  = hmri_def.sciz.b1_type.labels(1);
+hmri_def.b1_type.val  = hmri_def.b1_type.labels(1);
 
 % B1 map protocol parameters
 % --------------------------
@@ -301,12 +262,10 @@ hmri_def.b1map.i3D_EPI.b0acq.shortTE = 10; % ms
 hmri_def.b1map.i3D_EPI.b0acq.longTE = 12.46; % ms
 
 % 'tfl_b1_map'
-hmri_def.b1map.tfl_b1_map.data    = 'TFL'; 
 hmri_def.b1map.tfl_b1_map.avail   = true; 
 hmri_def.b1map.tfl_b1_map.procreq = true; 
 
 % 'rf_map'
-hmri_def.b1map.rf_map.data    = 'RFmap'; 
 hmri_def.b1map.rf_map.avail   = true; 
 hmri_def.b1map.rf_map.procreq = true; 
 

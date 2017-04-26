@@ -16,7 +16,7 @@ function varargout = hmri_get_defaults(defstr, varargin)
 % This value will not be saved for future sessions of hMRI. To make
 % persistent changes, edit hmri_defaults.m.
 %
-% NOTE, specific to hMRI tool:
+% NOTE, specific to hMRI tool (might become obsolete in future versions):
 % In order to allow centre specific defaults, *without* editing/commenting
 % the default file itself, these centre specific values are placed in a
 % centre specific substructure, named with 'fil', 'lren' or 'crc'(see the 

@@ -36,7 +36,7 @@ hmri_def.cleanup = false;
 
 hmri_def.R2sOLS = 1; % Create an Ordinary Least Squares R2* map?
 hmri_def.json = struct('extended',false,'separate',true,'anonym','none',...
-    'overwrite',true); % settings for JSON metadata
+    'overwrite',true, 'indent','\t'); % settings for JSON metadata
 
 %% Processing of PD maps
 hmri_def.PDproc.PDmap    = 1;    % Calculation of PD maps requires a B1 map. Set to 0 if a B1 map is not available
@@ -44,7 +44,7 @@ hmri_def.PDproc.WBMaskTh = 0.1;  % Threshold for calculation of whole-brain mask
 hmri_def.PDproc.WMMaskTh = 0.95; % Threshold for calculation of white-matter mask from TPMs
 hmri_def.PDproc.biasreg  = 10^(-5);
 hmri_def.PDproc.biasfwhm = 50;
-hmri_def.PDproc.nr_echoes_forA =1;
+hmri_def.PDproc.nr_echoes_forA = 1;
 
 %% UNICORT processing
 hmri_def.unicort.reg = 10^-3;

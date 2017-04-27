@@ -58,6 +58,7 @@ dt = [spm_type('float32'),spm_platform('bigend')]; % for nifti output
 outbasename = spm_file(mpm_params.input.MTw.fname(1,:),'basename'); % for all output files
 calcpath = mpm_params.calcpath;
 mpm_params.outbasename = outbasename;
+respath = mpm_params.respath;
 
 % Load B1 mapping data if available 
 % P_trans(1,:) = magnitude image (anatomical reference for coregistration) 

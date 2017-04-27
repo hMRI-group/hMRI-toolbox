@@ -88,7 +88,7 @@ out_loc.subj.T1w = {PT1w};
 
 % save job
 spm_jsonwrite([spm_str_manip(fMT,'r') '_job_create_maps.json'],job,struct('indent','\t'));
-save([spm_str_manip(fMT,'r') '_job_create_maps.mat'],'job');s
+save([spm_str_manip(fMT,'r') '_job_create_maps.mat'],'job');
 
 % clean after if required
 if hmri_get_defaults('cleanup')

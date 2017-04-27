@@ -24,10 +24,14 @@ metastruc.history.procstep.descrip = proc.descrip;
 metastruc.history.procstep.version = proc.version;
 metastruc.history.procstep.procpar = proc.params;
 
-for cinput = 1:numel(input_files)
-    filename = spm_file(input_files(cinput),'number','');
-    metastruc.history.input{cinput}.filename = filename{1};
-    hdr = get_metadata(filename{1});
+if iscell(input_files)
+    input_files = char(input_files);
+end
+
+for cinput = 1:size(input_files,1)
+    filename = spm_file(input_files(cinput,:),'number','');
+    metastruc.history.input{cinput}.filename = filename;
+    hdr = get_metadata(filename);
     if ~isempty(hdr{1})
         metastruc.history.input{cinput}.history = hdr{1}.history;
     else

@@ -135,7 +135,10 @@ mcontent.val     = {1};
 metaopts       = cfg_branch;
 metaopts.tag   = 'metaopts';
 metaopts.name  = 'JSON metadata';
-metaopts.val   = {mformat mcontent manonym};
+% NOTE: for release version, the anonymisation and content options are
+% removed from the Batch...
+% metaopts.val   = {mformat mcontent manonym};
+metaopts.val   = {mformat};
 metaopts.help  = {''};
 % ---------------------------------------------------------------------
 % icedims Use ICEDims in filename

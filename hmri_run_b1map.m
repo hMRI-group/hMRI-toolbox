@@ -65,6 +65,10 @@ if ~isempty(P_trans)
     copyfile(P_trans(2,:),fullfile(jobsubj.path.respath, spm_file(P_trans(2,:), 'filename')));
 end
 
+% save b1map_params as json-file
+spm_jsonwrite(fullfile(jobsubj.path.respath, [spm_file(P_trans(2,:),'basename') '_b1map_params.json']),'b1map_params',struct('indent','\t'));
+
+
 end
 
 %% =======================================================================%
@@ -368,8 +372,7 @@ V2 = spm_vol(Q);
 Vol1 = spm_read_vols(V1);
 Vol2 = spm_read_vols(V2);
 
-p = hmri_hinfo(P);
-alphanom = p(1).fa; % nominal flip angle of tfl_b1map
+alphanom = get_metadata_val(P,'FlipAngle'); % nominal flip angle of tfl_b1map
 
 % generating the map
 B1map_norm = abs(Vol1)*10/alphanom;

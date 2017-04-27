@@ -76,28 +76,19 @@ P_receiv = [];
 
 % apply UNICORT if required, and collect outputs:
 if strcmp(job.subj.b1_type,'UNICORT')
-    out_unicort = hmri_run_unicort(PPDw, fR1);
-    out_loc.subj.R1  = {fullfile(respath,spm_file(out_unicort.R1u,'filename'))};
+    out_unicort = hmri_run_unicort(PPDw, fR1, job.subj);
+    out_loc.subj.R1  = {out_unicort.R1u};
 else
-    out_loc.subj.R1  = {fullfile(respath,spm_file(fR1,'filename'))};
+    out_loc.subj.R1  = {fR1};
 end
-out_loc.subj.R2s = {fullfile(respath,spm_file(fR2s,'filename'))};
-out_loc.subj.MT  = {fullfile(respath,spm_file(fMT,'filename'))};
-out_loc.subj.A   = {fullfile(respath,spm_file(fA,'filename'))};
-out_loc.subj.T1w = {fullfile(respath,spm_file(PT1w,'filename'))};
+out_loc.subj.R2s = {fR2s};
+out_loc.subj.MT  = {fMT};
+out_loc.subj.A   = {fA};
+out_loc.subj.T1w = {PT1w};
 
-% copy final result files into Results directory
-f = fieldnames(out_loc.subj);
-for i=1:length(f)
-    fnam = out_loc.subj.(f{cfi}){1};
-    copyfile(fullfile(mpmpath, spm_file(fnam, 'filename')), fnam);
-end
-
-% save processing params (hmri defaults) and job for the current subject:
-hmri_def = hmri_get_defaults; %#ok<NASGU>
-P_mtw    = char(jobsubj.raw_mpm.MT);
-save(fullfile(respath, [spm_file(P_mtw(1,:),'basename') '_create_maps_hmridef.mat']),'hmri_def');
-save(fullfile(respath, [spm_file(P_mtw(1,:),'basename') '_create_maps_job.mat']),'job');
+% save job
+spm_jsonwrite([spm_str_manip(fMT,'r') '_job_create_maps.json'],job,struct('indent','\t'));
+save([spm_str_manip(fMT,'r') '_job_create_maps.mat'],'job');s
 
 % clean after if required
 if hmri_get_defaults('cleanup')
@@ -106,7 +97,7 @@ if hmri_get_defaults('cleanup')
     rmdir(job.subj.path.mpmpath,'s');
 end
 
-f = fopen(fullfile(outpath, '_finished_'), 'wb');
+f = fopen(fullfile(job.subj.path.respath, '_finished_'), 'wb');
 fclose(f);
 
 end

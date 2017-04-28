@@ -476,7 +476,11 @@ end
 function b1map_params = get_b1map_params(jobsubj)
 
 % retrieve b1type from job
-b1map_params.b1type = jobsubj.b1_type;
+b1_type = jobsubj.b1_type;
+
+% define local defaults for b1map
+hmri_defaults_local('b1_type', b1_type);
+b1map_params.b1type = hmri_get_defaults(['b1map.' b1_type '.b1type']); 
 
 % check for existing b1 data
 if isempty(jobsubj.raw_fld.b1)

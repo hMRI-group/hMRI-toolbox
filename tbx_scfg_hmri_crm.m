@@ -74,10 +74,11 @@ b1_type.help    = {
     [' - UNICORT: Use this option when B1 maps not available. ', ...
     'Bias field estimation and correction will be performed ', ...
     'using the approach described in [Weiskopf et al., NeuroImage 2011; 54:2116-2124].']
-    };
+    }; %#ok<*NBRAK>
 b1_type.labels  = b1_choices;
-b1_type.values = b1_choices;
-b1_type.val    = b1_choices(1);
+b1_type.values  = b1_choices;
+b1_type.val     = b1_choices(1);
+
 % ---------------------------------------------------------------------
 % vols Volumes
 % ---------------------------------------------------------------------
@@ -314,97 +315,6 @@ end
 % are defined separately.
 %_______________________________________________________________________
 
-function dep = vout_crt_Unicort(job)
-% This depends on job contents, which may not be present when virtual
-% outputs are calculated.
-
-% job = process_data_spec(job);
-
-if ~isfield(job, 'subj') % Many subjects
-    dep(1) = cfg_dep;
-    dep(1).sname = 'R1 Maps';
-    dep(1).src_output = substruct('.','R1','()',{':'});
-    dep(1).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
-    
-    dep(2) = cfg_dep;
-    dep(2).sname = 'R1u Maps';
-    dep(2).src_output = substruct('.','R1u','()',{':'});
-    dep(2).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
-    
-    dep(3) = cfg_dep;
-    dep(3).sname = 'R2s Maps';
-    dep(3).src_output = substruct('.','R2s','()',{':'});
-    dep(3).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
-    
-    dep(4) = cfg_dep;
-    dep(4).sname = 'MT Maps';
-    dep(4).src_output = substruct('.','MT','()',{':'});
-    dep(4).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
-    
-    dep(5) = cfg_dep;
-    dep(5).sname = 'A Maps';
-    dep(5).src_output = substruct('.','A','()',{':'});
-    dep(5).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
-    
-    dep(6) = cfg_dep;
-    dep(6).sname = 'T1w Maps';
-    dep(6).src_output = substruct('.','T1w','()',{':'});
-    dep(6).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
-    
-else
-    k=1;
-    cdep(5*numel(job.subj),1) = cfg_dep;
-    
-    for i=1:numel(job.subj)
-        
-        cdep(k)            = cfg_dep;
-        cdep(k).sname      = sprintf('R1_subj%d',i);
-        cdep(k).src_output = substruct('.','subj','()',{i},'.','R1','()',{':'});
-        cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
-        
-        k=k+1;
-        
-        cdep(k)          = cfg_dep;
-        cdep(k).sname      = sprintf('R1u_subj%d',i);
-        cdep(k).src_output = substruct('.','subj','()',{i},'.','R1u','()',{':'});
-        cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
-        
-        k=k+1;
-        
-        cdep(k)            = cfg_dep;
-        cdep(k).sname      = sprintf('R2s_subj%d',i);
-        cdep(k).src_output = substruct('.','subj','()',{i},'.','R2s','()',{':'});
-        cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
-        
-        k=k+1;
-        
-        cdep(k)            = cfg_dep;
-        cdep(k).sname      = sprintf('MT_subj%d',i);
-        cdep(k).src_output = substruct('.','subj','()',{i},'.','MT','()',{':'});
-        cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
-        
-        k=k+1;
-        
-        cdep(k)            = cfg_dep;
-        cdep(k).sname      = sprintf('A_subj%d',i);
-        cdep(k).src_output = substruct('.','subj','()',{i},'.','A','()',{':'});
-        cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
-        
-        k=k+1;
-        
-        cdep(k)            = cfg_dep;
-        cdep(k).sname      = sprintf('T1w_subj%d',i);
-        cdep(k).src_output = substruct('.','subj','()',{i},'.','T1w','()',{':'});
-        cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
-        
-        k=k+1;
-    end
-    dep = cdep;
-end
-
-end
-%_______________________________________________________________________
-
 function dep = vout_create_mpr(job)
 % This depends on job contents, which may not be present when virtual
 % outputs are calculated.
@@ -495,4 +405,4 @@ try
 catch e
 end
 end
-
+%_______________________________________________________________________

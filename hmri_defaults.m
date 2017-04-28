@@ -191,19 +191,12 @@ hmri_def.rfcorr.Unknown.tag = 'Unknown protocol. No spoiling correction defined.
 hmri_def.rfcorr.Unknown.RFCorr = false;
 
 %% ================== B1 mapping processing parameters ====================
-% Default parameters are set for each type of B1 processing.
-% Use of metadata is encouraged to retrieve site-specific parameters.
-% If this is not possible, default values can be modified by the user to
-% agree with local acquisition and processing parameters. Note that in that
-% case, the toolbox loses its integrity and leading to unexpected
-% behaviour. Only recommended for expert users.
-%
-% NOTE: all protocol names MUST 
-% - start with a letter, 
-% - include only letters, numbers or underscores, i.e. NO space.
-% as these names are used to define a structure fieldname with the protocol 
-% parameters.
-% - the first label in the list is the default one.
+% Default parameters are set below for each main type of B1 processing.
+% For acquisition parameters, default values are a fallback solution for B1
+% data processing when no metadata are available. Use of metadata is
+% recommended to retrieve site- & protocol-specific parameters and ensure
+% appropriate data handling and processing.
+% Use hmri_defaults_local to define local protocol parameters.
 %
 % List B1 protocols available
 % ---------------------------
@@ -220,27 +213,31 @@ hmri_def.b1_type.val  = hmri_def.b1_type.labels(1);
 
 % B1 map protocol parameters
 % --------------------------
-% Default values that will be used when no metadata are available:
 
 % 'i3D_AFI'
-hmri_def.b1map.i3D_AFI.b1avail   = true; 
+hmri_def.b1map.i3D_AFI.b1type = 'i3D_AFI'; 
+hmri_def.b1map.i3D_AFI.b1avail = true; 
 hmri_def.b1map.i3D_AFI.procreq = true; 
 hmri_def.b1map.i3D_AFI.b1acq.TR2TR1ratio = 5;
 hmri_def.b1map.i3D_AFI.b1acq.alphanom = 60;
 
 % 'pre_processed_B1'
+hmri_def.b1map.pre_processed_B1.b1type = 'pre_processed_B1'; 
 hmri_def.b1map.pre_processed_B1.b1avail   = true;
 hmri_def.b1map.pre_processed_B1.procreq = false;
 
 % 'no_B1_correction'
+hmri_def.b1map.no_B1_correction.b1type = 'no_B1_correction'; 
 hmri_def.b1map.no_B1_correction.b1avail   = false;
 hmri_def.b1map.no_B1_correction.procreq = false;
 
 % UNICORT
+hmri_def.b1map.UNICORT.b1type = 'UNICORT'; 
 hmri_def.b1map.UNICORT.procreq = true;
 hmri_def.b1map.UNICORT.b1avail   = false;
 
 % 'i3D_EPI'
+hmri_def.b1map.i3D_EPI.b1type = 'i3D_EPI'; 
 hmri_def.b1map.i3D_EPI.b1avail   = true; 
 hmri_def.b1map.i3D_EPI.procreq = true; 
 % b0&b1-processing
@@ -262,17 +259,21 @@ hmri_def.b1map.i3D_EPI.b1acq.blipDIR = 1;
 % b0-acquisition
 hmri_def.b1map.i3D_EPI.b0acq.shortTE = 10; % ms
 hmri_def.b1map.i3D_EPI.b0acq.longTE = 12.46; % ms
+hmri_def.b1map.i3D_EPI.b0acq.iformat = 'PM'; % ms
 
 % 'tfl_b1_map'
+hmri_def.b1map.tfl_b1_map.b1type = 'tfl_b1_map'; 
 hmri_def.b1map.tfl_b1_map.avail   = true; 
 hmri_def.b1map.tfl_b1_map.procreq = true; 
 
 % 'rf_map'
+hmri_def.b1map.rf_map.b1type = 'rf_map'; 
 hmri_def.b1map.rf_map.avail   = true; 
 hmri_def.b1map.rf_map.procreq = true; 
 
-% for local defaults
-if exist('hmri_defaults_local.m','file');
+% call local defaults to check for available protocols
+if exist('hmri_defaults_local.m','file')
     hmri_defaults_local;
 end
+
 end

@@ -1,5 +1,5 @@
-function out = hmri_run_unicort(P_PDw, P_R1)
-% function P = hmri_run_unicort(P_PDw, P_R1)
+function out = hmri_run_unicort(P_PDw, P_R1, jobsubj)
+% function P = hmri_run_unicort(P_PDw, P_R1, jobsubj)
 % P_PDw: proton density weighted FLASH image (small flip angle image) for
 % masking
 % P_R1: R1 (=1/T1) map estimated from dual flip angle FLASH experiment
@@ -40,13 +40,15 @@ json = hmri_get_defaults('json');
 % as determined for 3T Magnetom Tim Trio (Siemens Healthcare, Erlangen, Germany)
 % see Weiskopf et al., Neuroimage 2010
 
-unicort_procpar = hmri_get_defaults('unicort');
-reg = unicort_procpar.reg;
-FWHM = unicort_procpar.FWHM;
-thr_factor = unicort_procpar.thr;
+unicort_params = hmri_get_defaults('unicort');
+reg = unicort_params.reg;
+FWHM = unicort_params.FWHM;
+thr_factor = unicort_params.thr;
 
-% output directory
-outdir = hmri_get_defaults('outdir');
+% output directories
+mpmpath = jobsubj.path.mpmpath;
+b1path = jobsubj.path.b1path;
+respath = jobsubj.path.respath;
 
 % create head mask
 V_PDw = spm_vol(P_PDw);
@@ -58,27 +60,16 @@ V_R1 = spm_vol(P_R1);
 Y_R1 = spm_read_vols(V_R1);
 Y_R1 = Y_R1.*(Y_PDw > thresh);
 V_R1_mask = V_R1;
-[p,n,e] = fileparts(V_R1_mask.fname);
-P_R1_mask = fullfile(p,['h' n e]);
+outfnam = spm_file(V_R1_mask.fname,'filename');
+P_R1_mask = fullfile(mpmpath,spm_file(outfnam,'prefix','h'));
 V_R1_mask.fname = P_R1_mask;
 V_R1.descrip = 'Masked R1 map';
 V_R1_mask = spm_write_vol(V_R1_mask,Y_R1);
 
-Vtemp = cat(1,V_PDw,V_R1);
-Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[]));
-Output_hdr.history.procstep.version = hmri_get_version;
-Output_hdr.history.procstep.descrip = 'map creation';
-Output_hdr.history.procstep.procpar = unicort_procpar;
-for ctr = 1:numel(Vtemp)
-    Output_hdr.history.input{1}.filename = Vtemp(ctr).fname;
-    input_hdr = get_metadata(Vtemp(ctr).fname);
-    if ~isempty(input_hdr{1})
-        Output_hdr.history.input{1}.history = input_hdr{1}.history;
-    else
-        Output_hdr.history.input{1}.history = 'No history available.';
-    end
-end
-Output_hdr.history.output.imtype = 'Masked R1 map [1000/s]';
+% set and save metadata
+input_files = char(P_PDw,P_R1);
+Output_hdr = init_unicort_output_metadata(input_files, unicort_params);
+Output_hdr.history.output.imtype = 'Masked R1 map';
 Output_hdr.history.output.units = 'ms-1';
 set_metadata(P_R1_mask,Output_hdr,json);
 
@@ -86,7 +77,7 @@ set_metadata(P_R1_mask,Output_hdr,json);
 %% preparation of spm structure for "New Segment" tool
 
 % clear('matlabbatch');
-tpm_nam = fullfile(spm('dir'),'tpm','eTPM.nii'); % instead of TPM.nii
+tpm_nam = hmri_get_defaults('TPM'); % eTPM.nii instead of TPM.nii
 % see http://www.unil.ch/lren/home/menuinst/data--utilities.html
 % Lorio S, Fresard S, Adaszewski S, Kherif F, Chowdhury R, Frackowiak RS,
 % Ashburner J, Helms G, Weiskopf N, Lutti A, Draganski B. New tissue priors
@@ -129,29 +120,16 @@ preproc8.channel.biasreg = reg;
 preproc8.channel.vols = {P_R1_mask};
 
 %% run prepared "New Segment" job
-spm_preproc_run(preproc8)
-% spm_jobman('run', matlabbatch);
+spm_preproc_run(preproc8);
 clear('matlabbatch');
 
 %% calculate B1+ map from bias field
-[p,n,e] = fileparts(V_R1_mask.fname); %#ok<ASGLU,*NASGU>
-if isempty(spm_select('FPList',p,['^BiasField_' n '.nii']))
-    P_biasmap = spm_select('FPList',p,['^BiasField_' n '.img']);
-else
-    P_biasmap = spm_select('FPList',p,['^BiasField_' n '.nii']);
-end
+[p,n,e] = fileparts(P_R1_mask); %#ok<ASGLU,*NASGU>
+P_biasmap = spm_select('FPList',mpmpath,['^BiasField_' n '.(nii|img)']);
 
-Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[]));
-Output_hdr.history.procstep.version = hmri_get_version;
-Output_hdr.history.procstep.descrip = 'map creation';
-Output_hdr.history.procstep.procpar = struct('preproc8',preproc8);
-Output_hdr.history.input{ctr}.filename = P_R1_mask;
-input_hdr = get_metadata(P_R1_mask);
-if ~isempty(input_hdr{1})
-    Output_hdr.history.input{ctr}.history = input_hdr{1}.history;
-else
-    Output_hdr.history.input{ctr}.history = 'No history available.';
-end
+% set and save metadata
+input_files = P_R1_mask;
+Output_hdr = init_unicort_output_metadata(input_files, unicort_params);
 Output_hdr.history.output.imtype = 'Bias corrected R1 UNICORT map';
 Output_hdr.history.output.units = 'ms-1';
 set_metadata(P_biasmap,Output_hdr,json);
@@ -161,49 +139,56 @@ V_biasmap = spm_vol(P_biasmap);
 Y_biasmap = spm_read_vols(V_biasmap);
 Y_B1 = sqrt(Y_biasmap)*100.*(Y_PDw > thresh);
 V_B1 = V_R1;
-[p,n,e] = fileparts(V_R1.fname);
-P_B1 = fullfile(p,['B1_' n e]);
+outfnam = spm_file(V_R1.fname,'filename');
+P_B1 = fullfile(b1path,spm_file(outfnam,'prefix','B1_'));
 V_B1.fname = P_B1;
 V_B1.descrip = 'UNICORT estimated B1+ map (p.u. nominal fa)';
 V_B1 = spm_write_vol(V_B1,Y_B1);
 
-Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[]));
-Output_hdr.history.procstep.version = hmri_get_version;
-Output_hdr.history.procstep.descrip = 'map creation';
-Output_hdr.history.procstep.procpar = struct('preproc8',preproc8);
-Output_hdr.history.input{1}.filename = V_biasmap.fname;
-input_hdr = get_metadata(V_biasmap.fname);
-if ~isempty(input_hdr{1})
-    Output_hdr.history.input{1}.history = input_hdr{1}.history;
-else
-    Output_hdr.history.input{1}.history = 'No history available.';
-end
+% set and save metadata
+input_files = P_biasmap;
+Output_hdr = init_unicort_output_metadata(input_files, unicort_params);
 Output_hdr.history.output.imtype = 'B1+ map';
-Output_hdr.history.output.units = 'p.u. nominal FA';
+Output_hdr.history.output.units = 'p.u.';
 set_metadata(P_B1,Output_hdr,json);
 
-[p,n,e] = fileparts(P_R1_mask);
-P_R1_unicort = fullfile(p, ['m' n e]);
+outfnam = spm_file(P_R1_mask,'filename');
+P_R1_unicort = fullfile(mpmpath,spm_file(outfnam,'prefix','m'));
 
-Vtemp = cat(1,V_PDw,V_R1);
-Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[]));
-Output_hdr.history.procstep.version = hmri_get_version;
-Output_hdr.history.procstep.descrip = 'map creation';
-Output_hdr.history.procstep.procpar = struct('preproc8',preproc8);
-for ctr = 1:numel(Vtemp)
-    Output_hdr.history.input{ctr}.filename = Vtemp(ctr).fname;
-    input_hdr = get_metadata(Vtemp(ctr).fname);
-    if ~isempty(input_hdr{1})
-        Output_hdr.history.input{ctr}.history = input_hdr{1}.history;
-    else
-        Output_hdr.history.input{ctr}.history = 'No history available.';
-    end
-end
+% set and save metadata
+input_files = char(P_PDw,P_R1);
+Output_hdr = init_unicort_output_metadata(input_files, unicort_params);
 Output_hdr.history.output.imtype = 'Bias corrected R1 UNICORT map';
 Output_hdr.history.output.units = 'ms-1';
 set_metadata(P_R1_unicort,Output_hdr,json);
 
-out.R1u={fullfile(outdir,spm_str_manip(P_R1_unicort,'t'))};
-out.B1u={fullfile(outdir,spm_str_manip(P_B1,'t'))};
+% define output file names
+out.R1u = {fullfile(respath,spm_str_manip(P_R1_unicort,'t'))};
+out.B1u = {fullfile(respath,spm_str_manip(P_B1,'t'))};
+
+% now copy files from calc directory into results directory (nii & json!)
+copyfile(P_R1_unicort,out.R1u{1});
+try copyfile([spm_str_manip(P_R1_unicort,'r') '.json'],[spm_str_manip(out.R1u{1},'r') '.json']); end %#ok<*TRYNC>
+copyfile(P_B1,out.B1u{1});
+try copyfile([spm_str_manip(P_B1,'r') '.json'],[spm_str_manip(out.B1u{1},'r') '.json']); end %#ok<*TRYNC>
+
+% save unicort params as json-file
+spm_jsonwrite([spm_str_manip(out.R1u{1},'r') '_unicort_params.json'],unicort_params,struct('indent','\t'));
+
+end
+
+%% =======================================================================%
+% To arrange the metadata structure for B1 map calculation output.
+%=========================================================================%
+function metastruc = init_unicort_output_metadata(input_files, unicort_params)
+
+proc.descrip = 'UNICORT';
+proc.version = hmri_get_version;
+proc.params = unicort_params;
+
+output.imtype = 'B1+ map';
+output.units = 'p.u.';
+
+metastruc = init_output_metadata_structure(input_files, proc, output);
 
 end

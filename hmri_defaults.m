@@ -38,6 +38,8 @@ hmri_def.R2sOLS = 1; % Create an Ordinary Least Squares R2* map?
 hmri_def.json = struct('extended',false,'separate',true,'anonym','none',...
     'overwrite',true, 'indent','\t'); % settings for JSON metadata
 
+hmri_def.TPM = fullfile(spm_file(mfilename('fullpath'),'path'), 'etpm', 'eTPM.nii');
+
 %% Processing of PD maps
 hmri_def.PDproc.PDmap    = 1;    % Calculation of PD maps requires a B1 map. Set to 0 if a B1 map is not available
 hmri_def.PDproc.WBMaskTh = 0.1;  % Threshold for calculation of whole-brain mask from TPMs

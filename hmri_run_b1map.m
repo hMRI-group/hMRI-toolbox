@@ -101,7 +101,7 @@ Y1 = spm_read_vols(V1);
 Y2 = spm_read_vols(V2);
 
 TR1 = 1; % only the ratio [TR2/TR1=n] matters
-TR2 = b1map_params.TR2TR1ratio;
+TR2 = b1map_params.b1acq.TR2TR1ratio;
 alphanom = b1map_params.b1acq.alphanom;
 
 % Mask = squeeze(Vol1);
@@ -517,14 +517,12 @@ else
         case 'pre_processed_B1'
             b1map_params.b1avail   = true;
             b1map_params.procreq   = false;
-            %b1map_params.datatype = 'PREPROCB1';
             fprintf(1, ['---------------- B1 MAP CALCULATION ----------------\n' ...
                 'Preprocessed B1 map available. Assuming it is in percent units. No calculation required.\n']);
         otherwise
             b1map_params.b1avail = true; 
             b1map_params.procreq = true;
-            b1map_params.b1proc = hmri_get_defaults(['b1map.' b1map_params.b1type '.b1proc']);
-                    
+                
             % retrieve metadata if available
             hdr = get_metadata(jobsubj.raw_fld.b1{1});
             try

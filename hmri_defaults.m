@@ -225,8 +225,8 @@ hmri_def.b1_type.val  = hmri_def.b1_type.labels(1);
 % 'i3D_AFI'
 hmri_def.b1map.i3D_AFI.b1avail   = true; 
 hmri_def.b1map.i3D_AFI.procreq = true; 
-hmri_def.b1map.i3D_AFI.b1proc.TR2TR1ratio = 5;
-hmri_def.b1map.i3D_AFI.b1proc.alphanom = 60;
+hmri_def.b1map.i3D_AFI.b1acq.TR2TR1ratio = 5;
+hmri_def.b1map.i3D_AFI.b1acq.alphanom = 60;
 
 % 'pre_processed_B1'
 hmri_def.b1map.pre_processed_B1.b1avail   = true;
@@ -271,4 +271,8 @@ hmri_def.b1map.tfl_b1_map.procreq = true;
 hmri_def.b1map.rf_map.avail   = true; 
 hmri_def.b1map.rf_map.procreq = true; 
 
+% for local defaults
+if exist('hmri_defaults_local.m','file');
+    hmri_defaults_local;
+end
 end

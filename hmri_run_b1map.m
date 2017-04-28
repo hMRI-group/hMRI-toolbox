@@ -57,16 +57,21 @@ switch(b1map_params.b1type)
        
 end
 
-% save these into Results directory
-% NOTE: if "cleanup" set to true, the B1mapCal directory is deleted when
-% the Map Calculation completes... 
+% save these into Results directory (nii & json!)
+% NOTES: 
+%   - if "cleanup" set to true, the B1mapCal directory is deleted when the
+%   Map Calculation completes...  
+%   - just in case no json files have been saved with the output, the
+%   copyfile is called in "try" mode...
 if ~isempty(P_trans)
     copyfile(P_trans(1,:),fullfile(jobsubj.path.respath, spm_file(P_trans(1,:), 'filename')));
+    try copyfile([spm_str_manip(P_trans(1,:),'r') '.json'],fullfile(jobsubj.path.respath, [spm_file(P_trans(1,:), 'basename') '.json'])); end %#ok<*TRYNC>
     copyfile(P_trans(2,:),fullfile(jobsubj.path.respath, spm_file(P_trans(2,:), 'filename')));
+    try copyfile([spm_str_manip(P_trans(2,:),'r') '.json'],fullfile(jobsubj.path.respath, [spm_file(P_trans(2,:), 'basename') '.json'])); end
 end
 
 % save b1map_params as json-file
-spm_jsonwrite(fullfile(jobsubj.path.respath, [spm_file(P_trans(2,:),'basename') '_b1map_params.json']),'b1map_params',struct('indent','\t'));
+spm_jsonwrite([spm_str_manip(P_trans(2,:),'r') '_b1map_params.json'],b1map_params,struct('indent','\t'));
 
 
 end
@@ -96,7 +101,7 @@ Y1 = spm_read_vols(V1);
 Y2 = spm_read_vols(V2);
 
 TR1 = 1; % only the ratio [TR2/TR1=n] matters
-TR2 = b1map_params.TR2TR1ratio;
+TR2 = b1map_params.b1acq.TR2TR1ratio;
 alphanom = b1map_params.b1acq.alphanom;
 
 % Mask = squeeze(Vol1);
@@ -512,14 +517,12 @@ else
         case 'pre_processed_B1'
             b1map_params.b1avail   = true;
             b1map_params.procreq   = false;
-            %b1map_params.datatype = 'PREPROCB1';
             fprintf(1, ['---------------- B1 MAP CALCULATION ----------------\n' ...
                 'Preprocessed B1 map available. Assuming it is in percent units. No calculation required.\n']);
         otherwise
             b1map_params.b1avail = true; 
             b1map_params.procreq = true;
-            b1map_params.b1proc = hmri_get_defaults(['b1map.' b1map_params.b1type '.b1proc']);
-                    
+                
             % retrieve metadata if available
             hdr = get_metadata(jobsubj.raw_fld.b1{1});
             try

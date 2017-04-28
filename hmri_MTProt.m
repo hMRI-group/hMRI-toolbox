@@ -1,4 +1,4 @@
-function [fR1, fR2s, fMT, fA, PPDw, PT1w]  = hmri_MTProt(jobsubj, P_trans, P_receiv)
+function [fR1, fR2s, fMT, fA, PPDw, PT1w]  = hmri_MTProt(jobsubj, P_trans, P_receiv) %#ok<*STOUT>
 
 % Evaluation function for multi-contrast multi-echo FLASH protocol
 % P_mtw, P_pdw, P_t1w (retrieved from jobsubj.raw_mpm): MTw, PDw, T1w
@@ -58,6 +58,7 @@ dt = [spm_type('float32'),spm_platform('bigend')]; % for nifti output
 outbasename = spm_file(mpm_params.input.MTw.fname(1,:),'basename'); % for all output files
 calcpath = mpm_params.calcpath;
 mpm_params.outbasename = outbasename;
+respath = mpm_params.respath;
 
 % Load B1 mapping data if available 
 % P_trans(1,:) = magnitude image (anatomical reference for coregistration) 
@@ -129,7 +130,7 @@ contrastnam = {'MTw','PDw','T1w'};
 avg  = [0 0 0]; % not used?
 for ii=1:3 % loop over MTw, PDw, T1w contrasts
     avg_fnam    = fullfile(calcpath,[outbasename '_' contrastnam{ii} '.nii']);
-    eval(sprintf('P%s = avg_fnam;', contrastnam{ii})); % i.e. PPDw/PMTw/PT1w = avg_fnam;
+    eval(sprintf('P%s = avg_fnam;', contrastnam{ii})); % i.e. PPDw/PMTw/PT1w = avg_fnam; Defined here!!
     V           = spm_vol(PP{ii});
     dm          = V(1).dim;
     Ni          = nifti;
@@ -627,6 +628,40 @@ if ~isempty(f_T) && isempty(f_R) && PDproc.PDmap
     PDcalculation(mpm_params)
 end
 
+% copy final result files into Results directory
+fR1_final = fullfile(respath, spm_file(fR1,'filename'));
+copyfile(fR1,fR1_final);
+try copyfile([spm_str_manip(fR1,'r') '.json'],[spm_str_manip(fR1_final,'r') '.json']); end
+fR1 = fR1_final;
+
+fR2s_final = fullfile(respath, spm_file(fR2s,'filename'));
+copyfile(fR2s,fR2s_final);
+try copyfile([spm_str_manip(fR2s,'r') '.json'],[spm_str_manip(fR2s_final,'r') '.json']); end
+fR2s = fR2s_final;
+
+fMT_final = fullfile(respath, spm_file(fMT,'filename'));
+copyfile(fMT,fMT_final);
+try copyfile([spm_str_manip(fMT,'r') '.json'],[spm_str_manip(fMT_final,'r') '.json']); end
+fMT = fMT_final;
+
+fA_final = fullfile(respath, spm_file(fA,'filename'));
+copyfile(fA,fA_final);
+try copyfile([spm_str_manip(fA,'r') '.json'],[spm_str_manip(fA_final,'r') '.json']); end
+fA = fA_final;
+
+PPDw_final = fullfile(respath, spm_file(PPDw,'filename'));
+copyfile(PPDw,PPDw_final);
+try copyfile([spm_str_manip(PPDw,'r') '.json'],[spm_str_manip(PPDw_final,'r') '.json']); end
+PPDw = PPDw_final;
+
+PT1w_final = fullfile(respath, spm_file(PT1w,'filename'));
+copyfile(PT1w,PT1w_final);
+try copyfile([spm_str_manip(PT1w,'r') '.json'],[spm_str_manip(PT1w_final,'r') '.json']); end
+PT1w = PT1w_final;
+
+% save processing params (mpm_params)
+spm_jsonwrite(fullfile(respath,[outbasename '_mpm_params.json']),mpm_params,struct('indent','\t'));
+
 spm_progress_bar('Clear');
 
 end
@@ -726,8 +761,8 @@ Y = BF.*spm_read_vols(spm_vol(P));
 % matter value from the litterature (69%)
 A_WM = WMmask.*Y;
 Y = Y/mean(A_WM(A_WM~=0))*69;
-sprintf('mean White Matter intensity: %04d',mean(A_WM(A_WM~=0)))
-sprintf('SD White Matter intensity %04d',std(A_WM(A_WM~=0),[],1))
+fprintf(1,'mean White Matter intensity: %.1f\n',mean(A_WM(A_WM~=0)));
+fprintf(1,'SD White Matter intensity %.1f\n',std(A_WM(A_WM~=0),[],1));
 Y(Y>200) = 0;
 % MFC: Estimating Error for data set to catch bias field issues:
 errorEstimate = std(A_WM(A_WM > 0))./mean(A_WM(A_WM > 0));
@@ -827,7 +862,7 @@ MPMacq_prot = [mpm_params.input.PDw.TR mpm_params.input.T1w.TR mpm_params.input.
 % then match the values and find protocol tag
 nsets = numel(MPMacq_sets.vals);
 ii = 0; mtch = false;
-while ~mtch && ii <= nsets
+while ~mtch && ii < nsets
     ii = ii+1;
     if all(MPMacq_prot == MPMacq_sets.vals{ii})
         mtch  = true;

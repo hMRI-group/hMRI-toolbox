@@ -80,16 +80,20 @@ try
         hmri_def = subsasgn(hmri_def, subs, varargin{1});
     end
 catch %#ok<CTCH>
-    % Try adding the centre name as intermediate field
-    ctr_name = hmri_get_defaults('centre');
-    % construct subscript reference struct from dot delimited tag string
-    tags = textscan([ctr_name,'.',defstr],'%s', 'delimiter','.');
-    subs = struct('type','.','subs',tags{1}');
-    if nargin == 1
-        varargout{1} = subsref(hmri_def, subs);
-    else
-        hmri_def = subsasgn(hmri_def, subs, varargin{1});
-    end
+    
+    varargout{1} = [];
+    fprintf(1,'WARNING: no default value defined for %s!\n', defstr);
+    
+% %     % Try adding the centre name as intermediate field
+% %     ctr_name = hmri_get_defaults('centre');
+% %     % construct subscript reference struct from dot delimited tag string
+% %     tags = textscan([ctr_name,'.',defstr],'%s', 'delimiter','.');
+% %     subs = struct('type','.','subs',tags{1}');
+% %     if nargin == 1
+% %         varargout{1} = subsref(hmri_def, subs);
+% %     else
+% %         hmri_def = subsasgn(hmri_def, subs, varargin{1});
+% %     end
 end
 
 end

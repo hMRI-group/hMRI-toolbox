@@ -9,7 +9,7 @@ function hmri_defaults_local(varargin)
 % without modifying the global defaults (which is NOT recommended!!). 
 %
 % WARNING
-% Modificaiton of the defaults parameters may impair the the integrity of
+% Modification of the defaults parameters may impair the the integrity of
 % the toolbox, leading to unexpected behaviour. Only recommended for expert
 % users. 
 %

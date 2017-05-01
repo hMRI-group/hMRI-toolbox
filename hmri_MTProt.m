@@ -625,13 +625,13 @@ end
 
 % PD map calculation
 if ~isempty(f_T) && isempty(f_R) && PDproc.PDmap
-    PDcalculation(mpm_params)
+    PDcalculation(fA, mpm_params);
 end
 
 % copy final result files into Results directory
 fR1_final = fullfile(respath, spm_file(fR1,'filename'));
 copyfile(fR1,fR1_final);
-try copyfile([spm_str_manip(fR1,'r') '.json'],[spm_str_manip(fR1_final,'r') '.json']); end
+try copyfile([spm_str_manip(fR1,'r') '.json'],[spm_str_manip(fR1_final,'r') '.json']); end %#ok<*TRYNC>
 fR1 = fR1_final;
 
 fR2s_final = fullfile(respath, spm_file(fR2s,'filename'));
@@ -712,7 +712,9 @@ end
 %% =======================================================================%
 % Proton density map calculation
 %=========================================================================%
-function PDcalculation(mpm_params)
+function PDcalculation(fA, mpm_params)
+% fA is the filename of the output A image 
+% (not yet properly quantitative PD map)
 fprintf(1,'\n    -------- Proton density map calculation --------\n');
 
 PDproc = mpm_params.proc.PD;
@@ -726,11 +728,10 @@ WMmask=zeros(size(squeeze(TPMs(:,:,:,1))));
 WMmask(squeeze(TPMs(:,:,:,2))>=PDproc.WMMaskTh) = 1;
 
 % Save masked A map for bias-field correction later
-P = spm_select('FPList',calcpath,'^.*_PD.(img|nii)$');
-Vsave=spm_vol(P);
-Vsave.fname=fullfile(calcpath,['masked_' spm_str_manip(Vsave.fname,'t')]);
-Amap=spm_read_vols(spm_vol(P)).*WBmask;
-Amap(Amap==Inf)=0;Amap(isnan(Amap))=0;Amap(Amap==threshA)=0;
+Vsave = spm_vol(fA);
+Vsave.fname = fullfile(calcpath,['masked_' spm_str_manip(Vsave.fname,'t')]);
+Amap = spm_read_vols(spm_vol(fA)).*WBmask;
+Amap(Amap==Inf) = 0;Amap(isnan(Amap))=0;Amap(Amap==threshA)=0;
 spm_write_vol(Vsave,Amap);
 
 % Bias-field correction of masked A map
@@ -752,10 +753,9 @@ end
 % the masked A map but we want to apply it on the unmasked A map. We
 % therefore need to explicitly load the bias field and apply it on the original A map instead of just
 % loading the bias-field corrected A map from the previous step
-P = spm_select('FPList',calcpath ,'^s.*_PD.(img|nii)$');
 bf = fullfile(calcpath, spm_select('List', calcpath, '^BiasField.*\.(img|nii)$'));
 BF = double(spm_read_vols(spm_vol(bf)));
-Y = BF.*spm_read_vols(spm_vol(P));
+Y = BF.*spm_read_vols(spm_vol(fA));
 
 % Calibration of flattened A map to % water content using typical white
 % matter value from the litterature (69%)
@@ -766,7 +766,7 @@ fprintf(1,'SD White Matter intensity %.1f\n',std(A_WM(A_WM~=0),[],1));
 Y(Y>200) = 0;
 % MFC: Estimating Error for data set to catch bias field issues:
 errorEstimate = std(A_WM(A_WM > 0))./mean(A_WM(A_WM > 0));
-Vsave = spm_vol(P);
+Vsave = spm_vol(fA);
 Vsave.descrip = [Vsave.descrip '. Error Estimate: ', num2str(errorEstimate)];
 if errorEstimate > 0.06 %#ok<BDSCI>
     % MFC: Testing on 15 subjects showed 6% is a good cut-off:
@@ -782,7 +782,7 @@ if mpm_params.QA
 end
 spm_write_vol(Vsave,Y);
 
-temp = spm_select('FPList',calcpath,'^Bias.*\_A');
+temp = spm_select('FPList',calcpath,['^Bias.*\_PD']);
 for counter = 1:size(temp,1)
     delete(deblank(temp(counter,:)));
 end

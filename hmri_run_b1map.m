@@ -63,7 +63,10 @@ end
 %   Map Calculation completes...  
 %   - just in case no json files have been saved with the output, the
 %   copyfile is called in "try" mode...
+%   - must strip the ',1' (at the end of the file extension '.nii,1')
+%   otherwise copyfile does not find the files!! 
 if ~isempty(P_trans)
+    P_trans = spm_file(P_trans,'number','');
     copyfile(P_trans(1,:),fullfile(jobsubj.path.respath, spm_file(P_trans(1,:), 'filename')));
     try copyfile([spm_str_manip(P_trans(1,:),'r') '.json'],fullfile(jobsubj.path.respath, [spm_file(P_trans(1,:), 'basename') '.json'])); end %#ok<*TRYNC>
     copyfile(P_trans(2,:),fullfile(jobsubj.path.respath, spm_file(P_trans(2,:), 'filename')));
@@ -187,7 +190,7 @@ Y_cd = zeros(V(1).dim(1:3));
 Index_Matrix = zeros([V(1).dim(1:3) b1map_params.b1proc.Nonominalvalues]);
 real_Y_tmp = zeros([V(1).dim(1:2) 2*b1map_params.b1proc.Nonominalvalues]);
 
-Ssq_matrix=sqrt(sum(spm_read_vols(V(1:2:end)).^2,4));
+Ssq_matrix = sqrt(sum(spm_read_vols(V(1:2:end)).^2,4));
 
 %-Define output directory
 %-----------------------------------------------------------------------
@@ -524,51 +527,50 @@ else
             fprintf(1, ['---------------- B1 MAP CALCULATION ----------------\n' ...
                 'Preprocessed B1 map available. Assuming it is in percent units. No calculation required.\n']);
         otherwise
-            b1map_params.b1avail = true; 
+            b1map_params.b1avail = true;
             b1map_params.procreq = true;
-                
+            
             % retrieve metadata if available
             hdr = get_metadata(jobsubj.raw_fld.b1{1});
             try
-                ProtocolName = get_metadata_val(hdr{1},'ProtocolName');
-                
-                if ~isempty(strfind(ProtocolName,'al_B1mapping'))
-                    fprintf(1, ['---------------- B1 MAP CALCULATION ----------------\n' ...
-                        'SE/STE EPI protocol selected ...\n']);
-                    b1map_params.b1acq.beta = get_metadata_val(hdr{1},'B1mapNominalFAValues');
-                    b1map_params.b1acq.TM = get_metadata_val(hdr{1},'B1mapMixingTime');
-                    b1map_params.b1acq.tert = get_metadata_val(hdr{1},'epiReadoutDuration'); % must take into account PAT but not PF acceleration
-                    b1map_params.b1acq.blipDIR = get_metadata_val(hdr{1},'PhaseEncodingDirectionSign');
-                    b1map_params.b1proc = hmri_get_defaults('b1map.i3D_EPI.b1proc');
-                    % B0 data are required, let's check:
-                    if isempty(jobsubj.raw_fld.b0)
-                        b1map_params.b0avail = false;
-                        fprintf(1,['WARNING: expected B0 map not available for EPI undistortion.\n' ...
-                            'No fieldmap correction will be applied.']);
-                    else
-                        % note that the current implementation assumes that
-                        % b0 input images = 2 magnitude images (1st and 2nd
-                        % echoes) and 1 presubtracted phase image.
-                        b1map_params.b0avail = true;
-                        b1map_params.b0acq.shortTE = get_metadata_val(jobsubj.raw_fld.b0{1},'EchoTime');
-                        b1map_params.b0acq.longTE = get_metadata_val(jobsubj.raw_fld.b0{2},'EchoTime');
-                        b1map_params.b0acq.iformat = 'PM';
-                    end
-                    
-                elseif ~isempty(strfind(ProtocolName,'nw_b1map'))
-                    fprintf(1, ['---------------- B1 MAP CALCULATION ----------------\n' ...
-                        'AFI protocol selected ...\n']);
-                    tr = get_metadata_val(hdr{1},'RepetitionTimes');
-                    b1map_params.b1acq.TR2TR1ratio = tr(2)/tr(1);
-                    b1map_params.b1acq.alphanom = get_metadata_val(hdr{1},'FlipAngle');
-                    
-                elseif ~isempty(strfind(ProtocolName,'tfl_b1map'))
-                    fprintf(1, ['---------------- B1 MAP CALCULATION ----------------\n' ...
-                        'SIEMENS tfl_b1map protocol selected ...\n']);
-                    
-                elseif ~isempty(strfind(ProtocolName,'rf_map'))
-                    fprintf(1, ['---------------- B1 MAP CALCULATION ----------------\n' ...
-                        'AFI protocol selected ...\n']);
+                switch(b1map_params.b1type)
+                    case 'i3D_EPI'
+                        fprintf(1, ['---------------- B1 MAP CALCULATION ----------------\n' ...
+                            'SE/STE EPI protocol selected ...\n']);
+                        b1map_params.b1acq.beta = get_metadata_val(hdr{1},'B1mapNominalFAValues');
+                        b1map_params.b1acq.TM = get_metadata_val(hdr{1},'B1mapMixingTime');
+                        b1map_params.b1acq.tert = get_metadata_val(hdr{1},'epiReadoutDuration'); % must take into account PAT but not PF acceleration
+                        b1map_params.b1acq.blipDIR = get_metadata_val(hdr{1},'PhaseEncodingDirectionSign');
+                        b1map_params.b1proc = hmri_get_defaults('b1map.i3D_EPI.b1proc');
+                        % B0 data are required, let's check:
+                        if isempty(jobsubj.raw_fld.b0)
+                            b1map_params.b0avail = false;
+                            fprintf(1,['WARNING: expected B0 map not available for EPI undistortion.\n' ...
+                                'No fieldmap correction will be applied.']);
+                        else
+                            % note that the current implementation assumes that
+                            % b0 input images = 2 magnitude images (1st and 2nd
+                            % echoes) and 1 presubtracted phase image.
+                            b1map_params.b0avail = true;
+                            b1map_params.b0acq.shortTE = get_metadata_val(jobsubj.raw_fld.b0{1},'EchoTime');
+                            b1map_params.b0acq.longTE = get_metadata_val(jobsubj.raw_fld.b0{2},'EchoTime');
+                            b1map_params.b0acq.iformat = 'PM';
+                        end
+                        
+                    case 'i3D_AFI'
+                        fprintf(1, ['---------------- B1 MAP CALCULATION ----------------\n' ...
+                            'AFI protocol selected ...\n']);
+                        tr = get_metadata_val(hdr{1},'RepetitionTimes');
+                        b1map_params.b1acq.TR2TR1ratio = tr(2)/tr(1);
+                        b1map_params.b1acq.alphanom = get_metadata_val(hdr{1},'FlipAngle');
+                        
+                    case 'tfl_b1_map'
+                        fprintf(1, ['---------------- B1 MAP CALCULATION ----------------\n' ...
+                            'SIEMENS tfl_b1map protocol selected ...\n']);
+                        
+                    case 'rf_map'
+                        fprintf(1, ['---------------- B1 MAP CALCULATION ----------------\n' ...
+                            'SIEMENS rf_map protocol selected ...\n']);
                 end
             catch
                 fprintf(1, ['---------------- B1 MAP CALCULATION ----------------\n' ...

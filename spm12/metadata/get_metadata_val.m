@@ -631,10 +631,14 @@ else
                     fprintf(1,'Trying to derive the epiReadoutDuration from the Sequence version (%s/%s).\n',valSEQ,valPROT);
                     nFieldFound = 1;
                     switch lower(valSEQ)
-                        case 'b1v2d3d2'
-                            EchoSpacing = 2*140+260; % 540 us - Prisma
-                        case 'b1epi4a3d2'
-                            EchoSpacing = 330; % 330 us - Allegra
+                        case 'b1v2d3d2' % 540 us - Prisma
+                            EchoSpacing = 2*140+260; 
+                        case 'b1epi4a3d2' % 330 us - Allegra
+                            EchoSpacing = 330; 
+                        case 'b1epi2b3d2' % 1mm protocol from WTCN
+                            EchoSpacing = 540;
+                        case 'b1epi2d3d2' % 800um protocol from WTCN
+                            EchoSpacing = 540;
                         otherwise
                             fprintf(1,'WARNING: B1mapping version unknown, trying to base our guess on PixelBandwidth.\n');
                             PixelBandwidth = get_metadata_val(mstruc,'BandwidthPerPixelRO');
@@ -707,9 +711,21 @@ else
                         parLocation{cRes} = [nam{1} '.adFree(3:4)'];
                         parValue{cRes} = val{1}.adFree(3):-val{1}.adFree(4):0;
                     case 'b1epi4a3d2' % VA35 Allegra data
-                        % wip parameters are sorted as follows (not right, need to be checked):
+                        % wip parameters are sorted as follows:
                         % alFree: [EddyCurrentDelay MixingTime NoRefAverages DurationPer5Deg BWT_SE/STE_factor NoDummyScans CrusherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
                         % adFree: [RefocCorr CrusherAmplitude MaxRefocAngle DecRefocAngle FAforReferScans RFSpoilIncr]
+                        parLocation{cRes} = [nam{1} '.adFree(3:4)'];
+                        parValue{cRes} = val{1}.adFree(3):-val{1}.adFree(4):0;
+                    case 'b1epi2b3d2' % 1mm protocol from WTCN
+                        % wip parameters are sorted as follows:
+                        % alFree: [EddyCurrentDelay Tmixing (?) DurationPer5Deg BWT_SE/STE_factor (?) CrusherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
+                        % adFree: [RefocCorr ScaleSGrad? MaxRefocAngle DecRefocAngle FAforReferScans]
+                        parLocation{cRes} = [nam{1} '.adFree(3:4)'];
+                        parValue{cRes} = val{1}.adFree(3):-val{1}.adFree(4):0;
+                    case 'b1epi2d3d2' % 800um protocol from WTCN
+                        % wip parameters are sorted as follows:
+                        % alFree: [Tmixing DurationPer5Deg BWT_SE/STE_factor (?) CrusherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
+                        % adFree: [RefocCorr ScaleSGrad? MaxRefocAngle DecRefocAngle FAforReferScans RFSpoilIncr]
                         parLocation{cRes} = [nam{1} '.adFree(3:4)'];
                         parValue{cRes} = val{1}.adFree(3):-val{1}.adFree(4):0;
                     otherwise
@@ -745,6 +761,11 @@ else
                         % alFree: [RawDataExport(off/on=1/2) MTRepFactor DurationMTGaussianPulse FlatTopMTSpoiler DurPrewRamp DurPrewFlat DurRORamp RFExc(RectNonSel/SincNonSel/SincSlabSel = 1/2/3) RectFixedDur SincFixedDur BWTSinc]
                         % adFree: [MTGaussianFA OffResonanceMTGaussianPulse RFSpoilIncr]
                         index = 3;
+                    case 'b1epi2d3d2' % 800um protocol from WTCN
+                        % wip parameters are sorted as follows:
+                        % alFree: [Tmixing DurationPer5Deg BWT_SE/STE_factor (?) CrusherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
+                        % adFree: [RefocCorr ScaleSGrad? MaxRefocAngle DecRefocAngle FAforReferScans RFSpoilIncr]
+                        index = 6;                        
                     case 'fl3d_2d3d6' % VA35 Allegra
                         % wip parameters are sorted as follows:
                         % alFree: [MTSaturationMode (1/2 = Gaussian/Binomial)
@@ -789,10 +810,20 @@ else
                         % adFree: [RefocCorr ScaleSGrad MaxRefocAngle DecRefocAngle FAforReferScans RFSpoilIncr]
                         index = 1;
                     case 'b1epi4a3d2' % VA35 Allegra data
-                        % wip parameters are sorted as follows (not right, need to be checked):
-                        % alFree: [Tmixing DurationPer5Deg BWT_SE/STE_factor CursherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
-                        % adFree: [RefocCorr ScaleSGrad MaxRefocAngle DecRefocAngle FAforReferScans RFSpoilIncr]
+                        % wip parameters are sorted as follows:
+                        % alFree: [EddyCurrentDelay MixingTime NoRefAverages DurationPer5Deg BWT_SE/STE_factor NoDummyScans CrusherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
+                        % adFree: [RefocCorr CrusherAmplitude MaxRefocAngle DecRefocAngle FAforReferScans RFSpoilIncr]
                         index = 2;
+                    case 'b1epi2b3d2' % 1mm protocol from WTCN
+                        % wip parameters are sorted as follows:
+                        % alFree: [EddyCurrentDelay Tmixing (?) DurationPer5Deg BWT_SE/STE_factor (?) CrusherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
+                        % adFree: [RefocCorr ScaleSGrad? MaxRefocAngle DecRefocAngle FAforReferScans]
+                        index = 2;
+                    case 'b1epi2d3d2' % 800um protocol from WTCN
+                        % wip parameters are sorted as follows:
+                        % alFree: [Tmixing DurationPer5Deg BWT_SE/STE_factor (?) CrusherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
+                        % adFree: [RefocCorr ScaleSGrad? MaxRefocAngle DecRefocAngle FAforReferScans RFSpoilIncr]
+                        index = 1;
                     otherwise
                         fprintf(1,'B1mapping version unknown (%s/%s). Give up guessing TM value.\n', valSEQ, valPROT);
                 end

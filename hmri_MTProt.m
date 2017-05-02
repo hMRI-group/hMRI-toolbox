@@ -862,7 +862,7 @@ MPMacq_prot = [mpm_params.input.PDw.TR mpm_params.input.T1w.TR mpm_params.input.
 % then match the values and find protocol tag
 nsets = numel(MPMacq_sets.vals);
 ii = 0; mtch = false;
-while ~mtch && ii <= nsets
+while ~mtch && ii < nsets
     ii = ii+1;
     if all(MPMacq_prot == MPMacq_sets.vals{ii})
         mtch  = true;

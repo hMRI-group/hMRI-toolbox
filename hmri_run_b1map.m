@@ -478,12 +478,12 @@ end
 %=========================================================================%
 function b1map_params = get_b1map_params(jobsubj)
 
-% retrieve b1type from job
-b1_type = jobsubj.b1_type;
+% retrieve b1 protocol from job 
+% (can be different - a variation of - the b1 type)
+b1_protocol = jobsubj.b1_type;
 
 % define local defaults for b1map
-hmri_defaults_local('b1_type', b1_type);
-b1map_params.b1type = hmri_get_defaults(['b1map.' b1_type '.b1type']); 
+b1map_params.b1type = hmri_get_defaults(['b1map.' b1_protocol '.b1type']); 
 
 % check for existing b1 data
 if isempty(jobsubj.raw_fld.b1)
@@ -541,7 +541,7 @@ else
                         b1map_params.b1acq.TM = get_metadata_val(hdr{1},'B1mapMixingTime');
                         b1map_params.b1acq.tert = get_metadata_val(hdr{1},'epiReadoutDuration'); % must take into account PAT but not PF acceleration
                         b1map_params.b1acq.blipDIR = get_metadata_val(hdr{1},'PhaseEncodingDirectionSign');
-                        b1map_params.b1proc = hmri_get_defaults('b1map.i3D_EPI.b1proc');
+                        b1map_params.b1proc = hmri_get_defaults(['b1map.' b1_protocol '.b1proc']);
                         % B0 data are required, let's check:
                         if isempty(jobsubj.raw_fld.b0)
                             b1map_params.b0avail = false;
@@ -576,8 +576,8 @@ else
                 fprintf(1, ['---------------- B1 MAP CALCULATION ----------------\n' ...
                     'WARNING: possibly no metadata associated to the input images. \n' ...
                     'Default acquisition and processing parameters will be used.\n' ...
-                    '%s data type is assumed.\n'], b1map_params.b1type);
-                b1map_def = hmri_get_defaults(['b1map.' b1map_params.b1type]);
+                    '%s data type is assumed with protocol %s.\n'], b1map_params.b1type, b1_protocol);
+                b1map_def = hmri_get_defaults(['b1map.' b1_protocol]);
                 f = fieldnames(b1map_def);
                 for cfi=1:length(f)
                     if ~isfield(b1map_params,f{cfi})

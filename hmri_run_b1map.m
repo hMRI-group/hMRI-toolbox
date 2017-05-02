@@ -74,7 +74,7 @@ if ~isempty(P_trans)
 end
 
 % save b1map_params as json-file
-spm_jsonwrite([spm_str_manip(P_trans(2,:),'r') '_b1map_params.json'],b1map_params,struct('indent','\t'));
+spm_jsonwrite(fullfile(jobsubj.path.respath,'MPM_map_creation_b1map_params.json'),b1map_params,struct('indent','\t'));
 
 
 end
@@ -397,7 +397,7 @@ spm_smooth(B1map_norm,smB1map_norm,smth);
 outpath = jobsubj.path.b1path;
 b1map_params.outpath = outpath;
 
-sname = spm_file(V1.fname,'filename');
+sname = spm_file(V1.fname,'basename');
 
 VB1 = V1;
 VB1.pinfo = [max(smB1map_norm(:))/16384;0;0]; % what is this for? (TL)
@@ -449,7 +449,7 @@ spm_smooth(B1map_norm,smB1map_norm,smth);
 outpath = jobsubj.path.b1path;
 b1map_params.outpath = outpath;
 
-sname = spm_file(V1.fname,'filename');
+sname = spm_file(V1.fname,'basename');
 
 VB1 = V1;
 VB1.pinfo = [max(smB1map_norm(:))/16384;0;0]; % what is this for? (TL)

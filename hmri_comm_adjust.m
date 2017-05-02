@@ -1,7 +1,8 @@
 function [M,R] = hmri_comm_adjust(option,Ref,Other,Nits,doshear,Template)
 
 % This function is a version of comm_adjust.m customized for T1 like
-% images, i.e. MT images. Now it is necessary to define as input parameter the Template to be used for the commisure adjustment.
+% images, i.e. MT images. Now it is necessary to define as input parameter
+% the Template to be used for the commisure adjustment. 
 %
 %% Lester Melie-Garcia
 % LREN, CHUV. 
@@ -51,7 +52,7 @@ end
 sep = 8./[1 2 4*ones(1,Nits)];
 %Tmp = sprintf('%s//templates//%s.nii',spm('Dir'),Modality);
 if ~exist('Template','var')
-    Template = sprintf('%s//canonical//%s.nii',spm('Dir'),'avg152T1');
+    Template = fullfile(spm('Dir'),'canonical','avg152T1.nii');
 end;
 flags = struct('WG'      ,[]    ,...
                'WF'      ,[]    ,...

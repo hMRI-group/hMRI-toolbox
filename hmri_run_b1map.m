@@ -411,7 +411,7 @@ Output_hdr.history.procstep.descrip = 'B1+ map calculation (SIEMENS tfl_b1map pr
 set_metadata(VB1.fname,Output_hdr,json);
 
 % requires anatomic image + map
-P_trans  = char(Q,char(VB1.fname));
+P_trans  = char(char(V2.fname),char(VB1.fname));
 
 end
 
@@ -463,7 +463,7 @@ Output_hdr.history.procstep.descrip = 'B1+ map calculation (SIEMENS rf_map proto
 set_metadata(VB1.fname,Output_hdr,json);
 
 % requires anatomic image + map
-P_trans  = char(Q,char(VB1.fname));
+P_trans  = char(char(V2.fname),char(VB1.fname));
 
 end
 

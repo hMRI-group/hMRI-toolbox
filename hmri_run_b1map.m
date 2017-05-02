@@ -64,9 +64,9 @@ end
 %   - just in case no json files have been saved with the output, the
 %   copyfile is called in "try" mode...
 if ~isempty(P_trans)
-    copyfile(P_trans(1,:),fullfile(jobsubj.path.respath, spm_file(P_trans(1,:), 'filename')));
+    copyfile(deblank(P_trans(1,:)),fullfile(jobsubj.path.respath, spm_file(P_trans(1,:), 'filename')));
     try copyfile([spm_str_manip(P_trans(1,:),'r') '.json'],fullfile(jobsubj.path.respath, [spm_file(P_trans(1,:), 'basename') '.json'])); end %#ok<*TRYNC>
-    copyfile(P_trans(2,:),fullfile(jobsubj.path.respath, spm_file(P_trans(2,:), 'filename')));
+    copyfile(deblank(P_trans(2,:)),fullfile(jobsubj.path.respath, spm_file(P_trans(2,:), 'filename')));
     try copyfile([spm_str_manip(P_trans(2,:),'r') '.json'],fullfile(jobsubj.path.respath, [spm_file(P_trans(2,:), 'basename') '.json'])); end
 end
 
@@ -408,7 +408,7 @@ Output_hdr.history.procstep.descrip = 'B1+ map calculation (SIEMENS tfl_b1map pr
 set_metadata(VB1.fname,Output_hdr,json);
 
 % requires anatomic image + map
-P_trans  = char(Q,char(VB1.fname));
+P_trans  = char(char(V2.fname),char(VB1.fname));
 
 end
 
@@ -460,7 +460,7 @@ Output_hdr.history.procstep.descrip = 'B1+ map calculation (SIEMENS rf_map proto
 set_metadata(VB1.fname,Output_hdr,json);
 
 % requires anatomic image + map
-P_trans  = char(Q,char(VB1.fname));
+P_trans  = char(char(V2.fname),char(VB1.fname));
 
 end
 

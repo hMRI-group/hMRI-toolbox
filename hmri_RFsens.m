@@ -21,7 +21,7 @@ function jobsubj = hmri_RFsens(jobsubj)
 % DOI 10.1002/mrm.26058
 
 % retrieve some defaults
-outdir = hmri_get_defaults('outdir');
+outdir = jobsubj.path.rfsenspath;
 smooth_kernel = hmri_get_defaults('RFsens.smooth_kernel');
 json = hmri_get_defaults('json');
 
@@ -53,10 +53,10 @@ T1_sensmaps0 = char(T1_sensmaps01,T1_sensmaps02);
 
 [~,~,ext] = fileparts(MT_sensmaps0(1,:));
 MT_sensmap1 = strcat(outdir,filesep,'MT_sens_head',ext);
-copyfile(MT_sensmaps0(1,:),MT_sensmap1);
+copyfile(deblank(MT_sensmaps0(1,:)),MT_sensmap1);
 [~,~,ext] = fileparts(MT_sensmaps0(2,:));
 MT_sensmap2 = strcat(outdir,filesep,'MT_sens_body',ext);
-copyfile(MT_sensmaps0(2,:),MT_sensmap2);
+copyfile(deblank(MT_sensmaps0(2,:)),MT_sensmap2);
 MT_sensmaps = char(MT_sensmap1,MT_sensmap2);
 % set and write metadata
 Output_hdr = struct('history',struct('procstep',[],'input',[]));
@@ -75,10 +75,10 @@ end
 
 [~,~,ext] = fileparts(PD_sensmaps0(1,:));
 PD_sensmap1 = strcat(outdir,filesep,'PD_sens_head',ext);
-copyfile(PD_sensmaps0(1,:),PD_sensmap1);
+copyfile(deblank(PD_sensmaps0(1,:)),PD_sensmap1);
 [~,~,ext] = fileparts(PD_sensmaps0(2,:));
 PD_sensmap2 = strcat(outdir,filesep,'PD_sens_body',ext);
-copyfile(PD_sensmaps0(2,:),PD_sensmap2);
+copyfile(deblank(PD_sensmaps0(2,:)),PD_sensmap2);
 PD_sensmaps = char(PD_sensmap1,PD_sensmap2);
 % set and write metadata
 Output_hdr = struct('history',struct('procstep',[],'input',[]));
@@ -97,10 +97,10 @@ end
 
 [~,~,ext] = fileparts(T1_sensmaps0(1,:));
 T1_sensmap1 = strcat(outdir,filesep,'T1_sens_head',ext);
-copyfile(T1_sensmaps0(1,:),T1_sensmap1);
+copyfile(deblank(T1_sensmaps0(1,:)),T1_sensmap1);
 [~,~,ext] = fileparts(T1_sensmaps0(2,:));
 T1_sensmap2 = strcat(outdir,filesep,'T1_sens_body',ext);
-copyfile(T1_sensmaps0(2,:),T1_sensmap2);
+copyfile(deblank(T1_sensmaps0(2,:)),T1_sensmap2);
 T1_sensmaps = char(T1_sensmap1,T1_sensmap2);
 % set and write metadata
 Output_hdr = struct('history',struct('procstep',[],'input',[]));
@@ -367,12 +367,19 @@ for i = 1:size(MT_structurals,1)
     FileName = [strcat(Filepath,filesep,'sMT_manualnorm_echo-',num2str(i)),'.nii'];
     placeholder = spm_imcalc({deblank(MT_structurals(i,:)), deblank(MT_map)}, FileName, 'i1./i2');
     % set and write metadata
-    Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[]));
+    Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[],'acqpar',...
+        struct('RepetitionTime',[],'EchoTime',[],'FlipAngle',[])));
     Output_hdr.history.procstep.version = hmri_get_version;
     Output_hdr.history.procstep.descrip = 'B1- map application to MT';
     Output_hdr.history.procstep.procpar = 'i1./i2';
     Output_hdr.history.input{1}.filename = MT_structurals(i,:);
     Output_hdr.history.input{2}.filename = MT_map;
+    Output_hdr.history.acqpar.RepetitionTime = ...
+        get_metadata_val(MT_structurals(i,:),'RepetitionTime');
+    Output_hdr.history.acqpar.EchoTime = ...
+        get_metadata_val(MT_structurals(i,:),'EchoTime');
+    Output_hdr.history.acqpar.FlipAngle = ...
+        get_metadata_val(MT_structurals(i,:),'FlipAngle');
     for ctr = 1:2
         input_hdr = get_metadata(Output_hdr.history.input{ctr}.filename);
         if ~isempty(input_hdr{1})
@@ -436,12 +443,19 @@ for i = 1:size(PD_structurals,1)
     FileName = [strcat(Filepath,filesep,'sPD_manualnorm_echo-',num2str(i)),'.nii'];
     placeholder = spm_imcalc({deblank(PD_structurals(i,:)), deblank(PD_map)}, FileName, 'i1./i2');
     % set and write metadata
-    Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[]));
+    Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[],'acqpar',...
+        struct('RepetitionTime',[],'EchoTime',[],'FlipAngle',[])));
     Output_hdr.history.procstep.version = hmri_get_version;
     Output_hdr.history.procstep.descrip = 'B1- map application to PD';
     Output_hdr.history.procstep.procpar = 'i1./i2';
     Output_hdr.history.input{1}.filename = PD_structurals(i,:);
     Output_hdr.history.input{2}.filename = PD_map;
+    Output_hdr.history.acqpar.RepetitionTime = ...
+        get_metadata_val(PD_structurals(i,:),'RepetitionTime');
+    Output_hdr.history.acqpar.EchoTime = ...
+        get_metadata_val(PD_structurals(i,:),'EchoTime');
+    Output_hdr.history.acqpar.FlipAngle = ...
+        get_metadata_val(PD_structurals(i,:),'FlipAngle');
     for ctr = 1:2
         input_hdr = get_metadata(Output_hdr.history.input{ctr}.filename);
         if ~isempty(input_hdr{1})
@@ -505,12 +519,19 @@ for i = 1:size(T1_structurals,1)
     FileName = [strcat(Filepath,filesep,'sT1_manualnorm_echo-',num2str(i)),'.nii'];
     placeholder = spm_imcalc({deblank(T1_structurals(i,:)), deblank(T1_map)}, FileName, 'i1./i2');
     % set and write metadata
-    Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[]));
+    Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[],'acqpar',...
+        struct('RepetitionTime',[],'EchoTime',[],'FlipAngle',[])));
     Output_hdr.history.procstep.version = hmri_get_version;
     Output_hdr.history.procstep.descrip = 'B1- map application to T1';
     Output_hdr.history.procstep.procpar = 'i1./i2';
     Output_hdr.history.input{1}.filename = T1_structurals(i,:);
     Output_hdr.history.input{2}.filename = T1_map;
+    Output_hdr.history.acqpar.RepetitionTime = ...
+        get_metadata_val(T1_structurals(i,:),'RepetitionTime');
+    Output_hdr.history.acqpar.EchoTime = ...
+        get_metadata_val(T1_structurals(i,:),'EchoTime');
+    Output_hdr.history.acqpar.FlipAngle = ...
+        get_metadata_val(T1_structurals(i,:),'FlipAngle');
     for ctr = 1:2
         input_hdr = get_metadata(Output_hdr.history.input{ctr}.filename);
         if ~isempty(input_hdr{1})

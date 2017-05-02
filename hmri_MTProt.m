@@ -608,13 +608,14 @@ if (mpm_params.QA.enable||(PDproc.PDmap))
     clear matlabbatch
     matlabbatch{1}.spm.spatial.preproc.channel.vols = {fMT};
     matlabbatch{1}.spm.spatial.preproc.channel.write = [0 0];
-    spm_jobman('run', matlabbatch);
+    output_list = spm_jobman('run', matlabbatch);
+    fTPM = char(cat(1,output_list{1}.tiss.c));
 end
 
 % for quality assessment
 if mpm_params.QA.enable
     % Calculate WM mask
-    TPMs = spm_read_vols(spm_vol(spm_select('FPList',calcpath,'^c.*\.(img|nii)$')));
+    TPMs = spm_read_vols(spm_vol(fTPM));
     WMmask = zeros(size(squeeze(TPMs(:,:,:,2))));
     WMmask(squeeze(TPMs(:,:,:,2))>=PDproc.WMMaskTh) = 1;        
     WMmask = spm_erode(spm_erode(double(WMmask)));
@@ -639,7 +640,7 @@ end
 
 % PD map calculation
 if ~isempty(f_T) && isempty(f_R) && PDproc.PDmap
-    PDcalculation(fA, mpm_params);
+    PDcalculation(fA,fTPM,mpm_params);
 end
 
 % copy final result files into Results directory
@@ -652,6 +653,17 @@ fR2s_final = fullfile(respath, spm_file(fR2s,'filename'));
 copyfile(fR2s,fR2s_final);
 try copyfile([spm_str_manip(fR2s,'r') '.json'],[spm_str_manip(fR2s_final,'r') '.json']); end
 fR2s = fR2s_final;
+
+% NB: if OLS calculation of R2s map has been done, the output file for R2s
+% map is the OLS result. However, both simple R2s and R2s_OLS images are
+% copied into results directory:
+if mpm_params.proc.R2sOLS
+    fR2s_OLS_final = spm_file(fR2s,'suffix','_OLS');
+    fR2s_OLS = fullfile(calcpath, spm_file(fR2s_OLS,'filename'));
+    copyfile(fR2s_OLS,fR2s_OLS_final);
+    try copyfile([spm_str_manip(fR2s_OLS,'r') '.json'],[spm_str_manip(fR2s_OLS_final,'r') '.json']); end
+    fR2s = fR2s_OLS_final;
+end
 
 fMT_final = fullfile(respath, spm_file(fMT,'filename'));
 copyfile(fMT,fMT_final);
@@ -726,16 +738,17 @@ end
 %% =======================================================================%
 % Proton density map calculation
 %=========================================================================%
-function PDcalculation(fA, mpm_params)
+function PDcalculation(fA, fTPM, mpm_params)
 % fA is the filename of the output A image 
 % (not yet properly quantitative PD map when it enters PDcalculation)
+% fTMP is the list of TPMs generated from MT map
 fprintf(1,'\n    -------- Proton density map calculation --------\n');
 
 PDproc = mpm_params.proc.PD;
 threshA = mpm_params.proc.threshall.A;
 calcpath = mpm_params.calcpath;
 
-TPMs = spm_read_vols(spm_vol(spm_select('FPList',calcpath,'^c.*\.(img|nii)$')));
+TPMs = spm_read_vols(spm_vol(fTPM));
 WBmask = zeros(size(squeeze(TPMs(:,:,:,1))));
 WBmask(sum(cat(4,TPMs(:,:,:,1:2),TPMs(:,:,:,end)),4)>=PDproc.WBMaskTh) = 1;
 WMmask=zeros(size(squeeze(TPMs(:,:,:,1))));

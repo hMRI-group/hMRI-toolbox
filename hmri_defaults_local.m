@@ -31,8 +31,8 @@ if nargin==0
     
 %======================== Global parameters ===============================
 % Specifying the lab and scanner
-hmri_def.centre = 'crc' ; % 'fil', 'lren', 'crc', 'sciz', 'cbs', ...
-hmri_def.scanner = 'prisma' ; % 'allegra', 'terra', ...
+hmri_def.centre = 'research centre' ; 
+hmri_def.scanner = 'scanner name' ; % e.g. 'prisma', 'allegra', 'terra', 'achieva', ...
 
 %================== B1 mapping processing parameters ======================
 % Centre-specific list of protocols available
@@ -90,28 +90,5 @@ hmri_def.b1map.i3D_EPI_local_example.b0acq.shortTE = 4.72; % ms
 hmri_def.b1map.i3D_EPI_local_example.b0acq.longTE = 7.38; % ms
 % b1-processing
 hmri_def.b1map.i3D_EPI_local_example.b1proc.HZTHRESH = 300;
-
-
-%% ===================== selecting a specific protocol ====================
-% Only defined for selecting default parameters for b1_type, but could be
-% extended if needed...
-%==========================================================================
-elseif nargin==2
-    % re-initiate default values
-    hmri_defaults;
-    % collect arguments
-    defstr = varargin{1};
-    defval = varargin{2};
-    % modify defaults
-    switch defstr
-        case 'b1_type'
-            % retrieve the values
-            b1map = hmri_get_defaults(['b1map.' defval]);
-            % overwrite global defaults with local ones
-            hmri_get_defaults(['b1map.' b1map.b1type],b1map);
-    end
     
-else 
-    error('Wrong number of input! Type "help hmri_defaults_local".');
-end
 end

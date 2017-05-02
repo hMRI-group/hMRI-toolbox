@@ -194,8 +194,9 @@ spm_progress_bar('Clear');
 %=========================================================================%
 fprintf(1,'\n    -------- Coregistering the images  --------\n');
 
-x_MT2PD = coreg_mt(PPDw, PMTw);
-x_T12PD = coreg_mt(PPDw, PT1w);
+% NOTE: PPDw, PMTw and PT1w are defined above as evaluated string (~line 133)
+x_MT2PD = coreg_mt(PPDw, PMTw);  %#ok<NODEF>
+x_T12PD = coreg_mt(PPDw, PT1w); %#ok<NODEF>
 coreg_mt(PPDw, PT1w_forA);
 if ~isempty(V_trans)
     coreg_bias_map(PPDw, P_trans);
@@ -205,13 +206,13 @@ if ~isempty(V_receiv)
 end
 
 % parameters saved for quality assessment
-if mpm_params.QA
-    if (exist(fullfile(calcpath,'QualityAssessment.mat'),'file')==2)
-        load(fullfile(calcpath,'QualityAssessment.mat'));
+if mpm_params.QA.enable
+    if exist(mpm_params.QA.fnam,'file')
+        mpm_params.QA = spm_jsonread(mpm_params.QA.fnam);
     end
-    QA.ContrastCoreg.MT2PD = x_MT2PD;
-    QA.ContrastCoreg.T12PD = x_T12PD;
-    save(fullfile(calcpath,'QualityAssessment'),'QA')
+    mpm_params.QA.ContrastCoreg.MT2PD = x_MT2PD;
+    mpm_params.QA.ContrastCoreg.T12PD = x_T12PD;
+    spm_jsonwrite(mpm_params.QA.fnam, mpm_params.QA, struct('indent','\t'));
 end
 
 % load averaged images
@@ -227,7 +228,7 @@ VT1w_forA = spm_vol(PT1w_forA);
 % to evaluate the SD of each R2* map in white matter (i.e. intra-run motion
 % measurement).
 %=========================================================================%
-if mpm_params.QA
+if mpm_params.QA.enable
     fprintf(1,'\n    -------- multi-contrast R2* map calculation for QA --------\n');
     
     allTEs = {TE_mtw, TE_pdw, TE_t1w};
@@ -288,7 +289,7 @@ end
 % OLS R2* map calculation by MFC
 % [Reference: ESTATICS, Weiskopf et al. 2014]
 %=========================================================================%
-if mpm_params.proc.R2sOLS || mpm_params.QA
+if mpm_params.proc.R2sOLS
     fprintf(1,'\n    -------- OLS R2* map calculation --------\n');
     
     R2sOLS_fnam = fullfile(calcpath,[outbasename '_R2s_OLS' '.nii']);
@@ -547,22 +548,41 @@ end
 %% =======================================================================%
 % ACPC Realign all images
 %=========================================================================%
-if 0;%mpm_params.ACPCrealign
+if mpm_params.ACPCrealign
     fprintf(1,'\n    -------- ACPC Realign all images --------\n');
     
-    Vsave = spm_vol(spm_select('FPList',calcpath,'^s.*_MT.(img|nii)$'));
-    MTimage = spm_read_vols(Vsave);    
-    Vsave.fname = fullfile(calcpath,['masked_' spm_str_manip(Vsave.fname,'t')]);
-    PDWimage = spm_read_vols(spm_vol(spm_select('FPList',calcpath,'^s.*_PDw.(img|nii)$')));
-    MTimage(find(PDWimage<0.6*mean(PDWimage(:))))=0;
-    spm_write_vol(Vsave,MTimage);
+    % Define and calculate masked MT image
+    % Load MT image
+    V_MT = spm_vol(fMT);
+    MTimage = spm_read_vols(V_MT);    
+    % Define new file name for masked MT image
+    V_MT.fname = fullfile(calcpath,['masked_' spm_str_manip(fMT,'t')]);
+    % Load average PDw image (mask based on averaged PDw image)
+    PDWimage = spm_read_vols(spm_vol(PPDw));
+    % Mask MT image and save the masked MT image ('masked_..._MT.nii')
+    MTimage(PDWimage<0.6*mean(PDWimage(:)))=0;
+    spm_write_vol(V_MT,MTimage);
 
-    MTimage = spm_select('FPList',calcpath,'^masked.*_MT.(img|nii)$');    
-    [~,R] = hmri_comm_adjust(1,MTimage,MTimage,8,0,sprintf('%s//canonical//%s.nii',spm('Dir'),'avg152T1')); % Commissure adjustment to find a rigth image center and have good segmentation.
-    Vsave = spm_vol(MTimage);
-    Vsave.descrip = [Vsave.descrip ' - AC-PC realigned'];
-    spm_write_vol(Vsave,spm_read_vols(spm_vol(MTimage)));
-    ACPC_images = spm_select('FPList',calcpath,'^s.*_(MT||A||PD||R1||R2s||R2s_OLS||MTR).(img|nii)$');
+    % Use masked MT image to calculate transformation for ACPC realignment
+    % (to increase robustness in segmentation):
+    [~,R] = hmri_comm_adjust(1,V_MT.fname,V_MT.fname,8,0,fullfile(spm('Dir'),'canonical','avg152T1.nii')); 
+    
+    % Collect all images from all defined output directories:
+    allpaths = jobsubj.path;
+    ACPC_images = [];
+    f = fieldnames(allpaths);
+    for cfield = 1:length(f)
+        tmpfiles = spm_select('FPList',allpaths.(f{cfield}),'.*.(img|nii)$');
+        if ~isempty(tmpfiles)
+            if ~isempty(ACPC_images)
+                ACPC_images = char(ACPC_images,spm_select('FPList',allpaths.(f{cfield}),'.*.(img|nii)$'));
+            else
+                ACPC_images = tmpfiles;
+            end
+        end
+    end
+    
+    % Apply transform to ALL images 
     for i=1:size(ACPC_images,1)
         spm_get_space(deblank(ACPC_images(i,:)),...
             R*spm_get_space(deblank(ACPC_images(i,:))));
@@ -570,68 +590,62 @@ if 0;%mpm_params.ACPCrealign
         Vsave.descrip = [Vsave.descrip ' - AC-PC realigned'];
         spm_write_vol(Vsave,spm_read_vols(spm_vol(ACPC_images(i,:))));
     end;
-    if mpm_params.QA
-        ACPC_images = spm_select('FPList',calcpath,'^s.*_(PDw||T1w||MTw).(img|nii)$');
-        for i=1:size(ACPC_images,1)
-            spm_get_space(deblank(ACPC_images(i,:)),...
-                R*spm_get_space(deblank(ACPC_images(i,:))));
-            Vsave = spm_vol(ACPC_images(i,:));
-            Vsave.descrip = [Vsave.descrip ' - AC-PC realigned'];
-            spm_write_vol(Vsave,spm_read_vols(spm_vol(ACPC_images(i,:))));
-        end;
-    end
-    save(fullfile(calcpath,'ACPCrealign'),'R')
-    delete(deblank(spm_select('FPList',calcpath,'^masked.*_MT.(img|nii)$')));
+    
+    % Save transformation matrix
+    spm_jsonwrite(fullfile(respath,'MPM_map_creation_ACPCrealign_transformation_matrix.json'),R,struct('indent','\t'));
 end
 
 % for quality assessment and/or PD map calculation
-if (mpm_params.QA||(PDproc.PDmap))
-    P = spm_select('FPList',calcpath,'^s.*_MT.(img|nii)$');
-    Vsave = spm_vol(P);
+if (mpm_params.QA.enable||(PDproc.PDmap))
+    Vsave = spm_vol(fMT);
     MTtemp = spm_read_vols(Vsave);
     %The 5 outer voxels in all directions are nulled in order to remove artefactual effects from the MT map on segmentation:
-    MTtemp(1:5,:,:)=0; MTtemp(end-5:end, :,:)=0;
-    MTtemp(:, 1:5,:)=0; MTtemp(:, end-5:end,:)=0;
-    MTtemp(:,:, 1:5)=0; MTtemp(:,:,end-5:end)=0;
+    MTtemp(1:5,:,:)=0; MTtemp(end-5:end,:,:)=0;
+    MTtemp(:,1:5,:)=0; MTtemp(:,end-5:end,:)=0;
+    MTtemp(:,:,1:5)=0; MTtemp(:,:,end-5:end)=0;
     spm_write_vol(Vsave,MTtemp);
     
     clear matlabbatch
-    matlabbatch{1}.spm.spatial.preproc.channel.vols = {P};
+    matlabbatch{1}.spm.spatial.preproc.channel.vols = {fMT};
     matlabbatch{1}.spm.spatial.preproc.channel.write = [0 0];
     spm_jobman('run', matlabbatch);
 end
 
 % for quality assessment
-if mpm_params.QA
+if mpm_params.QA.enable
+    % Calculate WM mask
     TPMs = spm_read_vols(spm_vol(spm_select('FPList',calcpath,'^c.*\.(img|nii)$')));
     WMmask = zeros(size(squeeze(TPMs(:,:,:,2))));
     WMmask(squeeze(TPMs(:,:,:,2))>=PDproc.WMMaskTh) = 1;        
     WMmask = spm_erode(spm_erode(double(WMmask)));
+    % Load OLS R2s maps calculated for each contrast and mask tehm
     R2s = spm_read_vols(spm_vol(spm_select('FPList',calcpath,'^s.*_R2s_(MTw|PDw|T1w).(img|nii)$')));
     R2s = R2s.*repmat(WMmask,[1 1 1 size(R2s,4)]);
     SDR2s = zeros(1,size(R2s,4));
+    % For each contrast calculate SD of the R2s values within the WM mask
+    % (measure of the intra-run motion for each contrast)
     for ctr=1:size(R2s,4)
         MaskedR2s = squeeze(R2s(:,:,:,ctr));
         SDR2s(ctr) = std(MaskedR2s(MaskedR2s~=0),[],1);
     end
-    if (exist(fullfile(calcpath,'QualityAssessment.mat'),'file')==2)
-        load(fullfile(calcpath,'QualityAssessment.mat'));
+    if exist(mpm_params.QA.fnam,'file')
+        mpm_params.QA = spm_jsonread(mpm_params.QA.fnam);
     end
-    QA.SDR2s.MTw = SDR2s(1);
-    QA.SDR2s.PDw = SDR2s(2);
-    QA.SDR2s.T1w = SDR2s(3);
-    save(fullfile(calcpath,'QualityAssessment'),'QA')
+    mpm_params.QA.SDR2s.MTw = SDR2s(1);
+    mpm_params.QA.SDR2s.PDw = SDR2s(2);
+    mpm_params.QA.SDR2s.T1w = SDR2s(3);
+    spm_jsonwrite(mpm_params.QA.fnam, mpm_params.QA, struct('indent','\t'));
 end
 
 % PD map calculation
 if ~isempty(f_T) && isempty(f_R) && PDproc.PDmap
-    PDcalculation(mpm_params)
+    PDcalculation(fA, mpm_params);
 end
 
 % copy final result files into Results directory
 fR1_final = fullfile(respath, spm_file(fR1,'filename'));
 copyfile(fR1,fR1_final);
-try copyfile([spm_str_manip(fR1,'r') '.json'],[spm_str_manip(fR1_final,'r') '.json']); end
+try copyfile([spm_str_manip(fR1,'r') '.json'],[spm_str_manip(fR1_final,'r') '.json']); end %#ok<*TRYNC>
 fR1 = fR1_final;
 
 fR2s_final = fullfile(respath, spm_file(fR2s,'filename'));
@@ -660,7 +674,7 @@ try copyfile([spm_str_manip(PT1w,'r') '.json'],[spm_str_manip(PT1w_final,'r') '.
 PT1w = PT1w_final;
 
 % save processing params (mpm_params)
-spm_jsonwrite(fullfile(respath,[outbasename '_mpm_params.json']),mpm_params,struct('indent','\t'));
+spm_jsonwrite(fullfile(respath,'MPM_map_creation_mpm_params.json'),mpm_params,struct('indent','\t'));
 
 spm_progress_bar('Clear');
 
@@ -712,7 +726,9 @@ end
 %% =======================================================================%
 % Proton density map calculation
 %=========================================================================%
-function PDcalculation(mpm_params)
+function PDcalculation(fA, mpm_params)
+% fA is the filename of the output A image 
+% (not yet properly quantitative PD map when it enters PDcalculation)
 fprintf(1,'\n    -------- Proton density map calculation --------\n');
 
 PDproc = mpm_params.proc.PD;
@@ -726,36 +742,29 @@ WMmask=zeros(size(squeeze(TPMs(:,:,:,1))));
 WMmask(squeeze(TPMs(:,:,:,2))>=PDproc.WMMaskTh) = 1;
 
 % Save masked A map for bias-field correction later
-P = spm_select('FPList',calcpath,'^.*_PD.(img|nii)$');
-Vsave=spm_vol(P);
-Vsave.fname=fullfile(calcpath,['masked_' spm_str_manip(Vsave.fname,'t')]);
-Amap=spm_read_vols(spm_vol(P)).*WBmask;
-Amap(Amap==Inf)=0;Amap(isnan(Amap))=0;Amap(Amap==threshA)=0;
-spm_write_vol(Vsave,Amap);
+V_maskedA = spm_vol(fA);
+V_maskedA.fname = fullfile(calcpath,['masked_' spm_str_manip(V_maskedA.fname,'t')]);
+maskedA = spm_read_vols(spm_vol(fA)).*WBmask;
+maskedA(maskedA==Inf) = 0;
+maskedA(isnan(maskedA)) = 0;
+maskedA(maskedA==threshA) = 0;
+spm_write_vol(V_maskedA,maskedA);
 
 % Bias-field correction of masked A map
-P = spm_select('FPList',calcpath ,'^masked.*_PD.(img|nii)$');
 clear matlabbatch
-matlabbatch{1}.spm.spatial.preproc.channel.vols = {P};
+matlabbatch{1}.spm.spatial.preproc.channel.vols = {V_maskedA.fname};
 matlabbatch{1}.spm.spatial.preproc.channel.biasreg = PDproc.biasreg;
 matlabbatch{1}.spm.spatial.preproc.channel.biasfwhm = PDproc.biasfwhm;
 matlabbatch{1}.spm.spatial.preproc.channel.write = [1 0];
-% spm_jobman('initcfg');
-spm_jobman('run', matlabbatch);
+output_list = spm_jobman('run', matlabbatch);
 
-temp = spm_select('FPList',calcpath,'^(c|masked).*\_PD');
-for counter = 1:size(temp,1)
-    delete(deblank(temp(counter,:)));
-end
-
-% Bias field correction of A map. The bias field is calculated on
-% the masked A map but we want to apply it on the unmasked A map. We
-% therefore need to explicitly load the bias field and apply it on the original A map instead of just
-% loading the bias-field corrected A map from the previous step
-P = spm_select('FPList',calcpath ,'^s.*_PD.(img|nii)$');
-bf = fullfile(calcpath, spm_select('List', calcpath, '^BiasField.*\.(img|nii)$'));
-BF = double(spm_read_vols(spm_vol(bf)));
-Y = BF.*spm_read_vols(spm_vol(P));
+% Bias field correction of A map. 
+% Bias field calculation is based on the masked A map, while correction
+% must be applied to the unmasked A map. The BiasField is therefore
+% retrieved from previous step and applied onto the original A map. 
+BFfnam = output_list{1}.channel.biasfield{1};
+BF = double(spm_read_vols(spm_vol(BFfnam)));
+Y = BF.*spm_read_vols(spm_vol(fA));
 
 % Calibration of flattened A map to % water content using typical white
 % matter value from the litterature (69%)
@@ -766,26 +775,21 @@ fprintf(1,'SD White Matter intensity %.1f\n',std(A_WM(A_WM~=0),[],1));
 Y(Y>200) = 0;
 % MFC: Estimating Error for data set to catch bias field issues:
 errorEstimate = std(A_WM(A_WM > 0))./mean(A_WM(A_WM > 0));
-Vsave = spm_vol(P);
+Vsave = spm_vol(fA);
 Vsave.descrip = [Vsave.descrip '. Error Estimate: ', num2str(errorEstimate)];
 if errorEstimate > 0.06 %#ok<BDSCI>
     % MFC: Testing on 15 subjects showed 6% is a good cut-off:
     warning(['Error estimate is high: ', Vsave.fname]);
 end
-if mpm_params.QA
-    if (exist(fullfile(calcpath,'QualityAssessment.mat'),'file')==2)
-        load(fullfile(calcpath,'QualityAssessment.mat'));
+if mpm_params.QA.enable
+    if exist(mpm_params.QA.fnam,'file')
+        mpm_params.QA = spm_jsonread(mpm_params.QA.fnam);
     end
-    QA.PD.mean = mean(A_WM(A_WM > 0));
-    QA.PD.SD = std(A_WM(A_WM > 0));
-    save(fullfile(calcpath,'QualityAssessment'),'QA');
+    mpm_params.QA.PD.mean = mean(A_WM(A_WM > 0));
+    mpm_params.QA.PD.SD = std(A_WM(A_WM > 0));
+    spm_jsonwrite(mpm_params.QA.fnam,mpm_params.QA,struct('indent','\t'));
 end
 spm_write_vol(Vsave,Y);
-
-temp = spm_select('FPList',calcpath,'^Bias.*\_A');
-for counter = 1:size(temp,1)
-    delete(deblank(temp(counter,:)));
-end
 
 end
 
@@ -801,7 +805,11 @@ mpm_params.json = hmri_get_defaults('json');
 mpm_params.centre = hmri_get_defaults('centre');
 mpm_params.calcpath = jobsubj.path.mpmpath;
 mpm_params.respath = jobsubj.path.respath;
-mpm_params.QA = hmri_get_defaults('qMRI_maps.QA'); % quality assurance
+mpm_params.QA.enable = hmri_get_defaults('qMRI_maps.QA'); % quality assurance
+if mpm_params.QA.enable
+    mpm_params.QA.fnam = fullfile(mpm_params.respath,'MPM_map_creation_quality_assessment.json');
+    spm_jsonwrite(mpm_params.QA.fnam,mpm_params.QA,struct('indent','\t'));
+end
 mpm_params.ACPCrealign = hmri_get_defaults('qMRI_maps.ACPCrealign'); % realigns qMRI maps to MNI
 
 % retrieve input file names for map creation

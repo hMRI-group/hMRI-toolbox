@@ -87,8 +87,7 @@ out_loc.subj.A   = {fA};
 out_loc.subj.T1w = {PT1w};
 
 % save job
-spm_jsonwrite([spm_str_manip(fMT,'r') '_job_create_maps.json'],job,struct('indent','\t'));
-save([spm_str_manip(fMT,'r') '_job_create_maps.mat'],'job');
+spm_jsonwrite(fullfile(respath,'MPM_map_creation_job_create_maps.json'),job,struct('indent','\t'));
 
 % clean after if required
 if hmri_get_defaults('cleanup')
@@ -97,7 +96,7 @@ if hmri_get_defaults('cleanup')
     rmdir(job.subj.path.mpmpath,'s');
 end
 
-f = fopen(fullfile(job.subj.path.respath, '_finished_'), 'wb');
+f = fopen(fullfile(respath, '_finished_'), 'wb');
 fclose(f);
 
 end

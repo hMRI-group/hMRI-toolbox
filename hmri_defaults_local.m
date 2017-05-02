@@ -27,7 +27,6 @@ function hmri_defaults_local(varargin)
 global hmri_def
 
 %% ================ definition of all potential protocols =================
-if nargin==0 
     
 %======================== Global parameters ===============================
 % Specifying the lab and scanner

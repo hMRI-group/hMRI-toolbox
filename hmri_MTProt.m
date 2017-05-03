@@ -659,7 +659,7 @@ fR2s = fR2s_final;
 % copied into results directory:
 if mpm_params.proc.R2sOLS
     fR2s_OLS_final = spm_file(fR2s,'suffix','_OLS');
-    fR2s_OLS = fullfile(calcpath, spm_file(fR2s_OLS,'filename'));
+    fR2s_OLS = fullfile(calcpath, spm_file(fR2s_OLS_final,'filename'));
     copyfile(fR2s_OLS,fR2s_OLS_final);
     try copyfile([spm_str_manip(fR2s_OLS,'r') '.json'],[spm_str_manip(fR2s_OLS_final,'r') '.json']); end
     fR2s = fR2s_OLS_final;

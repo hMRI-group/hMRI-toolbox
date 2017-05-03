@@ -67,9 +67,9 @@ end
 %   otherwise copyfile does not find the files!! 
 if ~isempty(P_trans)
     P_trans = spm_file(P_trans,'number','');
-    copyfile(P_trans(1,:),fullfile(jobsubj.path.respath, spm_file(P_trans(1,:), 'filename')));
+    copyfile(deblank(P_trans(1,:)),fullfile(jobsubj.path.respath, spm_file(P_trans(1,:), 'filename')));
     try copyfile([spm_str_manip(P_trans(1,:),'r') '.json'],fullfile(jobsubj.path.respath, [spm_file(P_trans(1,:), 'basename') '.json'])); end %#ok<*TRYNC>
-    copyfile(P_trans(2,:),fullfile(jobsubj.path.respath, spm_file(P_trans(2,:), 'filename')));
+    copyfile(deblank(P_trans(2,:)),fullfile(jobsubj.path.respath, spm_file(P_trans(2,:), 'filename')));
     try copyfile([spm_str_manip(P_trans(2,:),'r') '.json'],fullfile(jobsubj.path.respath, [spm_file(P_trans(2,:), 'basename') '.json'])); end
 end
 

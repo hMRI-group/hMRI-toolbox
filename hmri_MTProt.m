@@ -603,10 +603,11 @@ if (mpm_params.QA.enable||(PDproc.PDmap))
     MTtemp(1:5,:,:)=0; MTtemp(end-5:end,:,:)=0;
     MTtemp(:,1:5,:)=0; MTtemp(:,end-5:end,:)=0;
     MTtemp(:,:,1:5)=0; MTtemp(:,:,end-5:end)=0;
+    Vsave.fname = spm_file(Vsave.fname,'suffix','_outer_suppressed');
     spm_write_vol(Vsave,MTtemp);
     
     clear matlabbatch
-    matlabbatch{1}.spm.spatial.preproc.channel.vols = {fMT};
+    matlabbatch{1}.spm.spatial.preproc.channel.vols = {Vsave.fname};
     matlabbatch{1}.spm.spatial.preproc.channel.write = [0 0];
     output_list = spm_jobman('run', matlabbatch);
     fTPM = char(cat(1,output_list{1}.tiss.c));

@@ -30,7 +30,7 @@ function out = hmri_run_unicort(P_PDw, P_R1, jobsubj)
 % 29 November 2010
 
 %%
-disp('----- Apply UNICORT correction to R1 map -----');
+fprintf(1,'\n    -------- Apply UNICORT correction to R1 map --------\n');
 
 % json metadata default options
 json = hmri_get_defaults('json');
@@ -60,11 +60,11 @@ V_R1 = spm_vol(P_R1);
 Y_R1 = spm_read_vols(V_R1);
 Y_R1 = Y_R1.*(Y_PDw > thresh);
 V_R1_mask = V_R1;
-outfnam = spm_file(V_R1_mask.fname,'filename');
-P_R1_mask = fullfile(mpmpath,spm_file(outfnam,'prefix','h'));
+outfnam = spm_file(P_R1,'filename');
+P_R1_mask = fullfile(mpmpath,spm_file(outfnam,'suffix','_masked'));
 V_R1_mask.fname = P_R1_mask;
-V_R1.descrip = 'Masked R1 map';
-V_R1_mask = spm_write_vol(V_R1_mask,Y_R1);
+V_R1_mask.descrip = 'Masked R1 map';
+spm_write_vol(V_R1_mask,Y_R1);
 
 % set and save metadata
 input_files = char(P_PDw,P_R1);
@@ -120,18 +120,16 @@ preproc8.channel.biasreg = reg;
 preproc8.channel.vols = {P_R1_mask};
 
 %% run prepared "New Segment" job
-spm_preproc_run(preproc8);
-clear('matlabbatch');
+output_list = spm_preproc_run(preproc8);
 
 %% calculate B1+ map from bias field
-[p,n,e] = fileparts(P_R1_mask); %#ok<ASGLU,*NASGU>
-P_biasmap = spm_select('FPList',mpmpath,['^BiasField_' n '.(nii|img)']);
+P_biasmap = output_list.channel.biasfield{1};
 
 % set and save metadata
 input_files = P_R1_mask;
 Output_hdr = init_unicort_output_metadata(input_files, unicort_params);
-Output_hdr.history.output.imtype = 'Bias corrected R1 UNICORT map';
-Output_hdr.history.output.units = 'ms-1';
+Output_hdr.history.output.imtype = 'BiasField for corrected R1 UNICORT map calculation';
+Output_hdr.history.output.units = 'a.u.';
 set_metadata(P_biasmap,Output_hdr,json);
 
 %% create B1+ map from bias field
@@ -139,21 +137,20 @@ V_biasmap = spm_vol(P_biasmap);
 Y_biasmap = spm_read_vols(V_biasmap);
 Y_B1 = sqrt(Y_biasmap)*100.*(Y_PDw > thresh);
 V_B1 = V_R1;
-outfnam = spm_file(V_R1.fname,'filename');
-P_B1 = fullfile(b1path,spm_file(outfnam,'prefix','B1_'));
+P_B1 = fullfile(b1path,spm_file(outfnam,'prefix','B1u_'));
 V_B1.fname = P_B1;
-V_B1.descrip = 'UNICORT estimated B1+ map (p.u. nominal fa)';
-V_B1 = spm_write_vol(V_B1,Y_B1);
+V_B1.descrip = 'UNICORT estimated B1+ map (p.u.)';
+spm_write_vol(V_B1,Y_B1);
 
 % set and save metadata
 input_files = P_biasmap;
 Output_hdr = init_unicort_output_metadata(input_files, unicort_params);
-Output_hdr.history.output.imtype = 'B1+ map';
+Output_hdr.history.output.imtype = 'UNICORT estimated B1+ map';
 Output_hdr.history.output.units = 'p.u.';
 set_metadata(P_B1,Output_hdr,json);
 
-outfnam = spm_file(P_R1_mask,'filename');
-P_R1_unicort = fullfile(mpmpath,spm_file(outfnam,'prefix','m'));
+% Bias corrected R1 map
+P_R1_unicort = output_list.channel.biascorr{1};
 
 % set and save metadata
 input_files = char(P_PDw,P_R1);
@@ -163,7 +160,7 @@ Output_hdr.history.output.units = 'ms-1';
 set_metadata(P_R1_unicort,Output_hdr,json);
 
 % define output file names
-out.R1u = {fullfile(respath,spm_str_manip(P_R1_unicort,'t'))};
+out.R1u = {fullfile(respath,spm_file(outfnam,'suffix','_UNICORT'))};
 out.B1u = {fullfile(respath,spm_str_manip(P_B1,'t'))};
 
 % now copy files from calc directory into results directory (nii & json!)
@@ -173,7 +170,7 @@ copyfile(P_B1,out.B1u{1});
 try copyfile([spm_str_manip(P_B1,'r') '.json'],[spm_str_manip(out.B1u{1},'r') '.json']); end %#ok<*TRYNC>
 
 % save unicort params as json-file
-spm_jsonwrite([spm_str_manip(out.R1u{1},'r') '_unicort_params.json'],unicort_params,struct('indent','\t'));
+spm_jsonwrite(fullfile(spm_file(out.R1u{1},'path'), 'MPM_map_creation_unicort_params.json'),unicort_params,struct('indent','\t'));
 
 end
 

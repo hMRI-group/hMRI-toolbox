@@ -537,7 +537,7 @@ for p = 1:dm(3)
 end
 
 % set metadata for all output images
-input_files = cat(1,mpm_params.input.MTw.fname,mpm_params.input.PDw.fname,mpm_params.input.T1w.fname);
+input_files = char(mpm_params.input.MTw.fname,mpm_params.input.PDw.fname,mpm_params.input.T1w.fname);
 Output_hdr = init_mpm_output_metadata(input_files, mpm_params);
 for ctr = 1:size(output_suffix,2)
     Output_hdr.history.output.imtype = descrip(ctr);

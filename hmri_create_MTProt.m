@@ -1,35 +1,66 @@
 function [fR1, fR2s, fMT, fA, PPDw, PT1w]  = hmri_create_MTProt(jobsubj, P_trans, P_receiv) %#ok<*STOUT>
-
+%==========================================================================
+% This is hmri_create_MTProt, part of the hMRI-Toolbox.
+%
+% PURPOSE
 % Evaluation function for multi-contrast multi-echo FLASH protocol
-% P_mtw, P_pdw, P_t1w (retrieved from jobsubj.raw_mpm): MTw, PDw, T1w
-%           images (can be multiple echoes = images) 
-% TE_mtw, TE_pdw, TE_t1w, TR_mtw, TR_pdw, TR_t1w: echo times and TR of
-%           images 
-% fa_mtw, fa_pdw, fa_t1w: excitation flip angles of images
-% P_trans: transmit bias map (p.u.) of B1 field of RF body coil
-% P_receiv: sensitivity map of phased-array coil relative to BC (p.u.)
+% 
+% FORMAT
+% [fR1, fR2s, fMT, fA, PPDw, PT1w]  = hmri_create_MTProt(jobsubj, P_trans, P_receiv)
 %
-% Gunther Helms, MR-Research in Neurology and Psychiatry, University of Goettingen
-% Nikolaus Weiskopf, Antoine Lutti, John Ashburner, Wellcome Trust Centre for Neuroimaging at UCL, London
+% INPUTS
+%   jobsubj     parameters for one subject out of the job list.
+%               NB: ONE SINGLE DATA SET FROM ONE SINGLE SUBJECT IS
+%               PROCESSED HERE, LOOP OVER SUBJECTS DONE AT HIGHER LEVEL.
+%   P_trans     filenames of a pair of magnitude image + transmit bias map
+%               [p.u.] of B1+ field (not mandatory) 
+%   P_receive   filenames of a pair of magnitude image + sensitivity map of
+%               phased-array coil relative to BC [p.u.] (not mandatory) 
 %
-% Antoine Lutti 15/01/09
-% This version of MTProt corrects for imperfect RF spoiling when a B1 map
-% is loaded (line 229 and below) 
-% based on Preibisch and Deichmann's paper MRM 61:125-135 (2009).
-% The values for P2_a and P2_b were obtained using the code supplied by
-% Deichmann with the experimental parameters used to get our PDw and T1w
-% images.
+% OUTPUTS
+%   fR1     R1 map output filename (only quantitative if B1+ map provided)
+%   fR2s    R2* map output filename (simple fit or OLS, according to
+%           defaults settings)
+%   fMT     MT map output filename  
+%   fA      Proton density map output filename (water concentration (PD)
+%           [%] or signal amplitude (A) [a.u.] depending on defaults
+%           settings (PDproc.PDmap).   
+%   PPDw    averate PD-weighted image filename
+%   PT1w    average T1-weighted image filename  
 %
-% MFC 31.05.2013    If the spoiling correction has not been defined for the
-%                   protocol then none is applied.
+% OTHER USEFUL VARIABLES EXPLAINED
+%   P_mtw, P_pdw, P_t1w (from jobsubj.raw_mpm) are MTw, PDw, T1w series of
+%           images respectively (multiple echoes) 
+%   TE_mtw, TE_pdw, TE_t1w: echo times of the first echo (volume) of each
+%           contrast, respectively.
+%   TR_mtw, TR_pdw, TR_t1w: repetition time for each contrast,
+%           respectively. 
+%   fa_mtw, fa_pdw, fa_t1w: excitation flip angles for each contrast,
+%           respectively. 
 %
-% MFC 27.03.2014    Use PDw image as template for writing out maps to be
-%                   robust in cases of inconsistent FoV positioning.
+%==========================================================================
+% FEATURES
+%   Imperfect RF spoiling correction
+%       Reference: Preibisch and Deichmann, MRM 61:125-135 (2009)
+%       Modelling data and P2_a, P2_b correction factors calculation based
+%       on code supplied by Ralf Deichmann. Only a small subset of
+%       experimental parameters have been used and RF spoiling corection
+%       can only be applied if these correction factors are defined.    
 %
-% MFC 23.10.2015    Adding OLS R2* map option. For details see Weiskopf et 
-%                   al., Front. Neurosci. 2014 DOI: 10.3389/fnins.2014.00278
-%                   This reference should be cited if you use this output.
-
+%   OLS R2* map calculation 
+%       Reference: Weiskopf et al. Front. Neurosci. 2014 DOI:
+%       10.3389/fnins.2014.00278 
+%       This reference should be cited if you use this output.
+%
+%==========================================================================
+% Written by
+%   Gunther Helms, MR-Research in Neurology and Psychiatry, University
+%       of Goettingen 
+%   Nikolaus Weiskopf, Antoine Lutti, John Ashburner, Wellcome Trust
+%           Centre for Neuroimaging at UCL, London 
+%   Antoine Lutti, Martina Callaghan, ...
+%
+%==========================================================================
 
 %% =======================================================================%
 % Initiate processing

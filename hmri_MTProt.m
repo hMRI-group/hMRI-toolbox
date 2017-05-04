@@ -366,15 +366,28 @@ end % OLS code
 % Prepare output for R1, PD and MT maps
 %=========================================================================%
 % description fields and file names of output images
-if ~isempty(V_trans) && isempty(V_receiv) && PDproc.PDmap % whether quantitative PD or not...
-    output_suffix    = {'R1','PD','MT'};
-    descrip = {'R1 map [1000/s]', 'Water concentration [%]','Delta MT map'};
-    units = {'1000/s', '%','a.u.'};
+
+output_suffix{1} = 'R1';
+units{1} = '1000/s';
+if isempty(V_trans)&&strcmp(jobsubj.b1_type,'UNICORT')
+     descrip{1} = 'semi-quantitative R1 map';
 else
-    output_suffix    = {'R1','A','MT'};
-    descrip = {'R1 map [1000/s]', 'Signal amplitude [a.u.]','Delta MT map'};
-    units = {'1000/s', 'a.u.','a.u.'};
+     descrip{1} = 'quantitative R1 map';
 end
+if PDproc.PDmap
+     output_suffix{2} = 'PD';
+     descrip{2} = 'Water concentration [%]';
+     units{2} = '%';
+else
+     output_suffix{2} = 'A';
+     descrip{2} = 'Signal amplitude [a.u.]';
+     units{2} = 'a.u.';
+end
+
+output_suffix{3} = 'MT';
+descrip{3} = 'Delta MT map';
+units{3} = 'a.u.';
+
 if (TR_mtw == TR_pdw) && (fa_mtw == fa_pdw) % additional MTR image...
     output_suffix    = [output_suffix{:} {'MTR'}];
     descrip = [descrip{:} {'Classic MTR image'}];

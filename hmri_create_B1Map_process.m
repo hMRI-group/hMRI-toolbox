@@ -1,10 +1,10 @@
-function [allub1_img] = hmri_B1Map_process(ub1_img,ustd_img,vdm_img,fpm_img,b1map_params)
+function [allub1_img] = hmri_create_B1Map_process(ub1_img,ustd_img,vdm_img,fpm_img,b1map_params)
 %==========================================================================
 % PURPOSE
 % To mask, pad and smooth the unwrapped B1 map.
 % Part of the hMRI toolbox, B1+ map calculation, EPI SE/STE protocol.
 %
-% FORMAT [allub1_img] = hmri_B1Map_process(ub1_img,ustd_img,vdm_img,fpm_img,b1map_params)
+% FORMAT [allub1_img] = hmri_create_B1Map_process(ub1_img,ustd_img,vdm_img,fpm_img,b1map_params)
 % INPUT ARGUMENTS (all filenames are 1-element cell arrays)
 % - ub1_img         filename of the unwrapped B1 map  
 % - ustd_img        filename of the unwrapped SD (error) image 

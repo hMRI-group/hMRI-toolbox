@@ -1,7 +1,7 @@
-function P_trans = hmri_run_b1map(jobsubj)
+function P_trans = hmri_create_b1map(jobsubj)
 
 %% Processing of B1 maps for B1 bias correction
-% FORMAT P_trans = hmri_run_b1map(jobsubj)
+% FORMAT P_trans = hmri_create_b1map(jobsubj)
 %    jobsubj - are parameters for one subject out of the job list.
 %    NB: ONE SINGLE DATA SET FROM ONE SINGLE SUBJECT IS PROCESSED HERE,
 %    LOOP OVER SUBJECTS DONE AT HIGHER LEVEL.
@@ -164,13 +164,15 @@ function P_trans = calc_SESTE_b1map(jobsubj, b1map_params)
 % Corresponding scanning protocol/sequence: al_B1mapping
 % Input: 11 pairs of (SE, STE) images for B1 map calculation and 3 images
 % for B0 map calculation.
-% This macro calls the functions hmri_B1Map_unwarp and hmri_B1Map_process
-% for correction of image distortions, padding and smoothing of the images.
+% This macro calls the functions hmri_create_B1Map_unwarp and
+% hmri_create_B1Map_process for correction of image distortions, padding
+% and smoothing of the images. 
 % Output:
 %     - distorted B1 (B1map_*) and error (SDmap_*) maps
 %     - undistorted B1 (uB1map_*) and error (uSDmap_*) maps
 %     - undistorted, masked and padded B1 maps (muB1map_*)
-%     - undistorted, masked, padded and smoothed B1 maps (smuB1map_*) i.e. FULLY PROCESSED
+%     - undistorted, masked, padded and smoothed B1 maps (smuB1map_*)
+%                                                   i.e. FULLY PROCESSED
 % At each voxel, this macro selects the 5 pairs of (SE,STE image) (out of
 % 11) with maximum signal amplitude in the SE images.
 % The sum of square image of all SE images is created (SumOfSq) and
@@ -295,7 +297,7 @@ otherfnam{1} = V_save.fname;
 otherfnam{2} = W_save.fname;
 
 % unwarp
-[fmap_img,unwarp_img] = hmri_B1Map_unwarp(fmfnam, anatfnam, otherfnam, b1map_params);
+[fmap_img,unwarp_img] = hmri_create_B1Map_unwarp(fmfnam, anatfnam, otherfnam, b1map_params);
 uanat_img{1} = unwarp_img{1}.fname;
 ub1_img{1} = unwarp_img{2}.fname;
 ustd_img{1} = unwarp_img{3}.fname;
@@ -341,7 +343,7 @@ set_metadata(scphasefnam,Output_hdr,json);
 %--------------------------------------------------------------------------
 fpm_img{1} = fmap_img{1};
 vdm_img{1} = fmap_img{2};
-[allub1_img] = hmri_B1Map_process(ub1_img,ustd_img,vdm_img,fpm_img,b1map_params);
+[allub1_img] = hmri_create_B1Map_process(ub1_img,ustd_img,vdm_img,fpm_img,b1map_params);
 
 % set metadata for processing B1 images
 % define generic header for B1 process

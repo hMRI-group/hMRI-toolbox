@@ -1,4 +1,4 @@
-function jobsubj = hmri_RFsens(jobsubj)
+function jobsubj = hmri_create_RFsens(jobsubj)
 % RF sensitivity calculation as part of the hmri toolbox
 % Based on a script by Daniel Papp
 % Wellcome Trust Centre for Neuroimaging (WTCN), London, UK.

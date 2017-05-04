@@ -1,9 +1,9 @@
-function [fmap_img,unwarp_img] = hmri_B1Map_unwarp(fmfnam, anatfnam, otherfnam, b1map_params)
+function [fmap_img,unwarp_img] = hmri_create_B1Map_unwarp(fmfnam, anatfnam, otherfnam, b1map_params)
 %==========================================================================
 % PURPOSE
 % For B0 undistortion of EPI-based B1 maps, part of the hMRI toolbox.
 %
-% FORMAT [fmap_img,unwarp_img] = hmri_B1Map_unwarp(magfnam, phasefnam, anatfnam, otherfnam, b1map_params)
+% FORMAT [fmap_img,unwarp_img] = hmri_create_B1Map_unwarp(magfnam, phasefnam, anatfnam, otherfnam, b1map_params)
 % INPUT ARGUMENTS
 % - fmfnam          filename of the fieldmap images (must be char) 
 % - anatfnam        filename of the image to be undistorted ("anatomical" reference, i.e. SSQ image)   
@@ -101,7 +101,7 @@ if ~isempty(IP.P{1})
     %----------------------------------------------------------------------
     % Create field map (in Hz) - this routine calls the unwrapping
     %----------------------------------------------------------------------
-    IP.fm = hmri_FieldMap('CreateFieldMap',IP);
+    IP.fm = hmri_create_FieldMap('CreateFieldMap',IP);
     
     % TL: move created maps to outpath
     if IP.maskbrain==1

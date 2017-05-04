@@ -1,4 +1,4 @@
-function varargout = hmri_FieldMap(varargin)
+function varargout = hmri_create_FieldMap(varargin)
 % This is a fraction of the FieldMap script (case 'createfieldmap')
 % rewritten for the hMRI toolbox in order to make use of the original
 % SPM12's FieldMap script wherever no modification is required. The
@@ -8,13 +8,13 @@ function varargout = hmri_FieldMap(varargin)
 % Implementation following FieldMap version:
 % $Id: FieldMap.m 6994 2017-01-26 16:19:14Z guillaume $
 % 
-% FORMAT IP.fm = hmri_FieldMap('CreateFieldMap',IP);
+% FORMAT IP.fm = hmri_create_FieldMap('CreateFieldMap',IP);
 %=======================================================================
 
 persistent IP            % Input and results
 
 if nargin == 0
-   warning('Can only be called for map creation.\nFORMAT: FM = hmri_FieldMap(''CreateFieldMap'',IP);');
+   warning('Can only be called for map creation.\nFORMAT: FM = hmri_create_FieldMap(''CreateFieldMap'',IP);');
    return;
 else
    Action = varargin{1};
@@ -63,7 +63,7 @@ switch lower(Action)
          if IP.maskbrain==1 
             IP.fmagP = FieldMap('Magnitude',IP);
             % IP.uflags.bmask = pm_brain_mask(IP.fmagP,IP.mflags);
-            IP.uflags.bmask = hmri_pm_brain_mask(IP.fmagP,IP.mflags);
+            IP.uflags.bmask = hmri_create_pm_brain_mask(IP.fmagP,IP.mflags);
             varargout{2} = IP.fmagP;
          end
 

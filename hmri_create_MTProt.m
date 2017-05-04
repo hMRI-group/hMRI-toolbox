@@ -1,4 +1,4 @@
-function [fR1, fR2s, fMT, fA, PPDw, PT1w]  = hmri_MTProt(jobsubj, P_trans, P_receiv) %#ok<*STOUT>
+function [fR1, fR2s, fMT, fA, PPDw, PT1w]  = hmri_create_MTProt(jobsubj, P_trans, P_receiv) %#ok<*STOUT>
 
 % Evaluation function for multi-contrast multi-echo FLASH protocol
 % P_mtw, P_pdw, P_t1w (retrieved from jobsubj.raw_mpm): MTw, PDw, T1w
@@ -578,7 +578,7 @@ if mpm_params.ACPCrealign
 
     % Use masked MT image to calculate transformation for ACPC realignment
     % (to increase robustness in segmentation):
-    [~,R] = hmri_comm_adjust(1,V_MT.fname,V_MT.fname,8,0,fullfile(spm('Dir'),'canonical','avg152T1.nii')); 
+    [~,R] = hmri_create_comm_adjust(1,V_MT.fname,V_MT.fname,8,0,fullfile(spm('Dir'),'canonical','avg152T1.nii')); 
     
     % Collect all images from all defined output directories:
     allpaths = jobsubj.path;

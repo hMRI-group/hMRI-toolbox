@@ -1,5 +1,5 @@
-function out = hmri_run_unicort(P_PDw, P_R1, jobsubj)
-% function P = hmri_run_unicort(P_PDw, P_R1, jobsubj)
+function out = hmri_create_unicort(P_PDw, P_R1, jobsubj)
+% function P = hmri_create_unicort(P_PDw, P_R1, jobsubj)
 % P_PDw: proton density weighted FLASH image (small flip angle image) for
 % masking
 % P_R1: R1 (=1/T1) map estimated from dual flip angle FLASH experiment

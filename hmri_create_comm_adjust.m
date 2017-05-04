@@ -1,4 +1,4 @@
-function [M,R] = hmri_comm_adjust(option,Ref,Other,Nits,doshear,Template)
+function [M,R] = hmri_create_comm_adjust(option,Ref,Other,Nits,doshear,Template)
 
 % This function is a version of comm_adjust.m customized for T1 like
 % images, i.e. MT images. Now it is necessary to define as input parameter

@@ -1,9 +1,9 @@
-function VO = hmri_pm_segment(InputImage)
+function VO = hmri_create_pm_segment(InputImage)
 % To segment the brain and extract a brain mask in the hMRI Toolbox
 % This function replaces pm_segment used in the FieldMap toolbox
-% (SPM12/toolbox/FieldMap). Used in hmri_pm_brain_mask.
+% (SPM12/toolbox/FieldMap). Used in hmri_create_pm_brain_mask.
 %
-% FORMAT: VO = hmri_pm_segment(P.fname).
+% FORMAT: VO = hmri_create_pm_segment(P.fname).
 %
 %========================================================================== 
 % Written by Lester Melie-Garcia

@@ -1,11 +1,11 @@
-function out = hmri_run_mpr(job)
+function out = hmri_run_create(job)
 %==========================================================================
 % PURPOSE
 % Calculation of multiparameter maps using B1 maps for B1 bias correction.
 % If no B1 maps available, one can choose not to correct for B1 bias or
 % apply UNICORT.
 %==========================================================================
-job = hmri_process_data_spec(job);
+job = hmri_create_process_data_spec(job);
 
 out.R1 = {};
 out.R2s = {};
@@ -17,7 +17,7 @@ out.T1w = {};
 % each subject:
 for in=1:numel(job.subj)
     local_job.subj = job.subj(in);
-    out_temp       = hmri_mpr_local(local_job);
+    out_temp       = hmri_create_local(local_job);
     out.subj(in)   = out_temp.subj(1);
     out.R1{end+1}  = out.subj(in).R1{1};
     out.R2s{end+1} = out.subj(in).R2s{1};
@@ -30,7 +30,7 @@ end
 %% =======================================================================%
 % LOCAL SUBFUNCTION (PROCESSING FOR ONE SUBJET)
 %=========================================================================%
-function out_loc = hmri_mpr_local(job)
+function out_loc = hmri_create_local(job)
 
 % determine output directory path
 try 
@@ -61,22 +61,22 @@ job.subj.path.mpmpath = mpmpath;
 job.subj.path.respath = respath;
 
 % run B1 map calculation for B1 bias correction
-P_trans = hmri_run_b1map(job.subj);
+P_trans = hmri_create_b1map(job.subj);
 
 % check, if RF sensitivity profile was acquired and do the recalculation
 % accordingly
 if ~isfield(job.subj.sensitivity,'RF_none')
-  job.subj = hmri_RFsens(job.subj);
+  job.subj = hmri_create_RFsens(job.subj);
 end
 
 P_receiv = [];
 
-% run hmri_MTProt to evaluate the parameter maps
-[fR1, fR2s, fMT, fA, PPDw, PT1w]  = hmri_MTProt(job.subj, P_trans, P_receiv);
+% run hmri_create_MTProt to evaluate the parameter maps
+[fR1, fR2s, fMT, fA, PPDw, PT1w]  = hmri_create_MTProt(job.subj, P_trans, P_receiv);
 
 % apply UNICORT if required, and collect outputs:
 if strcmp(job.subj.b1_type,'UNICORT')
-    out_unicort = hmri_run_unicort(PPDw, fR1, job.subj);
+    out_unicort = hmri_create_unicort(PPDw, fR1, job.subj);
     out_loc.subj.R1  = {out_unicort.R1u};
 else
     out_loc.subj.R1  = {fR1};

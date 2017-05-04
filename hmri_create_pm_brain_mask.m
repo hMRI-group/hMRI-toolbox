@@ -1,10 +1,10 @@
-function bmask = hmri_pm_brain_mask(P,flags)
+function bmask = hmri_create_pm_brain_mask(P,flags)
 % Calculate a brain mask in hMRI Toolbox
 % This is pm_brain_mask (SPM12/toolbox/FieldMap) modified for the hMRI
-% toolbox. Calls hmri_pm_segment instead of pm_segment. This is the only
-% modification, syntax is unchanged otherwise.
+% toolbox. Calls hmri_create_pm_segment instead of pm_segment. This is the
+% only modification, syntax is unchanged otherwise.
 %
-% FORMAT bmask = hmri_pm_brain_mask(P,flags)
+% FORMAT bmask = hmri_create_pm_brain_mask(P,flags)
 %
 % P - is a single pointer to a single image
 %
@@ -50,8 +50,8 @@ disp('Segmenting and extracting brain...');
 % seg_flags.estimate.reg=flags.reg;
 % seg_flags.graphics = flags.graphics;
 % VO=pm_segment(P.fname,flags.template,seg_flags);
-% % In hmri_pm_brain_mask, replaced by:
-VO = hmri_pm_segment(P.fname);
+% % In hmri_create_pm_brain_mask, replaced by:
+VO = hmri_create_pm_segment(P.fname);
 
 bmask=double(VO(1).dat)+double(VO(2).dat)+double(VO(3).dat)>0;
 

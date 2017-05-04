@@ -1,4 +1,4 @@
-function job = hmri_process_data_spec(job)
+function job = hmri_create_process_data_spec(job)
 if isfield(job.data_spec, 'sdata_multi')
     % ---- MT ----
     s = 1;

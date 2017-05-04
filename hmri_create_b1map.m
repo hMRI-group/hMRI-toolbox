@@ -57,9 +57,9 @@ switch(b1map_params.b1type)
        
 end
 
-% save these into Results directory (nii & json!)
+% save these into Results/Supplementary directory (nii & json!)
 % NOTES: 
-%   - if "cleanup" set to true, the B1mapCal directory is deleted when the
+%   - if "cleanup" set to true, the B1mapCalc directory is deleted when the
 %   Map Calculation completes...  
 %   - just in case no json files have been saved with the output, the
 %   copyfile is called in "try" mode...
@@ -67,14 +67,14 @@ end
 %   otherwise copyfile does not find the files!! 
 if ~isempty(P_trans)
     P_trans = spm_file(P_trans,'number','');
-    copyfile(deblank(P_trans(1,:)),fullfile(jobsubj.path.respath, spm_file(P_trans(1,:), 'filename')));
-    try copyfile([spm_str_manip(P_trans(1,:),'r') '.json'],fullfile(jobsubj.path.respath, [spm_file(P_trans(1,:), 'basename') '.json'])); end %#ok<*TRYNC>
-    copyfile(deblank(P_trans(2,:)),fullfile(jobsubj.path.respath, spm_file(P_trans(2,:), 'filename')));
-    try copyfile([spm_str_manip(P_trans(2,:),'r') '.json'],fullfile(jobsubj.path.respath, [spm_file(P_trans(2,:), 'basename') '.json'])); end
+    copyfile(deblank(P_trans(1,:)),fullfile(jobsubj.path.supplpath, spm_file(P_trans(1,:), 'filename')));
+    try copyfile([spm_str_manip(P_trans(1,:),'r') '.json'],fullfile(jobsubj.path.supplpath, [spm_file(P_trans(1,:), 'basename') '.json'])); end %#ok<*TRYNC>
+    copyfile(deblank(P_trans(2,:)),fullfile(jobsubj.path.supplpath, spm_file(P_trans(2,:), 'filename')));
+    try copyfile([spm_str_manip(P_trans(2,:),'r') '.json'],fullfile(jobsubj.path.supplpath, [spm_file(P_trans(2,:), 'basename') '.json'])); end
 end
 
 % save b1map_params as json-file
-spm_jsonwrite(fullfile(jobsubj.path.respath,'MPM_map_creation_b1map_params.json'),b1map_params,struct('indent','\t'));
+spm_jsonwrite(fullfile(jobsubj.path.supplpath,'MPM_map_creation_b1map_params.json'),b1map_params,struct('indent','\t'));
 
 
 end

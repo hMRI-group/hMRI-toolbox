@@ -90,6 +90,7 @@ outbasename = spm_file(mpm_params.input.MTw.fname(1,:),'basename'); % for all ou
 calcpath = mpm_params.calcpath;
 mpm_params.outbasename = outbasename;
 respath = mpm_params.respath;
+supplpath = mpm_params.supplpath;
 
 % Load B1 mapping data if available 
 % P_trans(1,:) = magnitude image (anatomical reference for coregistration) 
@@ -636,7 +637,7 @@ if mpm_params.ACPCrealign
     end;
     
     % Save transformation matrix
-    spm_jsonwrite(fullfile(respath,'MPM_map_creation_ACPCrealign_transformation_matrix.json'),R,struct('indent','\t'));
+    spm_jsonwrite(fullfile(supplpath,'MPM_map_creation_ACPCrealign_transformation_matrix.json'),R,struct('indent','\t'));
 end
 
 % for quality assessment and/or PD map calculation
@@ -689,6 +690,9 @@ if ~isempty(f_T) && isempty(f_R) && PDproc.PDmap
 end
 
 % copy final result files into Results directory
+% NB: to avoid ambiguity for users, only the 4 final maps to be used in
+% further analysis are in Results, all other files (additional maps, 
+% processing parameters, etc) are in Results/Supplementary.
 fR1_final = fullfile(respath, spm_file(fR1,'filename'));
 copyfile(fR1,fR1_final);
 try copyfile([spm_str_manip(fR1,'r') '.json'],[spm_str_manip(fR1_final,'r') '.json']); end %#ok<*TRYNC>
@@ -700,13 +704,18 @@ try copyfile([spm_str_manip(fR2s,'r') '.json'],[spm_str_manip(fR2s_final,'r') '.
 fR2s = fR2s_final;
 
 % NB: if OLS calculation of R2s map has been done, the output file for R2s
-% map is the OLS result. However, both simple R2s and R2s_OLS images are
-% copied into results directory:
+% map is the OLS result. In that case, the basic R2s map is moved to
+% Results/Supplementary while the R2s_OLS is copied into results directory: 
 if mpm_params.proc.R2sOLS
+    % move basin R2s map to Results/Supplementary
+    movefile(fR2s_final, fullfile(supplpath, spm_file(fR2s_final,'filename')));
+    try movefile([spm_str_manip(fR2s_final,'r') '.json'],fullfile(supplpath, [spm_file(fR2s_final,'basename') '.json'])); end
+    % copy OLS_R2s map to Results
     fR2s_OLS_final = spm_file(fR2s,'suffix','_OLS');
     fR2s_OLS = fullfile(calcpath, spm_file(fR2s_OLS_final,'filename'));
     copyfile(fR2s_OLS,fR2s_OLS_final);
     try copyfile([spm_str_manip(fR2s_OLS,'r') '.json'],[spm_str_manip(fR2s_OLS_final,'r') '.json']); end
+    % the hmri_create_MTProt fR2s output in now the R2s_OLS map
     fR2s = fR2s_OLS_final;
 end
 
@@ -720,18 +729,18 @@ copyfile(fA,fA_final);
 try copyfile([spm_str_manip(fA,'r') '.json'],[spm_str_manip(fA_final,'r') '.json']); end
 fA = fA_final;
 
-PPDw_final = fullfile(respath, spm_file(PPDw,'filename'));
+PPDw_final = fullfile(supplpath, spm_file(PPDw,'filename'));
 copyfile(PPDw,PPDw_final);
 try copyfile([spm_str_manip(PPDw,'r') '.json'],[spm_str_manip(PPDw_final,'r') '.json']); end
 PPDw = PPDw_final;
 
-PT1w_final = fullfile(respath, spm_file(PT1w,'filename'));
+PT1w_final = fullfile(supplpath, spm_file(PT1w,'filename'));
 copyfile(PT1w,PT1w_final);
 try copyfile([spm_str_manip(PT1w,'r') '.json'],[spm_str_manip(PT1w_final,'r') '.json']); end
 PT1w = PT1w_final;
 
 % save processing params (mpm_params)
-spm_jsonwrite(fullfile(respath,'MPM_map_creation_mpm_params.json'),mpm_params,struct('indent','\t'));
+spm_jsonwrite(fullfile(supplpath,'MPM_map_creation_mpm_params.json'),mpm_params,struct('indent','\t'));
 
 spm_progress_bar('Clear');
 
@@ -863,9 +872,10 @@ mpm_params.json = hmri_get_defaults('json');
 mpm_params.centre = hmri_get_defaults('centre');
 mpm_params.calcpath = jobsubj.path.mpmpath;
 mpm_params.respath = jobsubj.path.respath;
+mpm_params.supplpath = jobsubj.path.supplpath;
 mpm_params.QA.enable = hmri_get_defaults('qMRI_maps.QA'); % quality assurance
 if mpm_params.QA.enable
-    mpm_params.QA.fnam = fullfile(mpm_params.respath,'MPM_map_creation_quality_assessment.json');
+    mpm_params.QA.fnam = fullfile(mpm_params.supplpath,'MPM_map_creation_quality_assessment.json');
     spm_jsonwrite(mpm_params.QA.fnam,mpm_params.QA,struct('indent','\t'));
 end
 mpm_params.ACPCrealign = hmri_get_defaults('qMRI_maps.ACPCrealign'); % realigns qMRI maps to MNI

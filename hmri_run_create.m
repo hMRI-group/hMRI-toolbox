@@ -43,8 +43,14 @@ end
 hmri_get_defaults('outdir',outpath);
 
 % define a directory for final results
+% RESULTS contains the 4 final maps which are the essentials for the users
 respath = fullfile(outpath, 'Results');
 if ~exist(respath,'dir'); mkdir(respath); end
+% SUPPLEMENTARY (within the Results directory) contains useful
+% supplementary files (processing parameters anda few additional maps)
+supplpath = fullfile(outpath, 'Results', 'Supplementary');
+if ~exist(supplpath,'dir'); mkdir(supplpath); end
+
 
 % define other (temporary) paths for processing data
 b1path = fullfile(outpath, 'B1mapCalc');
@@ -59,6 +65,7 @@ job.subj.path.b1path = b1path;
 job.subj.path.rfsenspath = rfsenspath;
 job.subj.path.mpmpath = mpmpath;
 job.subj.path.respath = respath;
+job.subj.path.supplpath = supplpath;
 
 % run B1 map calculation for B1 bias correction
 P_trans = hmri_create_b1map(job.subj);
@@ -87,7 +94,7 @@ out_loc.subj.A   = {fA};
 out_loc.subj.T1w = {PT1w};
 
 % save job
-spm_jsonwrite(fullfile(respath,'MPM_map_creation_job_create_maps.json'),job,struct('indent','\t'));
+spm_jsonwrite(fullfile(supplpath,'MPM_map_creation_job_create_maps.json'),job,struct('indent','\t'));
 
 % clean after if required
 if hmri_get_defaults('cleanup')

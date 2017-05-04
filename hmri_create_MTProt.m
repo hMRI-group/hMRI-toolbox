@@ -1,35 +1,66 @@
 function [fR1, fR2s, fMT, fA, PPDw, PT1w]  = hmri_create_MTProt(jobsubj, P_trans, P_receiv) %#ok<*STOUT>
-
+%==========================================================================
+% This is hmri_create_MTProt, part of the hMRI-Toolbox.
+%
+% PURPOSE
 % Evaluation function for multi-contrast multi-echo FLASH protocol
-% P_mtw, P_pdw, P_t1w (retrieved from jobsubj.raw_mpm): MTw, PDw, T1w
-%           images (can be multiple echoes = images) 
-% TE_mtw, TE_pdw, TE_t1w, TR_mtw, TR_pdw, TR_t1w: echo times and TR of
-%           images 
-% fa_mtw, fa_pdw, fa_t1w: excitation flip angles of images
-% P_trans: transmit bias map (p.u.) of B1 field of RF body coil
-% P_receiv: sensitivity map of phased-array coil relative to BC (p.u.)
+% 
+% FORMAT
+% [fR1, fR2s, fMT, fA, PPDw, PT1w]  = hmri_create_MTProt(jobsubj, P_trans, P_receiv)
 %
-% Gunther Helms, MR-Research in Neurology and Psychiatry, University of Goettingen
-% Nikolaus Weiskopf, Antoine Lutti, John Ashburner, Wellcome Trust Centre for Neuroimaging at UCL, London
+% INPUTS
+%   jobsubj     parameters for one subject out of the job list.
+%               NB: ONE SINGLE DATA SET FROM ONE SINGLE SUBJECT IS
+%               PROCESSED HERE, LOOP OVER SUBJECTS DONE AT HIGHER LEVEL.
+%   P_trans     filenames of a pair of magnitude image + transmit bias map
+%               [p.u.] of B1+ field (not mandatory) 
+%   P_receive   filenames of a pair of magnitude image + sensitivity map of
+%               phased-array coil relative to BC [p.u.] (not mandatory) 
 %
-% Antoine Lutti 15/01/09
-% This version of MTProt corrects for imperfect RF spoiling when a B1 map
-% is loaded (line 229 and below) 
-% based on Preibisch and Deichmann's paper MRM 61:125-135 (2009).
-% The values for P2_a and P2_b were obtained using the code supplied by
-% Deichmann with the experimental parameters used to get our PDw and T1w
-% images.
+% OUTPUTS
+%   fR1     R1 map output filename (only quantitative if B1+ map provided)
+%   fR2s    R2* map output filename (simple fit or OLS, according to
+%           defaults settings)
+%   fMT     MT map output filename  
+%   fA      Proton density map output filename (water concentration (PD)
+%           [%] or signal amplitude (A) [a.u.] depending on defaults
+%           settings (PDproc.PDmap).   
+%   PPDw    averate PD-weighted image filename
+%   PT1w    average T1-weighted image filename  
 %
-% MFC 31.05.2013    If the spoiling correction has not been defined for the
-%                   protocol then none is applied.
+% OTHER USEFUL VARIABLES EXPLAINED
+%   P_mtw, P_pdw, P_t1w (from jobsubj.raw_mpm) are MTw, PDw, T1w series of
+%           images respectively (multiple echoes) 
+%   TE_mtw, TE_pdw, TE_t1w: echo times of the first echo (volume) of each
+%           contrast, respectively.
+%   TR_mtw, TR_pdw, TR_t1w: repetition time for each contrast,
+%           respectively. 
+%   fa_mtw, fa_pdw, fa_t1w: excitation flip angles for each contrast,
+%           respectively. 
 %
-% MFC 27.03.2014    Use PDw image as template for writing out maps to be
-%                   robust in cases of inconsistent FoV positioning.
+%==========================================================================
+% FEATURES
+%   Imperfect RF spoiling correction
+%       Reference: Preibisch and Deichmann, MRM 61:125-135 (2009)
+%       Modelling data and P2_a, P2_b correction factors calculation based
+%       on code supplied by Ralf Deichmann. Only a small subset of
+%       experimental parameters have been used and RF spoiling corection
+%       can only be applied if these correction factors are defined.    
 %
-% MFC 23.10.2015    Adding OLS R2* map option. For details see Weiskopf et 
-%                   al., Front. Neurosci. 2014 DOI: 10.3389/fnins.2014.00278
-%                   This reference should be cited if you use this output.
-
+%   OLS R2* map calculation 
+%       Reference: Weiskopf et al. Front. Neurosci. 2014 DOI:
+%       10.3389/fnins.2014.00278 
+%       This reference should be cited if you use this output.
+%
+%==========================================================================
+% Written by
+%   Gunther Helms, MR-Research in Neurology and Psychiatry, University
+%       of Goettingen 
+%   Nikolaus Weiskopf, Antoine Lutti, John Ashburner, Wellcome Trust
+%           Centre for Neuroimaging at UCL, London 
+%   Antoine Lutti, Martina Callaghan, ...
+%
+%==========================================================================
 
 %% =======================================================================%
 % Initiate processing
@@ -59,6 +90,7 @@ outbasename = spm_file(mpm_params.input.MTw.fname(1,:),'basename'); % for all ou
 calcpath = mpm_params.calcpath;
 mpm_params.outbasename = outbasename;
 respath = mpm_params.respath;
+supplpath = mpm_params.supplpath;
 
 % Load B1 mapping data if available 
 % P_trans(1,:) = magnitude image (anatomical reference for coregistration) 
@@ -605,7 +637,7 @@ if mpm_params.ACPCrealign
     end;
     
     % Save transformation matrix
-    spm_jsonwrite(fullfile(respath,'MPM_map_creation_ACPCrealign_transformation_matrix.json'),R,struct('indent','\t'));
+    spm_jsonwrite(fullfile(supplpath,'MPM_map_creation_ACPCrealign_transformation_matrix.json'),R,struct('indent','\t'));
 end
 
 % for quality assessment and/or PD map calculation
@@ -658,6 +690,9 @@ if ~isempty(f_T) && isempty(f_R) && PDproc.PDmap
 end
 
 % copy final result files into Results directory
+% NB: to avoid ambiguity for users, only the 4 final maps to be used in
+% further analysis are in Results, all other files (additional maps, 
+% processing parameters, etc) are in Results/Supplementary.
 fR1_final = fullfile(respath, spm_file(fR1,'filename'));
 copyfile(fR1,fR1_final);
 try copyfile([spm_str_manip(fR1,'r') '.json'],[spm_str_manip(fR1_final,'r') '.json']); end %#ok<*TRYNC>
@@ -669,13 +704,18 @@ try copyfile([spm_str_manip(fR2s,'r') '.json'],[spm_str_manip(fR2s_final,'r') '.
 fR2s = fR2s_final;
 
 % NB: if OLS calculation of R2s map has been done, the output file for R2s
-% map is the OLS result. However, both simple R2s and R2s_OLS images are
-% copied into results directory:
+% map is the OLS result. In that case, the basic R2s map is moved to
+% Results/Supplementary while the R2s_OLS is copied into results directory: 
 if mpm_params.proc.R2sOLS
+    % move basin R2s map to Results/Supplementary
+    movefile(fR2s_final, fullfile(supplpath, spm_file(fR2s_final,'filename')));
+    try movefile([spm_str_manip(fR2s_final,'r') '.json'],fullfile(supplpath, [spm_file(fR2s_final,'basename') '.json'])); end
+    % copy OLS_R2s map to Results
     fR2s_OLS_final = spm_file(fR2s,'suffix','_OLS');
     fR2s_OLS = fullfile(calcpath, spm_file(fR2s_OLS_final,'filename'));
     copyfile(fR2s_OLS,fR2s_OLS_final);
     try copyfile([spm_str_manip(fR2s_OLS,'r') '.json'],[spm_str_manip(fR2s_OLS_final,'r') '.json']); end
+    % the hmri_create_MTProt fR2s output in now the R2s_OLS map
     fR2s = fR2s_OLS_final;
 end
 
@@ -689,18 +729,18 @@ copyfile(fA,fA_final);
 try copyfile([spm_str_manip(fA,'r') '.json'],[spm_str_manip(fA_final,'r') '.json']); end
 fA = fA_final;
 
-PPDw_final = fullfile(respath, spm_file(PPDw,'filename'));
+PPDw_final = fullfile(supplpath, spm_file(PPDw,'filename'));
 copyfile(PPDw,PPDw_final);
 try copyfile([spm_str_manip(PPDw,'r') '.json'],[spm_str_manip(PPDw_final,'r') '.json']); end
 PPDw = PPDw_final;
 
-PT1w_final = fullfile(respath, spm_file(PT1w,'filename'));
+PT1w_final = fullfile(supplpath, spm_file(PT1w,'filename'));
 copyfile(PT1w,PT1w_final);
 try copyfile([spm_str_manip(PT1w,'r') '.json'],[spm_str_manip(PT1w_final,'r') '.json']); end
 PT1w = PT1w_final;
 
 % save processing params (mpm_params)
-spm_jsonwrite(fullfile(respath,'MPM_map_creation_mpm_params.json'),mpm_params,struct('indent','\t'));
+spm_jsonwrite(fullfile(supplpath,'MPM_map_creation_mpm_params.json'),mpm_params,struct('indent','\t'));
 
 spm_progress_bar('Clear');
 
@@ -832,9 +872,10 @@ mpm_params.json = hmri_get_defaults('json');
 mpm_params.centre = hmri_get_defaults('centre');
 mpm_params.calcpath = jobsubj.path.mpmpath;
 mpm_params.respath = jobsubj.path.respath;
+mpm_params.supplpath = jobsubj.path.supplpath;
 mpm_params.QA.enable = hmri_get_defaults('qMRI_maps.QA'); % quality assurance
 if mpm_params.QA.enable
-    mpm_params.QA.fnam = fullfile(mpm_params.respath,'MPM_map_creation_quality_assessment.json');
+    mpm_params.QA.fnam = fullfile(mpm_params.supplpath,'MPM_map_creation_quality_assessment.json');
     spm_jsonwrite(mpm_params.QA.fnam,mpm_params.QA,struct('indent','\t'));
 end
 mpm_params.ACPCrealign = hmri_get_defaults('qMRI_maps.ACPCrealign'); % realigns qMRI maps to MNI

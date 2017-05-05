@@ -20,548 +20,131 @@ function jobsubj = hmri_create_RFsens(jobsubj)
 % Quantitative R1 Mapping by Accounting for Receive Coil Sensitivity
 % Effects", MRM 2015 DOI 10.1002/mrm.26058
 
-% retrieve some defaults
-outdir = jobsubj.path.rfsenspath;
-smooth_kernel = hmri_get_defaults('RFsens.smooth_kernel');
-json = hmri_get_defaults('json');
+%% ========================================================================
+% Define processing parameters, defaults, input files...
+%==========================================================================
+rfsens_params = get_rfsens_params(jobsubj);
 
-%% calculate the RF sensitivity maps for each modality
-% first assign sensitivity maps, save the original file names for history, 
-if isfield(jobsubj.sensitivity,'RF_once')
-    MT_sensmaps0 = char(jobsubj.sensitivity.RF_once);
-    PD_sensmaps0 = char(jobsubj.sensitivity.RF_once);
-    T1_sensmaps0 = char(jobsubj.sensitivity.RF_once);    
-elseif isfield(jobsubj.sensitivity,'RF_MPM')
-    MT_sensmaps0 = char(jobsubj.sensitivity.RF_MPM.raw_sens3.raw_sens_MT);
-    PD_sensmaps0 = char(jobsubj.sensitivity.RF_MPM.raw_sens3.raw_sens_PD);
-    T1_sensmaps0 = char(jobsubj.sensitivity.RF_MPM.raw_sens3.raw_sens_T1);
-end
+% for convenience:
+calcpath = rfsens_params.calcpath;
+supplpath = rfsens_params.supplpath;
+smooth_kernel = rfsens_params.smooth_kernel;
+json = rfsens_params.json;
 
-% prepare filenames, i.e. remove ',1' from spm_select
-MT_sensmaps01 = spm_file(MT_sensmaps0(1,:),'number','');
-MT_sensmaps02 = spm_file(MT_sensmaps0(2,:),'number','');
-MT_sensmaps0 = char(MT_sensmaps01,MT_sensmaps02);
-PD_sensmaps01 = spm_file(PD_sensmaps0(1,:),'number','');
-PD_sensmaps02 = spm_file(PD_sensmaps0(2,:),'number','');
-PD_sensmaps0 = char(PD_sensmaps01,PD_sensmaps02);
-T1_sensmaps01 = spm_file(T1_sensmaps0(1,:),'number','');
-T1_sensmaps02 = spm_file(T1_sensmaps0(2,:),'number','');
-T1_sensmaps0 = char(T1_sensmaps01,T1_sensmaps02);
+% Input sensitivity maps: a pair of head coil/body coil sensitivity maps,
+% either acquired once for the whole protocol, or once per contrast (MT,
+% PD, T1):
+MT_sensmaps = rfsens_params.input.MT.sensimages.fnames;
+PD_sensmaps = rfsens_params.input.MT.sensimages.fnames;
+T1_sensmaps = rfsens_params.input.MT.sensimages.fnames;
 
-% afterwards copy and rename in order to have a set of maps for each modality
-% especially in the case of only one measure
+% Input MTw, PDw, T1w multiecho images:
+MT_structurals = rfsens_params.input.MT.structurals.fnames;
+PD_structurals = rfsens_params.input.MT.structurals.fnames;
+T1_structurals = rfsens_params.input.MT.structurals.fnames;
 
-[~,~,ext] = fileparts(MT_sensmaps0(1,:));
-MT_sensmap1 = strcat(outdir,filesep,'MT_sens_head',ext);
-copyfile(deblank(MT_sensmaps0(1,:)),MT_sensmap1);
-[~,~,ext] = fileparts(MT_sensmaps0(2,:));
-MT_sensmap2 = strcat(outdir,filesep,'MT_sens_body',ext);
-copyfile(deblank(MT_sensmaps0(2,:)),MT_sensmap2);
-MT_sensmaps = char(MT_sensmap1,MT_sensmap2);
-% set and write metadata
-Output_hdr = struct('history',struct('procstep',[],'input',[]));
-Output_hdr.history.procstep.version = hmri_get_version;
-Output_hdr.history.procstep.descrip = 'B1- map calculation: copy raw data';
-for ctr = 1:size(MT_sensmaps0,1)
-    Output_hdr.history.input.filename = MT_sensmaps0(ctr,:);
-    input_hdr = get_metadata(MT_sensmaps0(ctr,:));
-    if ~isempty(input_hdr{1})
-        Output_hdr.history.input.history = input_hdr{1}.history;
-    else
-        Output_hdr.history.input.history = 'No history available.';
-    end
-    set_metadata(MT_sensmaps(ctr,:),Output_hdr,json);
-end
+%==========================================================================
+% Coregistering the images: each sensmap onto the corresponding structural
+%==========================================================================
+MT_coregmaps = coreg_sens_to_struct_images(MT_structurals(1,:), MT_sensmaps, calcpath);
+PD_coregmaps = coreg_sens_to_struct_images(PD_structurals(1,:), PD_sensmaps, calcpath);
+T1_coregmaps = coreg_sens_to_struct_images(T1_structurals(1,:), T1_sensmaps, calcpath);
 
-[~,~,ext] = fileparts(PD_sensmaps0(1,:));
-PD_sensmap1 = strcat(outdir,filesep,'PD_sens_head',ext);
-copyfile(deblank(PD_sensmaps0(1,:)),PD_sensmap1);
-[~,~,ext] = fileparts(PD_sensmaps0(2,:));
-PD_sensmap2 = strcat(outdir,filesep,'PD_sens_body',ext);
-copyfile(deblank(PD_sensmaps0(2,:)),PD_sensmap2);
-PD_sensmaps = char(PD_sensmap1,PD_sensmap2);
-% set and write metadata
-Output_hdr = struct('history',struct('procstep',[],'input',[]));
-Output_hdr.history.procstep.version = hmri_get_version;
-Output_hdr.history.procstep.descrip = 'B1- map calculation: copy raw data';
-for ctr = 1:size(PD_sensmaps0,1)
-    Output_hdr.history.input.filename = PD_sensmaps0(ctr,:);
-    input_hdr = get_metadata(PD_sensmaps0(ctr,:));
-    if ~isempty(input_hdr{1})
-        Output_hdr.history.input.history = input_hdr{1}.history;
-    else
-        Output_hdr.history.input.history = 'No history available.';
-    end
-    set_metadata(PD_sensmaps(ctr,:),Output_hdr,json);
-end
+%% ========================================================================
+% Smoothing the coregistered images
+%==========================================================================
+MT_smoothedmaps = smooth_sens_images(MT_coregmaps, smooth_kernel);
+PD_smoothedmaps = smooth_sens_images(PD_coregmaps, smooth_kernel);
+T1_smoothedmaps = smooth_sens_images(T1_coregmaps, smooth_kernel);
 
-[~,~,ext] = fileparts(T1_sensmaps0(1,:));
-T1_sensmap1 = strcat(outdir,filesep,'T1_sens_head',ext);
-copyfile(deblank(T1_sensmaps0(1,:)),T1_sensmap1);
-[~,~,ext] = fileparts(T1_sensmaps0(2,:));
-T1_sensmap2 = strcat(outdir,filesep,'T1_sens_body',ext);
-copyfile(deblank(T1_sensmaps0(2,:)),T1_sensmap2);
-T1_sensmaps = char(T1_sensmap1,T1_sensmap2);
-% set and write metadata
-Output_hdr = struct('history',struct('procstep',[],'input',[]));
-Output_hdr.history.procstep.version = hmri_get_version;
-Output_hdr.history.procstep.descrip = 'B1- map calculation: copy raw data';
-for ctr = 1:size(T1_sensmaps0,1)
-    Output_hdr.history.input.filename = T1_sensmaps0(ctr,:);
-    input_hdr = get_metadata(T1_sensmaps0(ctr,:));
-    if ~isempty(input_hdr{1})
-        Output_hdr.history.input.history = input_hdr{1}.history;
-    else
-        Output_hdr.history.input.history = 'No history available.';
-    end
-    set_metadata(T1_sensmaps(ctr,:),Output_hdr,json);
-end
-    
-% assign appropriate structurals
-MT_structurals = char(jobsubj.raw_mpm.MT);
-PD_structurals = char(jobsubj.raw_mpm.PD);
-T1_structurals = char(jobsubj.raw_mpm.T1);
 
-% create cell for the coregistered images by using the old filenames 
-% before coregistration, and add the r_ marker to the filename
-MT_coregmaps = cell(size(MT_sensmaps,1),1);
+%% ========================================================================
+% Calculate quantitative RF sensitivity maps (HC/BC division)
+%==========================================================================
+MT_qsensmap = spm_imcalc(MT_smoothedmaps, fullfile(calcpath, 'sensMap_HC_over_BC_division_MT.nii'), 'i1./i2');
+PD_qsensmap = spm_imcalc(PD_smoothedmaps, fullfile(calcpath, 'sensMap_HC_over_BC_division_PD.nii'), 'i1./i2');
+T1_qsensmap = spm_imcalc(T1_smoothedmaps, fullfile(calcpath, 'sensMap_HC_over_BC_division_T1.nii'), 'i1./i2');
+% set metadata MT
+input_files = MT_sensmaps;
+Output_hdr = init_rfsens_output_metadata(input_files, rfsens_params);
+Output_hdr.history.output.imtype = 'Quantitative RF sensitivity map (HC/BC) for MTw images';
+set_metadata(MT_qsensmap,Output_hdr,json);
+% set metadata PD
+input_files = PD_sensmaps;
+Output_hdr = init_rfsens_output_metadata(input_files, rfsens_params);
+Output_hdr.history.output.imtype = 'Quantitative RF sensitivity map (HC/BC) for PDw images';
+set_metadata(PD_qsensmap,Output_hdr,json);
+% set metadata T1
+input_files = T1_sensmaps;
+Output_hdr = init_rfsens_output_metadata(input_files, rfsens_params);
+Output_hdr.history.output.imtype = 'Quantitative RF sensitivity map (HC/BC) for T1w images';
+set_metadata(T1_qsensmap,Output_hdr,json);
 
-% coregistering the images. Probably could be done more elegantly
-clear matlabbatch
-for i = 1:2
-    spm_jobman('initcfg')
-    matlabbatch{1}.spm.spatial.coreg.estwrite.ref = {deblank(MT_structurals(1,:))};
-    matlabbatch{1}.spm.spatial.coreg.estwrite.source = {deblank(MT_sensmaps(i,:))};
-    matlabbatch{1}.spm.spatial.coreg.estwrite.eoptions.cost_fun = 'nmi';
-    matlabbatch{1}.spm.spatial.coreg.estwrite.roptions.prefix = 'r_';
-    matlabbatch{1}.spm.spatial.coreg.estwrite.other = {''};
-    matlabbatch{1}.spm.spatial.coreg.estwrite.eoptions.sep = [2 1];
-    matlabbatch{1}.spm.spatial.coreg.estwrite.eoptions.tol = [0.02 0.02 0.02 0.001 0.001 0.001 0.01 0.01 0.01 0.001 0.001 0.001];
-    matlabbatch{1}.spm.spatial.coreg.estwrite.eoptions.fwhm = [7 7];
-    matlabbatch{1}.spm.spatial.coreg.estwrite.roptions.interp = 4;
-    matlabbatch{1}.spm.spatial.coreg.estwrite.roptions.wrap = [0 0 0];
-    matlabbatch{1}.spm.spatial.coreg.estwrite.roptions.mask = 0;
-    spm_jobman('run',matlabbatch)
-    % set and write metadata
-    Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[]));
-    Output_hdr.history.procstep.version = hmri_get_version;
-    Output_hdr.history.procstep.descrip = 'B1- map calculation: coregister with structural';
-    Output_hdr.history.procstep.procpar = matlabbatch{1};
-    Output_hdr.history.input{1}.filename = MT_structurals(1,:);
-    Output_hdr.history.input{2}.filename = MT_sensmaps(i,:);
-    for ctr = 1:2
-        input_hdr = get_metadata(Output_hdr.history.input{ctr}.filename);
-        if ~isempty(input_hdr{1})
-            Output_hdr.history.input{ctr}.history = input_hdr{1}.history;
-        else
-            Output_hdr.history.input{ctr}.history = 'No history available.';
-        end
-    end
-    Output_hdr.history.output.imtype = 'coregistered raw sensitivity map';
+
+%% ========================================================================
+% Normalise all input multi-echo images using the p.u. sensitivity maps
+%==========================================================================
+nMT = size(MT_structurals,1);
+nPD = size(PD_structurals,1);
+nT1 = size(T1_structurals,1);
+MT_corrected_structurals = cell(nMT,1);
+PD_corrected_structurals = cell(nPD,1);
+T1_corrected_structurals = cell(nT1,1);
+
+for i=1:nMT
+    MT_corrected_structurals{i} = fullfile(calcpath, spm_file(spm_file(MT_structurals{i},'filename'),'suffix','_RFSC'));
+    spm_imcalc({MT_structurals{i}, MT_qsensmap}, MT_corrected_structurals{i}, 'i1./i2');
+    %set metadata
+    input_files = char(MT_structurals{i}, MT_qsensmap);
+    Output_hdr = init_rfsens_output_metadata(input_files, rfsens_params);
+    Output_hdr.history.output.imtype = 'RF sensitivity corrected MT-weighted echo';
     Output_hdr.history.output.units = 'a.u.';
-    namelimits = strfind(MT_sensmaps(i,:),filesep);
-    MT_coregmaps{i,:} = strcat(MT_sensmaps(i,1:namelimits(end)),'r_',(MT_sensmaps(i,namelimits(end)+1:end)));
-    set_metadata(MT_coregmaps{i,:},Output_hdr,json);
+    set_metadata(MT_corrected_structurals{i},Output_hdr,json);
 end
-clear matlabbatch
-clear namelimits;
 
-PD_coregmaps = cell(size(PD_sensmaps,1),1);
-for i = 1:2
-    spm_jobman('initcfg')
-    matlabbatch{1}.spm.spatial.coreg.estwrite.ref = {deblank(PD_structurals(1,:))};
-    matlabbatch{1}.spm.spatial.coreg.estwrite.source = {deblank(PD_sensmaps(i,:))};
-    matlabbatch{1}.spm.spatial.coreg.estwrite.eoptions.cost_fun = 'nmi';
-    matlabbatch{1}.spm.spatial.coreg.estwrite.roptions.prefix = 'r_';
-    matlabbatch{1}.spm.spatial.coreg.estwrite.other = {''};
-    matlabbatch{1}.spm.spatial.coreg.estwrite.eoptions.sep = [2 1];
-    matlabbatch{1}.spm.spatial.coreg.estwrite.eoptions.tol = [0.02 0.02 0.02 0.001 0.001 0.001 0.01 0.01 0.01 0.001 0.001 0.001];
-    matlabbatch{1}.spm.spatial.coreg.estwrite.eoptions.fwhm = [7 7];
-    matlabbatch{1}.spm.spatial.coreg.estwrite.roptions.interp = 4;
-    matlabbatch{1}.spm.spatial.coreg.estwrite.roptions.wrap = [0 0 0];
-    matlabbatch{1}.spm.spatial.coreg.estwrite.roptions.mask = 0;
-    spm_jobman('run',matlabbatch)
-    % set and write metadata
-    Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[]));
-    Output_hdr.history.procstep.version = hmri_get_version;
-    Output_hdr.history.procstep.descrip = 'B1- map calculation: coregister with structural';
-    Output_hdr.history.procstep.procpar = matlabbatch{1};
-    Output_hdr.history.input{1}.filename = PD_structurals(1,:);
-    Output_hdr.history.input{2}.filename = PD_sensmaps(i,:);
-    for ctr = 1:2
-        input_hdr = get_metadata(Output_hdr.history.input{ctr}.filename);
-        if ~isempty(input_hdr{1})
-            Output_hdr.history.input{ctr}.history = input_hdr{1}.history;
-        else
-            Output_hdr.history.input{ctr}.history = 'No history available.';
-        end
-    end
-    Output_hdr.history.output.imtype = 'coregistered raw sensitivity map';
+for i=1:nPD
+    PD_corrected_structurals{i} = fullfile(calcpath, spm_file(spm_file(PD_structurals{i},'filename'),'suffix','_RFSC'));
+    spm_imcalc({PD_structurals{i}, PD_qsensmap}, PD_corrected_structurals{i}, 'i1./i2');
+    %set metadata
+    input_files = char(PD_structurals{i}, PD_qsensmap);
+    Output_hdr = init_rfsens_output_metadata(input_files, rfsens_params);
+    Output_hdr.history.output.imtype = 'RF sensitivity corrected PD-weighted echo';
     Output_hdr.history.output.units = 'a.u.';
-    namelimits = strfind(PD_sensmaps(i,:),filesep);
-    PD_coregmaps{i,:} = strcat(PD_sensmaps(i,1:namelimits(end)),'r_',(PD_sensmaps(i,namelimits(end)+1:end)));
-    set_metadata(PD_coregmaps{i,:},Output_hdr,json);
+    set_metadata(PD_corrected_structurals{i},Output_hdr,json);
 end
-clear matlabbatch
-clear namelimits;
 
-T1_coregmaps = cell(size(T1_sensmaps,1),1);
-for i = 1:2
-    spm_jobman('initcfg')
-    matlabbatch{1}.spm.spatial.coreg.estwrite.ref = {deblank(T1_structurals(1,:))};
-    matlabbatch{1}.spm.spatial.coreg.estwrite.source = {deblank(T1_sensmaps(i,:))};
-    matlabbatch{1}.spm.spatial.coreg.estwrite.eoptions.cost_fun = 'nmi';
-    matlabbatch{1}.spm.spatial.coreg.estwrite.roptions.prefix = 'r_';
-    matlabbatch{1}.spm.spatial.coreg.estwrite.other = {''};
-    matlabbatch{1}.spm.spatial.coreg.estwrite.eoptions.sep = [2 1];
-    matlabbatch{1}.spm.spatial.coreg.estwrite.eoptions.tol = [0.02 0.02 0.02 0.001 0.001 0.001 0.01 0.01 0.01 0.001 0.001 0.001];
-    matlabbatch{1}.spm.spatial.coreg.estwrite.eoptions.fwhm = [7 7];
-    matlabbatch{1}.spm.spatial.coreg.estwrite.roptions.interp = 4;
-    matlabbatch{1}.spm.spatial.coreg.estwrite.roptions.wrap = [0 0 0];
-    matlabbatch{1}.spm.spatial.coreg.estwrite.roptions.mask = 0;
-    spm_jobman('run',matlabbatch)
-    % set and write metadata
-    Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[]));
-    Output_hdr.history.procstep.version = hmri_get_version;
-    Output_hdr.history.procstep.descrip = 'B1- map calculation: coregister with structural';
-    Output_hdr.history.procstep.procpar = matlabbatch{1};
-    Output_hdr.history.input{1}.filename = T1_structurals(1,:);
-    Output_hdr.history.input{2}.filename = T1_sensmaps(i,:);
-    for ctr = 1:2
-        input_hdr = get_metadata(Output_hdr.history.input{ctr}.filename);
-        if ~isempty(input_hdr{1})
-            Output_hdr.history.input{ctr}.history = input_hdr{1}.history;
-        else
-            Output_hdr.history.input{ctr}.history = 'No history available.';
-        end
-    end
-    Output_hdr.history.output.imtype = 'coregistered raw sensitivity map';
+for i=1:nT1
+    T1_corrected_structurals{i} = fullfile(calcpath, spm_file(spm_file(T1_structurals{i},'filename'),'suffix','_RFSC'));
+    spm_imcalc({T1_structurals{i}, T1_qsensmap}, T1_corrected_structurals{i}, 'i1./i2');
+    %set metadata
+    input_files = char(T1_structurals{i}, T1_qsensmap);
+    Output_hdr = init_rfsens_output_metadata(input_files, rfsens_params);
+    Output_hdr.history.output.imtype = 'RF sensitivity corrected T1-weighted echo';
     Output_hdr.history.output.units = 'a.u.';
-    namelimits = strfind(T1_sensmaps(i,:),filesep);
-    T1_coregmaps{i,:} = strcat(T1_sensmaps(i,1:namelimits(end)),'r_',(T1_sensmaps(i,namelimits(end)+1:end)));
-    set_metadata(T1_coregmaps{i,:},Output_hdr,json);
-end
-clear matlabbatch
-clear namelimits;
-
-% create cell for the smoothed and coregistered files by using the old 
-% filenames before coregistration, and add the smooth marker to it
-MT_smoothedmaps = cell(size(MT_coregmaps,1),1);
-
-% smooth coregistered images
-% Use the coregistered images, and call spm_smooth for them
-clear matlabbatch
-for i = 1:2
-    matlabbatch{1}.spm.spatial.smooth.data = {deblank(MT_coregmaps{i,:})};
-    matlabbatch{1}.spm.spatial.smooth.fwhm = [smooth_kernel smooth_kernel smooth_kernel];
-    matlabbatch{1}.spm.spatial.smooth.prefix = strcat('smooth',num2str(smooth_kernel),'_');
-    spm_jobman('run',matlabbatch)
-    % set and write metadata
-    Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[]));
-    Output_hdr.history.procstep.version = hmri_get_version;
-    Output_hdr.history.procstep.descrip = 'B1- map calculation: smooth coregistered raw image';
-    Output_hdr.history.procstep.procpar = matlabbatch{1};
-    Output_hdr.history.input{1}.filename = MT_coregmaps{i,:};
-    input_hdr = get_metadata(Output_hdr.history.input{1}.filename);
-    if ~isempty(input_hdr{1})
-        Output_hdr.history.input{1}.history = input_hdr{1}.history;
-    else
-        Output_hdr.history.input{1}.history = 'No history available.';
-    end
-    Output_hdr.history.output.imtype = 'smoothed raw sensitivity map';
-    Output_hdr.history.output.units = 'a.u.';
-    namelimits = strfind(MT_coregmaps{i,:},filesep);
-    MT_smoothedmaps{i,:} = strcat((MT_coregmaps{i}(1:namelimits(end))),...
-        strcat('smooth',num2str(smooth_kernel),'_'),...
-        (MT_coregmaps{i}(namelimits(end)+1:end)));
-    set_metadata(MT_smoothedmaps{i,:},Output_hdr,json);
+    set_metadata(T1_corrected_structurals{i},Output_hdr,json);
 end
 
-PD_smoothedmaps = cell(size(PD_coregmaps,1),1);
-clear matlabbatch
-for i = 1:2
-    matlabbatch{1}.spm.spatial.smooth.data = {deblank(PD_coregmaps{i,:})};
-    matlabbatch{1}.spm.spatial.smooth.fwhm = [smooth_kernel smooth_kernel smooth_kernel];
-    matlabbatch{1}.spm.spatial.smooth.prefix = strcat('smooth',num2str(smooth_kernel),'_');
-    spm_jobman('run',matlabbatch)
-    % set and write metadata
-    Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[]));
-    Output_hdr.history.procstep.version = hmri_get_version;
-    Output_hdr.history.procstep.descrip = 'B1- map calculation: smooth coregistered raw image';
-    Output_hdr.history.procstep.procpar = matlabbatch{1};
-    Output_hdr.history.input{1}.filename = PD_coregmaps{i,:};
-    input_hdr = get_metadata(Output_hdr.history.input{1}.filename);
-    if ~isempty(input_hdr{1})
-        Output_hdr.history.input{1}.history = input_hdr{1}.history;
-    else
-        Output_hdr.history.input{1}.history = 'No history available.';
-    end
-    Output_hdr.history.output.imtype = 'smoothed raw sensitivity map';
-    Output_hdr.history.output.units = 'a.u.';
-    namelimits = strfind(PD_coregmaps{i,:},filesep);
-    PD_smoothedmaps{i,:} = strcat((PD_coregmaps{i}(1:namelimits(end))),...
-        strcat('smooth',num2str(smooth_kernel),'_'),...
-        (PD_coregmaps{i}(namelimits(end)+1:end)));
-    set_metadata(PD_smoothedmaps{i,:},Output_hdr,json);
-end
+% % % % % % still need TE/TR/FA
+% % % % % Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[],'acqpar',...
+% % % % %         struct('RepetitionTime',[],'EchoTime',[],'FlipAngle',[])));
+% % % % %     Output_hdr.history.procstep.version = hmri_get_version;
+% % % % %     Output_hdr.history.procstep.descrip = 'B1- map application to T1';
+% % % % %     Output_hdr.history.procstep.procpar = 'i1./i2';
+% % % % %     Output_hdr.history.input{1}.filename = T1_structurals(i,:);
+% % % % %     Output_hdr.history.input{2}.filename = T1_map;
+% % % % %     Output_hdr.history.acqpar.RepetitionTime = ...
+% % % % %         get_metadata_val(T1_structurals(i,:),'RepetitionTime');
+% % % % %     Output_hdr.history.acqpar.EchoTime = ...
+% % % % %         get_metadata_val(T1_structurals(i,:),'EchoTime');
+% % % % %     Output_hdr.history.acqpar.FlipAngle = ...
+% % % % %         get_metadata_val(T1_structurals(i,:),'FlipAngle');
 
-T1_smoothedmaps = cell(size(T1_coregmaps,1),1);
-clear matlabbatch
-for i = 1:2
-    matlabbatch{1}.spm.spatial.smooth.data = {deblank(T1_coregmaps{i,:})};
-    matlabbatch{1}.spm.spatial.smooth.fwhm = [smooth_kernel smooth_kernel smooth_kernel];
-    matlabbatch{1}.spm.spatial.smooth.prefix = strcat('smooth',num2str(smooth_kernel),'_');
-    spm_jobman('run',matlabbatch)
-    % set and write metadata
-    Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[]));
-    Output_hdr.history.procstep.version = hmri_get_version;
-    Output_hdr.history.procstep.descrip = 'B1- map calculation: smooth coregistered raw image';
-    Output_hdr.history.procstep.procpar = matlabbatch{1};
-    Output_hdr.history.input{1}.filename = T1_coregmaps{i,:};
-    input_hdr = get_metadata(Output_hdr.history.input{1}.filename);
-    if ~isempty(input_hdr{1})
-        Output_hdr.history.input{1}.history = input_hdr{1}.history;
-    else
-        Output_hdr.history.input{1}.history = 'No history available.';
-    end
-    Output_hdr.history.output.imtype = 'smoothed raw sensitivity map';
-    Output_hdr.history.output.units = 'a.u.';
-    namelimits = strfind(T1_coregmaps{i,:},filesep);
-    T1_smoothedmaps{i,:} = strcat((T1_coregmaps{i}(1:namelimits(end))),...
-        strcat('smooth',num2str(smooth_kernel),'_'),...
-        (T1_coregmaps{i}(namelimits(end)+1:end)));
-    set_metadata(T1_smoothedmaps{i,:},Output_hdr,json);
-end
-
-% Divide the 32ch image with the BC image
-[Filepath,~,~] = fileparts(MT_smoothedmaps{1});
-clear matlabbatch;
-matlabbatch{1}.spm.util.imcalc.input = {deblank(MT_smoothedmaps{1}),deblank(MT_smoothedmaps{2})}';
-matlabbatch{1}.spm.util.imcalc.output = 'MT_32ch_over_BC.nii';
-matlabbatch{1}.spm.util.imcalc.outdir = {Filepath};
-matlabbatch{1}.spm.util.imcalc.expression = 'i1./i2';
-spm_jobman('run',matlabbatch)
-% set and write metadata
-Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[]));
-Output_hdr.history.procstep.version = hmri_get_version;
-Output_hdr.history.procstep.descrip = 'B1- map calculation: MT';
-Output_hdr.history.procstep.procpar = matlabbatch{1};
-Output_hdr.history.input{1}.filename = matlabbatch{1}.spm.util.imcalc.input{1};
-Output_hdr.history.input{2}.filename = matlabbatch{1}.spm.util.imcalc.input{2};
-for ctr = 1:2
-    input_hdr = get_metadata(Output_hdr.history.input{ctr}.filename);
-    if ~isempty(input_hdr{1})
-        Output_hdr.history.input{ctr}.history = input_hdr{1}.history;
-    else
-        Output_hdr.history.input{ctr}.history = 'No history available.';
-    end
-end
-Output_hdr.history.output.imtype = 'sensitivity map for MT';
-Output_hdr.history.output.units = 'p.u.';
-MT_map = strcat(Filepath,filesep,matlabbatch{1}.spm.util.imcalc.output);
-set_metadata(MT_map(1,:),Output_hdr,json);
+%==========================================================================
+% Copy output at right place
+%==========================================================================
 
 
-% generate manually normalized images
-for i = 1:size(MT_structurals,1)
-    FileName = [strcat(Filepath,filesep,'sMT_manualnorm_echo-',num2str(i)),'.nii'];
-    placeholder = spm_imcalc({deblank(MT_structurals(i,:)), deblank(MT_map)}, FileName, 'i1./i2');
-    % set and write metadata
-    Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[],'acqpar',...
-        struct('RepetitionTime',[],'EchoTime',[],'FlipAngle',[])));
-    Output_hdr.history.procstep.version = hmri_get_version;
-    Output_hdr.history.procstep.descrip = 'B1- map application to MT';
-    Output_hdr.history.procstep.procpar = 'i1./i2';
-    Output_hdr.history.input{1}.filename = MT_structurals(i,:);
-    Output_hdr.history.input{2}.filename = MT_map;
-    Output_hdr.history.acqpar.RepetitionTime = ...
-        get_metadata_val(MT_structurals(i,:),'RepetitionTime');
-    Output_hdr.history.acqpar.EchoTime = ...
-        get_metadata_val(MT_structurals(i,:),'EchoTime');
-    Output_hdr.history.acqpar.FlipAngle = ...
-        get_metadata_val(MT_structurals(i,:),'FlipAngle');
-    for ctr = 1:2
-        input_hdr = get_metadata(Output_hdr.history.input{ctr}.filename);
-        if ~isempty(input_hdr{1})
-            Output_hdr.history.input{ctr}.history = input_hdr{1}.history;
-        else
-            Output_hdr.history.input{ctr}.history = 'No history available.';
-        end
-    end
-    Output_hdr.history.output.imtype = 'RF sensitivity corrected MT';
-    Output_hdr.history.output.units = 'a.u.';
-    set_metadata(FileName,Output_hdr,json);
-end    
-
-% change nifti headers
-originalMT = cell(size(MT_structurals,1),1);
-for i = 1:size(originalMT,1)
-    originalMT{i,1} = nifti(deblank(MT_structurals(i,:)));
-end
-
-correctedMT = cell(size(MT_structurals,1),1);
-correctedMTs = cell(size(MT_structurals,1),1);
-for i = 1:size(correctedMT,1)
-    FileName = [strcat(Filepath,filesep,'sMT_manualnorm_echo-',num2str(i)),'.nii'];
-    correctedMT{i,1} = nifti(FileName);
-    correctedMT{i,1}.descrip = originalMT{i,1}.descrip;
-    create(correctedMT{i,1});
-    correctedMTs{i,1} = FileName;
-end
-
-%% calculating the same for PD
-% Divide the 32ch image with the BC image
-[Filepath,~,~] = fileparts(PD_smoothedmaps{1});
-clear matlabbatch;
-matlabbatch{1}.spm.util.imcalc.input = {deblank(PD_smoothedmaps{1}),deblank(PD_smoothedmaps{2})}';
-matlabbatch{1}.spm.util.imcalc.output = 'PD_32ch_over_BC.nii';
-matlabbatch{1}.spm.util.imcalc.outdir = {Filepath};
-matlabbatch{1}.spm.util.imcalc.expression = 'i1./i2';
-spm_jobman('run',matlabbatch)
-% set and write metadata
-Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[]));
-Output_hdr.history.procstep.version = hmri_get_version;
-Output_hdr.history.procstep.descrip = 'B1- map calculation: PD';
-Output_hdr.history.procstep.procpar = matlabbatch{1};
-Output_hdr.history.input{1}.filename = matlabbatch{1}.spm.util.imcalc.input{1};
-Output_hdr.history.input{2}.filename = matlabbatch{1}.spm.util.imcalc.input{2};
-for ctr = 1:2
-    input_hdr = get_metadata(Output_hdr.history.input{ctr}.filename);
-    if ~isempty(input_hdr{1})
-        Output_hdr.history.input{ctr}.history = input_hdr{1}.history;
-    else
-        Output_hdr.history.input{ctr}.history = 'No history available.';
-    end
-end
-Output_hdr.history.output.imtype = 'sensitivity map for PD';
-Output_hdr.history.output.units = 'p.u.';
-PD_map = strcat(Filepath,filesep,matlabbatch{1}.spm.util.imcalc.output);
-set_metadata(PD_map(1,:),Output_hdr,json);
-
-% generate manually normalized images
-for i = 1:size(PD_structurals,1)
-    FileName = [strcat(Filepath,filesep,'sPD_manualnorm_echo-',num2str(i)),'.nii'];
-    placeholder = spm_imcalc({deblank(PD_structurals(i,:)), deblank(PD_map)}, FileName, 'i1./i2');
-    % set and write metadata
-    Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[],'acqpar',...
-        struct('RepetitionTime',[],'EchoTime',[],'FlipAngle',[])));
-    Output_hdr.history.procstep.version = hmri_get_version;
-    Output_hdr.history.procstep.descrip = 'B1- map application to PD';
-    Output_hdr.history.procstep.procpar = 'i1./i2';
-    Output_hdr.history.input{1}.filename = PD_structurals(i,:);
-    Output_hdr.history.input{2}.filename = PD_map;
-    Output_hdr.history.acqpar.RepetitionTime = ...
-        get_metadata_val(PD_structurals(i,:),'RepetitionTime');
-    Output_hdr.history.acqpar.EchoTime = ...
-        get_metadata_val(PD_structurals(i,:),'EchoTime');
-    Output_hdr.history.acqpar.FlipAngle = ...
-        get_metadata_val(PD_structurals(i,:),'FlipAngle');
-    for ctr = 1:2
-        input_hdr = get_metadata(Output_hdr.history.input{ctr}.filename);
-        if ~isempty(input_hdr{1})
-            Output_hdr.history.input{ctr}.history = input_hdr{1}.history;
-        else
-            Output_hdr.history.input{ctr}.history = 'No history available.';
-        end
-    end
-    Output_hdr.history.output.imtype = 'RF sensitivity corrected PD';
-    Output_hdr.history.output.units = 'a.u.';
-    set_metadata(FileName,Output_hdr,json);
-end    
-
-% change nifti headers
-originalPD = cell(size(PD_structurals,1),1);
-for i = 1:size(originalPD,1)
-    originalPD{i,1} = nifti(deblank(PD_structurals(i,:)));
-end
-
-correctedPD = cell(size(PD_structurals,1),1);
-correctedPDs = cell(size(PD_structurals,1),1);
-for i = 1:size(correctedPD,1)
-    FileName = [strcat(Filepath,filesep,'sPD_manualnorm_echo-',num2str(i)),'.nii'];
-    correctedPD{i,1} = nifti(FileName);
-    correctedPD{i,1}.descrip = originalPD{i,1}.descrip;
-    create(correctedPD{i,1});
-    correctedPDs{i,1} = FileName;
-end
-
-%% same thing for T1
-% Divide the 32ch image with the BC image
-[Filepath,~,~] = fileparts(T1_smoothedmaps{1});
-clear matlabbatch;
-matlabbatch{1}.spm.util.imcalc.input = {deblank(T1_smoothedmaps{1}),deblank(T1_smoothedmaps{2})}';
-matlabbatch{1}.spm.util.imcalc.output = 'T1_32ch_over_BC.nii';
-matlabbatch{1}.spm.util.imcalc.outdir = {Filepath};
-matlabbatch{1}.spm.util.imcalc.expression = 'i1./i2';
-spm_jobman('run',matlabbatch)
-% set and write metadata
-Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[]));
-Output_hdr.history.procstep.version = hmri_get_version;
-Output_hdr.history.procstep.descrip = 'B1- map calculation: T1';
-Output_hdr.history.procstep.procpar = matlabbatch{1};
-Output_hdr.history.input{1}.filename = matlabbatch{1}.spm.util.imcalc.input{1};
-Output_hdr.history.input{2}.filename = matlabbatch{1}.spm.util.imcalc.input{2};
-for ctr = 1:2
-    input_hdr = get_metadata(Output_hdr.history.input{ctr}.filename);
-    if ~isempty(input_hdr{1})
-        Output_hdr.history.input{ctr}.history = input_hdr{1}.history;
-    else
-        Output_hdr.history.input{ctr}.history = 'No history available.';
-    end
-end
-Output_hdr.history.output.imtype = 'sensitivity map for T1';
-Output_hdr.history.output.units = 'p.u.';
-T1_map = strcat(Filepath,filesep,matlabbatch{1}.spm.util.imcalc.output);
-set_metadata(T1_map(1,:),Output_hdr,json);
-
-% generate manually normalized images
-for i = 1:size(T1_structurals,1)
-    FileName = [strcat(Filepath,filesep,'sT1_manualnorm_echo-',num2str(i)),'.nii'];
-    placeholder = spm_imcalc({deblank(T1_structurals(i,:)), deblank(T1_map)}, FileName, 'i1./i2');
-    % set and write metadata
-    Output_hdr = struct('history',struct('procstep',[],'input',[],'output',[],'acqpar',...
-        struct('RepetitionTime',[],'EchoTime',[],'FlipAngle',[])));
-    Output_hdr.history.procstep.version = hmri_get_version;
-    Output_hdr.history.procstep.descrip = 'B1- map application to T1';
-    Output_hdr.history.procstep.procpar = 'i1./i2';
-    Output_hdr.history.input{1}.filename = T1_structurals(i,:);
-    Output_hdr.history.input{2}.filename = T1_map;
-    Output_hdr.history.acqpar.RepetitionTime = ...
-        get_metadata_val(T1_structurals(i,:),'RepetitionTime');
-    Output_hdr.history.acqpar.EchoTime = ...
-        get_metadata_val(T1_structurals(i,:),'EchoTime');
-    Output_hdr.history.acqpar.FlipAngle = ...
-        get_metadata_val(T1_structurals(i,:),'FlipAngle');
-    for ctr = 1:2
-        input_hdr = get_metadata(Output_hdr.history.input{ctr}.filename);
-        if ~isempty(input_hdr{1})
-            Output_hdr.history.input{ctr}.history = input_hdr{1}.history;
-        else
-            Output_hdr.history.input{ctr}.history = 'No history available.';
-        end
-    end
-    Output_hdr.history.output.imtype = 'RF sensitivity corrected T1';
-    Output_hdr.history.output.units = 'a.u.';
-    set_metadata(FileName,Output_hdr,json);
-end    
-
-% change nifti headers
-originalT1 = cell(size(T1_structurals,1),1);
-for i = 1:size(originalT1,1)
-    originalT1{i,1} = nifti(deblank(T1_structurals(i,:)));
-end
-
-correctedT1 = cell(size(T1_structurals,1),1);
-correctedT1s = cell(size(T1_structurals,1),1);
-for i = 1:size(correctedT1,1)
-    FileName = [strcat(Filepath,filesep,'sT1_manualnorm_echo-',num2str(i)),'.nii'];
-    correctedT1{i,1} = nifti(FileName);
-    correctedT1{i,1}.descrip = originalT1{i,1}.descrip;
-    create(correctedT1{i,1});
-    correctedT1s{i,1} = FileName;
-end
-
-% assign the corrected maps to the output structure
+% substitute the corrected maps to the output structure
 jobsubj.raw_mpm.MT = correctedMTs;
 jobsubj.raw_mpm.PD = correctedPDs;
 jobsubj.raw_mpm.T1 = correctedT1s;
@@ -578,16 +161,39 @@ rfsens_params.json = hmri_get_defaults('json');
 rfsens_params.calcpath = jobsubj.path.rfsenspath;
 rfsens_params.respath = jobsubj.path.respath;
 rfsens_params.supplpath = jobsubj.path.supplpath;
-rfsens_params.proc = hmri_get_defaults('RFsens');
+rfsens_params.smooth_kernel = hmri_get_defaults('RFsens.smooth_kernel');
+
+% Input sensitivity maps: a pair of head coil/body coil sensitivity maps,
+% either acquired once for the whole protocol, or once per contrast (MT,
+% PD, T1):
+if isfield(jobsubj.sensitivity,'RF_once')
+    rfsens_params.input.MT.sensimages.fnames = spm_file(char(jobsubj.sensitivity.RF_once),'number','');
+    rfsens_params.input.PD.sensimages.fnames = spm_file(char(jobsubj.sensitivity.RF_once),'number','');
+    rfsens_params.input.T1.sensimages.fnames = spm_file(char(jobsubj.sensitivity.RF_once),'number','');    
+    rfsens_params.senstype = 'RF_once: single sensitivity data set acquired for the whole MPM protocol';
+elseif isfield(jobsubj.sensitivity,'RF_MPM')
+    rfsens_params.input.MT.sensimages.fnames  = spm_file(char(jobsubj.sensitivity.RF_MPM.raw_sens3.raw_sens_MT),'number','');
+    rfsens_params.input.PD.sensimages.fnames  = spm_file(char(jobsubj.sensitivity.RF_MPM.raw_sens3.raw_sens_PD),'number','');
+    rfsens_params.input.T1.sensimages.fnames  = spm_file(char(jobsubj.sensitivity.RF_MPM.raw_sens3.raw_sens_T1),'number','');
+    rfsens_params.senstype = 'RF_MPM: one sensitivity data set acquired per MPM contrast';
+else
+    error('RF sensitivity correction: no RF sensitivity data provided.');
+end
+
+% Input MTw, PDw, T1w multiecho images:
+rfsens_params.input.MT.structurals.fnames = spm_file(char(jobsubj.raw_mpm.MT),'number','');
+rfsens_params.input.PD.structurals.fnames = spm_file(char(jobsubj.raw_mpm.PD),'number','');
+rfsens_params.input.T1.structurals.fnames = spm_file(char(jobsubj.raw_mpm.T1),'number','');
 
 end
+
 
 %% =======================================================================%
 % To arrange the metadata structure for RFsens calculation output.
 %=========================================================================%
 function metastruc = init_rfsens_output_metadata(input_files, rfsens_params)
 
-proc.descrip = 'RF sensitivity calculation';
+proc.descrip = 'RF sensitivity correction';
 proc.version = hmri_get_version;
 proc.params = rfsens_params;
 
@@ -598,3 +204,75 @@ output.units = 'p.u.';
 metastruc = init_output_metadata_structure(input_files, proc, output);
 
 end
+
+%% =======================================================================%
+% Divide HeadCoil sensitivity image by BodyCoil sensitivity image 
+% Quantitative RF sensitivity map in [p.u.]
+%=========================================================================%
+function qsenfnam = divide_headcoil_bodycoil(HCsensfnam, BCsensfnam, calcpath, tag)
+
+clear matlabbatch;
+inputfiles = cellstr(char(HCsensfnam,BCsensfnam));
+outputfnam = sprints('HC_over_BC_division_sensMap_%s.nii',tag);
+matlabbatch{1}.spm.util.imcalc.input = inputfiles;
+matlabbatch{1}.spm.util.imcalc.output = outputfnam;
+matlabbatch{1}.spm.util.imcalc.outdir = {calcpath};
+matlabbatch{1}.spm.util.imcalc.expression = 'i1./i2';
+output_list = spm_jobman('run',matlabbatch);
+qsenfnam = output_list.files;
+% qsenfnam = fullfile(calcpath, outputfnam);
+
+end
+
+%% =======================================================================%
+% Smoothing images 
+%=========================================================================%
+function smoosensfnam = smooth_sens_images(inputfnam, smookernel)
+
+clear matlabbatch
+spm_jobman('initcfg')
+matlabbatch{1}.spm.spatial.smooth.data = inputfnam;
+matlabbatch{1}.spm.spatial.smooth.fwhm = smookernel*[1 1 1];
+matlabbatch{1}.spm.spatial.smooth.prefix = sprints('smooth%d_', smookernel);
+output_list = spm_jobman('run',matlabbatch);
+smoosensfnam = output_list.files;
+clear matlabbatch
+
+end
+
+%% =======================================================================%
+% Coregister sensitivity images onto structural images, move results into
+% RFsensCalc directory. 
+%=========================================================================%
+function coregsensfnam = coreg_sens_to_struct_images(strucfnam, sensfnam, calcpath)
+
+% cellstr(sensfnam)
+% char(sensfnam)
+% coregistration made for body coil and head coil sensitivity maps
+% separately:
+
+clear matlabbatch
+for i = 1:size(sensfnam,1)
+    % first coregister
+    spm_jobman('initcfg')
+    matlabbatch{1}.spm.spatial.coreg.estwrite.ref = {strucfnam(1,:)};
+    matlabbatch{1}.spm.spatial.coreg.estwrite.source = {sensfnam(i,:)};
+    matlabbatch{1}.spm.spatial.coreg.estwrite.eoptions.cost_fun = 'nmi';
+    matlabbatch{1}.spm.spatial.coreg.estwrite.roptions.prefix = 'r_';
+    matlabbatch{1}.spm.spatial.coreg.estwrite.other = {''};
+    matlabbatch{1}.spm.spatial.coreg.estwrite.eoptions.sep = [2 1];
+    matlabbatch{1}.spm.spatial.coreg.estwrite.eoptions.tol = [0.02 0.02 0.02 0.001 0.001 0.001 0.01 0.01 0.01 0.001 0.001 0.001];
+    matlabbatch{1}.spm.spatial.coreg.estwrite.eoptions.fwhm = [7 7];
+    matlabbatch{1}.spm.spatial.coreg.estwrite.roptions.interp = 4;
+    matlabbatch{1}.spm.spatial.coreg.estwrite.roptions.wrap = [0 0 0];
+    matlabbatch{1}.spm.spatial.coreg.estwrite.roptions.mask = 0;
+    output_list = spm_jobman('run',matlabbatch);
+    % move results to calculation folder (copy metadata if available)
+    movefile(output_list.truc, fullfile(calcpath, spm_file(output_list.truc,'filename')));
+    % assign output 
+    coregsensfnam{i} = output_list.files{i}; %#ok<AGROW>
+end
+clear matlabbatch
+
+end
+

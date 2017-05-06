@@ -51,7 +51,6 @@ if ~exist(respath,'dir'); mkdir(respath); end
 supplpath = fullfile(outpath, 'Results', 'Supplementary');
 if ~exist(supplpath,'dir'); mkdir(supplpath); end
 
-
 % define other (temporary) paths for processing data
 b1path = fullfile(outpath, 'B1mapCalc');
 if ~exist(b1path,'dir'); mkdir(b1path); end
@@ -66,6 +65,9 @@ job.subj.path.rfsenspath = rfsenspath;
 job.subj.path.mpmpath = mpmpath;
 job.subj.path.respath = respath;
 job.subj.path.supplpath = supplpath;
+
+% save original job (before it gets modified by RFsens)
+spm_jsonwrite(fullfile(supplpath,'MPM_map_creation_job_create_maps.json'),job,struct('indent','\t'));
 
 % run B1 map calculation for B1 bias correction
 P_trans = hmri_create_b1map(job.subj);
@@ -92,9 +94,6 @@ out_loc.subj.R2s = {fR2s};
 out_loc.subj.MT  = {fMT};
 out_loc.subj.A   = {fA};
 out_loc.subj.T1w = {PT1w};
-
-% save job
-spm_jsonwrite(fullfile(supplpath,'MPM_map_creation_job_create_maps.json'),job,struct('indent','\t'));
 
 % clean after if required
 if hmri_get_defaults('cleanup')

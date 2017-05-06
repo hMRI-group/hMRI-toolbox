@@ -22,6 +22,9 @@ function P_trans = hmri_create_b1map(jobsubj)
 % use defaults 
 b1map_params = get_b1map_params(jobsubj);
 
+% save b1map_params as json-file
+spm_jsonwrite(fullfile(jobsubj.path.supplpath,'MPM_map_creation_b1map_params.json'),b1map_params,struct('indent','\t'));
+
 % init output
 P_trans = [];
 
@@ -72,10 +75,6 @@ if ~isempty(P_trans)
     copyfile(deblank(P_trans(2,:)),fullfile(jobsubj.path.supplpath, spm_file(P_trans(2,:), 'filename')));
     try copyfile([spm_str_manip(P_trans(2,:),'r') '.json'],fullfile(jobsubj.path.supplpath, [spm_file(P_trans(2,:), 'basename') '.json'])); end
 end
-
-% save b1map_params as json-file
-spm_jsonwrite(fullfile(jobsubj.path.supplpath,'MPM_map_creation_b1map_params.json'),b1map_params,struct('indent','\t'));
-
 
 end
 

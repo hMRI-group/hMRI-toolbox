@@ -3,7 +3,8 @@ function [fR1, fR2s, fMT, fA, PPDw, PT1w]  = hmri_create_MTProt(jobsubj, P_trans
 % This is hmri_create_MTProt, part of the hMRI-Toolbox.
 %
 % PURPOSE
-% Evaluation function for multi-contrast multi-echo FLASH protocol
+% Estimation of quantitative parameters (R1, R2*, PD, MT) from
+% multi-contrast multi-echo FLASH protocol 
 % 
 % FORMAT
 % [fR1, fR2s, fMT, fA, PPDw, PT1w]  = hmri_create_MTProt(jobsubj, P_trans, P_receiv)
@@ -19,12 +20,12 @@ function [fR1, fR2s, fMT, fA, PPDw, PT1w]  = hmri_create_MTProt(jobsubj, P_trans
 %
 % OUTPUTS
 %   fR1     R1 map output filename (only quantitative if B1+ map provided)
-%   fR2s    R2* map output filename (simple fit or OLS, according to
-%           defaults settings)
-%   fMT     MT map output filename  
-%   fA      Proton density map output filename (water concentration (PD)
-%           [%] or signal amplitude (A) [a.u.] depending on defaults
-%           settings (PDproc.PDmap).   
+%   fR2s    R2* map output filename (simple fit on PD data or OLS across
+%           all contrasts, according to defaults settings)
+%   fMT     Magnetization transfer (MT) map output filename  
+%   fA      Proton density map output filename (free water concentration
+%           (PD) [%] or signal amplitude (A) [a.u.] depending on defaults
+%           settings (PDproc.PDmap)). 
 %   PPDw    averate PD-weighted image filename
 %   PT1w    average T1-weighted image filename  
 %
@@ -39,26 +40,43 @@ function [fR1, fR2s, fMT, fA, PPDw, PT1w]  = hmri_create_MTProt(jobsubj, P_trans
 %           respectively. 
 %
 %==========================================================================
-% FEATURES
+% FEATURES AND REFERENCES
+%   Estimation of R1 and MT maps
+%       Helms et al., Magnetic Resonance in Medicine 60:1396–1407 (2008)
+%       Helms et al., Magnetic Resonance in Medicine 59:667–672 (2008)
+%
+%   B1 correction of MT maps
+%       Weiskopf et al., Front. Neurosci. 2013, doi:
+%       10.3389/fnins.2013.00095 
+%
 %   Imperfect RF spoiling correction
-%       Reference: Preibisch and Deichmann, MRM 61:125-135 (2009)
+%       Preibisch and Deichmann, MRM 61:125-135 (2009)
+%       Corrects for residual transverse magnetization coherences that
+%       remain despite RF spoiling and result in deviations from the Ernst
+%       equation (ideal expected signal in a FLASH acquisition). 
 %       Modelling data and P2_a, P2_b correction factors calculation based
 %       on code supplied by Ralf Deichmann. Only a small subset of
-%       experimental parameters have been used and RF spoiling corection
-%       can only be applied if these correction factors are defined.    
+%       experimental parameters have been used and RF spoiling correction
+%       can only be applied if these correction factors are defined
+%       specifically for the acquisition protocol used.
 %
 %   OLS R2* map calculation 
-%       Reference: Weiskopf et al. Front. Neurosci. 2014 DOI:
-%       10.3389/fnins.2014.00278 
+%       Ordinary least square fit of R2* estimated from all echoes from all
+%       three contrasts instead of the PD-weighted image only. This
+%       increases the SNR in R2* maps. It is noted that it potentially
+%       mixes in additional MT and T1 contrast, as discussed in: 
+%       Weiskopf et al. Front. Neurosci. 2014 DOI: 10.3389/fnins.2014.00278 
 %       This reference should be cited if you use this output.
 %
 %==========================================================================
 % Written by
 %   Gunther Helms, MR-Research in Neurology and Psychiatry, University
 %       of Goettingen 
-%   Nikolaus Weiskopf, Antoine Lutti, John Ashburner, Wellcome Trust
-%           Centre for Neuroimaging at UCL, London 
-%   Antoine Lutti, Martina Callaghan, ...
+%   Martina Callaghan, John Ashburner, Wellcome Trust Centre for
+%       Neuroimaging at UCL, London  
+%   Antoine Lutti, CHUV, Lausanne, Switzerland
+%   Nikolaus Weiskopf, Department of Neurophysics, Max Planck Institute 
+%       for Human Cognitive and Brain Sciences, Leipzig, Germany 
 %
 %==========================================================================
 

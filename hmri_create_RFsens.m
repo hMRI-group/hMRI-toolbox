@@ -1,4 +1,4 @@
-function jobsubj = hmri_RFsens(jobsubj)
+function jobsubj = hmri_create_RFsens(jobsubj)
 % RF sensitivity calculation as part of the hmri toolbox
 % Based on a script by Daniel Papp
 % Wellcome Trust Centre for Neuroimaging (WTCN), London, UK.
@@ -16,9 +16,9 @@ function jobsubj = hmri_RFsens(jobsubj)
 % three "sensitivty maps", called MT_32ch_over_BC, or appropriate PD/T1
 % 
 % Reference: 
-% D. Papp et al.: "Correction of Inter-Scan Motion Artifacts in Quantitative 
-% R1 Mapping by Accounting for Receive Coil Sensitivity Effects", MRM 2015
-% DOI 10.1002/mrm.26058
+% D. Papp et al.: "Correction of Inter-Scan Motion Artifacts in
+% Quantitative R1 Mapping by Accounting for Receive Coil Sensitivity
+% Effects", MRM 2015 DOI 10.1002/mrm.26058
 
 % retrieve some defaults
 outdir = jobsubj.path.rfsenspath;
@@ -565,5 +565,36 @@ end
 jobsubj.raw_mpm.MT = correctedMTs;
 jobsubj.raw_mpm.PD = correctedPDs;
 jobsubj.raw_mpm.T1 = correctedT1s;
+
+end
+
+
+%% =======================================================================%
+% Sort out all parameters required for the RFsens calculation.
+%=========================================================================%
+function rfsens_params = get_rfsens_params(jobsubj)
+
+rfsens_params.json = hmri_get_defaults('json');
+rfsens_params.calcpath = jobsubj.path.rfsenspath;
+rfsens_params.respath = jobsubj.path.respath;
+rfsens_params.supplpath = jobsubj.path.supplpath;
+rfsens_params.proc = hmri_get_defaults('RFsens');
+
+end
+
+%% =======================================================================%
+% To arrange the metadata structure for RFsens calculation output.
+%=========================================================================%
+function metastruc = init_rfsens_output_metadata(input_files, rfsens_params)
+
+proc.descrip = 'RF sensitivity calculation';
+proc.version = hmri_get_version;
+proc.params = rfsens_params;
+
+% must be defined on the spot, default values here
+output.imtype = 'sensitivity map';
+output.units = 'p.u.';
+
+metastruc = init_output_metadata_structure(input_files, proc, output);
 
 end

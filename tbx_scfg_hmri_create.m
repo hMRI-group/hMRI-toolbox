@@ -1,4 +1,4 @@
-function crm = tbx_scfg_hmri_crm
+function crm = tbx_scfg_hmri_create
 % Configuration file for the "histological MRI" (hMRI) toolbox
 % Previously named "Voxel-Based Quantification" (VBQ)
 % -> Dealing with the creation of the maps
@@ -291,8 +291,8 @@ data_spec.values = { sdata sdata_multi };
 data_spec.val    = { sdata };
 create_mpr.val     = { data_spec };
 create_mpr.help    = {'hMRI map creation can handle data sets with and without B0/B1 maps.'};
-create_mpr.prog    = @hmri_run_mpr;
-create_mpr.vout    = @vout_create_mpr;
+create_mpr.prog    = @hmri_run_create;
+create_mpr.vout    = @vout_create;
 % ---------------------------------------------------------------------
 % crm Create maps
 % ---------------------------------------------------------------------
@@ -309,13 +309,12 @@ end
 % ========================================================================
 %% VOUT & OTHER SUBFUNCTIONS
 % ========================================================================
-% The RUN functions :
-% - out = hmri_run_mpr_b0_b1(job)
-% - out = hmri_run_mpr_unicort(job)
-% are defined separately.
+% The RUN function:
+% - out = hmri_run_create(job)
+% is defined separately.
 %_______________________________________________________________________
 
-function dep = vout_create_mpr(job)
+function dep = vout_create(job)
 % This depends on job contents, which may not be present when virtual
 % outputs are calculated.
 

@@ -1,5 +1,5 @@
-function out = hmri_run_unicort(P_PDw, P_R1, jobsubj)
-% function P = hmri_run_unicort(P_PDw, P_R1, jobsubj)
+function out = hmri_create_unicort(P_PDw, P_R1, jobsubj)
+% function P = hmri_create_unicort(P_PDw, P_R1, jobsubj)
 % P_PDw: proton density weighted FLASH image (small flip angle image) for
 % masking
 % P_R1: R1 (=1/T1) map estimated from dual flip angle FLASH experiment
@@ -49,6 +49,7 @@ thr_factor = unicort_params.thr;
 mpmpath = jobsubj.path.mpmpath;
 b1path = jobsubj.path.b1path;
 respath = jobsubj.path.respath;
+supplpath = jobsubj.path.supplpath;
 
 % create head mask
 V_PDw = spm_vol(P_PDw);
@@ -161,16 +162,23 @@ set_metadata(P_R1_unicort,Output_hdr,json);
 
 % define output file names
 out.R1u = {fullfile(respath,spm_file(outfnam,'suffix','_UNICORT'))};
-out.B1u = {fullfile(respath,spm_str_manip(P_B1,'t'))};
+out.B1u = {fullfile(supplpath,spm_str_manip(P_B1,'t'))};
 
 % now copy files from calc directory into results directory (nii & json!)
+% NB: only final maps that will be further analysed are kept in Results.
+% Other maps (e.g. uncorrected R1) are moved to Results/Supplemntary. 
+% 1. copy UNICORT R1 map into Results 
 copyfile(P_R1_unicort,out.R1u{1});
 try copyfile([spm_str_manip(P_R1_unicort,'r') '.json'],[spm_str_manip(out.R1u{1},'r') '.json']); end %#ok<*TRYNC>
+% 2. move R1 (not bias corrected) into Results/Supplementary
+movefile(P_R1,fullfile(supplpath,outfnam));
+try movefile([spm_str_manip(P_R1,'r') '.json'],fullfile(supplpath,[spm_file(outfnam,'basename') '.json'])); end %#ok<*TRYNC>
+% 3. copy UNICORT-estimated B1 map into Results/Supplementary
 copyfile(P_B1,out.B1u{1});
 try copyfile([spm_str_manip(P_B1,'r') '.json'],[spm_str_manip(out.B1u{1},'r') '.json']); end %#ok<*TRYNC>
 
 % save unicort params as json-file
-spm_jsonwrite(fullfile(spm_file(out.R1u{1},'path'), 'MPM_map_creation_unicort_params.json'),unicort_params,struct('indent','\t'));
+spm_jsonwrite(fullfile(supplpath, 'MPM_map_creation_unicort_params.json'),unicort_params,struct('indent','\t'));
 
 end
 

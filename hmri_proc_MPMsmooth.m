@@ -1,9 +1,9 @@
-function fn_out = hmri_MPMsmooth(fn_wMPM, fn_mwTC, fn_TPM, fwhm, l_TC)
+function fn_out = hmri_proc_MPMsmooth(fn_wMPM, fn_mwTC, fn_TPM, fwhm, l_TC)
 % Applying tissue specific smoothing, aka. weighted averaging, in order to 
 % limit partial volume effect. 
 % 
 % FORMAT
-%   fn_out = hmri_MPMsmooth(fn_wMPM, fn_mwTC, fn_TPM, fwhm)
+%   fn_out = hmri_proc_MPMsmooth(fn_wMPM, fn_mwTC, fn_TPM, fwhm)
 % 
 % INPUT
 % - fn_wMPM : filenames (char array) of the warped MPM, i.e. the

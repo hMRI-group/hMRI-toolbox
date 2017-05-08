@@ -986,7 +986,8 @@ function [multiframe,other] = select_multiframe(hdr)
 multiframe = {};
 other      = {};
 for i=1:length(hdr)
-    if isfield(hdr{i},'SharedFunctionalGroupsSequence') || isfield(hdr{i},'PerFrameFunctionalGroupsSequence'),
+    if (isfield(hdr{i},'SharedFunctionalGroupsSequence') && ~isempty(hdr{i}.SharedFunctionalGroupsSequence)) ...
+            || (isfield(hdr{i},'PerFrameFunctionalGroupsSequence') && ~isempty(hdr{i}.PerFrameFunctionalGroupsSequence)),
         multiframe = [multiframe(:)',hdr(i)];
     else
         other      = [other(:)',hdr(i)];

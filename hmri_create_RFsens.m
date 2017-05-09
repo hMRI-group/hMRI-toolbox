@@ -37,13 +37,13 @@ json = rfsens_params.json;
 % either acquired once for the whole protocol, or once per contrast (MT,
 % PD, T1):
 MT_sensmaps = rfsens_params.input.MT.sensimages.fnames;
-PD_sensmaps = rfsens_params.input.MT.sensimages.fnames;
-T1_sensmaps = rfsens_params.input.MT.sensimages.fnames;
+PD_sensmaps = rfsens_params.input.PD.sensimages.fnames;
+T1_sensmaps = rfsens_params.input.T1.sensimages.fnames;
 
 % Input MTw, PDw, T1w multiecho images:
 MT_structurals = rfsens_params.input.MT.structurals.fnames;
-PD_structurals = rfsens_params.input.MT.structurals.fnames;
-T1_structurals = rfsens_params.input.MT.structurals.fnames;
+PD_structurals = rfsens_params.input.PD.structurals.fnames;
+T1_structurals = rfsens_params.input.T1.structurals.fnames;
 
 %==========================================================================
 % Coregistering the images: each sensmap onto the corresponding structural

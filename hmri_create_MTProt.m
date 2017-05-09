@@ -419,10 +419,10 @@ end % OLS code
 
 output_suffix{1} = 'R1';
 units{1} = '1000/s';
-if isempty(V_trans)&&strcmp(jobsubj.b1_type,'UNICORT')
-     descrip{1} = 'semi-quantitative R1 map';
+if isempty(V_trans)
+     descrip{1} = 'R1 map (no B1+ bias correction applied)';
 else
-     descrip{1} = 'quantitative R1 map';
+     descrip{1} = 'R1 map (with B1+ bias correction)';
 end
 if PDproc.PDmap
      output_suffix{2} = 'PD';

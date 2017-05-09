@@ -214,8 +214,16 @@ else
                 [nFieldFound, fieldList] = find_field_name(mstruc, 'ProtocolName','caseSens','sensitive');
             end
             [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
-            % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
-            % Keep only first value if many
+            % to correct for mismatch of outputs depending on data
+            % Anonymous or not ('tProtocolName' returns a cell array of
+            % cell array of char, while 'ProtocolName' returns a cell array
+            % of char): 
+            if iscell(val) && (nFieldFound==1)
+                if iscell(val{1})
+                    val = val{1};
+                end
+            end
+            
             if nFieldFound
                 cRes = 1;
                 parLocation{cRes} = nam{1};

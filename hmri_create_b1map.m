@@ -180,8 +180,8 @@ function P_trans = calc_SESTE_b1map(jobsubj, b1map_params)
 
 json = hmri_get_defaults('json');
 
-P    = char(jobsubj.raw_fld.b1); % B1 data - 11 pairs
-Q    = char(jobsubj.raw_fld.b0); % B0 data - 3 volumes
+P    = char(spm_file(jobsubj.raw_fld.b1,'number','')); % B1 data - 11 pairs
+Q    = char(spm_file(jobsubj.raw_fld.b0,'number','')); % B0 data - 3 volumes
 
 V = spm_vol(P);
 n = numel(V);
@@ -282,6 +282,16 @@ set_metadata(X_save.fname,Output_hdr,json);
 
 %-B0 undistortion
 %-----------------------------------------------------------------------
+% since B0 data will be coregistered and resliced with the B1 data, we copy
+% them into the calcpath directory to avoid altering the the raw data:
+Qtmp = cell(size(Q,1),1);
+for i=1:size(Q,1)
+    Qtmp{i} = fullfile(outpath, spm_file(Q(i,:), 'filename'));
+    copyfile(Q(i,:), Qtmp{i});
+    try copyfile([spm_str_manip(Q(i,:),'r') '.json'],[spm_str_manip(Qtmp{i},'r') '.json']); end %#ok<*TRYNC>
+end
+Q = char(Qtmp);
+
 % magnitude image 
 % NOTE: must strip the ',1' (at the end of the file extension '.nii,1')!!
 magfnam = spm_file(Q(1,:),'number','');

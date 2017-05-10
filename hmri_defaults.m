@@ -51,7 +51,7 @@ hmri_def.PDproc.nr_echoes_forA = 1;
 %% UNICORT processing
 hmri_def.unicort.reg = 10^-3;
 hmri_def.unicort.FWHM = 60;
-hmri_def.unicort.thr = 2; % TL: 2 for sciz & cbs with SIEMENS 3T Skyra fit
+hmri_def.unicort.thr = 5; % TL: 2 best for sciz & cbs with SIEMENS 3T Skyra fit
                           % otherwise: 5
                           
 %% RF sensitivity processing
@@ -67,8 +67,8 @@ hmri_def.qMRI_maps_thresh.A        = 10^5;
 hmri_def.qMRI_maps_thresh.R2s      = 10;
 hmri_def.qMRI_maps_thresh.MTR      = 50;
 hmri_def.qMRI_maps_thresh.MTR_synt = 50;
-hmri_def.qMRI_maps_thresh.MT       = 15; % TL: 15 for cbs & sciz with SIEMENS 3T Skyra
-                                         % original: 5 
+hmri_def.qMRI_maps_thresh.MT       = 5; % TL: 15 best for cbs & sciz with SIEMENS 3T Skyra
+                                        % original: 5 
 
 %% === MPM acquisition parameters and RF spoiling correction parameters ===
 % these value are initialised with defaults (v2k protocol - Prisma) for the

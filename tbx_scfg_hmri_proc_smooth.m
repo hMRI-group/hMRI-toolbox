@@ -74,7 +74,7 @@ tpm.help    = {'Select the TPM used for the segmentation.'};
 tpm.filter  = 'image';
 tpm.ufilter = '.*';
 tpm.num     = [1 1];
-tpm.val     = {{fullfile(spm('dir'),'toolbox','hMRI','etpm','eTPM.nii,1')}};
+tpm.val     = {{fullfile(spm('dir'),'toolbox','hmri','etpm','eTPM.nii,1')}};
 
 % ---------------------------------------------------------------------
 % Gaussian FWHM

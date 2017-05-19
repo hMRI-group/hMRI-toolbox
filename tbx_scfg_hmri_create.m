@@ -128,7 +128,7 @@ braws.val       = {braws1 braws2};
 sraws3MT          = cfg_files;
 sraws3MT.tag      = 'raw_sens_MT';
 sraws3MT.name     = 'MT coil sensitivity';
-sraws3MT.help     = {'Input low resolution images for MT', ...
+sraws3MT.help     = {'Input low resolution images for MT-weighted images', ...
     'acquired with the head and body coil in this order.'};
 sraws3MT.filter   = 'image';
 sraws3MT.ufilter  = '.*';
@@ -140,7 +140,7 @@ sraws3MT.val      = {''};
 sraws3PD          = cfg_files;
 sraws3PD.tag      = 'raw_sens_PD';
 sraws3PD.name     = 'PD coil sensitivity';
-sraws3PD.help     = {'Input low resolution images for PD', ...
+sraws3PD.help     = {'Input low resolution images for PD-weighted images', ...
     'acquired with the head and body coil in this order.'};
 sraws3PD.filter   = 'image';
 sraws3PD.ufilter  = '.*';
@@ -152,7 +152,7 @@ sraws3PD.val      = {''};
 sraws3T1          = cfg_files;
 sraws3T1.tag      = 'raw_sens_T1';
 sraws3T1.name     = 'T1 coil sensitivity';
-sraws3T1.help     = {'Input low resolution images for T1', ...
+sraws3T1.help     = {'Input low resolution images for T1-weighed images', ...
     'acquired with the head and body coil in this order.'};
 sraws3T1.filter   = 'image';
 sraws3T1.ufilter  = '.*';
@@ -163,8 +163,8 @@ sraws3T1.val      = {''};
 % ---------------------------------------------------------------------
 sraws3           = cfg_branch;
 sraws3.tag       = 'raw_sens3';
-sraws3.name      = 'Raw low res. coil sensitivity data per modality';
-sraws3.help      = {'Input low resolution images for each modality', ...
+sraws3.name      = 'Raw low resolution coil sensitivity data';
+sraws3.help      = {'Input low resolution images for each contrast weighting', ...
     'acquired with the head and body coil in this order.'};
 sraws3.val       = {sraws3MT sraws3PD sraws3T1};
 % ---------------------------------------------------------------------
@@ -172,9 +172,9 @@ sraws3.val       = {sraws3MT sraws3PD sraws3T1};
 % ---------------------------------------------------------------------
 x0         = cfg_menu;
 x0.tag     = 'RF_none';
-x0.name    = 'No RF sensitivity';
+x0.name    = 'RF sensitivity not acquired';
 x0.help    = {'Choose this option, if no RF sensitivity was acquired.'};
-x0.labels = {'Yes'};
+x0.labels = {''};
 x0.values = {1};
 x0.val = {1};
 % ---------------------------------------------------------------------
@@ -195,9 +195,9 @@ x1.val      = {''};
 % ---------------------------------------------------------------------
 x3         = cfg_branch;
 x3.tag     = 'RF_MPM';
-x3.name    = 'RF sensitivity acquired for each modality';
-x3.help    = {'Choose this option, if RF sensitivity was acquired for each modality,',...
-    'i.e. for T1-, PD- and MT-weighted images.'};
+x3.name    = 'RF sensitivity acquired for each contrast weighting';
+x3.help    = {'Choose this option, if RF sensitivity was acquired ',...
+    'for each contrast weighting, i.e. for T1-, PD- and MT-weighted images.'};
 x3.val  = {sraws3};
 % ---------------------------------------------------------------------
 % sensitivity Sensitivity choice
@@ -206,7 +206,7 @@ sensitivity         = cfg_choice;
 sensitivity.tag     = 'sensitivity';
 sensitivity.name    = 'RF sensitivity';
 sensitivity.help    = {'Specify the kind of RF sensitivity acquired. ',...
-    'Could be none, once or per image modality.'};
+    'Could be none, once or per contrast weighting.'};
 sensitivity.values  = {x0 x1 x3};
 sensitivity.val = {x0};
 % ---------------------------------------------------------------------

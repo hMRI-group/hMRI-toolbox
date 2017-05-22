@@ -27,7 +27,7 @@ global hmri_def
 hmri_def.centre = 'centre' ; % 'fil', 'lren', 'crc', 'sciz', 'cbs', ...
 
 % Cleanup temporary directories 
-hmri_def.cleanup = false;
+hmri_def.cleanup = true;
 
 %% ===================== Common processing parameters =====================
 % These parameters are either parameters that are fixed for all sites or
@@ -46,7 +46,13 @@ hmri_def.PDproc.WBMaskTh = 0.1;  % Threshold for calculation of whole-brain mask
 hmri_def.PDproc.WMMaskTh = 0.95; % Threshold for calculation of white-matter mask from TPMs
 hmri_def.PDproc.biasreg  = 10^(-5);
 hmri_def.PDproc.biasfwhm = 50;
-hmri_def.PDproc.nr_echoes_forA = 1;
+hmri_def.PDproc.nr_echoes_forA = 1; % NOTE: in order to minimize R2* bias 
+    % on the PD estimates and gain in robustness for bias-field
+    % correction, the first echo of the T1w series is used ("average"
+    % calculated over the first echo only) for PD calculation. An average
+    % over more echoes might be preferable when PD map's SNR is too poor,
+    % but be aware that the gain in SNR will be balanced by an increased
+    % R2* bias in PD values (in particular in the GM).
 
 %% UNICORT processing
 hmri_def.unicort.reg = 10^-3;

@@ -117,19 +117,19 @@ if ~isstruct(mstruc)
                     cRes = 1;
                     parLocation{cRes} = 'NiftiDescriptionField';
                     parValue{cRes} = p.tr;
-                    fprintf(1,'Though found %s = %d ms in NIFTI description field.\n', inParName, parValue{1});
+                    fprintf(1,'Parameter available in NIFTI description field:\n\t%s = %5.2f ms\n', inParName, parValue{1});
                     
                 case 'EchoTime'
                     cRes = 1;
                     parLocation{cRes} = 'NiftiDescriptionField';
                     parValue{cRes} = p.te;
-                    fprintf(1,'Though found %s = %d ms in NIFTI description field.\n', inParName, parValue{1});
+                    fprintf(1,'Parameter available in NIFTI description field:\n\t%s = %5.2f ms\n', inParName, parValue{1});
                     
                 case 'FlipAngle'
                     cRes = 1;
                     parLocation{cRes} = 'NiftiDescriptionField';
                     parValue{cRes} = p.fa;
-                    fprintf(1,'Though found %s = %d deg in NIFTI description field.\n', inParName, parValue{1});
+                    fprintf(1,'Parameter available in NIFTI description field:\n\t%s = %5.2f ms\n', inParName, parValue{1});
                     
                 otherwise
                     fprintf(1,'Not able to retrieve any value for parameter %s.\n', inParName);

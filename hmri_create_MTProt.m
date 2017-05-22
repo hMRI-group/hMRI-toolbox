@@ -212,8 +212,8 @@ for ii=1:3 % loop over MTw, PDw, T1w contrasts
     set_metadata(avg_fnam,Output_hdr,mpm_params.json);
 end
 
-% Average T1w image for PD calculation (actually, by default, no average
-% is performed, only first echo is kept):  
+% Average T1w image for PD calculation 
+% (average over PDproc.nr_echoes_forA echoes, see hmri_defaults):
 PT1w_forA = fullfile(calcpath,[outbasename '_' 'T1w_forA.nii']);
 V           = spm_vol(PP{3});
 dm          = V(1).dim;

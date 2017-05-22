@@ -27,7 +27,7 @@ global hmri_def
 hmri_def.centre = 'centre' ; % 'fil', 'lren', 'crc', 'sciz', 'cbs', ...
 
 % Cleanup temporary directories 
-hmri_def.cleanup = false;
+hmri_def.cleanup = true;
 
 %% ===================== Common processing parameters =====================
 % These parameters are either parameters that are fixed for all sites or

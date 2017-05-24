@@ -496,6 +496,8 @@ b1_protocol = jobsubj.b1_type;
 % define local defaults for b1map
 b1map_params.b1type = hmri_get_defaults(['b1map.' b1_protocol '.b1type']); 
 
+fprintf(1, '\n');
+
 % check for existing b1 data
 if isempty(jobsubj.raw_fld.b1)
     b1map_params.b1avail = false; % nothing else to be done but send warning if data were expected
@@ -515,7 +517,7 @@ if isempty(jobsubj.raw_fld.b1)
                 'B1 map calculation cannot proceed because no B1 data available.\n' ...
                 'No B1 bias correction will be applied. Results will be semi-\n' ...
                 'quantitative only. If you meant to apply B1 bias correction, \n' ...
-                'check your data and re-run the batch.']);
+                'check your data and re-run the batch.\n']);
     end
 else
     switch(b1map_params.b1type)
@@ -557,7 +559,7 @@ else
                         if isempty(jobsubj.raw_fld.b0)
                             b1map_params.b0avail = false;
                             fprintf(1,['WARNING: expected B0 map not available for EPI undistortion.\n' ...
-                                'No fieldmap correction will be applied.']);
+                                'No fieldmap correction will be applied.\n']);
                         else
                             % note that the current implementation assumes that
                             % b0 input images = 2 magnitude images (1st and 2nd
@@ -612,6 +614,9 @@ else
     end
         
 end
+
+fprintf(1, '\n');
+
 end
 
 %=========================================================================%

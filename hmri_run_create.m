@@ -35,19 +35,44 @@ function out_loc = hmri_create_local(job)
 % determine output directory path
 try 
     outpath = job.subj.output.outdir{1}; % case outdir
-catch 
+    if ~exist(outpath,'dir'); mkdir(outpath); end
+catch  %#ok<CTCH>
     Pin = char(job.subj.raw_mpm.MT);
     outpath = fileparts(Pin(1,:)); % case indir
 end
 % save outpath as default for this job
 hmri_get_defaults('outdir',outpath);
 
+% Directory structure for results:
+% <output directory>/Results
+% <output directory>/Results/Supplementary
+% <output directory>/B1mapCalc
+% <output directory>/RFsensCalc
+% <output directory>/MPMCalc
+% The *Calc directories are deleted at the end of the Map Creation
+% processing if hmri.cleanup defaults is set to true.
+% If repeated runs, <output directory> is replaced by <output
+% directory>/Run_xx to avoid overwriting previous outputs.
+
 % define a directory for final results
 % RESULTS contains the 4 final maps which are the essentials for the users
 respath = fullfile(outpath, 'Results');
+if exist(respath,'dir')
+    index = 1;
+    tmpoutpath = outpath;
+    while exist(tmpoutpath,'dir')
+        index = index + 1;
+        tmpoutpath = fullfile(outpath,sprintf('Run_%0.2d',index));
+    end
+    outpath = tmpoutpath;
+    mkdir(outpath);
+    respath = fullfile(outpath, 'Results');
+    fprintf(1,['\nWARNING: existing results from previous run(s) were found, \n' ...
+        'the output directory has been modified. It is now:\n%s\n\n'],outpath); 
+end
 if ~exist(respath,'dir'); mkdir(respath); end
 % SUPPLEMENTARY (within the Results directory) contains useful
-% supplementary files (processing parameters anda few additional maps)
+% supplementary files (processing parameters and a few additional maps)
 supplpath = fullfile(outpath, 'Results', 'Supplementary');
 if ~exist(supplpath,'dir'); mkdir(supplpath); end
 

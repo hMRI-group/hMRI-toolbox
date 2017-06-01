@@ -163,7 +163,7 @@ for p = 1:dm(3)
     Y = zeros(dm(1:2));
     for i = 1:numel(V_pdw)
         M1 = V_pdw(i).mat\V_pdw(1).mat*M;
-        Y  = Y + W(i)*log(max(spm_slice_vol(V_pdw(i),M1,dm(1:2),hmri_interp),hmri_interp));
+        Y  = Y + W(i)*log(max(spm_slice_vol(V_pdw(i),M1,dm(1:2),hmri_interp),1));
     end
     Ni.dat(:,:,p) = max(min(Y,threshall.R2s),-threshall.R2s); % threshold T2* at +/- 0.1ms or R2* at +/- 10000 *(1/sec), negative values are allowed to preserve Gaussian distribution
     spm_progress_bar('Set',p);
@@ -332,7 +332,7 @@ if mpm_params.QA.enable
                 % Third order B-spline interpolation for OLS R2* estimation
                 % since we no longer assume that the echoes are perfectly
                 % aligned as we do for the standard PDw derived R2* estimate.
-                data(e,:,:) = log(max(spm_slice_vol(V_contrasts(e),M1,dm(1:2),hmri_interp),eps));
+                data(e,:,:) = log(max(spm_slice_vol(V_contrasts(e),M1,dm(1:2),hmri_interp),1));
             end
             Y = W*reshape(data, [size(TE,1) prod(dm(1:2))]);
             Y = -reshape(Y(2,:), dm(1:2));
@@ -422,7 +422,7 @@ if mpm_params.proc.R2sOLS
             % Third order B-spline interpolation for OLS R2* estimation
             % since we no longer assume that the echoes are perfectly 
             % aligned as we do for the standard PDw derived R2* estimate.
-            data(e,:,:) = log(max(spm_slice_vol(V_contrasts(e),M1,dm(1:2),hmri_interp),eps));
+            data(e,:,:) = log(max(spm_slice_vol(V_contrasts(e),M1,dm(1:2),hmri_interp),1));
         end
         Y = W*reshape(data, [nEchoes prod(dm(1:2))]);
         % SM: here is where the writing starts (see above)

@@ -42,8 +42,8 @@ function [fR1, fR2s, fMT, fA, PPDw, PT1w]  = hmri_create_MTProt(jobsubj, P_trans
 %==========================================================================
 % FEATURES AND REFERENCES
 %   Estimation of R1 and MT maps
-%       Helms et al., Magnetic Resonance in Medicine 60:1396–1407 (2008)
-%       Helms et al., Magnetic Resonance in Medicine 59:667–672 (2008)
+%       Helms et al., Magnetic Resonance in Medicine 60:1396-1407 (2008)
+%       Helms et al., Magnetic Resonance in Medicine 59:667-672 (2008)
 %
 %   B1 correction of MT maps
 %       Weiskopf et al., Front. Neurosci. 2013, doi:
@@ -424,7 +424,7 @@ if isempty(V_trans)
 else
      descrip{1} = 'R1 map (with B1+ bias correction)';
 end
-if PDproc.PDmap
+if PDproc.PDmap && ~isempty(V_trans)
      output_suffix{2} = 'PD';
      descrip{2} = 'Water concentration [%]';
      units{2} = '%';

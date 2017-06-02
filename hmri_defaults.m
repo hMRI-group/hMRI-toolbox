@@ -44,7 +44,7 @@ hmri_def.TPM = fullfile(spm_file(mfilename('fullpath'),'path'), 'etpm', 'eTPM.ni
 % want to keep SNR and resolution as far as possible the same, I would
 % recommend using sinc interpolation (at least -4, in my experience -7 
 % gives decent results)
-hmri_def.interp = 1;
+hmri_def.interp = 3;
 
 % SM: define the ols fit as default
 hmri_def.fullOLS = true;

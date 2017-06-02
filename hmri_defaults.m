@@ -40,6 +40,15 @@ hmri_def.json = struct('extended',false,'separate',true,'anonym','none',...
 
 hmri_def.TPM = fullfile(spm_file(mfilename('fullpath'),'path'), 'etpm', 'eTPM.nii');
 
+% SM: define a coherent interpolation factor. I left the 3, but in case you
+% want to keep SNR and resolution as far as possible the same, I would
+% recommend using sinc interpolation (at least -4, in my experience -7 
+% gives decent results)
+hmri_def.interp = 1;
+
+% SM: define the ols fit as default
+hmri_def.fullOLS = true;
+
 %% Processing of PD maps
 hmri_def.PDproc.PDmap    = 1;    % Calculation of PD maps requires a B1 map. Set to 0 if a B1 map is not available
 hmri_def.PDproc.WBMaskTh = 0.1;  % Threshold for calculation of whole-brain mask from TPMs

@@ -42,8 +42,8 @@ function [fR1, fR2s, fMT, fA, PPDw, PT1w]  = hmri_create_MTProt(jobsubj, P_trans
 %==========================================================================
 % FEATURES AND REFERENCES
 %   Estimation of R1 and MT maps
-%       Helms et al., Magnetic Resonance in Medicine 60:1396–1407 (2008)
-%       Helms et al., Magnetic Resonance in Medicine 59:667–672 (2008)
+%       Helms et al., Magnetic Resonance in Medicine 60:1396?1407 (2008)
+%       Helms et al., Magnetic Resonance in Medicine 59:667?672 (2008)
 %
 %   B1 correction of MT maps
 %       Weiskopf et al., Front. Neurosci. 2013, doi:
@@ -122,19 +122,6 @@ if ~isempty(P_trans); V_trans = spm_vol(P_trans); end
 V_receiv   = [];
 if ~isempty(P_receiv); V_receiv = spm_vol(P_receiv); end
 
-% SM: define a coherent interpolation factor. I left the 3, but in case you
-% want to keep SNR and resolution as far as possible the same, I would
-% recommend using sinc interpolation (at least -4, in my experience -7 
-% gives decent results)
-if(~exist('hmri_interp','var'))
-    hmri_interp = 3;
-end
-
-% SM: define the ols fit as default
-if(~exist('hmri_fullOLS','var'))
-    hmri_fullOLS =true;
-end
-
 %% =======================================================================%
 % Calculate R2* map from PDw echoes
 %=========================================================================%
@@ -163,7 +150,7 @@ for p = 1:dm(3)
     Y = zeros(dm(1:2));
     for i = 1:numel(V_pdw)
         M1 = V_pdw(i).mat\V_pdw(1).mat*M;
-        Y  = Y + W(i)*log(max(spm_slice_vol(V_pdw(i),M1,dm(1:2),hmri_interp),1));
+        Y  = Y + W(i)*log(max(spm_slice_vol(V_pdw(i),M1,dm(1:2),mpm_params.interp),1));
     end
     Ni.dat(:,:,p) = max(min(Y,threshall.R2s),-threshall.R2s); % threshold T2* at +/- 0.1ms or R2* at +/- 10000 *(1/sec), negative values are allowed to preserve Gaussian distribution
     spm_progress_bar('Set',p);
@@ -208,7 +195,7 @@ for ii=1:3 % loop over MTw, PDw, T1w contrasts
         Y = zeros(dm(1:2));
         for nr = 1:avg_nr
             M1 = V(nr).mat\V(1).mat*M;
-            Y  = Y + spm_slice_vol(V(nr),M1,dm(1:2),hmri_interp);
+            Y  = Y + spm_slice_vol(V(nr),M1,dm(1:2),mpm_params.interp);
         end
         Ni.dat(:,:,p) = Y/avg_nr;
         sm = sm + sum(Y(:))/avg_nr;
@@ -242,7 +229,7 @@ for p = 1:dm(3),
     Y = zeros(dm(1:2));
     for nr = 1:PDproc.nr_echoes_forA,
         M1 = V(nr).mat\V(1).mat*M;
-        Y  = Y + spm_slice_vol(V(nr),M1,dm(1:2),hmri_interp);
+        Y  = Y + spm_slice_vol(V(nr),M1,dm(1:2),mpm_params.interp);
     end
     Ni.dat(:,:,p) = Y/PDproc.nr_echoes_forA;
     sm = sm + sum(Y(:))/PDproc.nr_echoes_forA;
@@ -332,7 +319,7 @@ if mpm_params.QA.enable
                 % Third order B-spline interpolation for OLS R2* estimation
                 % since we no longer assume that the echoes are perfectly
                 % aligned as we do for the standard PDw derived R2* estimate.
-                data(e,:,:) = log(max(spm_slice_vol(V_contrasts(e),M1,dm(1:2),hmri_interp),1));
+                data(e,:,:) = log(max(spm_slice_vol(V_contrasts(e),M1,dm(1:2),mpm_params.interp),1));
             end
             Y = W*reshape(data, [size(TE,1) prod(dm(1:2))]);
             Y = -reshape(Y(2,:), dm(1:2));
@@ -356,7 +343,7 @@ if mpm_params.proc.R2sOLS
         
     % SM: overwrites the averaged echoes of each contrast with the 
     % respective ols fit at TE = 0 (see also SM below)
-    if hmri_fullOLS
+    if mpm_params.fullOLS
         fprintf(1,'\n    -------- and fit to TE=0 for all contrasts --------\n');
         Nmap    = nifti;
         for ii=1:numel(contrastnam)
@@ -370,6 +357,12 @@ if mpm_params.proc.R2sOLS
             Ni.dat      = file_array(avg_fnam,dm,dt,0,1,0);
             create(Ni);
             Nmap(ii) = Ni;
+            
+            input_files = mpm_params.input.(contrastnam{ii}).fname;
+            Output_hdr = init_mpm_output_metadata(input_files, mpm_params);
+            Output_hdr.history.output.imtype = Ni.descrip;
+            Output_hdr.history.output.units = 'a.u.';
+            set_metadata(avg_fnam,Output_hdr,mpm_params.json);
         end
     end    
     
@@ -422,12 +415,12 @@ if mpm_params.proc.R2sOLS
             % Third order B-spline interpolation for OLS R2* estimation
             % since we no longer assume that the echoes are perfectly 
             % aligned as we do for the standard PDw derived R2* estimate.
-            data(e,:,:) = log(max(spm_slice_vol(V_contrasts(e),M1,dm(1:2),hmri_interp),1));
+            data(e,:,:) = log(max(spm_slice_vol(V_contrasts(e),M1,dm(1:2),mpm_params.interp),1));
         end
         Y = W*reshape(data, [nEchoes prod(dm(1:2))]);
         % SM: here is where the writing starts (see above)
         vec = [2 1 3];
-        if hmri_fullOLS
+        if mpm_params.fullOLS
             for ii = 1:numel(Nmap)
                 Nmap(ii).dat(:,:,p) = reshape(exp(Y(vec(ii),:)), dm(1:2));
             end
@@ -516,21 +509,21 @@ spm_progress_bar('Init',dm(3),'Calculating maps','planes completed');
 for p = 1:dm(3)
     M = M0*spm_matrix([0 0 p]);
 
-    MTw = spm_slice_vol(VMTw,VMTw.mat\M,dm(1:2),hmri_interp);
-    PDw = spm_slice_vol(VPDw,VPDw.mat\M,dm(1:2),hmri_interp);
-    T1w = spm_slice_vol(VT1w,VT1w.mat\M,dm(1:2),hmri_interp);
-    if hmri_fullOLS
+    MTw = spm_slice_vol(VMTw,VMTw.mat\M,dm(1:2),mpm_params.interp);
+    PDw = spm_slice_vol(VPDw,VPDw.mat\M,dm(1:2),mpm_params.interp);
+    T1w = spm_slice_vol(VT1w,VT1w.mat\M,dm(1:2),mpm_params.interp);
+    if mpm_params.fullOLS
         T1w_forA = T1w;
     else
-        T1w_forA = spm_slice_vol(VT1w_forA,VT1w_forA.mat\M,dm(1:2),hmri_interp);
+        T1w_forA = spm_slice_vol(VT1w_forA,VT1w_forA.mat\M,dm(1:2),mpm_params.interp);
     end
     if ~isempty(V_trans)
-        f_T = spm_slice_vol(V_trans(2,:),V_trans(2,:).mat\M,dm(1:2),hmri_interp)/100; % divide by 100, since p.u. maps
+        f_T = spm_slice_vol(V_trans(2,:),V_trans(2,:).mat\M,dm(1:2),mpm_params.interp)/100; % divide by 100, since p.u. maps
     else
         f_T = [];
     end
     if ~isempty(V_receiv) && ~isempty(V_trans)
-        f_R = spm_slice_vol(V_receiv(2,:),V_receiv(2,:).mat\M,dm(1:2),hmri_interp)/100; % divide by 100, since p.u. maps
+        f_R = spm_slice_vol(V_receiv(2,:),V_receiv(2,:).mat\M,dm(1:2),mpm_params.interp)/100; % divide by 100, since p.u. maps
         f_R = f_R .* f_T; % f_R is only the sensitivity map and not the true receive bias map, therefore needs to be multiplied by transmit bias (B1+ approx. B1- map)
     else
         f_R = [];
@@ -938,6 +931,8 @@ if mpm_params.QA.enable
     spm_jsonwrite(mpm_params.QA.fnam,mpm_params.QA,struct('indent','\t'));
 end
 mpm_params.ACPCrealign = hmri_get_defaults('qMRI_maps.ACPCrealign'); % realigns qMRI maps to MNI
+mpm_params.interp = hmri_get_defaults('interp');
+mpm_params.fullOLS = hmri_get_defaults('fullOLS'); % uses all echoes to interpolate TE=0
 
 % retrieve input file names for map creation
 mpm_params.input.MTw.fname   = char(jobsubj.raw_mpm.MT); % P_mtw
@@ -1021,13 +1016,16 @@ mpm_params.proc.PD = hmri_get_defaults('PDproc');
 mpm_params.proc.R2sOLS = hmri_get_defaults('R2sOLS');
 
 % check that echo times are identical (common echoes only)
-TE_mtw = mpm_params.input.MTw.TE;
-TE_pdw = mpm_params.input.PDw.TE;
-TE_t1w = mpm_params.input.T1w.TE;
-nr_c_echoes = min([length(TE_mtw), length(TE_pdw), length(TE_t1w)]);
-for nr = 1:nr_c_echoes
-    if ~((TE_mtw(nr) == TE_pdw(nr)) && (TE_pdw(nr) == TE_t1w(nr)))
-        error('Echo times do not match! Aborting.');
+% which is only necessary, when not using the TE=0 extrapolation
+if ~mpm_params.fullOLS
+    TE_mtw = mpm_params.input.MTw.TE;
+    TE_pdw = mpm_params.input.PDw.TE;
+    TE_t1w = mpm_params.input.T1w.TE;
+    nr_c_echoes = min([length(TE_mtw), length(TE_pdw), length(TE_t1w)]);
+    for nr = 1:nr_c_echoes
+        if ~((TE_mtw(nr) == TE_pdw(nr)) && (TE_pdw(nr) == TE_t1w(nr)))
+            error('Echo times do not match! Aborting.');
+        end
     end
 end
 

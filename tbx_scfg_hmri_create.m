@@ -133,7 +133,6 @@ sraws3MT.help     = {'Input low resolution images for MT-weighted images', ...
 sraws3MT.filter   = 'image';
 sraws3MT.ufilter  = '.*';
 sraws3MT.num      = [2 2];
-sraws3MT.val      = {''};
 % ---------------------------------------------------------------------
 % vols Volumes
 % ---------------------------------------------------------------------
@@ -145,7 +144,6 @@ sraws3PD.help     = {'Input low resolution images for PD-weighted images', ...
 sraws3PD.filter   = 'image';
 sraws3PD.ufilter  = '.*';
 sraws3PD.num      = [2 2];
-sraws3PD.val      = {''};
 % ---------------------------------------------------------------------
 % vols Volumes
 % ---------------------------------------------------------------------
@@ -157,7 +155,6 @@ sraws3T1.help     = {'Input low resolution images for T1-weighed images', ...
 sraws3T1.filter   = 'image';
 sraws3T1.ufilter  = '.*';
 sraws3T1.num      = [2 2];
-sraws3T1.val      = {''};
 % ---------------------------------------------------------------------
 % vols Volumes
 % ---------------------------------------------------------------------
@@ -189,7 +186,6 @@ x1.help      = {'Input low resolution images for RF sensitivity', ...
 x1.filter   = 'image';
 x1.ufilter  = '.*';
 x1.num      = [2 2];
-x1.val      = {''};
 % ---------------------------------------------------------------------
 % x3 RF sensitivity acquired for each modality 
 % ---------------------------------------------------------------------

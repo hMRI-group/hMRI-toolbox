@@ -172,7 +172,7 @@ set_metadata(fR2s,Output_hdr,mpm_params.json);
 fprintf(1,'\n    -------- Reading and averaging the images --------\n');
 
 % Average only first few echoes for increased SNR and fit T2*
-nr_TE_limit = sum(TE_mtw < mpm_params.input.TE_limit) + 1; % number of echoes under the TE_limit + 1(not sure why +1, why not to define TE_limit bigger then?)
+nr_TE_limit = find(TE_mtw > mpm_params.input.TE_limit,1);
 nr_c_echoes = min([length(TE_mtw), length(TE_pdw), length(TE_t1w)]); % maximum number of echoes available for ALL contrasts
 avg_nr      = min([nr_c_echoes nr_TE_limit]); % average is made over maximum number of echoes available for ALL contrasts AND under TE_limit
 PP   = {mpm_params.input.MTw.fname,mpm_params.input.PDw.fname,mpm_params.input.T1w.fname}; % gather all images in cell array
@@ -484,6 +484,7 @@ for p = 1:dm(3)
     T1w_forA = spm_slice_vol(VT1w_forA,VT1w_forA.mat\M,dm(1:2),3);
     
     if ~isempty(V_trans)
+        V_trans = spm_vol(P_trans);
         f_T = spm_slice_vol(V_trans(2,:),V_trans(2,:).mat\M,dm(1:2),3)/100; % divide by 100, since p.u. maps
     else
         f_T = [];

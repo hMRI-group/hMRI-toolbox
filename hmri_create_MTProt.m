@@ -110,18 +110,6 @@ mpm_params.outbasename = outbasename;
 respath = mpm_params.respath;
 supplpath = mpm_params.supplpath;
 
-% Load B1 mapping data if available 
-% P_trans(1,:) = magnitude image (anatomical reference for coregistration) 
-% P_trans(2,:) = B1 map (p.u.)
-V_trans = [];
-if ~isempty(P_trans); V_trans = spm_vol(P_trans); end
-
-% Load sensitivity map if available
-% P_receiv(1,:) = magnitude image (anatomical reference for coregistration) 
-% P_receiv(2,:) = sensitivity map
-V_receiv   = [];
-if ~isempty(P_receiv); V_receiv = spm_vol(P_receiv); end
-
 
 %% =======================================================================%
 % Calculate R2* map from PDw echoes
@@ -248,11 +236,23 @@ fprintf(1,'\n    -------- Coregistering the images  --------\n');
 x_MT2PD = coreg_mt(PPDw, PMTw);  %#ok<NODEF>
 x_T12PD = coreg_mt(PPDw, PT1w); %#ok<NODEF>
 coreg_mt(PPDw, PT1w_forA);
-if ~isempty(V_trans)
+
+V_trans = [];
+if ~isempty(P_trans)
+    % Load B1 mapping data if available and coregister to PDw
+    % P_trans(1,:) = magnitude image (anatomical reference for coregistration) 
+    % P_trans(2,:) = B1 map (p.u.)
     coreg_bias_map(PPDw, P_trans);
+    V_trans = spm_vol(P_trans);
 end
-if ~isempty(V_receiv)
+
+V_receiv   = [];
+if ~isempty(P_receiv)
+    % Load sensitivity map if available and coregister to PDw
+    % P_receiv(1,:) = magnitude image (anatomical reference for coregistration) 
+    % P_receiv(2,:) = sensitivity map
     coreg_bias_map(PPDw, P_receiv);
+    V_receiv = spm_vol(P_receiv);
 end
 
 % parameters saved for quality assessment

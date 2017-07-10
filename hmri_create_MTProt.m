@@ -484,7 +484,6 @@ for p = 1:dm(3)
     T1w_forA = spm_slice_vol(VT1w_forA,VT1w_forA.mat\M,dm(1:2),3);
     
     if ~isempty(V_trans)
-        V_trans = spm_vol(P_trans);
         f_T = spm_slice_vol(V_trans(2,:),V_trans(2,:).mat\M,dm(1:2),3)/100; % divide by 100, since p.u. maps
     else
         f_T = [];

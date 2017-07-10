@@ -421,8 +421,13 @@ Output_hdr = init_b1_output_metadata(input_files, b1map_params);
 Output_hdr.history.procstep.descrip = 'B1+ map calculation (SIEMENS tfl_b1map protocol)';
 set_metadata(VB1.fname,Output_hdr,json);
 
+% copy also anatomical image to outpath to prevent modification of original data
+anat_fname = fullfile(outpath, spm_file(V2.fname, 'filename'));
+copyfile(V2.fname, anat_fname);
+try copyfile([spm_str_manip(V2.fname,'r') '.json'],[spm_str_manip(anat_fname,'r') '.json']); end %#ok<*TRYNC>
+
 % requires anatomic image + map
-P_trans  = char(char(V2.fname),char(VB1.fname));
+P_trans  = char(char(anat_fname),char(VB1.fname));
 
 end
 
@@ -473,8 +478,13 @@ Output_hdr = init_b1_output_metadata(input_files, b1map_params);
 Output_hdr.history.procstep.descrip = 'B1+ map calculation (SIEMENS rf_map protocol)';
 set_metadata(VB1.fname,Output_hdr,json);
 
+% copy also anatomical image to outpath to prevent modification of original data
+anat_fname = fullfile(outpath, spm_file(V2.fname, 'filename'));
+copyfile(V2.fname, anat_fname);
+try copyfile([spm_str_manip(V2.fname,'r') '.json'],[spm_str_manip(anat_fname,'r') '.json']); end %#ok<*TRYNC>
+
 % requires anatomic image + map
-P_trans  = char(char(V2.fname),char(VB1.fname));
+P_trans  = char(char(anat_fname),char(VB1.fname));
 
 end
 

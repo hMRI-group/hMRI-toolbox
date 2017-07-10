@@ -903,6 +903,25 @@ mpm_params.input.MTw.fname   = char(jobsubj.raw_mpm.MT); % P_mtw
 mpm_params.input.PDw.fname   = char(jobsubj.raw_mpm.PD); % P_pdw
 mpm_params.input.T1w.fname   = char(jobsubj.raw_mpm.T1); % P_t1w
 
+% consistency check: all three contrasts must be present in order to
+% process the data. Just throw a warning if one contrast missing...
+fprintf(1,'\nINFO: FLASH echoes loaded for each contrast are: ');
+fprintf(1,'\n\t- MT-weighted: %d echoes', size(mpm_params.input.MTw.fname,1));
+fprintf(1,'\n\t- PD-weighted: %d echoes', size(mpm_params.input.PDw.fname,1));
+fprintf(1,'\n\t- T1-weighted: %d echoes\n', size(mpm_params.input.T1w.fname,1));
+if ~size(mpm_params.input.MTw.fname)
+    % NB: no proper error thrown, the batch will abort anyway...
+    fprintf(1,'\nWARNING: no MT-weighted FLASH echoes available, cannot proceed!\n');
+end    
+if ~size(mpm_params.input.PDw.fname)
+    % NB: no proper error thrown, the batch will abort anyway...
+    fprintf(1,'\nWARNING: no PD-weighted FLASH echoes available, cannot proceed!\n');
+end    
+if ~size(mpm_params.input.T1w.fname)
+    % NB: no proper error thrown, the batch will abort anyway...
+    fprintf(1,'\nWARNING: no T1-weighted FLASH echoes available, cannot proceed!\n');
+end    
+    
 % maximum TE for averaging (ms)
 mpm_params.input.TE_limit = 30; 
 
@@ -929,9 +948,9 @@ if ~isempty(p)
 else
     fprintf(1,'WARNING: No TE/TR/FA values found for PDw images. Fallback to defaults.\n');
     MPMacq = hmri_get_defaults('MPMacq');
-    mpm_params.input.MTw.TE = MPMacq.TE_pdw;
-    mpm_params.input.MTw.TR = MPMacq.TR_pdw;
-    mpm_params.input.MTw.fa = MPMacq.fa_pdw;
+    mpm_params.input.PDw.TE = MPMacq.TE_pdw;
+    mpm_params.input.PDw.TR = MPMacq.TR_pdw;
+    mpm_params.input.PDw.fa = MPMacq.fa_pdw;
 end
 
 % acquisition parameters of T1w images
@@ -943,9 +962,9 @@ if ~isempty(p)
 else
     fprintf(1,'WARNING: No TE/TR/FA values found for T1w images. Fallback to defaults.\n');
     MPMacq = hmri_get_defaults('MPMacq');
-    mpm_params.input.MTw.TE = MPMacq.TE_t1w;
-    mpm_params.input.MTw.TR = MPMacq.TR_t1w;
-    mpm_params.input.MTw.fa = MPMacq.fa_t1w;
+    mpm_params.input.T1w.TE = MPMacq.TE_t1w;
+    mpm_params.input.T1w.TR = MPMacq.TR_t1w;
+    mpm_params.input.T1w.fa = MPMacq.fa_t1w;
 end
 
 % identify the protocol to define RF spoiling correction parameters
@@ -988,6 +1007,15 @@ for nr = 1:nr_c_echoes
     if ~((TE_mtw(nr) == TE_pdw(nr)) && (TE_pdw(nr) == TE_t1w(nr)))
         error('Echo times do not match! Aborting.');
     end
+end
+
+% consistency check for number of echoes averaged for A calculation:
+if mpm_params.proc.PD.nr_echoes_forA > size(mpm_params.input.T1w.fname,1)
+    fprintf(1,['\nWARNING: number of T1w echoes to be averaged for PD calculation (%d)' ...
+        '\nis bigger than the available number of echoes (%d). Setting nr_echoes_forA' ...
+        '\nto the maximum number of echoes.\n'],mpm_params.proc.PD.nr_echoes_forA, ...
+        size(mpm_params.input.T1w.fname,1));
+    mpm_params.proc.PD.nr_echoes_forA = size(mpm_params.input.T1w.fname,1);
 end
 
 end

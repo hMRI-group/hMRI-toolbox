@@ -60,7 +60,10 @@ switch(b1map_params.b1type)
        
 end
 
-% save these into Results/Supplementary directory (nii & json!)
+% copy P_trans output to Results/Supplementary directory (nii & json!) and
+% make P_trans point to the copied files (so coregistration is applied to
+% them).
+%
 % NOTES: 
 %   - if "cleanup" set to true, the B1mapCalc directory is deleted when the
 %   Map Calculation completes...  
@@ -68,12 +71,16 @@ end
 %   copyfile is called in "try" mode...
 %   - must strip the ',1' (at the end of the file extension '.nii,1')
 %   otherwise copyfile does not find the files!! 
+
 if ~isempty(P_trans)
     P_trans = spm_file(P_trans,'number','');
-    copyfile(deblank(P_trans(1,:)),fullfile(jobsubj.path.supplpath, spm_file(P_trans(1,:), 'filename')));
-    try copyfile([spm_str_manip(P_trans(1,:),'r') '.json'],fullfile(jobsubj.path.supplpath, [spm_file(P_trans(1,:), 'basename') '.json'])); end %#ok<*TRYNC>
-    copyfile(deblank(P_trans(2,:)),fullfile(jobsubj.path.supplpath, spm_file(P_trans(2,:), 'filename')));
-    try copyfile([spm_str_manip(P_trans(2,:),'r') '.json'],fullfile(jobsubj.path.supplpath, [spm_file(P_trans(2,:), 'basename') '.json'])); end
+    P_trans_copy{1} = fullfile(jobsubj.path.supplpath, spm_file(P_trans(1,:), 'filename'));
+    P_trans_copy{2} = fullfile(jobsubj.path.supplpath, spm_file(P_trans(2,:), 'filename'));    
+    copyfile(deblank(P_trans(1,:)), P_trans_copy{1});
+    try copyfile([spm_str_manip(P_trans(1,:),'r') '.json'],[spm_str_manip(P_trans_copy{1},'r') '.json']); end %#ok<*TRYNC>
+    copyfile(deblank(P_trans(2,:)), P_trans_copy{2});
+    try copyfile([spm_str_manip(P_trans(2,:),'r') '.json'],[spm_str_manip(P_trans_copy{2},'r') '.json']); end
+    P_trans = char(P_trans_copy{1},P_trans_copy{2});
 end
 
 end

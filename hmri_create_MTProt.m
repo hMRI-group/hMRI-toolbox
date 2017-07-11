@@ -779,7 +779,7 @@ for src_nr = 1:size(P_src,1)
     %x  = spm_coreg(mireg(i).VG, mireg(i).VF,flags.estimate);
     M  = inv(spm_matrix(x));
     MM = spm_get_space(deblank(VF.fname));
-    spm_get_space(deblank(deblank(VF.fname)), M*MM);
+    spm_get_space(deblank(deblank(VF.fname)), M*MM); %#ok<*MINV>
 end
 end
 
@@ -855,8 +855,8 @@ Y = BF.*spm_read_vols(spm_vol(fA));
 % matter value from the litterature (69%)
 A_WM = WMmask.*Y;
 Y = Y/mean(A_WM(A_WM~=0))*69;
-fprintf(1,'mean White Matter intensity: %.1f\n',mean(A_WM(A_WM~=0)));
-fprintf(1,'SD White Matter intensity %.1f\n',std(A_WM(A_WM~=0),[],1));
+fprintf(1,'\nINFO (PD calculation):\n\tmean White Matter intensity: %.1f\n',mean(A_WM(A_WM~=0)));
+fprintf(1,'\tSD White Matter intensity %.1f\n',std(A_WM(A_WM~=0),[],1));
 Y(Y>200) = 0;
 % MFC: Estimating Error for data set to catch bias field issues:
 errorEstimate = std(A_WM(A_WM > 0))./mean(A_WM(A_WM > 0));
@@ -864,7 +864,8 @@ Vsave = spm_vol(fA);
 Vsave.descrip = [Vsave.descrip '. Error Estimate: ', num2str(errorEstimate)];
 if errorEstimate > 0.06 %#ok<BDSCI>
     % MFC: Testing on 15 subjects showed 6% is a good cut-off:
-    warning(['Error estimate is high: ', Vsave.fname]);
+    fprintf(1,['\nWARNING: Error estimate is high for calculated PD map:\n%s' ...
+        '\nError higher than 6% may indicate motion.\n'], Vsave.fname);
 end
 if mpm_params.QA.enable
     if exist(mpm_params.QA.fnam,'file')

@@ -41,7 +41,7 @@ asclines = tmp{1};
 % - replace hexadecimal values (e.g. "0x01") by decimal value
 % - delete lines where a field starts or ends by "_"
 % - delete end of lines after "#"
-asclines = regexprep(asclines,{'\[([0-9]*)\]','["]+','^([^"]*)0x([0-9a-fA-F]*)',' #.*','^.*\._.*$'},{'($1+1)','''','$1hex2dec(''$2'')','',''});
+asclines = regexprep(asclines,{'\[([0-9]*)\]','["]+','^([^"'']*)0x([0-9a-fA-F]+)',' #.*','^.*\._.*$'},{'($1+1)','''','$1hex2dec(''$2'')','',''});
     
 % initialise variables
 ascout = [];

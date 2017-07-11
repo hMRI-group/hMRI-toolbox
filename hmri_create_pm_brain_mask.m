@@ -1,6 +1,10 @@
-function bmask = hmri_pm_brain_mask(P,flags)
-% Calculate a brain mask
-% FORMAT bmask = pm_brain_mask(P,flags)
+function bmask = hmri_create_pm_brain_mask(P,flags)
+% Calculate a brain mask in hMRI Toolbox
+% This is pm_brain_mask (SPM12/toolbox/FieldMap) modified for the hMRI
+% toolbox. Calls hmri_create_pm_segment instead of pm_segment. This is the
+% only modification, syntax is unchanged otherwise.
+%
+% FORMAT bmask = hmri_create_pm_brain_mask(P,flags)
 %
 % P - is a single pointer to a single image
 %
@@ -41,16 +45,15 @@ if nargin < 2 || isempty(flags)
 end
 
 disp('Segmenting and extracting brain...');
-seg_flags.estimate.reg=flags.reg;
-seg_flags.graphics = flags.graphics;
 
-% Updated to use renamed version of spm_segment
-%VO=pm_segment(P.fname,flags.template,seg_flags);
-VO = hmri_pm_segment(P.fname);
+% % In pm_brain_mask, was:
+% seg_flags.estimate.reg=flags.reg;
+% seg_flags.graphics = flags.graphics;
+% VO=pm_segment(P.fname,flags.template,seg_flags);
+% % In hmri_create_pm_brain_mask, replaced by:
+VO = hmri_create_pm_segment(P.fname);
 
 bmask=double(VO(1).dat)+double(VO(2).dat)+double(VO(3).dat)>0;
-
-%bmask=open_it(bmask,flags.nerode,flags.ndilate); % Do opening to get rid of scalp
 
 bmask=open_it(bmask,flags.nerode,flags.ndilate); % Do opening to get rid of scalp
 

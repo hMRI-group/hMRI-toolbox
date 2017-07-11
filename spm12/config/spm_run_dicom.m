@@ -38,14 +38,19 @@ if strfind(job.convopts.metaopts.mformat,'sep')
 end
 
 % determine whether full content of header is dumped into the JSON metadata
-% structure or only the "essentials":
-essentials = true;
-if job.convopts.metaopts.mcontent
-    essentials = false;
+% structure or only the "essentials" (default is false, i.e. full content):
+essentials = false;
+if isfield(job.convopts.metaopts,'mcontent')
+    if ~job.convopts.metaopts,mcontent
+        essentials = true;
+    end
 end
 
-% determine the degree of confidentiality / anonymisation
-json.anonym = job.convopts.metaopts.manonym;
+% determine the degree of confidentiality / anonymisation (attempt!)
+json.anonym = 'basic';
+if isfield(job.convopts.metaopts,'manonym')
+    json.anonym = job.convopts.metaopts.manonym;
+end
 
 hdr = spm_dicom_headers(char(job.data), essentials);
 

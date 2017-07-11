@@ -47,7 +47,7 @@ for i_subj = 1:n_subj
         fn_mwTC{jj} = job.vols_tc{jj}{i_subj};
     end
     
-    fn_out = hmri_MPMsmooth(char(fn_wMPM), char(fn_mwTC), fn_TPM, job.fwhm, l_TC);
+    fn_out = hmri_proc_MPMsmooth(char(fn_wMPM), char(fn_mwTC), fn_TPM, job.fwhm, l_TC);
     
     for jj = 1:n_TCs
         for kk = 1:n_pams

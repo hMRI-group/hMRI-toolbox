@@ -23,11 +23,10 @@ root.tag     = 'root';
 root.name    = 'Directory structure for converted files';
 root.help    = {'Choose root directory of converted file tree. The options are:'
                 ''
-                '* Output directory: ./<StudyDate-StudyTime>: Automatically determine the project name and try to convert into the output directory, starting with a StudyDate-StudyTime subdirectory. This option is useful if automatic project recognition fails and one wants to convert data into a project directory.'
-                ''
-                '* Output directory: ./<PatientID>: Convert into the output directory, starting with a PatientID subdirectory.'
-                ''
-                '* Output directory: ./<PatientName>: Convert into the output directory, starting with a PatientName subdirectory.'
+                '* Output directory: ./<StudyDate-StudyTime>/<ProtocolName>'
+                '* Output directory: ./<PatientID>/<ProtocolName>'
+                '* Output directory: ./<PatientID>/<StudyDate-StudyTime>/<ProtocolName>'
+                '* Output directory: ./<ProtocolName>'
                 '* No directory hierarchy: Convert all files into the output directory, without sequence/series subdirectories'}';
 root.labels  = {'Output directory: ./<StudyDate-StudyTime>/<ProtocolName>'
                 'Output directory: ./<PatientID>/<ProtocolName>'
@@ -135,7 +134,10 @@ mcontent.val     = {1};
 metaopts       = cfg_branch;
 metaopts.tag   = 'metaopts';
 metaopts.name  = 'JSON metadata';
-metaopts.val   = {mformat mcontent manonym};
+% NOTE: for release version, the anonymisation and content options are
+% removed from the Batch...
+% metaopts.val   = {mformat mcontent manonym};
+metaopts.val   = {mformat};
 metaopts.help  = {''};
 % ---------------------------------------------------------------------
 % icedims Use ICEDims in filename

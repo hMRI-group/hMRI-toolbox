@@ -47,7 +47,7 @@ hmri_def.TPM = fullfile(spm_file(mfilename('fullpath'),'path'), 'etpm', 'eTPM.ni
 hmri_def.interp = 3;
 
 % SM: define the ols fit as default
-hmri_def.fullOLS = true;
+hmri_def.fullOLS = false;
 
 %% Processing of PD maps
 hmri_def.PDproc.PDmap    = 1;    % Calculation of PD maps requires a B1 map. Set to 0 if a B1 map is not available

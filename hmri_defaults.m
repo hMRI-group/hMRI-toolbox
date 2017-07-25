@@ -213,7 +213,6 @@ hmri_def.b1_type.labels  = {
     'pre_processed_B1'
     'UNICORT'
     }';
-hmri_def.b1_type.val  = hmri_def.b1_type.labels(1);
 
 % B1 map protocol parameters
 % --------------------------
@@ -224,6 +223,7 @@ hmri_def.b1map.i3D_AFI.b1avail = true;
 hmri_def.b1map.i3D_AFI.procreq = true; 
 hmri_def.b1map.i3D_AFI.b1acq.TR2TR1ratio = 5;
 hmri_def.b1map.i3D_AFI.b1acq.alphanom = 60;
+hmri_def.b1map.i3D_AFI.deffnam  = {'hmri_b1_defaults.m'};
 
 % 'pre_processed_B1'
 hmri_def.b1map.pre_processed_B1.b1type = 'pre_processed_B1'; 
@@ -244,6 +244,7 @@ hmri_def.b1map.UNICORT.b1avail   = false;
 hmri_def.b1map.i3D_EPI.b1type = 'i3D_EPI'; 
 hmri_def.b1map.i3D_EPI.b1avail   = true; 
 hmri_def.b1map.i3D_EPI.procreq = true; 
+hmri_def.b1map.i3D_EPI.deffnam = {'hmri_b1_defaults.m'};
 % b0&b1-processing
 hmri_def.b1map.i3D_EPI.b1proc.T1 = 1192; % ms, strictly valid only at 3T
 hmri_def.b1map.i3D_EPI.b1proc.eps = 0.0001;

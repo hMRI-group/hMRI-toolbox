@@ -50,78 +50,208 @@ raws.tag        = 'raw_mpm';
 raws.name       = 'Raw multiparameter data';
 raws.help       = {'Input all the MT/PD/T1-weighted images.'};
 raws.val        = {raws1 raws2 raws3 };
+
+
+%--------------------------------------------------------------------------
+% B1 acq/proc defaults file
+%--------------------------------------------------------------------------
+b1defaults         = cfg_files;
+b1defaults.tag     = 'b1defaults';
+b1defaults.name    = 'B1 defaults file';
+b1defaults.help    = {['Select the ''hmri_b1_defaults*.m'' file containing ' ...
+    'the parameters for processing the B1 map data. By default, parameters will be ' ...
+    'collected from metadata when available. Defaults parameters are provided as ' ...
+    'fallback solution when metadata are not available and/or uncomplete.'], ...
+    ['Please make sure that the parameters defined in the defaults file ' ...
+    'are correct for your data. To create your own customised defaults file, ' ...
+    'either edit the distributed version and/or save it with the name ' ...
+    '''hmri_b1_defaults_*yourprotocol*.m''.']};
+b1defaults.filter  = 'm';
+b1defaults.dir     = fileparts(mfilename('fullpath'));
+b1defaults.ufilter = '^hmri_b1_defaults.*\.m$';
+b1defaults.num     = [1 1];
+b1defaults.def     = @(val)hmri_get_defaults('b1map.i3D_EPI.deffnam', val{:});
+
+% ---------------------------------------------------------------------
+% UNICORT B1 bias correction
+% ---------------------------------------------------------------------
+b1metadata           = cfg_entry;
+b1metadata.tag       = 'b1metadata';
+b1metadata.name      = 'Use metadata or standard defaults.';
+b1metadata.help      = {''};
+b1metadata.strtype = 's';
+b1metadata.num     = [1 Inf];
+b1metadata.val     = {'Defaults'};
+
+%--------------------------------------------------------------------------
+% B1 processing parameters
+%--------------------------------------------------------------------------
+b1parameters         = cfg_choice;
+b1parameters.tag     = 'b1parameters';
+b1parameters.name    = 'B1 processing parameters';
+b1parameters.help    = {['You can either stick with metadata and standard ' ...
+    'defaults parameters (recommended) or select your own customised defaults file ' ...
+    '(fallback for situations where no metadata are available).']};
+b1parameters.values  = {b1metadata b1defaults};
+b1parameters.val     = {b1metadata};
+
+
+% ---------------------------------------------------------------------
+% B1 input images 
+% ---------------------------------------------------------------------
+b1raw          = cfg_files;
+b1raw.tag      = 'b1';
+b1raw.name     = 'B1 images';
+b1raw.help     = {
+    'Select B1 input images according to the type of B1 bias correction.'
+    };
+b1raw.filter   = 'image';
+b1raw.ufilter  = '.*';
+b1raw.num      = [2 30];
+b1raw.val      = {''};
+
+% ---------------------------------------------------------------------
+% B0 input images
+% ---------------------------------------------------------------------
+b0raw          = cfg_files;
+b0raw.tag      = 'b0raw';
+b0raw.name     = 'B0 images';
+b0raw.help     = {'Select B0 images.' ...
+    'Only required for distortion correction of EPI-based B1 maps.' ...
+    'Select both magnitude images and the presubtracted phase image, in that order.'};
+b0raw.filter   = 'image';
+b0raw.ufilter  = '.*';
+b0raw.num      = [3 3];
+b0raw.val      = {''};
+
+% ---------------------------------------------------------------------
+% UNICORT B1 bias correction
+% ---------------------------------------------------------------------
+b1_input_UNICORT           = cfg_entry;
+b1_input_UNICORT.tag       = 'b1_input_UNICORT';
+b1_input_UNICORT.name      = 'UNICORT';
+b1_input_UNICORT.help      = {'UNICORT will be applied for B1 bias correction.'
+    'No B1 input data required.'};
+b1_input_UNICORT.strtype = 's';
+b1_input_UNICORT.num     = [1 Inf];
+b1_input_UNICORT.val     = {'done'};
+
+
+% ---------------------------------------------------------------------
+% No B1 bias correction
+% ---------------------------------------------------------------------
+b1_input_noB1           = cfg_entry;
+b1_input_noB1.tag       = 'b1_input_noB1';
+b1_input_noB1.name      = 'no_B1_correction';
+b1_input_noB1.help      = {['No B1 bias correction will be applied. Note that ' ...
+    'when no B1 map is available, UNICORT might be a better ' ...
+    'solution than no B1 bias correction at all.']};
+b1_input_noB1.strtype = 's';
+b1_input_noB1.num     = [1 Inf];
+b1_input_noB1.val     = {'done'};
+
+
+% ---------------------------------------------------------------------
+% RF_MAP B1 protocol
+% ---------------------------------------------------------------------
+b1_input_preproc           = cfg_branch;
+b1_input_preproc.tag       = 'b1_input_preproc';
+b1_input_preproc.name      = 'pre_processed_B1';
+b1_input_preproc.help      = {'Input pre-calculated B1 bias map.'
+    ['Please select one unprocessed magnitude image ' ...
+    'from the B1map data set (for coregistration with the multiparameter maps) ' ...
+    'and the preprocessed B1map (in percent units), in that order.']};
+b1_input_preproc.val       = {b1raw};
+
+
+% ---------------------------------------------------------------------
+% RF_MAP B1 protocol
+% ---------------------------------------------------------------------
+b1_input_rfmap           = cfg_branch;
+b1_input_rfmap.tag       = 'b1_input_rfmap';
+b1_input_rfmap.name      = 'rf_map';
+b1_input_rfmap.help      = {'Input B1 images for rf_map B1 map protocol.' ...
+    'As B1 map input, please select the pair of anatomical and precalcuated B1 map.'};
+b1_input_rfmap.val       = {b1raw};
+
+
+% ---------------------------------------------------------------------
+% TFL_B1_MAP B1 protocol
+% ---------------------------------------------------------------------
+b1_input_tfl           = cfg_branch;
+b1_input_tfl.tag       = 'b1_input_tfl';
+b1_input_tfl.name      = 'tfl_b1_map';
+b1_input_tfl.help      = {'Input B1 data for TFL B1 map protocol.' ...
+    'As B1 map input, please select the pair of anatomical and precalculated B1 map.'};
+b1_input_tfl.val       = {b1raw};
+
+
+% ---------------------------------------------------------------------
+% i3D_AFI B1 protocol
+% ---------------------------------------------------------------------
+b1_input_3DAFI           = cfg_branch;
+b1_input_3DAFI.tag       = 'b1_input_3DAFI';
+b1_input_3DAFI.name      = 'i3D_AFI';
+b1_input_3DAFI.help      = {'3D AFI protocol.', ...
+    'As B1 map input, please select a TR2/TR1 pair of magnitude images.', ...
+    ['Acquisition and processing parameters can be retrieved through ' ...
+    'either of the three following methods:'], ...
+    '- using the metadata available with the nifti files (recommended),', ...
+    '- using defaults parameters available in hmri_defaults.m,', ...
+    '- loading customized defaults from a selected hmri_b1_defaults_*.m file'};
+b1_input_3DAFI.val       = {b1raw b1parameters};
+
+
+% ---------------------------------------------------------------------
+% i3D_EPI B1 protocol
+% ---------------------------------------------------------------------
+b1_input_3DEPI           = cfg_branch;
+b1_input_3DEPI.tag       = 'b1_input_3DEPI';
+b1_input_3DEPI.name      = 'i3D_EPI';
+b1_input_3DEPI.help      = {'Input B0/B1 data for 3D EPI protocol'
+    'For B1 data, please select all pairs of SE/STE 3D EPI images.'
+    ['For this EPI protocol, it is recommended to acquire B0 field map data ' ...
+    'for distortion correction. If no B0 map available, the script will proceed ' ...
+    'with distorted images.']
+    ['Please enter the two magnitude images and the presubtracted phase image' ...
+    'from the B0 mapping acquisition, in that order.']
+    ['Moreover, acquisition and processing parameters can be retrieved through ' ...
+    'either of the three following methods:']
+    '- using the metadata available with the nifti files (recommended),'
+    '- using defaults parameters available in hmri_defaults.m,'
+    '- loading customized defaults from a selected hmri_b1_defaults_*.m file'};
+b1_input_3DEPI.val       = {b1raw b0raw b1parameters};
+
+
 % ---------------------------------------------------------------------
 % menu type_b1
 % ---------------------------------------------------------------------
-b1_type         = cfg_menu;
+b1_type         = cfg_choice;
 b1_type.tag     = 'b1_type';
-b1_type.name    = 'Choose the B1map type';
-b1_type.help    = {
-    ['Various B1map types can be handled by the hMRI ', ...
-    'toolbox when creating the multiparameter maps. See list below for a ', ...
-    'brief description of each type. Note that all types may not be ', ...
-    'available at your site.']...
-    [' - i3D_EPI: B1map obtained from spin echo (SE) and stimulated echo ', ...
-    '(STE) images recorded with a 3D EPI scheme [Lutti A et al., ', ...
-    'PLoS One 2012;7(3):e32379].'] ...
-    [' - i3D_AFI: 3D actual flip angle imaging (AFI) method based on [Yarnykh VL, ', ...
-    'Magn Reson Med 2007;57:192-200].'] ...
-    [' - tfl_b1_map: Siemens product sequence for B1 mapping based on turbo FLASH.'] ...
-    [' - rf_map: Siemens product sequence for B1 mapping based on SE/STE.'] ...
-    [' - no_B1_correction: if selected no B1 bias correction will be applied.'] ...
-    [' - pre_processed_B1: B1 map pre-calculated out of the hMRI toolbox, must ', ...
-    'be expressed in percent units of the nominal flip angle value (percent bias).'] ...
-    [' - UNICORT: Use this option when B1 maps not available. ', ...
-    'Bias field estimation and correction will be performed ', ...
+b1_type.name    = 'B1 bias correction';
+b1_type.help    = {'Choose the B1 map type.'
+    ['Various B1map types can be handled by the hMRI ' ...
+    'toolbox when creating the multiparameter maps. See list below for a ' ...
+    'brief description of each type. Note that all types may not be ' ...
+    'available at your site.']
+    [' - i3D_EPI: B1map obtained from spin echo (SE) and stimulated echo ' ...
+    '(STE) images recorded with a 3D EPI scheme [Lutti A et al., ' ...
+    'PLoS One 2012;7(3):e32379].']
+    [' - i3D_AFI: 3D actual flip angle imaging (AFI) method based on [Yarnykh VL, ' ...
+    'Magn Reson Med 2007;57:192-200].']
+    [' - tfl_b1_map: Siemens product sequence for B1 mapping based on turbo FLASH.']
+    [' - rf_map: Siemens product sequence for B1 mapping based on SE/STE.']
+    [' - no_B1_correction: if selected no B1 bias correction will be applied.']
+    [' - pre_processed_B1: B1 map pre-calculated out of the hMRI toolbox, must ' ...
+    'be expressed in percent units of the nominal flip angle value (percent bias).']
+    [' - UNICORT: Use this option when B1 maps not available. ' ...
+    'Bias field estimation and correction will be performed ' ...
     'using the approach described in [Weiskopf et al., NeuroImage 2011; 54:2116-2124].']
     }; %#ok<*NBRAK>
-b1_type.labels  = b1_choices;
-b1_type.values  = b1_choices;
-b1_type.val     = b1_choices(1);
+% b1_type.labels  = {'i3D_EPI','i3D_AFI','tfl_b1_map','rf_map','no_B1_correction','pre_processed_B1','UNICORT'};
+b1_type.values  = {b1_input_3DEPI b1_input_3DAFI b1_input_tfl b1_input_rfmap b1_input_noB1 b1_input_preproc b1_input_UNICORT};
+b1_type.val     = {b1_input_3DEPI};
 
-% ---------------------------------------------------------------------
-% vols Volumes
-% ---------------------------------------------------------------------
-braws2          = cfg_files;
-braws2.tag      = 'b1';
-braws2.name     = 'B1 images';
-braws2.help     = {
-    'Select B1 images if available.' ...
-    ' - i3D_EPI: select all pairs of SE/STE images.' ...
-    ' - i3D_AFI: select a TR2/TR1 pair of magnitude images.' ...
-    ' - tfl_b1_map: select the pair of anatomical and precalcuated B1 map.' ...
-    ' - rf_map: select the pair of anatomical and precalcuated B1 map.' ...
-    ' - no_B1_correction: no B1 image required.' ...
-    [' - pre_processed_B1: select one unprocessed magnitude image from ', ...
-    'the B1map data set (for coregistration with the multiparameter maps) and ', ...
-    'the preprocessed B1map (in percent units), in that order.'] ...
-    ' - UNICORT: no B1 image required.' ...
-    };
-braws2.filter   = 'image';
-braws2.ufilter  = '.*';
-braws2.num      = [0 30];
-braws2.val      = {''};
-% ---------------------------------------------------------------------
-% vols Volumes
-% ---------------------------------------------------------------------
-braws1          = cfg_files;
-braws1.tag      = 'b0';
-braws1.name     = 'B0 images';
-braws1.help     = {'Select B0 images.' ...
-    'Only required for distortion correction of EPI-based B1 maps.' ...
-    'Select both magnitude images and the presubtracted phase image, in that order.'};
-braws1.filter   = 'image';
-braws1.ufilter  = '.*';
-braws1.num      = [0 3];
-braws1.val      = {''};
-% ---------------------------------------------------------------------
-% vols Volumes
-% ---------------------------------------------------------------------
-braws           = cfg_branch;
-braws.tag       = 'raw_fld';
-braws.name      = 'Raw B0 & B1 data';
-braws.help      = {'Input all B0 & B1 images required to create the multiparameter maps.'};
-braws.val       = {braws1 braws2};
 % ---------------------------------------------------------------------
 % vols Volumes
 % ---------------------------------------------------------------------
@@ -211,7 +341,7 @@ sensitivity.val = {x0};
 subj            = cfg_branch;
 subj.tag        = 'subj';
 subj.name       = 'Subject';
-subj.val        = {braws raws };
+subj.val        = {b1_type raws };
 subj.help       = {'Specify a subject for maps calculation.'};
 % ---------------------------------------------------------------------
 % data Data
@@ -226,14 +356,14 @@ sdata.num       = [1 Inf];
 % ---------------------------------------------------------------------
 % indir Input directory as output directory
 % ---------------------------------------------------------------------
-indir         = cfg_menu;
+indir         = cfg_entry;
 indir.tag     = 'indir';
 indir.name    = 'Input directory';
-indir.help    = {'Output files will be written to the same folder as each ',...
-    'corresponding input file.'};
-indir.labels = {'Yes'};
-indir.values = {1};
-indir.val = {1};
+indir.help    = {'Output files will be written to the same folder ',...
+    'as each corresponding input file.'};
+indir.strtype = 's';
+indir.num     = [1 Inf];
+indir.val     = {'yes'};
 % ---------------------------------------------------------------------
 % outdir Output directory
 % ---------------------------------------------------------------------
@@ -278,11 +408,10 @@ create_mpr         = cfg_exbranch;
 create_mpr.tag     = 'create_mpr';
 create_mpr.name    = 'Multiparameter maps';
 raws.val        = {raws1 raws2 raws3 };
-braws.val       = {braws1 braws2};
-subj.val        = {output sensitivity b1_type braws raws};
+subj.val        = {output sensitivity b1_type raws};
 sdata.val       = {subj };
 sdata.values    = {subj };
-sdata_multi.val  = { output unlimit(braws) unlimit(raws) };
+sdata_multi.val  = { output unlimit(b1_type) unlimit(raws) };
 data_spec.values = { sdata sdata_multi };
 data_spec.val    = { sdata };
 create_mpr.val     = { data_spec };
@@ -386,6 +515,10 @@ end
 end
 %_______________________________________________________________________
 
+
+
+
+%%%%%%%%%%%%%%%%%%%%
 function c = unlimit(c)
 try
     if isa(c, 'cfg_files')

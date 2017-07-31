@@ -103,12 +103,12 @@ if PDidx
     fa_pdw = mpm_params.input(PDidx).fa;
 end
 if T1idx
-    TE_t1w = mpm_params.input(T1idx).TE;
+    TE_t1w = mpm_params.input(T1idx).TE; %#ok<NASGU>
     TR_t1w = mpm_params.input(T1idx).TR;
     fa_t1w = mpm_params.input(T1idx).fa;
 end
 if MTidx
-    TE_mtw = mpm_params.input(MTidx).TE;
+    TE_mtw = mpm_params.input(MTidx).TE; %#ok<NASGU>
     TR_mtw = mpm_params.input(MTidx).TR;
     fa_mtw = mpm_params.input(MTidx).fa;
 end
@@ -117,7 +117,7 @@ threshall = mpm_params.proc.threshall;
 PDproc = mpm_params.proc.PD;
 RFC = mpm_params.proc.RFC;
 dt = [spm_type('float32'),spm_platform('bigend')]; % for nifti output
-outbasename = spm_file(mpm_params.input.MTw.fnam(1,:),'basename'); % for all output files
+outbasename = spm_file(mpm_params.input(end).fnam(1,:),'basename'); % for all output files
 calcpath = mpm_params.calcpath;
 mpm_params.outbasename = outbasename;
 respath = mpm_params.respath;
@@ -132,7 +132,7 @@ avg_nr = mpm_params.nr_echoes4avg;
 fprintf(1,'\n    -------- R2* map calculation --------\n');
 
 % load PDw images
-V_pdw = spm_vol(mpm_params.input.PDw.fnam);
+V_pdw = spm_vol(mpm_params.input(PDidx).fnam);
 dm = V_pdw(1).dim;
 spm_progress_bar('Init',dm(3),'R2* fit','planes completed');
 
@@ -175,16 +175,16 @@ set_metadata(fR2s,Output_hdr,mpm_params.json);
 fprintf(1,'\n    -------- Reading and averaging the images --------\n');
 
 % Average only first few echoes for increased SNR and fit T2* 
+Pavg = cell(1,mpm_params.ncon);
 for ccon=1:mpm_params.ncon % loop over available contrasts
-    avg_fnam    = fullfile(calcpath,[outbasename '_' mpm_params.input(ccon).tag 'w.nii']);
-    eval(sprintf('P%sw = avg_fnam;', mpm_params.input(ccon).tag )); % i.e. PPDw/PMTw/PT1w = avg_fnam; Defined here!!
+    Pavg{ccon}  = fullfile(calcpath,[outbasename '_' mpm_params.input(ccon).tag 'w.nii']);
     V           = spm_vol(mpm_params.input(ccon).fnam);
     dm          = V(1).dim;
     Ni          = nifti;
     Ni.mat      = V(1).mat;
     Ni.mat0     = V(1).mat;
     Ni.descrip  = sprintf('Averaged %sw images', mpm_params.input(ccon).tag);
-    Ni.dat      = file_array(avg_fnam,dm,dt,0,1,0);
+    Ni.dat      = file_array(Pavg{ccon},dm,dt,0,1,0);
     create(Ni);
     spm_progress_bar('Init',dm(3),Ni.descrip,'planes completed');
     % sm = 0;
@@ -206,7 +206,7 @@ for ccon=1:mpm_params.ncon % loop over available contrasts
     Output_hdr = init_mpm_output_metadata(input_files, mpm_params);
     Output_hdr.history.output.imtype = Ni.descrip;
     Output_hdr.history.output.units = 'a.u.';
-    set_metadata(avg_fnam,Output_hdr,mpm_params.json);
+    set_metadata(Pavg{ccon},Output_hdr,mpm_params.json);
 end
 
 % Average T1w image for PD calculation 
@@ -240,13 +240,12 @@ end
 %=========================================================================%
 fprintf(1,'\n    -------- Coregistering the images  --------\n');
 
-% NOTE: PPDw, PMTw and PT1w are defined above as evaluated string (~line 133)
 x_MT2PD = [];
-if MTidx; x_MT2PD = coreg_mt(PPDw, PMTw); end  %#ok<NODEF>
+if MTidx; x_MT2PD = coreg_mt(Pavg{PDidx}, Pavg{MTidx}); end
 x_T12PD = [];   
 if T1idx; 
-    x_T12PD = coreg_mt(PPDw, PT1w); %#ok<NODEF>
-    coreg_mt(PPDw, PT1w_forA);
+    x_T12PD = coreg_mt(Pavg{PDidx}, Pavg{T1idx});
+    coreg_mt(Pavg{PDidx}, PT1w_forA);
 end
 
 V_trans = [];
@@ -254,7 +253,7 @@ if ~isempty(P_trans)
     % Load B1 mapping data if available and coregister to PDw
     % P_trans(1,:) = magnitude image (anatomical reference for coregistration) 
     % P_trans(2,:) = B1 map (p.u.)
-    coreg_bias_map(PPDw, P_trans);
+    coreg_bias_map(Pavg{PDidx}, P_trans);
     V_trans = spm_vol(P_trans);
 end
 
@@ -263,7 +262,7 @@ if ~isempty(P_receiv)
     % Load sensitivity map if available and coregister to PDw
     % P_receiv(1,:) = magnitude image (anatomical reference for coregistration) 
     % P_receiv(2,:) = sensitivity map
-    coreg_bias_map(PPDw, P_receiv);
+    coreg_bias_map(Pavg{PDidx}, P_receiv);
     V_receiv = spm_vol(P_receiv);
 end
 
@@ -278,10 +277,10 @@ if mpm_params.QA.enable
 end
 
 % load averaged images
-if PDidx; Vavg(PDidx) = spm_vol(PPDw); end
-if MTidx; Vavg(MTidx) = spm_vol(PMTw); end
+if PDidx; Vavg(PDidx) = spm_vol(Pavg{PDidx}); end
+if MTidx; Vavg(MTidx) = spm_vol(Pavg{MTidx}); end
 if T1idx
-    Vavg(T1idx) = spm_vol(PT1w); 
+    Vavg(T1idx) = spm_vol(Pavg{T1idx}); 
     VT1w_forA = spm_vol(PT1w_forA);
 end
 
@@ -353,12 +352,12 @@ end
 if mpm_params.proc.R2sOLS
     fprintf(1,'\n    -------- OLS R2* map calculation --------\n');
     
-    R2sOLS_fnam = fullfile(calcpath,[outbasename '_R2s_OLS' '.nii']);
+    fR2s_OLS    = fullfile(calcpath,[outbasename '_R2s_OLS' '.nii']);
     Ni          = nifti;
     Ni.mat      = V_pdw(1).mat;
     Ni.mat0     = V_pdw(1).mat;
     Ni.descrip  = 'OLS R2* map [1/ms]';
-    Ni.dat      = file_array(R2sOLS_fnam,dm,dt,0,1,0);
+    Ni.dat      = file_array(fR2s_OLS,dm,dt,0,1,0);
     create(Ni);
     
     V_PD = spm_vol(mpm_params.input(PDidx).fnam);
@@ -383,7 +382,6 @@ if mpm_params.proc.R2sOLS
         M = spm_matrix([0 0 p 0 0 0 1 1 1]);
         data = zeros([sum(nechoes) dm(1:2)]);
         
-        echoes_done = 0;
         for ccon = 1:mpm_params.ncon
             
             Vcon = spm_vol(mpm_params.input(ccon).fnam);
@@ -399,10 +397,8 @@ if mpm_params.proc.R2sOLS
                 % since we no longer assume that the echoes are perfectly
                 % aligned as we do for the standard PDw derived R2*
                 % estimate. 
-                data(echoes_done+cecho,:,:) = log(max(spm_slice_vol(Vcon(cecho),M1,dm(1:2),3),eps));
+                data(sum(nechoes(1:ccon-1))+cecho,:,:) = log(max(spm_slice_vol(Vcon(cecho),M1,dm(1:2),3),eps));
             end
-            
-            echoes_done = echoes_done + nechoes(ccon);
         end
         Y = W*reshape(data, [sum(nechoes) prod(dm(1:2))]);
         Y = -reshape(Y(4,:), dm(1:2));
@@ -416,8 +412,8 @@ if mpm_params.proc.R2sOLS
     spm_progress_bar('Clear');
 
     input_files = mpm_params.input(PDidx).fnam;
-    if (T1idx); input_files = {input_files, mpm_params.input(T1idx).fnam}; end
-    if (MTidx); input_files = {input_files, mpm_params.input(MTidx).fnam}; end
+    if (T1idx); input_files = char(input_files, mpm_params.input(T1idx).fnam); end
+    if (MTidx); input_files = char(input_files, mpm_params.input(MTidx).fnam); end
     Output_hdr = init_mpm_output_metadata(input_files, mpm_params);
     Output_hdr.history.output.imtype = 'R2*-OLS map';
     Output_hdr.history.output.units = 'ms-1';
@@ -520,6 +516,7 @@ for p = 1:dm(3)
     % only if trpd = trmt and fapd = famt and if PDw and MTw images are
     % available
     if (MTidx && PDidx)
+        MTw = spm_slice_vol(Vavg(MTidx),Vavg(MTidx).mat\M,dm(1:2),3);
         if (TR_mtw == TR_pdw) && (fa_mtw == fa_pdw) % additional MTR image...
             MTR = (PDw-MTw)./(PDw+eps) * 100;
             % write MTR image
@@ -561,11 +558,6 @@ for p = 1:dm(3)
             end
             
             R1 = 1./T1*10^6;
-            
-            % R1App = f_T.^2.*(((T1w * (fa_t1w / 2 / TR_t1w)) - (PDw * fa_pdw / 2 / TR_pdw)) ./ ...
-            %       max(((PDw / fa_pdw) - (T1w / fa_t1w)),eps));
-            % A_poly = P2_a(1)*f_T.^2+P2_a(2)*f_T+P2_a(3);B_poly=(P2_b(1)*f_T.^2+P2_b(2)*f_T+P2_b(3));
-            % R1 = R1App./(max(R1App.*A_poly+B_poly,eps))*10^6;
         end
         
         T1       = max(T1,0);
@@ -607,16 +599,15 @@ for p = 1:dm(3)
             tmp      = MT;
             Nmap(3).dat(:,:,p) = max(min(tmp,threshall.MT),-threshall.MT);
         end
-        
     end
-    
     spm_progress_bar('Set',p);
 end
+spm_progress_bar('Clear');
 
 % set metadata for all output images
 input_files = mpm_params.input(PDidx).fnam;
-if (T1idx); input_files = {input_files, mpm_params.input(T1idx).fnam}; end
-if (MTidx); input_files = {input_files, mpm_params.input(MTidx).fnam}; end
+if (T1idx); input_files = char(input_files, mpm_params.input(T1idx).fnam); end
+if (MTidx); input_files = char(input_files, mpm_params.input(MTidx).fnam); end
 Output_hdr = init_mpm_output_metadata(input_files, mpm_params);
 for ctr = 1:size(output_suffix,2)
     Output_hdr.history.output.imtype = descrip(ctr);
@@ -681,18 +672,18 @@ if (mpm_params.QA.enable||(PDproc.PDmap)) && (PDidx && T1idx)
     if ~isempty(fMT); 
         Vsave = spm_vol(fMT);
     else % ~isempty(fR1); 
-        Vsave = spm_vol(fMT); 
+        Vsave = spm_vol(fR1); 
     end
     MTtemp = spm_read_vols(Vsave);
     %The 5 outer voxels in all directions are nulled in order to remove artefactual effects from the MT map on segmentation:
     MTtemp(1:5,:,:)=0; MTtemp(end-5:end,:,:)=0;
     MTtemp(:,1:5,:)=0; MTtemp(:,end-5:end,:)=0;
     MTtemp(:,:,1:5)=0; MTtemp(:,:,end-5:end)=0;
-    Vsave.fnam = spm_file(Vsave.fnam,'suffix','_outer_suppressed');
+    Vsave.fname = spm_file(Vsave.fname,'suffix','_outer_suppressed');
     spm_write_vol(Vsave,MTtemp);
     
     clear matlabbatch
-    matlabbatch{1}.spm.spatial.preproc.channel.vols = {Vsave.fnam};
+    matlabbatch{1}.spm.spatial.preproc.channel.vols = {Vsave.fname};
     matlabbatch{1}.spm.spatial.preproc.channel.write = [0 0];
     output_list = spm_jobman('run', matlabbatch);
     fTPM = char(cat(1,output_list{1}.tiss.c));
@@ -733,10 +724,12 @@ end
 % NB: to avoid ambiguity for users, only the 4 final maps to be used in
 % further analysis are in Results, all other files (additional maps, 
 % processing parameters, etc) are in Results/Supplementary.
-fR1_final = fullfile(respath, spm_file(fR1,'filename'));
-copyfile(fR1,fR1_final);
-try copyfile([spm_str_manip(fR1,'r') '.json'],[spm_str_manip(fR1_final,'r') '.json']); end %#ok<*TRYNC>
-fR1 = fR1_final;
+if ~isempty(fR1)
+    fR1_final = fullfile(respath, spm_file(fR1,'filename'));
+    copyfile(fR1,fR1_final);
+    try copyfile([spm_str_manip(fR1,'r') '.json'],[spm_str_manip(fR1_final,'r') '.json']); end %#ok<*TRYNC>
+    fR1 = fR1_final;
+end
 
 fR2s_final = fullfile(respath, spm_file(fR2s,'filename'));
 copyfile(fR2s,fR2s_final);
@@ -751,33 +744,38 @@ if mpm_params.proc.R2sOLS
     movefile(fR2s_final, fullfile(supplpath, spm_file(fR2s_final,'filename')));
     try movefile([spm_str_manip(fR2s_final,'r') '.json'],fullfile(supplpath, [spm_file(fR2s_final,'basename') '.json'])); end
     % copy OLS_R2s map to Results
-    fR2s_OLS_final = spm_file(fR2s,'suffix','_OLS');
-    fR2s_OLS = fullfile(calcpath, spm_file(fR2s_OLS_final,'filename'));
+    fR2s_OLS_final = fullfile(respath, spm_file(fR2s_OLS,'filename'));
     copyfile(fR2s_OLS,fR2s_OLS_final);
     try copyfile([spm_str_manip(fR2s_OLS,'r') '.json'],[spm_str_manip(fR2s_OLS_final,'r') '.json']); end
     % the hmri_create_MTProt fR2s output in now the R2s_OLS map
     fR2s = fR2s_OLS_final;
 end
 
-fMT_final = fullfile(respath, spm_file(fMT,'filename'));
-copyfile(fMT,fMT_final);
-try copyfile([spm_str_manip(fMT,'r') '.json'],[spm_str_manip(fMT_final,'r') '.json']); end
-fMT = fMT_final;
+if ~isempty(fMT)
+    fMT_final = fullfile(respath, spm_file(fMT,'filename'));
+    copyfile(fMT,fMT_final);
+    try copyfile([spm_str_manip(fMT,'r') '.json'],[spm_str_manip(fMT_final,'r') '.json']); end
+    fMT = fMT_final;
+end
 
-fA_final = fullfile(respath, spm_file(fA,'filename'));
-copyfile(fA,fA_final);
-try copyfile([spm_str_manip(fA,'r') '.json'],[spm_str_manip(fA_final,'r') '.json']); end
-fA = fA_final;
+if ~isempty(fA)
+    fA_final = fullfile(respath, spm_file(fA,'filename'));
+    copyfile(fA,fA_final);
+    try copyfile([spm_str_manip(fA,'r') '.json'],[spm_str_manip(fA_final,'r') '.json']); end
+    fA = fA_final;
+end
 
-PPDw_final = fullfile(supplpath, spm_file(PPDw,'filename'));
-copyfile(PPDw,PPDw_final);
-try copyfile([spm_str_manip(PPDw,'r') '.json'],[spm_str_manip(PPDw_final,'r') '.json']); end
+PPDw_final = fullfile(supplpath, spm_file(Pavg{PDidx},'filename'));
+copyfile(Pavg{PDidx},PPDw_final);
+try copyfile([spm_str_manip(Pavg{PDidx},'r') '.json'],[spm_str_manip(PPDw_final,'r') '.json']); end
 PPDw = PPDw_final;
 
-PT1w_final = fullfile(supplpath, spm_file(PT1w,'filename'));
-copyfile(PT1w,PT1w_final);
-try copyfile([spm_str_manip(PT1w,'r') '.json'],[spm_str_manip(PT1w_final,'r') '.json']); end
-PT1w = PT1w_final;
+if T1idx
+    PT1w_final = fullfile(supplpath, spm_file(Pavg{T1idx},'filename'));
+    copyfile(Pavg{T1idx},PT1w_final);
+    try copyfile([spm_str_manip(Pavg{T1idx},'r') '.json'],[spm_str_manip(PT1w_final,'r') '.json']); end
+    PT1w = PT1w_final;
+end
 
 % save processing params (mpm_params)
 spm_jsonwrite(fullfile(supplpath,'MPM_map_creation_mpm_params.json'),mpm_params,struct('indent','\t'));
@@ -792,16 +790,13 @@ end
 function [x] = coreg_mt(P_ref, P_src)
 
 for src_nr = 1:size(P_src,1)
-    P_src(src_nr,:);
     VG = spm_vol(P_ref);
     VF = spm_vol(P_src(src_nr,:));
-    %coregflags.sep = [2 1];
     coregflags.sep = [4 2];
     x = spm_coreg(VG,VF, coregflags);
-    %x  = spm_coreg(mireg(i).VG, mireg(i).VF,flags.estimate);
     M  = inv(spm_matrix(x));
-    MM = spm_get_space(deblank(VF.fnam));
-    spm_get_space(deblank(deblank(VF.fnam)), M*MM); %#ok<*MINV>
+    MM = spm_get_space(deblank(VF.fname));
+    spm_get_space(deblank(deblank(VF.fname)), M*MM); %#ok<*MINV>
 end
 end
 
@@ -819,13 +814,13 @@ coregflags.sep = [4 2];
 x = spm_coreg(VG,VF, coregflags);
 %x  = spm_coreg(mireg(i).VG, mireg(i).VF,flags.estimate);
 M  = inv(spm_matrix(x));
-MM = spm_get_space(deblank(VF.fnam));
-spm_get_space(deblank(deblank(VF.fnam)), M*MM);
+MM = spm_get_space(deblank(VF.fname));
+spm_get_space(deblank(deblank(VF.fname)), M*MM);
 
 VF2 = spm_vol(P_src(2,:)); % now also apply transform to the map
 M  = inv(spm_matrix(x));
-MM = spm_get_space(deblank(VF2.fnam));
-spm_get_space(deblank(deblank(VF2.fnam)), M*MM);
+MM = spm_get_space(deblank(VF2.fname));
+spm_get_space(deblank(deblank(VF2.fname)), M*MM);
 
 end
 
@@ -850,7 +845,7 @@ WMmask(squeeze(TPMs(:,:,:,2))>=PDproc.WMMaskTh) = 1;
 
 % Save masked A map for bias-field correction later
 V_maskedA = spm_vol(fA);
-V_maskedA.fnam = fullfile(calcpath,['masked_' spm_str_manip(V_maskedA.fnam,'t')]);
+V_maskedA.fname = fullfile(calcpath,['masked_' spm_str_manip(V_maskedA.fname,'t')]);
 maskedA = spm_read_vols(spm_vol(fA)).*WBmask;
 maskedA(maskedA==Inf) = 0;
 maskedA(isnan(maskedA)) = 0;
@@ -859,7 +854,7 @@ spm_write_vol(V_maskedA,maskedA);
 
 % Bias-field correction of masked A map
 clear matlabbatch
-matlabbatch{1}.spm.spatial.preproc.channel.vols = {V_maskedA.fnam};
+matlabbatch{1}.spm.spatial.preproc.channel.vols = {V_maskedA.fname};
 matlabbatch{1}.spm.spatial.preproc.channel.biasreg = PDproc.biasreg;
 matlabbatch{1}.spm.spatial.preproc.channel.biasfwhm = PDproc.biasfwhm;
 matlabbatch{1}.spm.spatial.preproc.channel.write = [1 0];
@@ -878,7 +873,7 @@ Y = BF.*spm_read_vols(spm_vol(fA));
 A_WM = WMmask.*Y;
 Y = Y/mean(A_WM(A_WM~=0))*69;
 fprintf(1,'\nINFO (PD calculation):\n\tmean White Matter intensity: %.1f\n',mean(A_WM(A_WM~=0)));
-fprintf(1,'\tSD White Matter intensity %.1f\n',std(A_WM(A_WM~=0),[],1));
+fprintf(1,'\tSD White Matter intensity %.1f\n\n',std(A_WM(A_WM~=0),[],1));
 Y(Y>200) = 0;
 % MFC: Estimating Error for data set to catch bias field issues:
 errorEstimate = std(A_WM(A_WM > 0))./mean(A_WM(A_WM > 0));
@@ -887,7 +882,7 @@ Vsave.descrip = [Vsave.descrip '. Error Estimate: ', num2str(errorEstimate)];
 if errorEstimate > 0.06 %#ok<BDSCI>
     % MFC: Testing on 15 subjects showed 6% is a good cut-off:
     fprintf(1,['\nWARNING: Error estimate is high for calculated PD map:\n%s' ...
-        '\nError higher than 6% may indicate motion.\n'], Vsave.fnam);
+        '\nError higher than 6% may indicate motion.\n'], Vsave.fname);
 end
 if mpm_params.QA.enable
     if exist(mpm_params.QA.fnam,'file')
@@ -958,9 +953,11 @@ if ~size(mpm_params.input(ccon).fnam)
 else
     fprintf(1,'\n\t- T1-weighted: %d echoes', size(mpm_params.input(ccon).fnam,1));
     mpm_params.input(ccon).tag = 'T1';  
-    mpm_params.T1idx = 0; % zero index means no contrast available    
+    mpm_params.T1idx = ccon; % zero index means no contrast available    
 end 
 mpm_params.ncon = ccon; % number of contrasts available
+fprintf(1,'\n');
+
 
 % collect TE, TR and FA for each available contrast
 for ccon = 1:mpm_params.ncon
@@ -970,7 +967,7 @@ for ccon = 1:mpm_params.ncon
         mpm_params.input(ccon).TR = p(1).tr;
         mpm_params.input(ccon).fa = p(1).fa;
     else
-        fprintf(1,'WARNING: No TE/TR/FA values found for %sw images. Fallback to defaults.\n',mpm_params.input(ccon).tag);
+        fprintf(1,'\nWARNING: No TE/TR/FA values found for %sw images. Fallback to defaults.\n',mpm_params.input(ccon).tag);
         MPMacq = hmri_get_defaults('MPMacq');
         mpm_params.input(ccon).TE = MPMacq.(['TE_' lower(mpm_params.input(ccon).tag) 'w']);
         mpm_params.input(ccon).TR = MPMacq.(['TR_' lower(mpm_params.input(ccon).tag) 'w']);
@@ -998,7 +995,7 @@ for ccon = 1:mpm_params.ncon
 end
 % find maximum number of echoes that are common to all available contrasts
 % AND one more than the maxTEval4avg:
-mpm_params.nr_echoes4avg = min(find(mpm_params.input(1).TE>maxTEval4avg,1),commonTEvals);
+mpm_params.nr_echoes4avg = min(length(find(mpm_params.input(1).TE<maxTEval4avg))+1,ncommonTEvals);
 
 % if T1w and PDw data available, identify the protocol to define RF
 % spoiling correction parameters (for T1 map calculation)
@@ -1018,12 +1015,12 @@ if mpm_params.PDidx && mpm_params.T1idx
         if all(MPMacq_prot == MPMacq_sets.vals{ii})
             mtch  = true;
             prot_tag = MPMacq_sets.tags{ii};
-            fprintf(1,'INFO: MPM acquisition protocol = %s.\n', prot_tag);
+            fprintf(1,'\nINFO: MPM acquisition protocol = %s.\n', prot_tag);
         end
     end
     if ~mtch
         prot_tag = 'Unknown';
-        fprintf(1,'WARNING: MPM protocol unknown. No RF spoiling correction will be applied.\n');
+        fprintf(1,'\nWARNING: MPM protocol unknown. No RF spoiling correction will be applied.\n');
     end
 else
     prot_tag = 'Unknown';
@@ -1046,7 +1043,7 @@ if mpm_params.PDidx && mpm_params.T1idx
             '\nis bigger than the available number of echoes (%d). Setting nr_echoes_forA' ...
             '\nto the maximum number of echoes.\n'],mpm_params.proc.PD.nr_echoes_forA, ...
             size(mpm_params.input(mpm_params.T1idx).fnam,1));
-        mpm_params.proc.PD.nr_echoes_forA = size(mpm_params.input.T1w.fnam,1);
+        mpm_params.proc.PD.nr_echoes_forA = size(mpm_params.input(T1idx).fnam,1);
     end
 end
 

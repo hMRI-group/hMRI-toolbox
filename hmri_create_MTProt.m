@@ -176,6 +176,8 @@ set_metadata(fR2s,Output_hdr,mpm_params.json);
 %=========================================================================%
 fprintf(1,'\n    -------- Reading and averaging the images --------\n');
 
+avg_nr = 6;
+
 % Average only first few echoes for increased SNR and fit T2* 
 Pavg = cell(1,mpm_params.ncon);
 for ccon=1:mpm_params.ncon % loop over available contrasts
@@ -279,7 +281,7 @@ if mpm_params.QA.enable
 end
 
 % load averaged images
-if PDidx; Vavg(PDidx) = spm_vol(Pavg{PDidx}); end
+Vavg(PDidx) = spm_vol(Pavg{PDidx});
 if MTidx; Vavg(MTidx) = spm_vol(Pavg{MTidx}); end
 if T1idx
     Vavg(T1idx) = spm_vol(Pavg{T1idx}); 
@@ -334,7 +336,7 @@ if mpm_params.QA.enable
                 data(cecho,:,:) = log(max(spm_slice_vol(Vcon(cecho),M1,dm(1:2),3),eps));
             end
             Y = W*reshape(data, [size(TE,1) prod(dm(1:2))]);
-            Y = -reshape(Y(2,:), dm(1:2));
+            Y = -reshape(Y(end,:), dm(1:2));
             
             % NB: mat field defined by V_pdw => first PDw echo
             % threshold T2* at +/- 0.1ms or R2* at +/- 10000 *(1/sec),
@@ -400,7 +402,7 @@ if mpm_params.proc.R2sOLS
             end
         end
         Y = W*reshape(data, [sum(nechoes) prod(dm(1:2))]);
-        Y = -reshape(Y(4,:), dm(1:2));
+        Y = -reshape(Y(end,:), dm(1:2));
         
         % NB: mat field defined by V_pdw => first PDw echo
         % threshold T2* at +/- 0.1ms or R2* at +/- 10000 *(1/sec), 
@@ -425,44 +427,63 @@ end % OLS code
 %=========================================================================%
 % description fields and file names of output images
 
-output_suffix{1} = 'R1';
-units{1} = '1000/s';
-if isempty(V_trans)
-     descrip{1} = 'R1 map (no B1+ bias correction applied)';
-else
-     descrip{1} = 'R1 map (with B1+ bias correction)';
-end
-if PDproc.PDmap && ~isempty(V_trans)
-     output_suffix{2} = 'PD';
-     descrip{2} = 'Water concentration [%]';
-     units{2} = '%';
-else
-     output_suffix{2} = 'A';
-     descrip{2} = 'Signal amplitude [a.u.]';
-     units{2} = 'a.u.';
+coutput = 0;
+
+if T1idx
+    coutput = coutput+1;
+    output_suffix{coutput} = 'R1';
+    units{coutput} = '1000/s';
+    if isempty(V_trans)
+        descrip{coutput} = 'R1 map (no B1+ bias correction applied)';
+    else
+        descrip{coutput} = 'R1 map (with B1+ bias correction)';
+    end
+    R1map_idx = coutput;
 end
 
-output_suffix{3} = 'MT';
-descrip{3} = 'Delta MT map';
-units{3} = 'a.u.';
+if T1idx
+    coutput = coutput+1;
+    if PDproc.PDmap && ~isempty(V_trans)
+        output_suffix{coutput} = 'PD';
+        descrip{coutput} = 'Water concentration [%]';
+        units{coutput} = '%';
+    else
+        output_suffix{coutput} = 'A';
+        descrip{coutput} = 'Signal amplitude [a.u.]';
+        units{coutput} = 'a.u.';
+    end
+    Amap_idx = coutput;
+end
+
+if (MTidx && T1idx)
+    coutput = coutput+1;
+    output_suffix{coutput} = 'MT';
+    descrip{coutput} = 'Delta MT map';
+    units{coutput} = 'a.u.';
+    MTmap_idx = coutput;
+end
 
 if (MTidx && PDidx)
     if (TR_mtw == TR_pdw) && (fa_mtw == fa_pdw) % additional MTR image...
-        output_suffix{4} = 'MTR';
-        descrip{4} = 'Classic MTR image';
-        units{4} = 'a.u.';
+        coutput = coutput+1;
+        output_suffix{coutput} = 'MTR';
+        descrip{coutput} = 'Classic MTR image';
+        units{coutput} = 'a.u.';
+        MTRmap_idx = coutput;    
     end
 end
 
+noutput = coutput;
+
 % define NIFTI objects for output images
 Nmap    = nifti;
-for ii=1:numel(output_suffix)
-    dm        = V_pdw(1).dim;
-    Ni        = nifti;
-    Ni.mat    = V_pdw(1).mat;
-    Ni.mat0   = V_pdw(1).mat;
-    Ni.descrip= descrip{ii};
-    Ni.dat    = file_array(fullfile(calcpath,[outbasename '_' output_suffix{ii} '.nii']),dm,dt, 0,1,0);
+for ii=1:noutput
+    dm         = V_pdw(1).dim;
+    Ni         = nifti;
+    Ni.mat     = V_pdw(1).mat;
+    Ni.mat0    = V_pdw(1).mat;
+    Ni.descrip = descrip{ii};
+    Ni.dat     = file_array(fullfile(calcpath,[outbasename '_' output_suffix{ii} '.nii']),dm,dt, 0,1,0);
     create(Ni);
     Nmap(ii) = Ni;
 end
@@ -471,10 +492,10 @@ fR1 = '';
 fA = '';
 fMT = '';
 if (PDidx && T1idx)
-    fR1 = fullfile(calcpath,[outbasename '_' output_suffix{1} '.nii']);
-    fA  = fullfile(calcpath,[outbasename '_' output_suffix{2} '.nii']);
+    fR1 = fullfile(calcpath,[outbasename '_' output_suffix{R1map_idx} '.nii']);
+    fA  = fullfile(calcpath,[outbasename '_' output_suffix{Amap_idx} '.nii']);
     if MTidx
-        fMT = fullfile(calcpath,[outbasename '_' output_suffix{3} '.nii']);
+        fMT = fullfile(calcpath,[outbasename '_' output_suffix{MTmap_idx} '.nii']);
     end        
 end
 
@@ -487,7 +508,7 @@ fprintf(1,'\n    -------- Map calculation continued (R1, PD, MT) --------\n');
 M0 = Ni.mat;
 dm = size(Ni.dat);
 
-if PDidx; fa_pdw_rad = fa_pdw * pi / 180; end
+fa_pdw_rad = fa_pdw * pi / 180;
 if MTidx; fa_mtw_rad = fa_mtw * pi / 180; end
 if T1idx; fa_t1w_rad = fa_t1w * pi / 180; end
 
@@ -519,7 +540,7 @@ for p = 1:dm(3)
         if (TR_mtw == TR_pdw) && (fa_mtw == fa_pdw) % additional MTR image...
             MTR = (PDw-MTw)./(PDw+eps) * 100;
             % write MTR image
-            Nmap(4).dat(:,:,p) = max(min(MTR,threshall.MTR),-threshall.MTR);
+            Nmap(MTRmap_idx).dat(:,:,p) = max(min(MTR,threshall.MTR),-threshall.MTR);
         end          
     end
     
@@ -562,7 +583,7 @@ for p = 1:dm(3)
         T1       = max(T1,0);
         R1(R1<0) = 0;
         tmp      = R1;
-        Nmap(1).dat(:,:,p) = min(max(tmp,-threshall.R1),threshall.R1); % truncating images
+        Nmap(R1map_idx).dat(:,:,p) = min(max(tmp,-threshall.R1),threshall.R1); % truncating images
         
         % A values proportional to PD
         if (~isempty(f_T)) && (~isempty(f_R))
@@ -578,7 +599,7 @@ for p = 1:dm(3)
         end
         
         tmp      = A;
-        Nmap(2).dat(:,:,p) = max(min(tmp,threshall.A),-threshall.A);
+        Nmap(Amap_idx).dat(:,:,p) = max(min(tmp,threshall.A),-threshall.A);
         % dynamic range increased to 10^5 to accommodate phased-array coils and symmetrical for noise distribution
         
         % for MT maps calculation, one needs MTw images on top of the T1w
@@ -596,7 +617,7 @@ for p = 1:dm(3)
             end
             
             tmp      = MT;
-            Nmap(3).dat(:,:,p) = max(min(tmp,threshall.MT),-threshall.MT);
+            Nmap(MTmap_idx).dat(:,:,p) = max(min(tmp,threshall.MT),-threshall.MT);
         end
     end
     spm_progress_bar('Set',p);
@@ -608,7 +629,7 @@ input_files = mpm_params.input(PDidx).fnam;
 if (T1idx); input_files = char(input_files, mpm_params.input(T1idx).fnam); end
 if (MTidx); input_files = char(input_files, mpm_params.input(MTidx).fnam); end
 Output_hdr = init_mpm_output_metadata(input_files, mpm_params);
-for ctr = 1:size(output_suffix,2)
+for ctr = 1:noutput
     Output_hdr.history.output.imtype = descrip(ctr);
     Output_hdr.history.output.units = units(ctr);
     set_metadata(fullfile(calcpath,[outbasename '_' output_suffix{ctr} '.nii']),Output_hdr,mpm_params.json);
@@ -666,7 +687,8 @@ end
 
 % for quality assessment and/or PD map calculation
 % segmentation preferentially performed on MT map but can be done on R1 map
-% if no MT map available.
+% if no MT map available. Therefore, we must at least have R1 available,
+% i.e. both PDw and T1w inputs...
 if (mpm_params.QA.enable||(PDproc.PDmap)) && (PDidx && T1idx)
     if ~isempty(fMT); 
         Vsave = spm_vol(fMT);
@@ -688,29 +710,30 @@ if (mpm_params.QA.enable||(PDproc.PDmap)) && (PDidx && T1idx)
     fTPM = char(cat(1,output_list{1}.tiss.c));
 end
 
-% for quality assessment
-if mpm_params.QA.enable
+% for quality assessment - the above segmentation must have run
+if mpm_params.QA.enable && exist('fTPM','var')
+    
+    % Load existing QA results
+    if exist(mpm_params.QA.fnam,'file')
+        mpm_params.QA = spm_jsonread(mpm_params.QA.fnam);
+    end
+
     % Calculate WM mask
     TPMs = spm_read_vols(spm_vol(fTPM));
     WMmask = zeros(size(squeeze(TPMs(:,:,:,2))));
     WMmask(squeeze(TPMs(:,:,:,2))>=PDproc.WMMaskTh) = 1;        
     WMmask = spm_erode(spm_erode(double(WMmask)));
-    % Load OLS R2s maps calculated for each contrast and mask them
-    R2s = spm_read_vols(spm_vol(spm_select('FPList',calcpath,'^s.*_R2s_(MTw|PDw|T1w).(img|nii)$')));
-    R2s = R2s.*repmat(WMmask,[1 1 1 size(R2s,4)]);
-    SDR2s = zeros(1,size(R2s,4));
-    % For each contrast calculate SD of the R2s values within the WM mask
-    % (measure of the intra-run motion for each contrast)
-    for ctr=1:size(R2s,4)
-        MaskedR2s = squeeze(R2s(:,:,:,ctr));
-        SDR2s(ctr) = std(MaskedR2s(MaskedR2s~=0),[],1);
+    
+    % Load OLS R2s maps calculated for each contrast, mask them and
+    % calculate SD within the WM mask (measure of the intra-run motion for
+    % each contrast)
+    for ccon = 1:mpm_params.ncon
+        R2s = spm_read_vols(spm_vol(spm_select('FPList',calcpath,sprintf('^s.*_R2s_%sw.nii$',mpm_params.input(ccon).tag))));
+        MaskedR2s = squeeze(R2s.*WMmask);
+        SDR2s = std(MaskedR2s(MaskedR2s~=0),[],1);
+        mpm_params.QA.SDR2s.([mpm_params.input(ccon).tag 'w']) = SDR2s;
     end
-    if exist(mpm_params.QA.fnam,'file')
-        mpm_params.QA = spm_jsonread(mpm_params.QA.fnam);
-    end
-    mpm_params.QA.SDR2s.MTw = SDR2s(1);
-    mpm_params.QA.SDR2s.PDw = SDR2s(2);
-    mpm_params.QA.SDR2s.T1w = SDR2s(3);
+    
     spm_jsonwrite(mpm_params.QA.fnam, mpm_params.QA, struct('indent','\t'));
 end
 
@@ -774,6 +797,8 @@ if T1idx
     copyfile(Pavg{T1idx},PT1w_final);
     try copyfile([spm_str_manip(Pavg{T1idx},'r') '.json'],[spm_str_manip(PT1w_final,'r') '.json']); end
     PT1w = PT1w_final;
+else
+    PT1w = '';
 end
 
 % save processing params (mpm_params)
@@ -920,37 +945,41 @@ mpm_params.ACPCrealign = hmri_get_defaults('qMRI_maps.ACPCrealign'); % realigns 
 % contrast.  
 % if no input files for a given contrast, no input entry created and
 % warning is thrown.
-ccon = 1;
+ccon = 0;
 fprintf(1,'\nINFO: FLASH echoes loaded for each contrast are: ');
 % 1) try MTw contrast:
-mpm_params.input(ccon).fnam   = char(jobsubj.raw_mpm.MT); % P_mtw
-if ~size(mpm_params.input(ccon).fnam)
-    fprintf(1,'\n\t- WARNING: no MT-weighted FLASH echoes available!\n');
+tmpfnam   = char(jobsubj.raw_mpm.MT); % P_mtw
+if isempty(tmpfnam)
+    fprintf(1,'\n\t- WARNING: no MT-weighted FLASH echoes available!');
     mpm_params.MTidx = 0; % zero index means no contrast available
 else
-    fprintf(1,'\n\t- MT-weighted: %d echoes', size(mpm_params.input(ccon).fnam,1));
+    ccon = ccon+1;
+    fprintf(1,'\n\t- MT-weighted: %d echoes', size(tmpfnam,1));
+    mpm_params.input(ccon).fnam = tmpfnam;
     mpm_params.input(ccon).tag = 'MT';  
     mpm_params.MTidx = ccon;
-    ccon = ccon+1;
 end  
 % 2) try PDw contrast:
-mpm_params.input(ccon).fnam   = char(jobsubj.raw_mpm.PD); % P_pdw
-if ~size(mpm_params.input(ccon).fnam)
-    fprintf(1,'\n\t- WARNING: no PD-weighted FLASH echoes available! \n\t\tThe map creation won''t be able to proceed!\n');
+tmpfnam   = char(jobsubj.raw_mpm.PD); % P_pdw
+if isempty(tmpfnam)
+    fprintf(1,'\n\n\t- WARNING: no PD-weighted FLASH echoes available! \n\t\tThe map creation won''t be able to proceed!\n');
     mpm_params.PDidx = 0; % zero index means no contrast available
 else
-    fprintf(1,'\n\t- PD-weighted: %d echoes', size(mpm_params.input(ccon).fnam,1));
+    ccon = ccon+1;
+    fprintf(1,'\n\t- PD-weighted: %d echoes', size(tmpfnam,1));
+    mpm_params.input(ccon).fnam = tmpfnam;
     mpm_params.input(ccon).tag = 'PD';  
     mpm_params.PDidx = ccon;
-    ccon = ccon+1;
 end  
 % 3) try T1w contrast:
-mpm_params.input(ccon).fnam   = char(jobsubj.raw_mpm.T1); % P_t1w
-if ~size(mpm_params.input(ccon).fnam)
-    fprintf(1,'\n\t- WARNING: no T1-weighted FLASH echoes available!\n');
+tmpfnam   = char(jobsubj.raw_mpm.T1); % P_t1w
+if isempty(tmpfnam)
+    fprintf(1,'\n\t- WARNING: no T1-weighted FLASH echoes available!');
     mpm_params.T1idx = 0; % zero index means no contrast available
 else
-    fprintf(1,'\n\t- T1-weighted: %d echoes', size(mpm_params.input(ccon).fnam,1));
+    ccon = ccon+1;
+    fprintf(1,'\n\t- T1-weighted: %d echoes', size(tmpfnam,1));
+    mpm_params.input(ccon).fnam = tmpfnam;
     mpm_params.input(ccon).tag = 'T1';  
     mpm_params.T1idx = ccon; % zero index means no contrast available    
 end 
@@ -1032,6 +1061,10 @@ mpm_params.proc.RFC = hmri_get_defaults(['rfcorr.',prot_tag]);
 mpm_params.proc.threshall = hmri_get_defaults('qMRI_maps_thresh');
 % load PD maps processing parameters
 mpm_params.proc.PD = hmri_get_defaults('PDproc');
+if ~(mpm_params.PDidx && mpm_params.T1idx) && mpm_params.proc.PD.PDmap
+    fprintf(1,'\nWARNING: PD map calculation enabled but T1w images not available.\n\tPD map won''t be calculated.\n');
+    mpm_params.proc.PD.PDmap = 0;
+end
 % whether OLS R2* is calculated
 mpm_params.proc.R2sOLS = hmri_get_defaults('R2sOLS');
 

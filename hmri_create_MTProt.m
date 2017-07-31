@@ -97,11 +97,13 @@ PDidx = mpm_params.PDidx;
 T1idx = mpm_params.T1idx;
 MTidx = mpm_params.MTidx;
 % TE/TR/FA for each contrast 
-if PDidx
-    TE_pdw = mpm_params.input(PDidx).TE;
-    TR_pdw = mpm_params.input(PDidx).TR;
-    fa_pdw = mpm_params.input(PDidx).fa;
-end
+% T1w and MTw contrasts are optional.
+% PDw must be present or nothing can be calculated. The script will abort
+% at the next line if no PDw echoes available. In that case, a warning has
+% been thrown earlier (in get_mpm_params).
+TE_pdw = mpm_params.input(PDidx).TE;
+TR_pdw = mpm_params.input(PDidx).TR;
+fa_pdw = mpm_params.input(PDidx).fa;
 if T1idx
     TE_t1w = mpm_params.input(T1idx).TE; %#ok<NASGU>
     TR_t1w = mpm_params.input(T1idx).TR;
@@ -294,12 +296,11 @@ end
 if mpm_params.QA.enable
     fprintf(1,'\n    -------- multi-contrast R2* map calculation for QA --------\n');
     
-    V_PD = spm_vol(mpm_params.input(PDidx).fnam);
     for ccon = 1:mpm_params.ncon
         dt        = [spm_type('float32'),spm_platform('bigend')];
         Ni        = nifti;
-        Ni.mat    = V.mat;
-        Ni.mat0   = V.mat;
+        Ni.mat    = V_pdw(1).mat;
+        Ni.mat0   = V_pdw(1).mat;
         Ni.descrip='OLS R2* map [1/ms]';
         Ni.dat    = file_array(fullfile(calcpath,[outbasename '_R2s_' mpm_params.input(ccon).tag 'w.nii']),dm,dt, 0,1,0);
         create(Ni);
@@ -325,7 +326,7 @@ if mpm_params.QA.enable
                 % appropriate contrast using the matField entry for that
                 % contrast, which has been co-registered to the PD-weighted
                 % data:
-                M1 = Vavg(ccon).mat\V_PD(1).mat*M;
+                M1 = Vavg(ccon).mat\V_pdw(1).mat*M;
                 
                 % Third order B-spline interpolation for OLS R2* estimation
                 % since we no longer assume that the echoes are perfectly
@@ -360,8 +361,6 @@ if mpm_params.proc.R2sOLS
     Ni.dat      = file_array(fR2s_OLS,dm,dt,0,1,0);
     create(Ni);
     
-    V_PD = spm_vol(mpm_params.input(PDidx).fnam);
-    
     % Combine the data and echo times:
     nechoes = zeros(1,mpm_params.ncon);
     for ccon = 1:mpm_params.ncon
@@ -390,7 +389,7 @@ if mpm_params.proc.R2sOLS
             % appropriate contrast using the V.mat field entry for that
             % contrast, which has been co-registered to the PD-weighted
             % data:
-            M1 = Vavg(ccon).mat\V_PD(1).mat*M;
+            M1 = Vavg(ccon).mat\V_pdw(1).mat*M;
             
             for cecho = 1:nechoes(ccon)               
                 % Third order B-spline interpolation for OLS R2* estimation
@@ -937,7 +936,7 @@ end
 % 2) try PDw contrast:
 mpm_params.input(ccon).fnam   = char(jobsubj.raw_mpm.PD); % P_pdw
 if ~size(mpm_params.input(ccon).fnam)
-    fprintf(1,'\n\t- WARNING: no PD-weighted FLASH echoes available!\n');
+    fprintf(1,'\n\t- WARNING: no PD-weighted FLASH echoes available! \n\t\tThe map creation won''t be able to proceed!\n');
     mpm_params.PDidx = 0; % zero index means no contrast available
 else
     fprintf(1,'\n\t- PD-weighted: %d echoes', size(mpm_params.input(ccon).fnam,1));

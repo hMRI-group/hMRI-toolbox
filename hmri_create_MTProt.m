@@ -634,54 +634,54 @@ for ctr = 1:noutput
 end
 
 %% =======================================================================%
-% ACPC Realign all images
+% ACPC Realign all images - only if MT map created
 %=========================================================================%
-% % % if mpm_params.ACPCrealign
-% % %     fprintf(1,'\n    -------- ACPC Realign all images --------\n');
-% % %     
-% % %     % Define and calculate masked MT image
-% % %     % Load MT image
-% % %     V_MT = spm_vol(fMT);
-% % %     MTimage = spm_read_vols(V_MT);    
-% % %     % Define new file name for masked MT image
-% % %     V_MT.fnam = fullfile(calcpath,['masked_' spm_str_manip(fMT,'t')]);
-% % %     % Load average PDw image (mask based on averaged PDw image)
-% % %     PDWimage = spm_read_vols(spm_vol(PPDw));
-% % %     % Mask MT image and save the masked MT image ('masked_..._MT.nii')
-% % %     MTimage(PDWimage<0.6*mean(PDWimage(:)))=0;
-% % %     spm_write_vol(V_MT,MTimage);
-% % % 
-% % %     % Use masked MT image to calculate transformation for ACPC realignment
-% % %     % (to increase robustness in segmentation):
-% % %     [~,R] = hmri_create_comm_adjust(1,V_MT.fnam,V_MT.fnam,8,0,fullfile(spm('Dir'),'canonical','avg152T1.nii')); 
-% % %     
-% % %     % Collect all images from all defined output directories:
-% % %     allpaths = jobsubj.path;
-% % %     ACPC_images = [];
-% % %     f = fieldnames(allpaths);
-% % %     for cfield = 1:length(f)
-% % %         tmpfiles = spm_select('FPList',allpaths.(f{cfield}),'.*.(img|nii)$');
-% % %         if ~isempty(tmpfiles)
-% % %             if ~isempty(ACPC_images)
-% % %                 ACPC_images = char(ACPC_images,spm_select('FPList',allpaths.(f{cfield}),'.*.(img|nii)$'));
-% % %             else
-% % %                 ACPC_images = tmpfiles;
-% % %             end
-% % %         end
-% % %     end
-% % %     
-% % %     % Apply transform to ALL images 
-% % %     for i=1:size(ACPC_images,1)
-% % %         spm_get_space(deblank(ACPC_images(i,:)),...
-% % %             R*spm_get_space(deblank(ACPC_images(i,:))));
-% % %         Vsave = spm_vol(ACPC_images(i,:));
-% % %         Vsave.descrip = [Vsave.descrip ' - AC-PC realigned'];
-% % %         spm_write_vol(Vsave,spm_read_vols(spm_vol(ACPC_images(i,:))));
-% % %     end;
-% % %     
-% % %     % Save transformation matrix
-% % %     spm_jsonwrite(fullfile(supplpath,'MPM_map_creation_ACPCrealign_transformation_matrix.json'),R,struct('indent','\t'));
-% % % end
+if mpm_params.ACPCrealign && MTidx && PDidx && T1idx
+    fprintf(1,'\n    -------- ACPC Realign all images --------\n');
+    
+    % Define and calculate masked MT image
+    % Load MT image
+    V_MT = spm_vol(fMT);
+    MTimage = spm_read_vols(V_MT);    
+    % Define new file name for masked MT image
+    V_MT.fname = fullfile(calcpath,['masked_' spm_str_manip(fMT,'t')]);
+    % Load average PDw image (mask based on averaged PDw image)
+    PDWimage = spm_read_vols(Vavg(PDidx));
+    % Mask MT image and save the masked MT image ('masked_..._MT.nii')
+    MTimage(PDWimage<0.6*mean(PDWimage(:)))=0;
+    spm_write_vol(V_MT,MTimage);
+
+    % Use masked MT image to calculate transformation for ACPC realignment
+    % (to increase robustness in segmentation):
+    [~,R] = hmri_create_comm_adjust(1,V_MT.fname,V_MT.fname,8,0,fullfile(spm('Dir'),'canonical','avg152T1.nii')); 
+    
+    % Collect all images from all defined output directories:
+    allpaths = jobsubj.path;
+    ACPC_images = [];
+    f = fieldnames(allpaths);
+    for cfield = 1:length(f)
+        tmpfiles = spm_select('FPList',allpaths.(f{cfield}),'.*.(img|nii)$');
+        if ~isempty(tmpfiles)
+            if ~isempty(ACPC_images)
+                ACPC_images = char(ACPC_images,spm_select('FPList',allpaths.(f{cfield}),'.*.(img|nii)$'));
+            else
+                ACPC_images = tmpfiles;
+            end
+        end
+    end
+    
+    % Apply transform to ALL images 
+    for i=1:size(ACPC_images,1)
+        spm_get_space(deblank(ACPC_images(i,:)),...
+            R*spm_get_space(deblank(ACPC_images(i,:))));
+        Vsave = spm_vol(ACPC_images(i,:));
+        Vsave.descrip = [Vsave.descrip ' - AC-PC realigned'];
+        spm_write_vol(Vsave,spm_read_vols(spm_vol(ACPC_images(i,:))));
+    end;
+    
+    % Save transformation matrix
+    spm_jsonwrite(fullfile(supplpath,'MPM_map_creation_ACPCrealign_transformation_matrix.json'),R,struct('indent','\t'));
+end
 
 % for quality assessment and/or PD map calculation
 % segmentation preferentially performed on MT map but can be done on R1 map

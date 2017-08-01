@@ -176,8 +176,6 @@ set_metadata(fR2s,Output_hdr,mpm_params.json);
 %=========================================================================%
 fprintf(1,'\n    -------- Reading and averaging the images --------\n');
 
-avg_nr = 6;
-
 % Average only first few echoes for increased SNR and fit T2* 
 Pavg = cell(1,mpm_params.ncon);
 for ccon=1:mpm_params.ncon % loop over available contrasts
@@ -1024,7 +1022,8 @@ end
 % find maximum number of echoes that are common to all available contrasts
 % AND one more than the maxTEval4avg:
 mpm_params.nr_echoes4avg = min(length(find(mpm_params.input(1).TE<maxTEval4avg))+1,ncommonTEvals);
-
+fprintf(1,'\nINFO: averaged PDw/T1w/MTw will be calculated based on the first %d echoes.\n',mpm_params.nr_echoes4avg);
+        
 % if T1w and PDw data available, identify the protocol to define RF
 % spoiling correction parameters (for T1 map calculation)
 if mpm_params.PDidx && mpm_params.T1idx
@@ -1061,7 +1060,7 @@ mpm_params.proc.RFC = hmri_get_defaults(['rfcorr.',prot_tag]);
 mpm_params.proc.threshall = hmri_get_defaults('qMRI_maps_thresh');
 % load PD maps processing parameters
 mpm_params.proc.PD = hmri_get_defaults('PDproc');
-if ~(mpm_params.PDidx && mpm_params.T1idx) && mpm_params.proc.PD.PDmap
+if ~mpm_params.T1idx && mpm_params.proc.PD.PDmap
     fprintf(1,'\nWARNING: PD map calculation enabled but T1w images not available.\n\tPD map won''t be calculated.\n');
     mpm_params.proc.PD.PDmap = 0;
 end

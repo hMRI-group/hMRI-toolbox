@@ -40,7 +40,13 @@ json = hmri_get_defaults('json');
 % as determined for 3T Magnetom Tim Trio (Siemens Healthcare, Erlangen, Germany)
 % see Weiskopf et al., Neuroimage 2010
 
-unicort_params = hmri_get_defaults('unicort');
+% if customized defaults file available, run it to overwrite standard
+% defaults parameters 
+if isfield(jobsubj.b1_type.UNICORT.b1parameters,'b1defaults')
+    deffnam = jobsubj.b1_type.UNICORT.b1parameters.b1defaults;
+    spm('Run',deffnam);
+end
+unicort_params = hmri_get_defaults('b1map.UNICORT.procpar');
 reg = unicort_params.reg;
 FWHM = unicort_params.FWHM;
 thr_factor = unicort_params.thr;

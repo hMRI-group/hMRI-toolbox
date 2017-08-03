@@ -182,30 +182,30 @@ if isfield(jobsubj.sensitivity,'RF_once')
     rfsens_params.input.MT.sensimages.fnames = char(tmpfnam);
     rfsens_params.input.PD.sensimages.fnames = char(tmpfnam);
     rfsens_params.input.T1.sensimages.fnames = char(tmpfnam);
-    rfsens_params.senstype = 'RF_once: single sensitivity data set acquired for the whole MPM protocol';
-elseif isfield(jobsubj.sensitivity,'RF_MPM')
-    for i=1:length(jobsubj.sensitivity.RF_MPM.raw_sens3.raw_sens_MT)
-        tmprawfnam = spm_file(jobsubj.sensitivity.RF_MPM.raw_sens3.raw_sens_MT{i},'number','');
+    rfsens_params.senstype = 'RF_once: single set of RF sensitivity maps acquired for all contrasts';
+elseif isfield(jobsubj.sensitivity,'RF_per_contrast')
+    for i=1:length(jobsubj.sensitivity.RF_per_contrast.raw_sens_MT)
+        tmprawfnam = spm_file(jobsubj.sensitivity.RF_per_contrast.raw_sens_MT{i},'number','');
         tmpfnam{i} = fullfile(rfsens_params.calcpath,spm_file(tmprawfnam,'filename')); %#ok<AGROW>
         copyfile(tmprawfnam, tmpfnam{i});
         try copyfile([spm_str_manip(tmprawfnam,'r') '.json'],[spm_str_manip(tmpfnam{i},'r') '.json']); end
     end
     rfsens_params.input.MT.sensimages.fnames = char(tmpfnam);
-    for i=1:length(jobsubj.sensitivity.RF_MPM.raw_sens3.raw_sens_PD)
-        tmprawfnam = spm_file(jobsubj.sensitivity.RF_MPM.raw_sens3.raw_sens_PD{i},'number','');
+    for i=1:length(jobsubj.sensitivity.RF_per_contrast.raw_sens_PD)
+        tmprawfnam = spm_file(jobsubj.sensitivity.RF_per_contrast.raw_sens_PD{i},'number','');
         tmpfnam{i} = fullfile(rfsens_params.calcpath,spm_file(tmprawfnam,'filename'));
         copyfile(tmprawfnam, tmpfnam{i});
         try copyfile([spm_str_manip(tmprawfnam,'r') '.json'],[spm_str_manip(tmpfnam{i},'r') '.json']); end
     end
     rfsens_params.input.PD.sensimages.fnames = char(tmpfnam);
-    for i=1:length(jobsubj.sensitivity.RF_MPM.raw_sens3.raw_sens_T1)
-        tmprawfnam = spm_file(jobsubj.sensitivity.RF_MPM.raw_sens3.raw_sens_T1{i},'number','');
+    for i=1:length(jobsubj.sensitivity.RF_per_contrast.raw_sens_T1)
+        tmprawfnam = spm_file(jobsubj.sensitivity.RF_per_contrast.raw_sens_T1{i},'number','');
         tmpfnam{i} = fullfile(rfsens_params.calcpath,spm_file(tmprawfnam,'filename')); 
         copyfile(tmprawfnam, tmpfnam{i});
         try copyfile([spm_str_manip(tmprawfnam,'r') '.json'],[spm_str_manip(tmpfnam{i},'r') '.json']); end
     end
     rfsens_params.input.T1.sensimages.fnames = char(tmpfnam);  
-    rfsens_params.senstype = 'RF_MPM: one sensitivity data set acquired per MPM contrast';
+    rfsens_params.senstype = 'RF_per_contrast: one sensitivity data set acquired per contrast (i.e. T1/PD/MT-weighted images)';
 else
     error('RF sensitivity correction: no RF sensitivity data provided.');
 end

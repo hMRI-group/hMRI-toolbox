@@ -2,45 +2,62 @@ function hmri_defaults
 % Sets the defaults which are used by the hMRI toolbox.
 %
 % FORMAT hmri_defaults
-%_______________________________________________________________________
+%__________________________________________________________________________
 %
-% This file can be customised to any the site/person own setup.
-% Individual users can make copies which can be stored on their own
-% matlab path. Make sure then that your 'hmri_defaults' is the first one
-% found in the path. See matlab documentation for details on setting path.
+% THIS FILE SHOULD NOT BE MODIFIED. 
+% To customize the hMRI-Toolbox defaults parameters and match your own
+% site/protocol-specific setup, please refer to the defaults files in
+% hMRI-Toolbox\local. 
 %
-% Care must be taken when modifying this file!
+% For B1 map calculation parameters customization (available for 3DEPI,
+% 3DAFI and UNICORT methods), use "hmri_b1_defaults.m". Make a copy with
+% meaningful name, modify as desired and select as defaults B1 file in the
+% MapCreation Batch GUI.
+%
+% For all other parameters, use "hmri_defaults_local.m". Make a copy with
+% meaningful name, modify as desired and select as general defaults file
+% in the "Configure Toolbox" branch of the hMRI-Toolbox.
 %
 % The structure and content of this file are largely inspired by the
 % equivalent file in SPM.
-%_______________________________________________________________________
+%__________________________________________________________________________
 % Copyright (C) 2013 Wellcome Trust Centre for Neuroimaging
 
 % Written by C. Phillips, 2013.
 % Cyclotron Research Centre, University of Liege, Belgium
 
-%%
+% Global hmri_def variable used across the whole toolbox
 global hmri_def
 
-%% ======================== Global parameters =============================
-% Specifying the lab
-hmri_def.centre = 'centre' ; % 'fil', 'lren', 'crc', 'sciz', 'cbs', ...
+% Specifying the research centre - to be customized in the lcal
+% configuration file (local/hmri_defaults_local.m). Not mandatory.
+hmri_def.centre = 'centre' ; 
 
-% Cleanup temporary directories 
+
+%==========================================================================
+% Common processing parameters 
+%==========================================================================
+
+% cleanup temporary directories. If set to true, all  
 hmri_def.cleanup = true;
-
-%% ===================== Common processing parameters =====================
-% These parameters are either parameters that are fixed for all sites or
-% recommended values. They can also be changed in a site-specific way at
-% run-time.
-
-hmri_def.R2sOLS = 1; % Create an Ordinary Least Squares R2* map?
+% settings for JSON metadata
 hmri_def.json = struct('extended',false,'separate',true,'anonym','none',...
-    'overwrite',true, 'indent','\t'); % settings for JSON metadata
-
+    'overwrite',true, 'indent','\t'); 
+% recommended TPM for segmentation and spatial processing
 hmri_def.TPM = fullfile(spm_file(mfilename('fullpath'),'path'), 'etpm', 'eTPM.nii');
 
-%% Processing of PD maps
+%==========================================================================
+% R1/PD/R2s/MT map creation parameters
+%==========================================================================
+
+%--------------------------------------------------------------------------
+% create an Ordinary Least Squares R2* map?
+%--------------------------------------------------------------------------
+hmri_def.R2sOLS = 1; 
+
+%--------------------------------------------------------------------------
+% PD maps processing parameters
+%--------------------------------------------------------------------------
 hmri_def.PDproc.PDmap    = 1;    % Calculation of PD maps requires a B1 map. Set to 0 if a B1 map is not available
 hmri_def.PDproc.WBMaskTh = 0.1;  % Threshold for calculation of whole-brain mask from TPMs
 hmri_def.PDproc.WMMaskTh = 0.95; % Threshold for calculation of white-matter mask from TPMs
@@ -53,20 +70,21 @@ hmri_def.PDproc.nr_echoes_forA = 1; % NOTE: in order to minimize R2* bias
     % over more echoes might be preferable when PD map's SNR is too poor,
     % but be aware that the gain in SNR will be balanced by an increased
     % R2* bias in PD values (in particular in the GM).
-
-%% UNICORT processing
-hmri_def.unicort.reg = 10^-3;
-hmri_def.unicort.FWHM = 60;
-hmri_def.unicort.thr = 5;
-                          
-%% RF sensitivity processing
+                         
+%--------------------------------------------------------------------------
+% RF sensitivity bias correction
+%--------------------------------------------------------------------------
 hmri_def.RFsens.smooth_kernel = 12;
 
-%% quantitative maps: quality evaluation and realignment to MNI
+%--------------------------------------------------------------------------
+% quantitative maps: quality evaluation and realignment to MNI
+%--------------------------------------------------------------------------
 hmri_def.qMRI_maps.QA          = 1; % creates a matlab structure containing markers of data quality
 hmri_def.qMRI_maps.ACPCrealign = 1; % realigns qMRI maps to MNI
 
-%% Threshold values for saving of the qMRI maps
+%--------------------------------------------------------------------------
+% Threshold values for qMRI maps
+%--------------------------------------------------------------------------
 hmri_def.qMRI_maps_thresh.R1       = 2000;
 hmri_def.qMRI_maps_thresh.A        = 10^5;
 hmri_def.qMRI_maps_thresh.R2s      = 10;
@@ -74,7 +92,9 @@ hmri_def.qMRI_maps_thresh.MTR      = 50;
 hmri_def.qMRI_maps_thresh.MTR_synt = 50;
 hmri_def.qMRI_maps_thresh.MT       = 5; 
 
-%% === MPM acquisition parameters and RF spoiling correction parameters ===
+%--------------------------------------------------------------------------
+% MPM acquisition parameters and RF spoiling correction parameters
+%--------------------------------------------------------------------------
 % these value are initialised with defaults (v2k protocol - Prisma) for the
 % first pass through this script only. They're updated at run-time with
 % actual acquisition values (see hmri_MTProt.m).
@@ -83,7 +103,6 @@ hmri_def.qMRI_maps_thresh.MT       = 5;
 % processing so they can be stored for reccord.
 
 % Default MPMacq values to begin with
-%---------------------------------------------------------------------
 hmri_def.MPMacq.TE_mtw = 2.34;
 hmri_def.MPMacq.TE_t1w = 2.34;
 hmri_def.MPMacq.TE_pdw = 2.34;
@@ -95,7 +114,7 @@ hmri_def.MPMacq.fa_t1w = 21;     % <-
 hmri_def.MPMacq.fa_pdw = 6;      % <-
 hmri_def.MPMacq.tag    = 'v2k';
 
-%% Defining the MPMacq paramters distinguishing the different protocols
+% Defining the MPMacq paramters distinguishing the different protocols
 %---------------------------------------------------------------------
 % Using the following parameter order: [TR_pdw TR_t1w fa_pdw fa_t1w]
 % NOTE: all tags MUST 
@@ -144,7 +163,7 @@ hmri_def.MPMacq_set.names{7} = 'v3star protocol';
 hmri_def.MPMacq_set.tags{7}  = 'v3star';
 hmri_def.MPMacq_set.vals{7}  = [25 25 6 21];
 
-%% Defining the RFCorr parameters for the different protocols
+% Defining the RFCorr parameters for the different protocols
 %---------------------------------------------------------------------
 % Antoine Lutti 15/01/09
 % Correction parameters used in hmri_MTProt to correct for imperfect RF
@@ -194,28 +213,15 @@ hmri_def.rfcorr.v3star.RFCorr = true;
 hmri_def.rfcorr.Unknown.tag = 'Unknown protocol. No spoiling correction defined.';
 hmri_def.rfcorr.Unknown.RFCorr = false;
 
-%% ================== B1 mapping processing parameters ====================
-% Default parameters are set below for each main type of B1 processing.
+%--------------------------------------------------------------------------
+% B1 mapping processing parameters 
+%--------------------------------------------------------------------------
+% Default parameters are set below for each type of B1 processing.
 % For acquisition parameters, default values are a fallback solution for B1
 % data processing when no metadata are available. Use of metadata is
 % recommended to retrieve site- & protocol-specific parameters and ensure
 % appropriate data handling and processing.
-% Use hmri_defaults_local to define local protocol parameters.
-%
-% List B1 protocols available
-% ---------------------------
-hmri_def.b1_type.labels  = {
-    'i3D_EPI'
-    'i3D_AFI'
-    'tfl_b1_map'
-    'rf_map'
-    'no_B1_correction'
-    'pre_processed_B1'
-    'UNICORT'
-    }';
-
-% B1 map protocol parameters
-% --------------------------
+% See examples of local customization in the hMRI-Toolbox\local directory.
 
 % 'i3D_AFI'
 hmri_def.b1map.i3D_AFI.b1type = 'i3D_AFI'; 
@@ -223,7 +229,7 @@ hmri_def.b1map.i3D_AFI.b1avail = true;
 hmri_def.b1map.i3D_AFI.procreq = true; 
 hmri_def.b1map.i3D_AFI.b1acq.TR2TR1ratio = 5;
 hmri_def.b1map.i3D_AFI.b1acq.alphanom = 60;
-hmri_def.b1map.i3D_AFI.deffnam  = {'hmri_b1_defaults.m'};
+hmri_def.b1map.i3D_AFI.deffnam  = {fullfile(fileparts(mfilename('fullpath')),'local','hmri_b1_defaults.m')};
 
 % 'pre_processed_B1'
 hmri_def.b1map.pre_processed_B1.b1type = 'pre_processed_B1'; 
@@ -239,12 +245,16 @@ hmri_def.b1map.no_B1_correction.procreq = false;
 hmri_def.b1map.UNICORT.b1type = 'UNICORT'; 
 hmri_def.b1map.UNICORT.procreq = true;
 hmri_def.b1map.UNICORT.b1avail   = false;
+hmri_def.b1map.UNICORT.procpar.reg = 10^-3;
+hmri_def.b1map.UNICORT.procpar.FWHM = 60;
+hmri_def.b1map.UNICORT.procpar.thr = 5;
+hmri_def.b1map.UNICORT.deffnam  = {fullfile(fileparts(mfilename('fullpath')),'local','hmri_b1_defaults.m')};
 
 % 'i3D_EPI'
 hmri_def.b1map.i3D_EPI.b1type = 'i3D_EPI'; 
 hmri_def.b1map.i3D_EPI.b1avail   = true; 
 hmri_def.b1map.i3D_EPI.procreq = true; 
-hmri_def.b1map.i3D_EPI.deffnam = {'hmri_b1_defaults.m'};
+hmri_def.b1map.i3D_EPI.deffnam  = {fullfile(fileparts(mfilename('fullpath')),'local','hmri_b1_defaults.m')};
 % b0&b1-processing
 hmri_def.b1map.i3D_EPI.b1proc.T1 = 1192; % ms, strictly valid only at 3T
 hmri_def.b1map.i3D_EPI.b1proc.eps = 0.0001;
@@ -268,17 +278,12 @@ hmri_def.b1map.i3D_EPI.b0acq.iformat = 'PM'; % ms
 
 % 'tfl_b1_map'
 hmri_def.b1map.tfl_b1_map.b1type = 'tfl_b1_map'; 
-hmri_def.b1map.tfl_b1_map.avail   = true; 
+hmri_def.b1map.tfl_b1_map.b1avail   = true; 
 hmri_def.b1map.tfl_b1_map.procreq = true; 
 
 % 'rf_map'
 hmri_def.b1map.rf_map.b1type = 'rf_map'; 
-hmri_def.b1map.rf_map.avail   = true; 
+hmri_def.b1map.rf_map.b1avail   = true; 
 hmri_def.b1map.rf_map.procreq = true; 
-
-% call local defaults to check for available protocols
-if exist('hmri_defaults_local.m','file')
-    hmri_defaults_local;
-end
 
 end

@@ -10,7 +10,7 @@ function hmri = tbx_cfg_hmri
 % Bogdan Draganski & Ferath Kherif, 2011
 % ======================================================================
 
-if ~isdeployed, addpath(fullfile(spm('Dir'),'toolbox','hmri')); end
+if ~isdeployed, addpath(genpath(fileparts(mfilename('fullpath')))); end
 
 % Work is split into 2 main branches:
 % - creating the MPM's from the raw images -> tbx_cfg_hmri_crm

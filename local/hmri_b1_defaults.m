@@ -1,5 +1,9 @@
 function hmri_b1_defaults
 % Sets the defaults for B1 bias correction, part of the hMRI toolbox.
+%!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+% DON'T MODIFY THIS FILE, IT'LL BE USED TO REINITIALISE B1 PROCESSING
+% DEFAULTS WHEN SET TO "STANDARD". Please read below for more details.
+%!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 %
 % FORMAT hmri_b1_defaults
 %__________________________________________________________________________
@@ -13,12 +17,14 @@ function hmri_b1_defaults
 % metadata is strongly recommended.  
 %
 % RECOMMENDATIONS
-% Parameters defined in this file are identical, initially, to the ones
-% defined in hmri_defaults.m. It is recommended, when modifying this file,
-% to remove all unchanged values and save the file with a meaningful name.
-% This will help you identifying the appropriate defaults to be used during
-% map creation for B1 map calculation, and will improve the readability of
-% the file by pointing to the modified parameters only.
+% Parameters defined in this file are identical, to the ones defined in
+% hmri_defaults.m. DON'T MODIFY THIS FILE, IT'LL BE USED TO REINITIALISE B1
+% PROCESSING DEFAULTS WHEN SET TO "STANDARD". It is recommended, when
+% modifying this file, to remove all unchanged values and SAVE THE MODIFIED
+% FILE WITH A MEANINGFUL NAME. This will help you identifying the
+% appropriate defaults to be used during  map creation for B1 map
+% calculation, and will improve the readability of the file by pointing to
+% the modified parameters only. 
 %
 % WARNING
 % Modification of the defaults parameters may impair the the integrity of

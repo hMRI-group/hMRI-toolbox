@@ -40,8 +40,12 @@ json = hmri_get_defaults('json');
 % as determined for 3T Magnetom Tim Trio (Siemens Healthcare, Erlangen, Germany)
 % see Weiskopf et al., Neuroimage 2010
 
+% first reinitialise processing parameters to standard defaults:
+deffnam = hmri_get_defaults('b1map.UNICORT.deffnam');    
+spm('Run',deffnam);
+
 % if customized defaults file available, run it to overwrite standard
-% defaults parameters 
+% defaults parameters:
 if isfield(jobsubj.b1_type.UNICORT.b1parameters,'b1defaults')
     deffnam = jobsubj.b1_type.UNICORT.b1parameters.b1defaults;
     spm('Run',deffnam);

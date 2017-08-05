@@ -511,6 +511,12 @@ b1_protocol = f{1};
 % (the customized defaults file must be run to overwrite the standard
 % defaults parameters)
 if isfield(jobsubj.b1_type.(b1_protocol),'b1parameters')
+    % first reinitialise processing parameters to standard defaults:
+    deffnam = hmri_get_defaults('b1map.(b1_protocol).deffnam');    
+    spm('Run',deffnam);
+
+    % then, if customized defaults file available, run it to overwrite
+    % standard defaults parameters.
     if isfield(jobsubj.b1_type.(b1_protocol).b1parameters,'b1defaults')
         deffnam = jobsubj.b1_type.(b1_protocol).b1parameters.b1defaults;
         spm('Run',deffnam);

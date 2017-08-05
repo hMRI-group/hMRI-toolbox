@@ -68,7 +68,7 @@ b1defaults.filter  = 'm';
 b1defaults.dir     = fullfile(fileparts(mfilename('fullpath')),'local');
 b1defaults.ufilter = '^hmri_b1_defaults.*\.m$';
 b1defaults.num     = [1 1];
-b1defaults.def     = @(val)hmri_get_defaults('b1map.i3D_EPI.deffnam', val{:});
+%b1defaults.def     = @(val)hmri_get_defaults('b1map.i3D_EPI.deffnam', val{:});
 
 % ---------------------------------------------------------------------
 % Use metadata or standard defaults (no customization)

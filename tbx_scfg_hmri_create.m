@@ -7,8 +7,6 @@ function crm = tbx_scfg_hmri_create
 
 % Christophe Phillips
 
-b1_choices = hmri_get_defaults('b1_type.labels');
-
 % ---------------------------------------------------------------------
 % Input FLASH images - T1-weighted 
 % ---------------------------------------------------------------------

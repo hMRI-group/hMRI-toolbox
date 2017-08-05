@@ -33,6 +33,8 @@ global hmri_def
 % configuration file (local/hmri_defaults_local.m). Not mandatory.
 hmri_def.centre = 'centre' ; 
 
+% Defaults customised defaults file location
+hmri_def.local_defaults = {fullfile(fileparts(mfilename('fullpath')),'local','hmri_defaults_local.m')};
 
 %==========================================================================
 % Common processing parameters 

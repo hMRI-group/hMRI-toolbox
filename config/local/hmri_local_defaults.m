@@ -1,4 +1,4 @@
-function hmri_local_defaults(varargin)
+function hmri_local_defaults
 % PURPOSE
 % To set the centre-specific defaults which are used by the hMRI toolbox.
 % Customized processing parameters can be defined, overwriting defaults

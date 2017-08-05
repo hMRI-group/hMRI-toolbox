@@ -512,8 +512,7 @@ b1_protocol = f{1};
 % defaults parameters)
 if isfield(jobsubj.b1_type.(b1_protocol),'b1parameters')
     % first reinitialise processing parameters to standard defaults:
-    deffnam = hmri_get_defaults('b1map.(b1_protocol).deffnam');    
-    spm('Run',deffnam);
+    hmri_b1_standard_defaults;
 
     % then, if customized defaults file available, run it to overwrite
     % standard defaults parameters.
@@ -607,7 +606,7 @@ switch b1_protocol
                     
                     b1map_params.b0acq.iformat = 'PM';
                 end
-            catch
+            catch %#ok<*CTCH>
                 fprintf(1, ['\nWARNING: possibly no metadata associated to the input images. \n' ...
                     'Default acquisition and processing parameters will be used.\n']);
             end

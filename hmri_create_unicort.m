@@ -41,8 +41,7 @@ json = hmri_get_defaults('json');
 % see Weiskopf et al., Neuroimage 2010
 
 % first reinitialise processing parameters to standard defaults:
-deffnam = hmri_get_defaults('b1map.UNICORT.deffnam');    
-spm('Run',deffnam);
+hmri_b1_standard_defaults;
 
 % if customized defaults file available, run it to overwrite standard
 % defaults parameters:

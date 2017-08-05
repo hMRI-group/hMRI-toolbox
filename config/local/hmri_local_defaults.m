@@ -1,4 +1,4 @@
-function hmri_defaults_local(varargin)
+function hmri_local_defaults(varargin)
 % PURPOSE
 % To set the centre-specific defaults which are used by the hMRI toolbox.
 % Customized processing parameters can be defined, overwriting defaults
@@ -9,7 +9,7 @@ function hmri_defaults_local(varargin)
 % RECOMMENDATIONS
 % Parameters defined in this file are identical, initially, to the ones
 % defined in hmri_defaults.m. It is recommended, when modifying this file,
-% to remove all unchanged values and save the file with a meaningful name.
+% to remove all unchanged entries and save the file with a meaningful name.
 % This will help you identifying the appropriate defaults to be used for
 % each protocol, and will improve the readability of the file by pointing
 % to the modified parameters only.
@@ -22,8 +22,8 @@ function hmri_defaults_local(varargin)
 % HOW DOES IT WORK?
 % The modified defaults file can be selected using the "Configure Toolbox"
 % branch of the hMRI-Toolbox. For customization of B1 processing
-% parameters, type "help hmri_defaults.m". 
-%_______________________________________________________________________
+% parameters, type "help hmri_b1_standard_defaults.m". 
+%__________________________________________________________________________
 % Written by E. Balteau, 2017.
 % Cyclotron Research Centre, University of Liege, Belgium
 
@@ -116,7 +116,7 @@ hmri_def.MPMacq.fa_pdw = 6;      % <-
 hmri_def.MPMacq.tag    = 'v2k';
 
 % Defining the MPMacq paramters distinguishing the different protocols
-%---------------------------------------------------------------------
+%--------------------------------------------------------------------------
 % Using the following parameter order: [TR_pdw TR_t1w fa_pdw fa_t1w]
 % NOTE: all tags MUST 
 % - start with a letter, and 
@@ -165,7 +165,7 @@ hmri_def.MPMacq_set.tags{7}  = 'v3star';
 hmri_def.MPMacq_set.vals{7}  = [25 25 6 21];
 
 % Defining the RFCorr parameters for the different protocols
-%---------------------------------------------------------------------
+%--------------------------------------------------------------------------
 % Antoine Lutti 15/01/09
 % Correction parameters used in hmri_MTProt to correct for imperfect RF
 % spoiling when a B1 map is loaded. Correction based on Preibisch and

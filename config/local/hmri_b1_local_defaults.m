@@ -1,30 +1,27 @@
-function hmri_b1_defaults
+function hmri_b1_local_defaults
 % Sets the defaults for B1 bias correction, part of the hMRI toolbox.
-%!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-% DON'T MODIFY THIS FILE, IT'LL BE USED TO REINITIALISE B1 PROCESSING
-% DEFAULTS WHEN SET TO "STANDARD". Please read below for more details.
-%!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+% Consider this file as a template for local settings specifications. 
+% Please read below for details.
 %
-% FORMAT hmri_b1_defaults
+% FORMAT hmri_b1_local_defaults
 %__________________________________________________________________________
 %
 % PURPOSE
 % To set the centre-specific defaults for the B1 mapping protocol used by
-% the hMRI toolbox. Applies for 3D EPI, 3D AFI and UNICORT protocols only.
+% the hMRI toolbox. Applies to 3D EPI, 3D AFI and UNICORT protocols only.
 % Customized processing parameters can be defined, overwriting defaults
-% from hmri_defaults. Acquisition parameters can be specified here as a
-% fallback solution when no metadata are available. Note that the use of
-% metadata is strongly recommended.  
+% from hmri_b1_standard_defaults. Acquisition parameters can be specified
+% here as a fallback solution when no metadata are available. Note that the
+% use of metadata is strongly recommended.  
 %
 % RECOMMENDATIONS
-% Parameters defined in this file are identical, to the ones defined in
-% hmri_defaults.m. DON'T MODIFY THIS FILE, IT'LL BE USED TO REINITIALISE B1
-% PROCESSING DEFAULTS WHEN SET TO "STANDARD". It is recommended, when
-% modifying this file, to remove all unchanged values and SAVE THE MODIFIED
-% FILE WITH A MEANINGFUL NAME. This will help you identifying the
-% appropriate defaults to be used during  map creation for B1 map
-% calculation, and will improve the readability of the file by pointing to
-% the modified parameters only. 
+% Parameters defined in this file are identical, initially, to the ones
+% defined in hMRI-Toolbox\config\hmri_b1_standard_defaults. It is
+% recommended, when modifying this file, to remove all unchanged values and
+% SAVE THE MODIFIED FILE WITH A MEANINGFUL NAME. This will help you
+% identifying the appropriate defaults to be used during map creation for
+% B1 map calculation, and will improve the readability of the file by
+% pointing to the modified parameters only. 
 %
 % WARNING
 % Modification of the defaults parameters may impair the the integrity of
@@ -34,7 +31,7 @@ function hmri_b1_defaults
 % HOW DOES IT WORK?
 % The modified defaults file can be selected when specifying the B1 type in
 % the "Create maps" branch of the hMRI-Toolbox.
-%_______________________________________________________________________
+%__________________________________________________________________________
 % Written by E. Balteau, 2017.
 % Cyclotron Research Centre, University of Liege, Belgium
 %__________________________________________________________________________
@@ -58,7 +55,7 @@ hmri_def.b1map.i3D_AFI.b1avail = true;
 hmri_def.b1map.i3D_AFI.procreq = true; 
 hmri_def.b1map.i3D_AFI.b1acq.TR2TR1ratio = 5;
 hmri_def.b1map.i3D_AFI.b1acq.alphanom = 60;
-hmri_def.b1map.i3D_AFI.deffnam  = {fullfile(fileparts(mfilename('fullpath')),'local','hmri_b1_defaults.m')};
+hmri_def.b1map.i3D_AFI.deffnam  = {fullfile(fileparts(mfilename('fullpath')),'config','local','hmri_b1_local_defaults.m')};
 
 % 'pre_processed_B1'
 hmri_def.b1map.pre_processed_B1.b1type = 'pre_processed_B1'; 
@@ -77,13 +74,13 @@ hmri_def.b1map.UNICORT.b1avail   = false;
 hmri_def.b1map.UNICORT.procpar.reg = 10^-3;
 hmri_def.b1map.UNICORT.procpar.FWHM = 60;
 hmri_def.b1map.UNICORT.procpar.thr = 5;
-hmri_def.b1map.UNICORT.deffnam  = {fullfile(fileparts(mfilename('fullpath')),'local','hmri_b1_defaults.m')};
+hmri_def.b1map.UNICORT.deffnam  = {fullfile(fileparts(mfilename('fullpath')),'config','local','hmri_b1_local_defaults.m')};
 
 % 'i3D_EPI'
 hmri_def.b1map.i3D_EPI.b1type = 'i3D_EPI'; 
 hmri_def.b1map.i3D_EPI.b1avail   = true; 
 hmri_def.b1map.i3D_EPI.procreq = true; 
-hmri_def.b1map.i3D_EPI.deffnam  = {fullfile(fileparts(mfilename('fullpath')),'local','hmri_b1_defaults.m')};
+hmri_def.b1map.i3D_EPI.deffnam  = {fullfile(fileparts(mfilename('fullpath')),'config','local','hmri_b1_local_defaults.m')};
 % b0&b1-processing
 hmri_def.b1map.i3D_EPI.b1proc.T1 = 1192; % ms, strictly valid only at 3T
 hmri_def.b1map.i3D_EPI.b1proc.eps = 0.0001;

@@ -142,7 +142,8 @@ VB1 = V1;
 % spm_write_vol(VB1,B1map_norm);
 
 VB1.pinfo = [max(smB1map_norm(:))/16384;0;0];
-VB1.fname = fullfile(outpath, [sname '_smB1map_norm.nii']);
+VB1.descrip = 'B1+ map - smoothed and normalised (p.u.)';
+VB1.fname = fullfile(outpath, [sname '_B1map.nii']);
 spm_write_vol(VB1,smB1map_norm);
 
 % set and write metadata
@@ -151,8 +152,13 @@ Output_hdr = init_b1_output_metadata(input_files, b1map_params);
 Output_hdr.history.output.imtype = 'B1+ map (AFI protocol)';
 set_metadata(VB1.fname,Output_hdr,json);
 
+% Rename anatomical reference for uniformity between protocols
+B1ref = fullfile(outpath, [sname '_B1ref.nii']);
+copyfile(char(fileTR1),B1ref);
+try copyfile([spm_str_manip(char(fileTR1),'r') '.json'],[spm_str_manip(B1ref,'r') '.json']); end %#ok<*TRYNC>
+
 % requires anatomic image + map
-P_trans  = char(char(fileTR1),char(VB1.fname));
+P_trans  = char(B1ref,char(VB1.fname));
 
 % VB1.fname = fullfile(outpath, [sname '_B1map_mask.nii']);
 % spm_write_vol(VB1,Mask);

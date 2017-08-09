@@ -7,8 +7,8 @@ function hmri_b1_local_defaults
 %__________________________________________________________________________
 %
 % PURPOSE
-% To set the centre-specific defaults for the B1 mapping protocol used by
-% the hMRI toolbox. Applies to 3D EPI, 3D AFI and UNICORT protocols only.
+% To set user-defined (site- or protocol-specific) defaults parameters for
+% B1 mapping. Applies to 3D EPI, 3D AFI and UNICORT protocols only. 
 % Customized processing parameters can be defined, overwriting defaults
 % from hmri_b1_standard_defaults. Acquisition parameters can be specified
 % here as a fallback solution when no metadata are available. Note that the
@@ -17,8 +17,8 @@ function hmri_b1_local_defaults
 % RECOMMENDATIONS
 % Parameters defined in this file are identical, initially, to the ones
 % defined in hMRI-Toolbox\config\hmri_b1_standard_defaults. It is
-% recommended, when modifying this file, to remove all unchanged values and
-% SAVE THE MODIFIED FILE WITH A MEANINGFUL NAME. This will help you
+% recommended, when modifying this file, to remove all unchanged entries
+% and SAVE THE MODIFIED FILE WITH A MEANINGFUL NAME. This will help you
 % identifying the appropriate defaults to be used during map creation for
 % B1 map calculation, and will improve the readability of the file by
 % pointing to the modified parameters only. 

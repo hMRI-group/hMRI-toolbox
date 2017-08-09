@@ -39,8 +39,6 @@ global hmri_def
 % data processing when no metadata are available. Use of metadata is
 % recommended to retrieve site- & protocol-specific parameters and ensure
 % appropriate data handling and processing.
-% See examples of local customization in the hMRI-Toolbox\config\local
-% directory. 
 
 % 'i3D_AFI'
 hmri_def.b1map.i3D_AFI.b1type = 'i3D_AFI'; 

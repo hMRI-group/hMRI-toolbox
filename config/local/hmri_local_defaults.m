@@ -1,10 +1,10 @@
 function hmri_local_defaults(varargin)
 % PURPOSE
-% To set the centre-specific defaults which are used by the hMRI toolbox.
-% Customized processing parameters can be defined, overwriting defaults
-% from hmri_defaults. Acquisition protocols can be specified here as 
-% a fallback solution when no metadata are available. Note that the use of
-% metadata is strongly recommended. 
+% To set user-defined (site- or protocol-specific) defaults parameters
+% which are used by the hMRI toolbox. Customized processing parameters can
+% be defined, overwriting defaults from hmri_defaults. Acquisition
+% protocols can be specified here as a fallback solution when no metadata
+% are available. Note that the use of metadata is strongly recommended. 
 %
 % RECOMMENDATIONS
 % Parameters defined in this file are identical, initially, to the ones
@@ -20,7 +20,7 @@ function hmri_local_defaults(varargin)
 % users. 
 %
 % HOW DOES IT WORK?
-% The modified defaults file can be selected using the "Configure Toolbox"
+% The modified defaults file can be selected using the "Configure toolbox"
 % branch of the hMRI-Toolbox. For customization of B1 processing
 % parameters, type "help hmri_b1_standard_defaults.m". 
 %__________________________________________________________________________
@@ -30,8 +30,7 @@ function hmri_local_defaults(varargin)
 % Global hmri_def variable used across the whole toolbox
 global hmri_def
 
-% Specifying the research centre - to be customized in the lcal
-% configuration file (local/hmri_defaults_local.m). Not mandatory.
+% Specify the research centre & scanner. Not mandatory.
 hmri_def.centre = 'centre' ; % 'fil', 'lren', 'crc', 'sciz', 'cbs', ...
 hmri_def.scanner = 'scanner name' ; % e.g. 'prisma', 'allegra', 'terra', 'achieva', ...
 

@@ -1,5 +1,5 @@
 function hmri_defaults
-% Sets the defaults which are used by the hMRI toolbox.
+% Sets the defaults parameters which are used by the hMRI toolbox.
 %!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 % DON'T MODIFY THIS FILE, IT CONTAINS THE REFERENCE DEFAULTS PARAMETERS.
 % Please refer to hMRI-Toolbox\config\local\hmri_local_defaults.m to
@@ -10,13 +10,11 @@ function hmri_defaults
 %__________________________________________________________________________
 %
 % THIS FILE SHOULD NOT BE MODIFIED. 
-% To customize the hMRI-Toolbox defaults parameters and match your own
-% site/protocol-specific setup, please refer to the defaults files in
-% hMRI-Toolbox\local. 
-%
-% For all other parameters, use "hmri_defaults_local.m". Make a copy with
-% meaningful name, modify as desired and select as general defaults file
-% in the "Configure Toolbox" branch of the hMRI-Toolbox.
+% To customize the hMRI-Toolbox defaults parameters so they match your own
+% site- or protocol-specific setup, please refer to the defaults files in
+% hMRI-Toolbox\config\local. In particular, use "hmri_local_defaults.m".
+% Make a copy with meaningful name, modify as desired and select as general
+% defaults file in the "Configure toolbox" branch of the hMRI-Toolbox.
 %
 % The structure and content of this file are largely inspired by the
 % equivalent file in SPM.
@@ -29,12 +27,13 @@ function hmri_defaults
 % Global hmri_def variable used across the whole toolbox
 global hmri_def
 
-% Specifying the research centre - to be customized in the lcal
-% configuration file (local/hmri_defaults_local.m). Not mandatory.
+% Specifying the research centre - to be customized in the local
+% configuration file (config/local/hmri_local_defaults.m). Not mandatory.
 hmri_def.centre = 'centre' ; 
 
 % Defaults customised defaults file location
-hmri_def.local_defaults = {fullfile(fileparts(mfilename('fullpath')),'config','local','hmri_local_defaults.m')};
+hmri_def.local_defaults = {fullfile(fileparts(mfilename('fullpath')), ...
+    'config','local','hmri_local_defaults.m')};
 
 %==========================================================================
 % Common processing parameters 

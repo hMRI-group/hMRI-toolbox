@@ -142,7 +142,7 @@ VB1 = V1;
 % spm_write_vol(VB1,B1map_norm);
 
 VB1.pinfo = [max(smB1map_norm(:))/16384;0;0];
-VB1.descrip = 'B1+ map - smoothed and normalised (p.u.)';
+VB1.descrip = 'B1+ map - smoothed and normalised (p.u.) - AFI protocol';
 VB1.fname = fullfile(outpath, [sname '_B1map.nii']);
 spm_write_vol(VB1,smB1map_norm);
 
@@ -188,6 +188,10 @@ function P_trans = calc_SESTE_b1map(jobsubj, b1map_params)
 % The sum of square image of all SE images is created (SumOfSq) and
 % undistorted (uSumOfSq) for coregistration of the B1 map to an anatomical
 % dataset.
+% 
+% For coherence among B1 protocols, the fully processed B1 map (smuB1map_*)
+% is renamed *_B1map.nii, while the undistorted SoS image (uSumOfSq) is
+% renamed *_B1ref for anatomical reference.
 
 json = hmri_get_defaults('json');
 
@@ -269,8 +273,8 @@ Output_hdr.history.procstep.descrip = 'B1+ map calculation (EPI SE/STE protocol)
 Output_hdr.history.output.imtype = 'Distorted B1+ map';
 Output_hdr.history.output.units = 'p.u.';
 V_save = struct('fname',V(1).fname,'dim',V(1).dim,'mat',V(1).mat,'dt',V(1).dt,'descrip','B1 map [%]');
-[~,name,e] = fileparts(V_save.fname);
-V_save.fname = fullfile(outpath,['B1map_' name e]);
+[~,outname,e] = fileparts(V_save.fname);
+V_save.fname = fullfile(outpath,['B1map_' outname e]);
 V_save = spm_write_vol(V_save,Y_ab*100);
 set_metadata(V_save.fname,Output_hdr,json);
 
@@ -278,7 +282,7 @@ set_metadata(V_save.fname,Output_hdr,json);
 Output_hdr.history.output.imtype = 'Distorted SD (error) map';
 Output_hdr.history.output.units = 'p.u.';
 W_save = struct('fname',V(1).fname,'dim',V(1).dim,'mat',V(1).mat,'dt',V(1).dt,'descrip','SD [%]');
-W_save.fname = fullfile(outpath,['SDmap_' name e]);
+W_save.fname = fullfile(outpath,['SDmap_' outname e]);
 W_save = spm_write_vol(W_save,Y_cd*100);
 set_metadata(W_save.fname,Output_hdr,json);
 
@@ -286,7 +290,7 @@ set_metadata(W_save.fname,Output_hdr,json);
 Output_hdr.history.output.imtype = 'SSQ image';
 Output_hdr.history.output.units = 'a.u.';
 X_save = struct('fname',V(1).fname,'dim',V(1).dim,'mat',V(1).mat,'dt',V(1).dt,'descrip','SE SSQ matrix');
-X_save.fname = fullfile(outpath,['SumOfSq' name e]);
+X_save.fname = fullfile(outpath,['SumOfSq' outname e]);
 X_save = spm_write_vol(X_save,Ssq_matrix); %#ok<*NASGU>
 set_metadata(X_save.fname,Output_hdr,json);
 
@@ -340,7 +344,7 @@ Output_hdr.history.output.units = 'p.u.';
 set_metadata(ustd_img{1},Output_hdr,json);
 
 % set metadata for unwarped SSQ map 
-Output_hdr.history.output.imtype = 'Unwarped SSQ image';
+Output_hdr.history.output.imtype = 'Unwarped SSQ image for anatomical reference';
 Output_hdr.history.output.units = 'a.u.';
 set_metadata(uanat_img{1},Output_hdr,json);
 
@@ -379,7 +383,15 @@ for i=1:length(allub1_img)
 end
 
 % set correct output for the current subfunction (unwrapped "anatomical"
-% image (SSQ) for coregistration and final B1 map):
+% image (SSQ) for coregistration and final B1 map). For coherence among B1
+% protocol, rename these files *_B1ref (for anatomical reference) and
+% *_B1map (for B1+ bias map in p.u.):  
+B1map = fullfile(outpath,[outname '_B1map.nii']);
+copyfile(allub1_img{2}.fname, B1map);
+copyfile([spm_str_manip(allub1_img{2}.fname,'r') '.json'],[spm_str_manip(B1map,'r') '.json']); 
+B1ref = fullfile(outpath,[outname '_B1ref.nii']);
+copyfile(uanat_img, B1ref);
+copyfile([spm_str_manip(uanat_img,'r') '.json'],[spm_str_manip(B1ref,'r') '.json']); 
 P_trans  = char(char(uanat_img),char(allub1_img{2}.fname));
 
 end
@@ -422,7 +434,8 @@ sname = spm_file(V1.fname,'basename');
 
 VB1 = V1;
 VB1.pinfo = [max(smB1map_norm(:))/16384;0;0]; % what is this for? (TL)
-VB1.fname = fullfile(outpath, [sname '_smB1map_norm.nii']);
+VB1.fname = fullfile(outpath, [sname '_B1map.nii']);
+VB1.descrip = 'Smoothed & normalised (p.u.) B1 bias map - TFL B1map protocol';
 spm_write_vol(VB1,smB1map_norm);
 
 % set and write metadata
@@ -432,7 +445,7 @@ Output_hdr.history.procstep.descrip = 'B1+ map calculation (SIEMENS tfl_b1map pr
 set_metadata(VB1.fname,Output_hdr,json);
 
 % copy also anatomical image to outpath to prevent modification of original data
-anat_fname = fullfile(outpath, spm_file(V2.fname, 'filename'));
+anat_fname = fullfile(outpath, [spm_file(V2.fname, 'basename') '_B1ref.nii']);
 copyfile(V2.fname, anat_fname);
 try copyfile([spm_str_manip(V2.fname,'r') '.json'],[spm_str_manip(anat_fname,'r') '.json']); end %#ok<*TRYNC>
 
@@ -478,7 +491,8 @@ sname = spm_file(V1.fname,'basename');
 
 VB1 = V1;
 VB1.pinfo = [max(smB1map_norm(:))/16384;0;0]; % what is this for? (TL)
-VB1.fname = fullfile(outpath, [sname '_smB1map_norm.nii']);
+VB1.fname = fullfile(outpath, [sname '_B1map.nii']);
+VB1.descrip = 'Smoothed & normalised (p.u.) B1 bias map - TFL B1map protocol';
 spm_write_vol(VB1,smB1map_norm);
 
 % set and write metadata
@@ -488,7 +502,7 @@ Output_hdr.history.procstep.descrip = 'B1+ map calculation (SIEMENS rf_map proto
 set_metadata(VB1.fname,Output_hdr,json);
 
 % copy also anatomical image to outpath to prevent modification of original data
-anat_fname = fullfile(outpath, spm_file(V2.fname, 'filename'));
+anat_fname = fullfile(outpath, [spm_file(V2.fname, 'basename') '_B1ref.nii']);
 copyfile(V2.fname, anat_fname);
 try copyfile([spm_str_manip(V2.fname,'r') '.json'],[spm_str_manip(anat_fname,'r') '.json']); end %#ok<*TRYNC>
 

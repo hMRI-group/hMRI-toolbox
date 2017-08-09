@@ -16,8 +16,8 @@ customised.help    = {['Select the ''hmri_defaults_local*.m'' file containing ' 
     'the specific defaults to process your data. Note that all other defaults ' ...
     'values will be reinitialised to their standard values.']};
 customised.filter  = 'm';
-customised.dir     = fullfile(fileparts(mfilename('fullpath')),'local');
-customised.ufilter = '^hmri_defaults.*\.m$';
+customised.dir     = fullfile(fileparts(mfilename('fullpath')),'config','local');
+customised.ufilter = '^hmri_.*\.m$';
 customised.num     = [1 1];
 %customised.def     = @(val)hmri_get_defaults('local_defaults', val{:});
 

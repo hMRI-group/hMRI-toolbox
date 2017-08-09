@@ -65,10 +65,9 @@ b1defaults.help    = {['Select the ''hmri_b1_defaults*.m'' file containing ' ...
     'either edit the distributed version and/or save it with the name ' ...
     '''hmri_b1_defaults_*yourprotocol*.m''.']};
 b1defaults.filter  = 'm';
-b1defaults.dir     = fullfile(fileparts(mfilename('fullpath')),'local');
-b1defaults.ufilter = '^hmri_b1_defaults.*\.m$';
+b1defaults.dir     = fullfile(fileparts(mfilename('fullpath')),'config','local');
+b1defaults.ufilter = '^hmri_.*\.m$';
 b1defaults.num     = [1 1];
-%b1defaults.def     = @(val)hmri_get_defaults('b1map.i3D_EPI.deffnam', val{:});
 
 % ---------------------------------------------------------------------
 % Use metadata or standard defaults (no customization)

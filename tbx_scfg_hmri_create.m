@@ -1,4 +1,4 @@
-function crm = tbx_scfg_hmri_create
+function create_mpm = tbx_scfg_hmri_create
 % Configuration file for the "histological MRI" (hMRI) toolbox
 % Previously named "Voxel-Based Quantification" (VBQ)
 % -> Dealing with the creation of the maps
@@ -232,11 +232,12 @@ b1_type.help    = {'Choose the methods for B1 bias correction.'
     [' - tfl_b1_map: Siemens product sequence for B1 mapping based on turbo FLASH.']
     [' - rf_map: Siemens product sequence for B1 mapping based on SE/STE.']
     [' - no B1 correction: if selected no B1 bias correction will be applied.']
-    [' - pre-processed B1: B1 map pre-calculated out of the hMRI toolbox, must ' ...
+    [' - pre-processed B1: B1 map pre-calculated outside the hMRI toolbox, must ' ...
     'be expressed in percent units of the nominal flip angle value (percent bias).']
     [' - UNICORT: Use this option when B1 maps not available. ' ...
     'Bias field estimation and correction will be performed ' ...
-    'using the approach described in [Weiskopf et al., NeuroImage 2011; 54:2116-2124].']
+    'using the approach described in [Weiskopf et al., NeuroImage 2011; 54:2116-2124]. ' ...
+    'WARNING: the correction only applies to R1 maps.']
     }; %#ok<*NBRAK>
 b1_type.values  = {b1_input_3DEPI b1_input_3DAFI b1_input_tfl b1_input_rfmap b1_input_preproc b1_input_UNICORT b1_input_noB1};
 b1_type.val     = {b1_input_3DEPI};
@@ -390,23 +391,13 @@ data_spec.val    = { sdata };
 % ---------------------------------------------------------------------
 % create_mpr Create MPR maps (whether B0/B1 maps are available or not)
 % ---------------------------------------------------------------------
-create_mpr         = cfg_exbranch;
-create_mpr.tag     = 'create_mpr';
-create_mpr.name    = 'Multiparameter maps';
-create_mpr.val     = { data_spec };
-create_mpr.help    = {'hMRI map creation can handle data sets with and without B0/B1 maps.'};
-create_mpr.prog    = @hmri_run_create;
-create_mpr.vout    = @vout_create;
-
-% ---------------------------------------------------------------------
-% crm Create maps
-% ---------------------------------------------------------------------
-crm             = cfg_choice;
-crm.tag         = 'crm';
-crm.name        = 'Create maps';
-crm.help        = {'You have the option to create multiparameter maps, ',...
-    'whether B1 maps are available or not.'};
-crm.values      = {create_mpr};
+create_mpm         = cfg_exbranch;
+create_mpm.tag     = 'create_mpm';
+create_mpm.name    = 'Create hMRI maps';
+create_mpm.val     = { data_spec };
+create_mpm.help    = {'hMRI map creation based on multi-echo FLASH sequences including optional receive/transmit bias correction.'};
+create_mpm.prog    = @hmri_run_create;
+create_mpm.vout    = @vout_create;
 
 end
 %----------------------------------------------------------------------

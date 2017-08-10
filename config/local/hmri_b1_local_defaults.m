@@ -24,8 +24,8 @@ function hmri_b1_local_defaults
 % pointing to the modified parameters only. 
 %
 % WARNING
-% Modification of the defaults parameters may impair the the integrity of
-% the toolbox, leading to unexpected behaviour. Only recommended for expert
+% Modification of the defaults parameters may impair the integrity of the
+% toolbox, leading to unexpected behaviour. Only recommended for expert
 % users. 
 %
 % HOW DOES IT WORK?

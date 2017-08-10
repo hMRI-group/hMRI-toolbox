@@ -147,7 +147,7 @@ V_biasmap = spm_vol(P_biasmap);
 Y_biasmap = spm_read_vols(V_biasmap);
 Y_B1 = sqrt(Y_biasmap)*100.*(Y_PDw > thresh);
 V_B1 = V_R1;
-P_B1 = fullfile(b1path,spm_file(outfnam,'prefix','B1u_'));
+P_B1 = fullfile(b1path,spm_file(outfnam,'suffix','_B1map'));
 V_B1.fname = P_B1;
 V_B1.descrip = 'UNICORT estimated B1+ map (p.u.)';
 spm_write_vol(V_B1,Y_B1);

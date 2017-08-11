@@ -390,9 +390,9 @@ B1map = fullfile(outpath,[outname '_B1map.nii']);
 copyfile(allub1_img{2}.fname, B1map);
 copyfile([spm_str_manip(allub1_img{2}.fname,'r') '.json'],[spm_str_manip(B1map,'r') '.json']); 
 B1ref = fullfile(outpath,[outname '_B1ref.nii']);
-copyfile(uanat_img, B1ref);
-copyfile([spm_str_manip(uanat_img,'r') '.json'],[spm_str_manip(B1ref,'r') '.json']); 
-P_trans  = char(char(uanat_img),char(allub1_img{2}.fname));
+copyfile(uanat_img{1}, B1ref);
+copyfile([spm_str_manip(uanat_img{1},'r') '.json'],[spm_str_manip(B1ref,'r') '.json']); 
+P_trans  = char(B1ref, B1map);
 
 end
 

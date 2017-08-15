@@ -110,18 +110,6 @@ mpm_params.outbasename = outbasename;
 respath = mpm_params.respath;
 supplpath = mpm_params.supplpath;
 
-% Load B1 mapping data if available 
-% P_trans(1,:) = magnitude image (anatomical reference for coregistration) 
-% P_trans(2,:) = B1 map (p.u.)
-V_trans = [];
-if ~isempty(P_trans); V_trans = spm_vol(P_trans); end
-
-% Load sensitivity map if available
-% P_receiv(1,:) = magnitude image (anatomical reference for coregistration) 
-% P_receiv(2,:) = sensitivity map
-V_receiv   = [];
-if ~isempty(P_receiv); V_receiv = spm_vol(P_receiv); end
-
 
 %% =======================================================================%
 % Calculate R2* map from PDw echoes
@@ -248,11 +236,23 @@ fprintf(1,'\n    -------- Coregistering the images  --------\n');
 x_MT2PD = coreg_mt(PPDw, PMTw);  %#ok<NODEF>
 x_T12PD = coreg_mt(PPDw, PT1w); %#ok<NODEF>
 coreg_mt(PPDw, PT1w_forA);
-if ~isempty(V_trans)
+
+V_trans = [];
+if ~isempty(P_trans)
+    % Load B1 mapping data if available and coregister to PDw
+    % P_trans(1,:) = magnitude image (anatomical reference for coregistration) 
+    % P_trans(2,:) = B1 map (p.u.)
     coreg_bias_map(PPDw, P_trans);
+    V_trans = spm_vol(P_trans);
 end
-if ~isempty(V_receiv)
+
+V_receiv   = [];
+if ~isempty(P_receiv)
+    % Load sensitivity map if available and coregister to PDw
+    % P_receiv(1,:) = magnitude image (anatomical reference for coregistration) 
+    % P_receiv(2,:) = sensitivity map
     coreg_bias_map(PPDw, P_receiv);
+    V_receiv = spm_vol(P_receiv);
 end
 
 % parameters saved for quality assessment
@@ -484,7 +484,6 @@ for p = 1:dm(3)
     T1w_forA = spm_slice_vol(VT1w_forA,VT1w_forA.mat\M,dm(1:2),3);
     
     if ~isempty(V_trans)
-        V_trans = spm_vol(P_trans);
         f_T = spm_slice_vol(V_trans(2,:),V_trans(2,:).mat\M,dm(1:2),3)/100; % divide by 100, since p.u. maps
     else
         f_T = [];
@@ -780,7 +779,7 @@ for src_nr = 1:size(P_src,1)
     %x  = spm_coreg(mireg(i).VG, mireg(i).VF,flags.estimate);
     M  = inv(spm_matrix(x));
     MM = spm_get_space(deblank(VF.fname));
-    spm_get_space(deblank(deblank(VF.fname)), M*MM);
+    spm_get_space(deblank(deblank(VF.fname)), M*MM); %#ok<*MINV>
 end
 end
 
@@ -856,8 +855,8 @@ Y = BF.*spm_read_vols(spm_vol(fA));
 % matter value from the litterature (69%)
 A_WM = WMmask.*Y;
 Y = Y/mean(A_WM(A_WM~=0))*69;
-fprintf(1,'mean White Matter intensity: %.1f\n',mean(A_WM(A_WM~=0)));
-fprintf(1,'SD White Matter intensity %.1f\n',std(A_WM(A_WM~=0),[],1));
+fprintf(1,'\nINFO (PD calculation):\n\tmean White Matter intensity: %.1f\n',mean(A_WM(A_WM~=0)));
+fprintf(1,'\tSD White Matter intensity %.1f\n',std(A_WM(A_WM~=0),[],1));
 Y(Y>200) = 0;
 % MFC: Estimating Error for data set to catch bias field issues:
 errorEstimate = std(A_WM(A_WM > 0))./mean(A_WM(A_WM > 0));
@@ -865,7 +864,8 @@ Vsave = spm_vol(fA);
 Vsave.descrip = [Vsave.descrip '. Error Estimate: ', num2str(errorEstimate)];
 if errorEstimate > 0.06 %#ok<BDSCI>
     % MFC: Testing on 15 subjects showed 6% is a good cut-off:
-    warning(['Error estimate is high: ', Vsave.fname]);
+    fprintf(1,['\nWARNING: Error estimate is high for calculated PD map:\n%s' ...
+        '\nError higher than 6% may indicate motion.\n'], Vsave.fname);
 end
 if mpm_params.QA.enable
     if exist(mpm_params.QA.fnam,'file')
@@ -904,6 +904,25 @@ mpm_params.input.MTw.fname   = char(jobsubj.raw_mpm.MT); % P_mtw
 mpm_params.input.PDw.fname   = char(jobsubj.raw_mpm.PD); % P_pdw
 mpm_params.input.T1w.fname   = char(jobsubj.raw_mpm.T1); % P_t1w
 
+% consistency check: all three contrasts must be present in order to
+% process the data. Just throw a warning if one contrast missing...
+fprintf(1,'\nINFO: FLASH echoes loaded for each contrast are: ');
+fprintf(1,'\n\t- MT-weighted: %d echoes', size(mpm_params.input.MTw.fname,1));
+fprintf(1,'\n\t- PD-weighted: %d echoes', size(mpm_params.input.PDw.fname,1));
+fprintf(1,'\n\t- T1-weighted: %d echoes\n', size(mpm_params.input.T1w.fname,1));
+if ~size(mpm_params.input.MTw.fname)
+    % NB: no proper error thrown, the batch will abort anyway...
+    fprintf(1,'\nWARNING: no MT-weighted FLASH echoes available, cannot proceed!\n');
+end    
+if ~size(mpm_params.input.PDw.fname)
+    % NB: no proper error thrown, the batch will abort anyway...
+    fprintf(1,'\nWARNING: no PD-weighted FLASH echoes available, cannot proceed!\n');
+end    
+if ~size(mpm_params.input.T1w.fname)
+    % NB: no proper error thrown, the batch will abort anyway...
+    fprintf(1,'\nWARNING: no T1-weighted FLASH echoes available, cannot proceed!\n');
+end    
+    
 % maximum TE for averaging (ms)
 mpm_params.input.TE_limit = 30; 
 
@@ -930,9 +949,9 @@ if ~isempty(p)
 else
     fprintf(1,'WARNING: No TE/TR/FA values found for PDw images. Fallback to defaults.\n');
     MPMacq = hmri_get_defaults('MPMacq');
-    mpm_params.input.MTw.TE = MPMacq.TE_pdw;
-    mpm_params.input.MTw.TR = MPMacq.TR_pdw;
-    mpm_params.input.MTw.fa = MPMacq.fa_pdw;
+    mpm_params.input.PDw.TE = MPMacq.TE_pdw;
+    mpm_params.input.PDw.TR = MPMacq.TR_pdw;
+    mpm_params.input.PDw.fa = MPMacq.fa_pdw;
 end
 
 % acquisition parameters of T1w images
@@ -944,9 +963,9 @@ if ~isempty(p)
 else
     fprintf(1,'WARNING: No TE/TR/FA values found for T1w images. Fallback to defaults.\n');
     MPMacq = hmri_get_defaults('MPMacq');
-    mpm_params.input.MTw.TE = MPMacq.TE_t1w;
-    mpm_params.input.MTw.TR = MPMacq.TR_t1w;
-    mpm_params.input.MTw.fa = MPMacq.fa_t1w;
+    mpm_params.input.T1w.TE = MPMacq.TE_t1w;
+    mpm_params.input.T1w.TR = MPMacq.TR_t1w;
+    mpm_params.input.T1w.fa = MPMacq.fa_t1w;
 end
 
 % identify the protocol to define RF spoiling correction parameters
@@ -989,6 +1008,15 @@ for nr = 1:nr_c_echoes
     if ~((TE_mtw(nr) == TE_pdw(nr)) && (TE_pdw(nr) == TE_t1w(nr)))
         error('Echo times do not match! Aborting.');
     end
+end
+
+% consistency check for number of echoes averaged for A calculation:
+if mpm_params.proc.PD.nr_echoes_forA > size(mpm_params.input.T1w.fname,1)
+    fprintf(1,['\nWARNING: number of T1w echoes to be averaged for PD calculation (%d)' ...
+        '\nis bigger than the available number of echoes (%d). Setting nr_echoes_forA' ...
+        '\nto the maximum number of echoes.\n'],mpm_params.proc.PD.nr_echoes_forA, ...
+        size(mpm_params.input.T1w.fname,1));
+    mpm_params.proc.PD.nr_echoes_forA = size(mpm_params.input.T1w.fname,1);
 end
 
 end

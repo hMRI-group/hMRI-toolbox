@@ -104,7 +104,7 @@ if ~isstruct(mstruc)
     % TR/TE/FA is the target field and available in the description field:
     if ischar(varargin{1}) && strcmp(spm_file(varargin{1},'ext'),'nii')
         fnam = varargin{1};
-        fprintf(1,'WARNING: No metadata available in %s.\n', fnam);
+        fprintf(1,'\nWARNING: No metadata available in %s.\n', fnam);
         N = nifti(fnam);
         p = struct('tr',[],'te',[],'fa',[]);
         tmp = regexp(N.descrip,'TR=(?<tr>.+)ms/TE=(?<te>.+)ms/FA=(?<fa>.+)deg','names');
@@ -567,7 +567,7 @@ else
                     cRes = 1;
                     parLocation{cRes} = 'B0Image';
                     parValue{cRes} = [0;0;0];
-                    fprintf(1,'WARNING: Diffusion direction not defined for DWImage %s. Assuming b=0.\n', inParName);
+                    fprintf(1,'\nWARNING: Diffusion direction not defined for DWImage %s. Assuming b=0.\n', inParName);
                 end
             end
             
@@ -602,7 +602,7 @@ else
                 parValue{cRes} = 0;
             end
             if parValue{1}==0
-                fprintf(1,'WARNING: This is not a DWI sequence.\n');
+                fprintf(1,'\nWARNING: This is not a DWI sequence.\n');
             end
             
             
@@ -625,7 +625,7 @@ else
                 parLocation{cRes} = nam{1};
                 parValue{cRes} = 1/val{1}*1000;
             else
-                fprintf(1,['WARNING: BandwidthPerPixelPhaseEncode not defined for the current sequence\n' ...
+                fprintf(1,['\nWARNING: BandwidthPerPixelPhaseEncode not defined for the current sequence\n' ...
                     'For 3D-EPI B1 mapping sequences, values are deduced from the sequence\n' ...
                     'version. Be aware that it might not be correct if the version is unknown.\n']);
                 
@@ -636,7 +636,7 @@ else
                 
                 % Case al_B1mapping
                 if strfind(lower(valPROT),'b1map')
-                    fprintf(1,'Trying to derive the epiReadoutDuration from the Sequence version (%s/%s).\n',valSEQ,valPROT);
+                    fprintf(1,'\nTrying to derive the epiReadoutDuration from the Sequence version (%s/%s).\n',valSEQ,valPROT);
                     nFieldFound = 1;
                     switch lower(valSEQ)
                         case 'b1v2d3d2' % 540 us - Prisma
@@ -648,7 +648,7 @@ else
                         case 'b1epi2d3d2' % 800um protocol from WTCN
                             EchoSpacing = 540;
                         otherwise
-                            fprintf(1,'WARNING: B1mapping version unknown, trying to base our guess on PixelBandwidth.\n');
+                            fprintf(1,'\nWARNING: B1mapping version unknown, trying to base our guess on PixelBandwidth.\n');
                             PixelBandwidth = get_metadata_val(mstruc,'BandwidthPerPixelRO');
                             switch PixelBandwidth
                                 case 2300
@@ -666,13 +666,20 @@ else
                     cRes = 1;
                     parLocation{cRes} = 'HardCodedParameter';
                     parValue{cRes} = EchoSpacing * measPElin * 0.001; % ms
+                
+                    fprintf(1,['\nINFO: the EPI readout duration has been derived:' ...
+                        '\n\tEchoSpacing = %5.2f us' ...
+                        '\n\tmeasPElin = %d' ...
+                        '\n\tepiReadoutDuration = %5.2f ms\n'], ...
+                        EchoSpacing, measPElin,parValue{cRes});
+                
                 else
                     if strcmp(valEPI,'EP')
-                        fprintf(1,['WARNING: Sequence defined as EPI but BandwidthPerPixelPhaseEncode\n' ...
+                        fprintf(1,['\nWARNING: Sequence defined as EPI but BandwidthPerPixelPhaseEncode\n' ...
                             'not defined. No value returned.\n']);
                     else
-                        fprintf(1,['WARNING: This might not be an EPI sequence. \n' ...
-                            'Could not work ou EPI readout duration.\n']);
+                        fprintf(1,['\nWARNING: This might not be an EPI sequence. \n' ...
+                            'Could not work out EPI readout duration.\n']);
                     end
                 end
             end
@@ -697,11 +704,21 @@ else
                 try
                     parValue{cRes} = epiROduration/measPElin;
                 catch
-                    fprintf(1,'WARNING: Cannot retrieve the EchoSpacing for the current sequence.\n');
+                    fprintf(1,'\nWARNING: Cannot retrieve the EchoSpacing for the current sequence.\n');
                 end
             else
-                fprintf(1,['WARNING: BandwidthPerPixelPhaseEncode not defined for the current sequence.\n' ...
-                    'The echo spacing cannot be retrieved unambiguously.\n']);
+                fprintf(1,['\nWARNING: BandwidthPerPixelPhaseEncode not defined for the current sequence.\n' ...
+                    'Trying to derive the echo spacing from the epiReadoutDuration...\n']);
+                cRes = 1;
+                epiROduration = get_metadata_val(mstruc,'epiReadoutDuration');
+                measPElin = get_metadata_val(mstruc,'PELinesPAT');
+                try 
+                    parValue{cRes} = epiROduration/measPElin;
+                    parLocation{cRes} = 'Derived';
+                    nFieldFound = 1;
+                catch
+                    fprintf(1,'\nWARNING: Failed deriving the Echo Spacing for the current protocol.\n');
+                end
             end
             
         case 'B1mapNominalFAValues' % [deg] for al_B1mapping - version dependent!!
@@ -737,7 +754,7 @@ else
                         parLocation{cRes} = [nam{1} '.adFree(3:4)'];
                         parValue{cRes} = val{1}.adFree(3):-val{1}.adFree(4):0;
                     otherwise
-                        fprintf(1,'B1mapping version unknown (%s/%s). Give up guessing FA values.\n', valSEQ, valPROT);
+                        fprintf(1,'\nWARNING: B1mapping version unknown (%s/%s). Give up guessing FA values.\n', valSEQ, valPROT);
                 end
                 if ~isempty(parLocation)
                     nmeas = get_metadata_val(mstruc,'NumberOfMeasurements');
@@ -847,7 +864,7 @@ else
             
     end
     if ~nFieldFound
-        fprintf(1,'WARNING: No %s found in the extended header\n', inParName);
+        fprintf(1,'\nWARNING: No %s found in the extended header\n', inParName);
         parValue = [];
         parLocation = [];
     end

@@ -12,13 +12,9 @@ function hmri_config = tbx_scfg_hmri_config
 customised         = cfg_files;
 customised.tag     = 'customised';
 customised.name    = 'Customised';
-customised.help    = {['Select the {hmri_local_defaults_*.m} file containing ' ...
+customised.help    = {['Select the [hmri_local_defaults_*.m] file containing ' ...
     'the specific defaults to process your data. Note that all other defaults ' ...
-    'values will be reinitialised to their standard values.']
-    ' '
-    ['WARNING to UNIX/MAC users: expressions between curly brackets in the help text above contain ' ...
-    '{underscores} that may have been replaced by {spaces} on UNIX/MAC machines. Refer ' ...
-    'to the Manual if in any doubt.']};
+    'values will be reinitialised to their standard values.']};
 customised.filter  = 'm';
 customised.dir     = fullfile(fileparts(mfilename('fullpath')),'config','local');
 customised.ufilter = '^hmri_.*\.m$';
@@ -43,11 +39,7 @@ hmri_setdef         = cfg_choice;
 hmri_setdef.tag     = 'hmri_setdef';
 hmri_setdef.name    = 'Defaults parameters';
 hmri_setdef.help    = {['You can either stick with standard defaults parameters ' ...
-    'from {hmri_defaults.m} or select your own customised defaults file.']
-    ' '
-    ['WARNING to UNIX/MAC users: expressions between curly brackets in the help text above contain ' ...
-    '{underscores} that may have been replaced by {spaces} on UNIX/MAC machines. Refer ' ...
-    'to the Manual if in any doubt.']};
+    'from [hmri_defaults.m] or select your own customised defaults file.']};
 hmri_setdef.values  = {standard customised};
 hmri_setdef.val     = {standard};
 
@@ -61,12 +53,8 @@ hmri_config.tag     = 'hmri_config';
 hmri_config.name    = 'Configure toolbox';
 hmri_config.val     = { hmri_setdef };
 hmri_config.help    = {['Customised default parameters can be set here by selecting ' ...
-    'a customised {hmri_local_defaults_*.m} file. Type {help hmri_local_defaults} for ' ...
-    'more details.']
-    ' '
-    ['WARNING to UNIX/MAC users: expressions between curly brackets in the help text above contain ' ...
-    '{underscores} that may have been replaced by {spaces} on UNIX/MAC machines. Refer ' ...
-    'to the Manual if in any doubt.']};
+    'a customised [hmri_local_defaults_*.m] file. Type [help hmri_local_defaults] for ' ...
+    'more details.']};
 hmri_config.prog    = @hmri_run_config;
 
 end

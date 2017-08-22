@@ -32,8 +32,7 @@ global hmri_def
 hmri_def.centre = 'centre' ; 
 
 % Defaults customised defaults file location
-hmri_def.local_defaults = {fullfile(fileparts(mfilename('fullpath')), ...
-    'config','local','hmri_local_defaults.m')};
+hmri_def.local_defaults = {fullfile(fileparts(mfilename('fullpath')),'local','hmri_local_defaults.m')};
 
 %==========================================================================
 % Common processing parameters 
@@ -45,7 +44,7 @@ hmri_def.cleanup = true;
 hmri_def.json = struct('extended',false,'separate',true,'anonym','none',...
     'overwrite',true, 'indent','\t'); 
 % recommended TPM for segmentation and spatial processing
-hmri_def.TPM = fullfile(spm_file(mfilename('fullpath'),'path'), 'etpm', 'eTPM.nii');
+hmri_def.TPM = fullfile(fileparts(mfilename('fullpath')),'..','etpm','eTPM.nii');
 
 %==========================================================================
 % R1/PD/R2s/MT map creation parameters

@@ -44,7 +44,7 @@ hmri_def.cleanup = true;
 hmri_def.json = struct('extended',false,'separate',true,'anonym','none',...
     'overwrite',true, 'indent','\t'); 
 % recommended TPM for segmentation and spatial processing
-hmri_def.TPM = fullfile(fileparts(mfilename('fullpath')),'..','etpm','eTPM.nii');
+hmri_def.TPM = fullfile(fileparts(fileparts(mfilename('fullpath'))),'etpm','eTPM.nii');
 
 %==========================================================================
 % R1/PD/R2s/MT map creation parameters

@@ -156,7 +156,7 @@ for p = 1:dm(3)
     Y = zeros(dm(1:2));
     for i = 1:numel(V_pdw)
         M1 = V_pdw(i).mat\V_pdw(1).mat*M;
-        Y  = Y + W(i)*log(max(spm_slice_vol(V_pdw(i),M1,dm(1:2),1),1));
+        Y  = Y + W(i)*log(max(spm_slice_vol(V_pdw(i),M1,dm(1:2),mpm_params.interp),1));
     end
     Ni.dat(:,:,p) = max(min(Y,threshall.R2s),-threshall.R2s); % threshold T2* at +/- 0.1ms or R2* at +/- 10000 *(1/sec), negative values are allowed to preserve Gaussian distribution
     spm_progress_bar('Set',p);
@@ -195,7 +195,7 @@ for ccon=1:mpm_params.ncon % loop over available contrasts
         Y = zeros(dm(1:2));
         for nr = 1:avg_nr
             M1 = V(nr).mat\V(1).mat*M;
-            Y  = Y + spm_slice_vol(V(nr),M1,dm(1:2),1);
+            Y  = Y + spm_slice_vol(V(nr),M1,dm(1:2),mpm_params.interp);
         end
         Ni.dat(:,:,p) = Y/avg_nr;
         % sm = sm + sum(Y(:))/avg_nr;
@@ -229,7 +229,7 @@ if (PDidx && T1idx)
         Y = zeros(dm(1:2));
         for nr = 1:PDproc.nr_echoes_forA,
             M1 = V(nr).mat\V(1).mat*M;
-            Y  = Y + spm_slice_vol(V(nr),M1,dm(1:2),1);
+            Y  = Y + spm_slice_vol(V(nr),M1,dm(1:2),mpm_params.interp);
         end
         Ni.dat(:,:,p) = Y/PDproc.nr_echoes_forA;
         spm_progress_bar('Set',p);
@@ -331,7 +331,7 @@ if mpm_params.QA.enable
                 % Third order B-spline interpolation for OLS R2* estimation
                 % since we no longer assume that the echoes are perfectly
                 % aligned as we do for the standard PDw derived R2* estimate.
-                data(cecho,:,:) = log(max(spm_slice_vol(Vcon(cecho),M1,dm(1:2),3),eps));
+                data(cecho,:,:) = log(max(spm_slice_vol(Vcon(cecho),M1,dm(1:2),mpm_params.interp),1));
             end
             Y = W*reshape(data, [size(TE,1) prod(dm(1:2))]);
             Y = -reshape(Y(end,:), dm(1:2));
@@ -352,6 +352,34 @@ end
 %=========================================================================%
 if mpm_params.proc.R2sOLS
     fprintf(1,'\n    -------- OLS R2* map calculation --------\n');
+        
+    % OLS fit at TE=0: overwrites the averaged echoes of each contrast with
+    % the respective OLS fit at TE=0
+    % !!!!! NOT YET COMPATIBLE WITH noMTw IMPLEMENTATION !!!!
+    %========================================================
+    if mpm_params.fullOLS
+        fprintf(1,'\n    -------- and fit to TE=0 for all contrasts --------\n');
+        Nmap    = nifti;
+        for ii=1:numel(contrastnam)
+            avg_fnam    = fullfile(calcpath,[outbasename '_' contrastnam{ii} '.nii']);
+            eval(sprintf('P%s = avg_fnam;', contrastnam{ii})); % i.e. PPDw/PMTw/PT1w = avg_fnam; Defined here!!
+            dm        = V_pdw(1).dim;
+            Ni        = nifti;
+            Ni.mat    = V_pdw(1).mat;
+            Ni.mat0   = V_pdw(1).mat;
+            Ni.descrip  = sprintf('Averaged %s OLS images', contrastnam{ii});
+            Ni.dat      = file_array(avg_fnam,dm,dt,0,1,0);
+            create(Ni);
+            Nmap(ii) = Ni;
+            
+            input_files = mpm_params.input.(contrastnam{ii}).fname;
+            Output_hdr = init_mpm_output_metadata(input_files, mpm_params);
+            Output_hdr.history.output.imtype = Ni.descrip;
+            Output_hdr.history.output.units = 'a.u.';
+            set_metadata(avg_fnam,Output_hdr,mpm_params.json);
+        end
+    end    
+    %========================================================
     
     fR2s_OLS    = fullfile(calcpath,[outbasename '_R2s_OLS' '.nii']);
     Ni          = nifti;
@@ -396,11 +424,23 @@ if mpm_params.proc.R2sOLS
                 % since we no longer assume that the echoes are perfectly
                 % aligned as we do for the standard PDw derived R2*
                 % estimate. 
-                data(sum(nechoes(1:ccon-1))+cecho,:,:) = log(max(spm_slice_vol(Vcon(cecho),M1,dm(1:2),3),eps));
+                data(sum(nechoes(1:ccon-1))+cecho,:,:) = log(max(spm_slice_vol(Vcon(cecho),M1,dm(1:2),mpm_params.interp),1));
             end
         end
         Y = W*reshape(data, [sum(nechoes) prod(dm(1:2))]);
         Y = -reshape(Y(end,:), dm(1:2));
+
+        % SM: here is where the writing starts (see above) 
+        % NOT YET COMPATIBLE WITH noMTw IMPLEMENTATION !!!
+        % ================================================
+        vec = [2 1 3];
+        if mpm_params.fullOLS
+            for ii = 1:numel(Nmap)
+                Nmap(ii).dat(:,:,p) = reshape(exp(Y(vec(ii),:)), dm(1:2));
+            end
+        end
+        Y = -reshape(Y(4,:), dm(1:2));
+        % ================================================
         
         % NB: mat field defined by V_pdw => first PDw echo
         % threshold T2* at +/- 0.1ms or R2* at +/- 10000 *(1/sec), 
@@ -516,15 +556,15 @@ for p = 1:dm(3)
     M = M0*spm_matrix([0 0 p]);
 
     % PDw images are always available, so this bit is always loaded:
-    PDw = spm_slice_vol(Vavg(PDidx),Vavg(PDidx).mat\M,dm(1:2),3);
+    PDw = spm_slice_vol(Vavg(PDidx),Vavg(PDidx).mat\M,dm(1:2),mpm_params.interp);
     
     if ~isempty(V_trans)
-        f_T = spm_slice_vol(V_trans(2,:),V_trans(2,:).mat\M,dm(1:2),3)/100; % divide by 100, since p.u. maps
+        f_T = spm_slice_vol(V_trans(2,:),V_trans(2,:).mat\M,dm(1:2),mpm_params.interp)/100; % divide by 100, since p.u. maps
     else
         f_T = [];
     end
     if ~isempty(V_receiv) && ~isempty(V_trans)
-        f_R = spm_slice_vol(V_receiv(2,:),V_receiv(2,:).mat\M,dm(1:2),3)/100; % divide by 100, since p.u. maps
+        f_R = spm_slice_vol(V_receiv(2,:),V_receiv(2,:).mat\M,dm(1:2),mpm_params.interp)/100; % divide by 100, since p.u. maps
         f_R = f_R .* f_T; % f_R is only the sensitivity map and not the true receive bias map, therefore needs to be multiplied by transmit bias (B1+ approx. B1- map)
     else
         f_R = [];
@@ -534,7 +574,7 @@ for p = 1:dm(3)
     % only if trpd = trmt and fapd = famt and if PDw and MTw images are
     % available
     if (MTidx && PDidx)
-        MTw = spm_slice_vol(Vavg(MTidx),Vavg(MTidx).mat\M,dm(1:2),3);
+        MTw = spm_slice_vol(Vavg(MTidx),Vavg(MTidx).mat\M,dm(1:2),mpm_params.interp);
         if (TR_mtw == TR_pdw) && (fa_mtw == fa_pdw) % additional MTR image...
             MTR = (PDw-MTw)./(PDw+eps) * 100;
             % write MTR image
@@ -545,9 +585,18 @@ for p = 1:dm(3)
     % T1 map and A/PD maps can only be calculated if T1w images are
     % available:
     if T1idx
-        T1w = spm_slice_vol(Vavg(T1idx),Vavg(T1idx).mat\M,dm(1:2),3);
-        T1w_forA = spm_slice_vol(VT1w_forA,VT1w_forA.mat\M,dm(1:2),3);
+
+        T1w = spm_slice_vol(Vavg(T1idx),Vavg(T1idx).mat\M,dm(1:2),mpm_params.interp);
         
+        % !!!! CHECK COMPATIBILITY WITH noMTw IMPLEMENTATION
+        %===================================================
+        if mpm_params.fullOLS
+            T1w_forA = T1w;
+        else
+            T1w_forA = spm_slice_vol(VT1w_forA,VT1w_forA.mat\M,dm(1:2),mpm_params.interp);
+        end
+        %===================================================
+    
         if isempty(f_T)
             % semi-quantitative T1
             T1 = ((PDw / fa_pdw_rad) - (T1w / fa_t1w_rad)) ./ ...
@@ -937,6 +986,8 @@ if mpm_params.QA.enable
     spm_jsonwrite(mpm_params.QA.fnam,mpm_params.QA,struct('indent','\t'));
 end
 mpm_params.ACPCrealign = hmri_get_defaults('qMRI_maps.ACPCrealign'); % realigns qMRI maps to MNI
+mpm_params.interp = hmri_get_defaults('interp');
+mpm_params.fullOLS = hmri_get_defaults('fullOLS'); % uses all echoes for OLS fit at TE=0
 
 % retrieve input file names for map creation.
 % the "mpm_params.input" field is an array, each element corresponds to a
@@ -1002,12 +1053,15 @@ for ccon = 1:mpm_params.ncon
 end
   
 % check that echo times are identical (common echoes only)
-for ccon = 1:mpm_params.ncon-1
-    TEcon1 = mpm_params.input(ccon).TE;
-    TEcon2 = mpm_params.input(ccon+1).TE;
-    for necho = 1:min(length(TEcon1),length(TEcon2))
-        if ~(TEcon1(necho)==TEcon2(necho))
-            error('Echo times do not match between contrasts! Aborting.');
+% NOTE: only necessary when not using the TE=0 extrapolation
+if ~mpm_params.fullOLS
+    for ccon = 1:mpm_params.ncon-1
+        TEcon1 = mpm_params.input(ccon).TE;
+        TEcon2 = mpm_params.input(ccon+1).TE;
+        for necho = 1:min(length(TEcon1),length(TEcon2))
+            if ~(TEcon1(necho)==TEcon2(necho))
+                error('Echo times do not match between contrasts! Aborting.');
+            end
         end
     end
 end

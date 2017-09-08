@@ -51,9 +51,20 @@ hmri_def.TPM = fullfile(fileparts(mfilename('fullpath')),'..','etpm','eTPM.nii')
 %==========================================================================
 
 %--------------------------------------------------------------------------
-% create an Ordinary Least Squares R2* map?
+% Ordinary Least Squares & fit at TE=0
 %--------------------------------------------------------------------------
+% create an Ordinary Least Squares R2* map?
 hmri_def.R2sOLS = 1; 
+
+% Define a coherent interpolation factor used all through the map creation
+% process. Default is 3, but if you want to keep SNR and resolution as far
+% as possible the same, it is recommended to use sinc interpolation (at
+% least -4, in Siawoosh's experience -7 gives decent results)
+hmri_def.interp = 3;
+
+% Define the OLS fit as default. OLS fit at TE=0 is used instead of
+% averaged contrast images for the map calculation
+hmri_def.fullOLS = false;
 
 %--------------------------------------------------------------------------
 % PD maps processing parameters

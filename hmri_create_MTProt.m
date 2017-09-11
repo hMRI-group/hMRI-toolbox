@@ -353,33 +353,30 @@ end
 if mpm_params.proc.R2sOLS
     fprintf(1,'\n    -------- OLS R2* map calculation --------\n');
         
-    % OLS fit at TE=0: overwrites the averaged echoes of each contrast with
-    % the respective OLS fit at TE=0
-    % !!!!! NOT YET COMPATIBLE WITH noMTw IMPLEMENTATION !!!!
-    %========================================================
+    % OLS fit at TE=0: to be used instead of averaged echoes of each
+    % contrast if "fullOLS" option is enabled
     if mpm_params.fullOLS
         fprintf(1,'\n    -------- and fit to TE=0 for all contrasts --------\n');
-        Nmap    = nifti;
-        for ii=1:numel(contrastnam)
-            avg_fnam    = fullfile(calcpath,[outbasename '_' contrastnam{ii} '.nii']);
-            eval(sprintf('P%s = avg_fnam;', contrastnam{ii})); % i.e. PPDw/PMTw/PT1w = avg_fnam; Defined here!!
-            dm        = V_pdw(1).dim;
-            Ni        = nifti;
-            Ni.mat    = V_pdw(1).mat;
-            Ni.mat0   = V_pdw(1).mat;
-            Ni.descrip  = sprintf('Averaged %s OLS images', contrastnam{ii});
-            Ni.dat      = file_array(avg_fnam,dm,dt,0,1,0);
+
+        Nmap = nifti;
+        Pte0 = cell(1,mpm_params.ncon);
+        for ccon = 1:mpm_params.ncon
+            Pte0{ccon}  = fullfile(calcpath,[outbasename '_' mpm_params.input(ccon).tag 'w_OLSfit_TEzero.nii']);
+            Ni          = nifti;
+            Ni.mat      = V_pdw(1).mat;
+            Ni.mat0     = V_pdw(1).mat;
+            Ni.descrip  = sprintf('OLS fit to TE=0 for %sw images', mpm_params.input(ccon).tag);
+            Ni.dat      = file_array(Pte0{ccon},dm,dt,0,1,0);
             create(Ni);
-            Nmap(ii) = Ni;
+            Nmap(ccon) = Ni;
             
-            input_files = mpm_params.input.(contrastnam{ii}).fname;
+            input_files = mpm_params.input(ccon).fnam;
             Output_hdr = init_mpm_output_metadata(input_files, mpm_params);
             Output_hdr.history.output.imtype = Ni.descrip;
             Output_hdr.history.output.units = 'a.u.';
-            set_metadata(avg_fnam,Output_hdr,mpm_params.json);
+            set_metadata(Pte0{ccon},Output_hdr,mpm_params.json);
         end
-    end    
-    %========================================================
+    end % init nifti objects for fullOLS case
     
     fR2s_OLS    = fullfile(calcpath,[outbasename '_R2s_OLS' '.nii']);
     Ni          = nifti;
@@ -428,19 +425,15 @@ if mpm_params.proc.R2sOLS
             end
         end
         Y = W*reshape(data, [sum(nechoes) prod(dm(1:2))]);
-        Y = -reshape(Y(end,:), dm(1:2));
 
-        % SM: here is where the writing starts (see above) 
-        % NOT YET COMPATIBLE WITH noMTw IMPLEMENTATION !!!
-        % ================================================
-        vec = [2 1 3];
+        % Writes "fullOLS" images (OLS fit to TE=0 for each contrast)
         if mpm_params.fullOLS
-            for ii = 1:numel(Nmap)
-                Nmap(ii).dat(:,:,p) = reshape(exp(Y(vec(ii),:)), dm(1:2));
+            for ccon = 1:mpm_params.ncon
+                Nmap(ccon).dat(:,:,p) = reshape(exp(Y(ccon,:)), dm(1:2));
             end
         end
-        Y = -reshape(Y(4,:), dm(1:2));
-        % ================================================
+        
+        Y = -reshape(Y(end,:), dm(1:2));
         
         % NB: mat field defined by V_pdw => first PDw echo
         % threshold T2* at +/- 0.1ms or R2* at +/- 10000 *(1/sec), 
@@ -459,6 +452,16 @@ if mpm_params.proc.R2sOLS
     set_metadata(fullfile(calcpath,[outbasename '_R2s_OLS' '.nii']),Output_hdr,mpm_params.json);
         
 end % OLS code
+
+% if "fullOLS" option enabled, Pte0 images replace Pavg images in the rest
+% of the code. We need to apply the substitution and reload the images...
+if mpm_params.fullOLS
+    for ccon = 1:mpm_params.ncon
+        Pavg{ccon} = Pte0{ccon};
+        Vavg(ccon) = spm_vol(Pavg{ccon});
+    end
+end
+        
 
 %% =======================================================================%
 % Prepare output for R1, PD and MT maps
@@ -588,14 +591,14 @@ for p = 1:dm(3)
 
         T1w = spm_slice_vol(Vavg(T1idx),Vavg(T1idx).mat\M,dm(1:2),mpm_params.interp);
         
-        % !!!! CHECK COMPATIBILITY WITH noMTw IMPLEMENTATION
-        %===================================================
+        % if "fullOLS" option enabled, use the OLS fit at TE=0 as
+        % "T1w_forA"; otherwise use the average calculated earlier (by
+        % default, corresponds to the first echo to reduce R2* bias)
         if mpm_params.fullOLS
             T1w_forA = T1w;
         else
             T1w_forA = spm_slice_vol(VT1w_forA,VT1w_forA.mat\M,dm(1:2),mpm_params.interp);
         end
-        %===================================================
     
         if isempty(f_T)
             % semi-quantitative T1
@@ -685,7 +688,8 @@ end
 %% =======================================================================%
 % ACPC Realign all images - only if MT map created
 %=========================================================================%
-if mpm_params.ACPCrealign && MTidx && PDidx && T1idx
+if mpm_params.ACPCrealign 
+    if (MTidx && PDidx && T1idx)
     fprintf(1,'\n    -------- ACPC Realign all images --------\n');
     
     % Define and calculate masked MT image
@@ -730,6 +734,13 @@ if mpm_params.ACPCrealign && MTidx && PDidx && T1idx
     
     % Save transformation matrix
     spm_jsonwrite(fullfile(supplpath,'MPM_map_creation_ACPCrealign_transformation_matrix.json'),R,struct('indent','\t'));
+
+    else
+        fprintf(1,['\nWARNING: ACPC Realign was enabled, but no MT map was available \n' ...
+                   'to proceed. ACPC realignment must be done separately, e.g. you can \n'...
+                   'run [hMRI tools > Auto-reorient] before calculating the maps.\n' ...
+                   'NOTE: segmentation might crash if no initial reorientation.\n']);
+    end
 end
 
 % for quality assessment and/or PD map calculation

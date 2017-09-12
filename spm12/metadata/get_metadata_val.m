@@ -52,6 +52,7 @@ function [parValue, parLocation] = get_metadata_val(varargin)
 %    - 'PhaseEncodingDirectionPositive' A>>P & R>>L = 1; P>>A & L>>R = 0.
 %    = 'PhaseEncodingDirection' A>>P/P>>A = 'COL' & R>>L/L>>R = 'ROW'
 %    - 'NumberOfMeasurements'
+%    - 'NumberOfSlices'
 %    - 'epiReadoutDuration' [ms]
 %    - 'WipParameters' structure containing fields alFree & adFree
 %    - 'B1mapNominalFAValues' [deg]
@@ -435,6 +436,18 @@ else
                 parLocation{cRes} = 'NullParameterNotDefinedInStruct';
                 parValue{cRes} = 1;
             end
+            
+        case 'NumberOfSlices' % Siemens-specific
+            [nFieldFound, fieldList] = find_field_name(mstruc, 'sSliceArray','caseSens','sensitive','matchType','exact');
+            [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
+            % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
+            % Keep only first value if many
+            if nFieldFound
+                cRes = 1;
+                parLocation{cRes} = [nam{1} '.lSize'];
+                parValue{cRes} = val{1}.lSize;
+            end
+            
             
         case 'PATparameters'
             % Siemens-specific

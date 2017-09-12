@@ -16,7 +16,7 @@ function varargout = hmri_get_defaults(defstr, varargin)
 % This value will not be saved for future sessions of hMRI. To make
 % persistent changes, edit hmri_defaults.m.
 %
-% NOTE, specific to hMRI tool:
+% NOTE, specific to hMRI tool (might become obsolete in future versions):
 % In order to allow centre specific defaults, *without* editing/commenting
 % the default file itself, these centre specific values are placed in a
 % centre specific substructure, named with 'fil', 'lren' or 'crc'(see the 
@@ -80,16 +80,20 @@ try
         hmri_def = subsasgn(hmri_def, subs, varargin{1});
     end
 catch %#ok<CTCH>
-    % Try adding the centre name as intermediate field
-    ctr_name = hmri_get_defaults('centre');
-    % construct subscript reference struct from dot delimited tag string
-    tags = textscan([ctr_name,'.',defstr],'%s', 'delimiter','.');
-    subs = struct('type','.','subs',tags{1}');
-    if nargin == 1
-        varargout{1} = subsref(hmri_def, subs);
-    else
-        hmri_def = subsasgn(hmri_def, subs, varargin{1});
-    end
+    
+    varargout{1} = [];
+    fprintf(1,'WARNING: no default value defined for %s!\n', defstr);
+    
+% %     % Try adding the centre name as intermediate field
+% %     ctr_name = hmri_get_defaults('centre');
+% %     % construct subscript reference struct from dot delimited tag string
+% %     tags = textscan([ctr_name,'.',defstr],'%s', 'delimiter','.');
+% %     subs = struct('type','.','subs',tags{1}');
+% %     if nargin == 1
+% %         varargout{1} = subsref(hmri_def, subs);
+% %     else
+% %         hmri_def = subsasgn(hmri_def, subs, varargin{1});
+% %     end
 end
 
 end

@@ -46,7 +46,8 @@ m_pams.help       = {['Select whole brain parameter maps (e.g. MT, ',...
 vols_tc         = cfg_files;
 vols_tc.tag     = 'vols_tc';
 vols_tc.name    = 'mwTC images';
-vols_tc.help    = {'Select the modulated warped tissue classes (mwc*)'};
+vols_tc.help    = {'Select the modulated warped tissue classes (mwc*).', ... 
+    'Pick only one type of mwc* images across all subjects!.'};
 vols_tc.filter  = 'image';
 vols_tc.ufilter = '^mwc.*';
 vols_tc.num     = [1 Inf];
@@ -61,8 +62,11 @@ m_TCs.values     = {vols_tc };
 m_TCs.val        = {vols_tc };
 m_TCs.num = [1 Inf];
 m_TCs.help       = {['Select the modulated warped tissue classes (TC) ',...
-    'of interest from all subjects. This ould typically be the mwc1* ',...
-    'and mwc2* images for GM and WM.']};
+    'of interest from all subjects.'], ...
+    ['For the typical case of GM and WM, you would selectall the mwc1* images ', ...
+    'in one set of ''mWTC_images'' and the mwc2* ones in second set of ', ...
+    '''mWTC_images''!']
+};
 
 % ---------------------------------------------------------------------
 % tpm Tissue Probability Maps

@@ -1,4 +1,4 @@
-function [fR1, fR2s, fMT, fA, PPDw, PT1w]  = hmri_create_MTProt(jobsubj, P_trans, P_receiv) %#ok<*STOUT>
+function [fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw]  = hmri_create_MTProt(jobsubj, P_trans, P_receiv) %#ok<*STOUT>
 %==========================================================================
 % This is hmri_create_MTProt, part of the hMRI-Toolbox.
 %
@@ -7,7 +7,7 @@ function [fR1, fR2s, fMT, fA, PPDw, PT1w]  = hmri_create_MTProt(jobsubj, P_trans
 % multi-contrast multi-echo FLASH protocol 
 % 
 % FORMAT
-% [fR1, fR2s, fMT, fA, PPDw, PT1w]  = hmri_create_MTProt(jobsubj, P_trans, P_receiv)
+% [fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw]  = hmri_create_MTProt(jobsubj, P_trans, P_receiv)
 %
 % INPUTS
 %   jobsubj     parameters for one subject out of the job list.
@@ -26,8 +26,9 @@ function [fR1, fR2s, fMT, fA, PPDw, PT1w]  = hmri_create_MTProt(jobsubj, P_trans
 %   fA      Proton density map output filename (free water concentration
 %           (PD) [%] or signal amplitude (A) [a.u.] depending on defaults
 %           settings (PDproc.PDmap)). 
-%   PPDw    averate PD-weighted image filename
-%   PT1w    average T1-weighted image filename  
+%   PPDw    averate PD-weighted image filename (or OLS fit at TE=0 if fullOLS = true) 
+%   PT1w    average T1-weighted image filename (or OLS fit at TE=0 if fullOLS = true)  
+%   PMTw    average MT-weighted image filename (or OLS fit at TE=0 if fullOLS = true)  
 %
 % OTHER USEFUL VARIABLES EXPLAINED
 %   P_mtw, P_pdw, P_t1w (from jobsubj.raw_mpm) are MTw, PDw, T1w series of
@@ -863,6 +864,15 @@ if T1idx
     PT1w = PT1w_final;
 else
     PT1w = '';
+end
+
+if MTidx
+    PMTw_final = fullfile(supplpath, spm_file(Pavg{MTidx},'filename'));
+    copyfile(Pavg{MTidx},PMTw_final);
+    try copyfile([spm_str_manip(Pavg{MTidx},'r') '.json'],[spm_str_manip(PMTw_final,'r') '.json']); end
+    PMTw = PMTw_final;
+else
+    PMTw = '';
 end
 
 % save processing params (mpm_params)

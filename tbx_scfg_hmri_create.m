@@ -440,6 +440,16 @@ if ~isfield(job, 'subj') % Many subjects
     dep(5).src_output = substruct('.','T1w','()',{':'});
     dep(5).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
     
+    dep(6) = cfg_dep;
+    dep(6).sname = 'MTw Maps';
+    dep(6).src_output = substruct('.','MTw','()',{':'});
+    dep(6).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
+    
+    dep(7) = cfg_dep;
+    dep(7).sname = 'PDw Maps';
+    dep(7).src_output = substruct('.','PDw','()',{':'});
+    dep(7).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
+    
 else
     k=1;
     cdep(5*numel(job.subj),1) = cfg_dep;
@@ -479,6 +489,21 @@ else
         cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
         
         k=k+1;
+        
+        cdep(k)            = cfg_dep;
+        cdep(k).sname      = sprintf('MTw_subj%d',i);
+        cdep(k).src_output = substruct('.','subj','()',{i},'.','MTw','()',{':'});
+        cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
+        
+        k=k+1;
+
+        cdep(k)            = cfg_dep;
+        cdep(k).sname      = sprintf('PDw_subj%d',i);
+        cdep(k).src_output = substruct('.','subj','()',{i},'.','PDw','()',{':'});
+        cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
+        
+        k=k+1;
+        
     end
     dep = cdep;
     

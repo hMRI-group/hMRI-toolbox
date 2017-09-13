@@ -5,6 +5,13 @@ niifilenam = spm_file(niifilenam,'number','');
 % Check whether a NIFTI file has extended header or not...
 fid = fopen(niifilenam,'r+');
 std_hdr_size = 348;
-fseek(fid, std_hdr_size, 'bof');
-isHdrExtended = fread(fid,1,'uint8');
+% check whether anything else than the standard header is written (if nifti
+% initialized but data not filled up yet, the file has just length = 348)
+fseek(fid, 0, 'eof');
+if (ftell(fid)<=std_hdr_size)
+    isHdrExtended = 0;
+else
+    fseek(fid, std_hdr_size, 'bof');
+    isHdrExtended = fread(fid,1,'uint8');
+end
 fclose(fid);

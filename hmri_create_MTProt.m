@@ -368,13 +368,18 @@ if mpm_params.proc.R2sOLS
             Ni.descrip  = sprintf('OLS fit to TE=0 for %sw images', mpm_params.input(ccon).tag);
             Ni.dat      = file_array(Pte0{ccon},dm,dt,0,1,0);
             create(Ni);
-            Nmap(ccon) = Ni;
             
+            % set metadata
             input_files = mpm_params.input(ccon).fnam;
             Output_hdr = init_mpm_output_metadata(input_files, mpm_params);
             Output_hdr.history.output.imtype = Ni.descrip;
             Output_hdr.history.output.units = 'a.u.';
-            set_metadata(Pte0{ccon},Output_hdr,mpm_params.json);
+            set_metadata(Pte0{ccon},Output_hdr,mpm_params.json);            
+            
+            % re-load the updated NIFTI file (in case extended header has
+            % been added, the offset has changed and must be updated before
+            % writing the data to the file!)
+            Nmap(ccon) = nifti(Pte0{ccon});
         end
     end % init nifti objects for fullOLS case
     
@@ -443,6 +448,7 @@ if mpm_params.proc.R2sOLS
     end
     spm_progress_bar('Clear');
 
+    % Set metadata (R2S_OLS)
     input_files = mpm_params.input(PDidx).fnam;
     if (T1idx); input_files = char(input_files, mpm_params.input(T1idx).fnam); end
     if (MTidx); input_files = char(input_files, mpm_params.input(MTidx).fnam); end
@@ -450,7 +456,7 @@ if mpm_params.proc.R2sOLS
     Output_hdr.history.output.imtype = 'R2*-OLS map';
     Output_hdr.history.output.units = 'ms-1';
     set_metadata(fullfile(calcpath,[outbasename '_R2s_OLS' '.nii']),Output_hdr,mpm_params.json);
-        
+   
 end % OLS code
 
 % if "fullOLS" option enabled, Pte0 images replace Pavg images in the rest

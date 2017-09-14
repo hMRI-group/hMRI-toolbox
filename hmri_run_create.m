@@ -112,7 +112,7 @@ P_receiv = [];
 [fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw]  = hmri_create_MTProt(job.subj, P_trans, P_receiv);
 
 % apply UNICORT if required, and collect outputs:
-if isfield(job.subj.b1_type,'UNICORT')
+if (isfield(job.subj.b1_type,'UNICORT') && ~isempty(fR1) && ~isempty(PPDw))
     out_unicort = hmri_create_unicort(PPDw, fR1, job.subj);
     out_loc.subj.R1  = {out_unicort.R1u};
 else

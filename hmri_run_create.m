@@ -5,7 +5,6 @@ function out = hmri_run_create(job)
 % If no B1 maps available, one can choose not to correct for B1 bias or
 % apply UNICORT.
 %==========================================================================
-job = hmri_create_process_data_spec(job);
 
 out.R1 = {};
 out.R2s = {};

@@ -62,7 +62,7 @@ for ccon = 1:rfsens_params.ncon
     input_files = sensmaps;
     Output_hdr = init_rfsens_output_metadata(input_files, rfsens_params);
     Output_hdr.history.output.imtype = sprintf('Quantitative RF sensitivity map (HC/BC) for %sw images',rfsens_params.input(ccon).tag);
-    set_metadata(qsensmap{con},Output_hdr,json);
+    set_metadata(qsensmap,Output_hdr,json);
     
     %==========================================================================
     % Normalise all input multi-echo images using the p.u. sensitivity maps
@@ -163,32 +163,16 @@ if isfield(jobsubj.sensitivity,'RF_once')
     end
     rfsens_params.senstype = 'RF_once: single set of RF sensitivity maps acquired for all contrasts';
 elseif isfield(jobsubj.sensitivity,'RF_per_contrast')
-    if (rfsens_params.MTidx)
-        for i=1:length(jobsubj.sensitivity.RF_per_contrast.raw_sens_MT)
-            tmprawfnam = spm_file(jobsubj.sensitivity.RF_per_contrast.raw_sens_MT{i},'number','');
-            tmpfnam{i} = fullfile(rfsens_params.calcpath,spm_file(tmprawfnam,'filename'));
-            copyfile(tmprawfnam, tmpfnam{i});
-            try copyfile([spm_str_manip(tmprawfnam,'r') '.json'],[spm_str_manip(tmpfnam{i},'r') '.json']); end
+    for ccon = 1:rfsens_params.ncon
+        raw_sens_field = sprintf('raw_sens_%s',rfsens_params.input(ccon).tag);
+        raw_sens_input = jobsubj.sensitivity.RF_per_contrast.(raw_sens_field);
+        for csens=1:length(raw_sens_input)
+            tmprawfnam = spm_file(raw_sens_input{csens},'number','');
+            tmpfnam{csens} = fullfile(rfsens_params.calcpath,spm_file(tmprawfnam,'filename'));
+            copyfile(tmprawfnam, tmpfnam{csens});
+            try copyfile([spm_str_manip(tmprawfnam,'r') '.json'],[spm_str_manip(tmpfnam{csens},'r') '.json']); end
         end
-        rfsens_params.input.MT.sensfnam = char(tmpfnam);
-    end
-    if (rfsens_params.PDidx)
-        for i=1:length(jobsubj.sensitivity.RF_per_contrast.raw_sens_PD)
-            tmprawfnam = spm_file(jobsubj.sensitivity.RF_per_contrast.raw_sens_PD{i},'number','');
-            tmpfnam{i} = fullfile(rfsens_params.calcpath,spm_file(tmprawfnam,'filename'));
-            copyfile(tmprawfnam, tmpfnam{i});
-            try copyfile([spm_str_manip(tmprawfnam,'r') '.json'],[spm_str_manip(tmpfnam{i},'r') '.json']); end
-        end
-        rfsens_params.input.PD.sensfnam = char(tmpfnam);
-    end
-    if (rfsens_params.T1idx)
-        for i=1:length(jobsubj.sensitivity.RF_per_contrast.raw_sens_T1)
-            tmprawfnam = spm_file(jobsubj.sensitivity.RF_per_contrast.raw_sens_T1{i},'number','');
-            tmpfnam{i} = fullfile(rfsens_params.calcpath,spm_file(tmprawfnam,'filename'));
-            copyfile(tmprawfnam, tmpfnam{i});
-            try copyfile([spm_str_manip(tmprawfnam,'r') '.json'],[spm_str_manip(tmpfnam{i},'r') '.json']); end
-        end
-        rfsens_params.input.T1.sensfnam = char(tmpfnam);
+        rfsens_params.input(ccon).sensfnam = char(tmpfnam);
     end
     rfsens_params.senstype = 'RF_per_contrast: one sensitivity data set acquired per contrast (i.e. T1/PD/MT-weighted images)';
 else

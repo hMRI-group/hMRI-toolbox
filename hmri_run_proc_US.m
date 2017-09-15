@@ -43,7 +43,11 @@ for nm = 1:length(job.subjc)
     same_dir = false;
     % pathes to struct image and parametric maps, could be different ones.
     struc_path = spm_file(job.subjc(nm).channel(1).vols{1},'path');
-    data_path = spm_file(job.subjc(nm).maps.vols_pm{1},'path');
+    if ~isempty(job.subjc(nm).maps.vols_pm)
+        data_path = spm_file(job.subjc(nm).maps.vols_pm{1},'path');
+    else
+        data_path = struc_path;
+    end
     if isfield(job.subjc(nm).output,'indir') && ...
             job.subjc(nm).output.indir == 1
         same_dir = true;
@@ -51,7 +55,8 @@ for nm = 1:length(job.subjc)
     elseif isfield(job.subjc(nm).output,'outdir')
         dn_output = job.subjc(nm).output.outdir{1};
     elseif isfield(job.subjc(nm).output,'outdir_ps')
-        dn_subj = ''; % Get the subjects directory name
+        % Get the subjects directory name, from data_ or struct_path???
+        dn_subj = get_subject_dn(data_path); 
         dn_output = fullfile(job.subjc(nm).output.outdir_ps{1},dn_subj);
         if ~exist(dn_output,'dir')
             % Create subject sub-directory if necessary
@@ -61,8 +66,6 @@ for nm = 1:length(job.subjc)
     
     % Prepare and run 'spm_preproc' -> get tissue maps + deformation
     defsa.channel = job.subjc(nm).channel;
-    %     defsa.channel = job.subjc(nm).struct(1);
-    %     defsa.channel.vols = job.subjc(nm).struct(1).s_vols;
     defsa.tissue  = job.tissue;
     defsa.warp    = job.warp;
     out.subjc(nm) = spm_preproc_run(defsa);
@@ -159,8 +162,6 @@ end
 function subjc_o = update_path(subjc_i,dn_output)
 % Function to update the path of created files, when results are moved to
 % another directory.
-% out.subjc(nm) = update_path(out.subjc(nm),dn_output);
-% subjc_i = out.subjc(nm)
 
 subjc_o = subjc_i; % At worst keep the same...
 
@@ -201,7 +202,6 @@ function st_o = update_struct_path(st_i,dn_o)
 % Small function to update the path of filenames stored in subfield of an
 % input structure 'st_i'.
 
-% st_i = subjc_i.tiss(1)
 field_nm = fieldnames(st_i);
 st_o = st_i;
 for ii = 1:numel(field_nm)
@@ -209,5 +209,23 @@ for ii = 1:numel(field_nm)
         st_o.(field_nm{ii}) = spm_file(st_i.(field_nm{ii}),'path',dn_o);
     end
 end
+end
+%_______________________________________________________________________
+
+function dn_subj = get_subject_dn(data_path)
+% Extract the subject's directory name from the path to its data
+
+% Fist split the path into its sub-parts
+l_fsep = strfind(data_path,filesep);
+n_fsep = numel(l_fsep);
+lp_fsep = [0 l_fsep length(data_path)+1];
+pth_parts = cell(1,n_fsep);
+for ii=1:(n_fsep+1)
+    pth_parts{ii} = data_path(lp_fsep(ii)+1:lp_fsep(ii+1)-1);
+end
+
+% Pick up last one
+dn_subj = pth_parts{end};
+
 end
 %_______________________________________________________________________

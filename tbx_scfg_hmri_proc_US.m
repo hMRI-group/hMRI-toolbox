@@ -68,7 +68,7 @@ output.tag     = 'output';
 output.name    = 'Output choice';
 output.help    = {['Output directory can be the same as the input ',...
     'directory for each input file or user selected (one for everything ',...
-    'or preserve a per-subject organisation']};
+    'or preserve a per-subject organisation).']};
 output.values  = {indir outdir outdir_ps };
 output.val     = {indir};
 

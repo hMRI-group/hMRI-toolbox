@@ -191,7 +191,7 @@ cdep = cfg_dep;
 for ii=1:numel(job.multsdata.vols_tc)
     cdep(end+1) = cfg_dep;
     cdep(end).sname      = sprintf('mw TC #%d',ii);
-    cdep(end).src_output = substruct('.','vols_mwtc','{}',{ii});
+    cdep(end).src_output = substruct('.','vols_mwc','{}',{ii});
     cdep(end).tgt_spec   = cfg_findspec({{'filter','nifti'}});
 end
 %deal with wPM's

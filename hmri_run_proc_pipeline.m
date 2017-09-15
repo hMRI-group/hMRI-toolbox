@@ -27,11 +27,13 @@ if job.pipe_c==1 % US+smooth -> warp the parametric maps here.
     job_US.many_sdatas.vols_pm = job.vols_pm;
 end
 job_US.many_sdatas.channel.vols = job.s_vols;
-% job_US.many_sdatas.rstruct.s_vols = job.s_vols;
 
 % Only spit out CSF in native space (no Dartel imported) & warped (no modulation)
 job_US.tissue(3).native = [1 0];
 job_US.tissue(3).warped = [1 0];
+
+% Get the output direcotry across
+job_US.many_sdatas.output = job.output;
 
 % Run the *_proc_US
 fprintf('\nhMRI-pipeline: running the US module.\n')
@@ -63,6 +65,20 @@ if job.pipe_c == 2
     % Run the Dartel-warp job
     fprintf('\nhMRI-pipeline: running the Darte-warp module.\n')
     out_Dwarp = spm_dartel_template(job_Dwarp);
+    
+    % Move if using specific per-subject subdirectory -> 'dart_files'
+    if isfield(job.output,'outdir_ps')
+        dn_dartel = fullfile(job.output.outdir_ps{1},'dart_files');
+        if ~exist(dn_dartel,'dir')
+            mkdir(dn_dartel)
+        end
+        current_path = spm_file(out_Dwarp.template{1},'path');
+        f2move = spm_select('FPList',current_path,'^Template_[\d]\.nii$');
+        for ii=1:size(f2move,1)
+            movefile(deblank(f2move(ii,:)),dn_dartel);
+        end
+        out_Dwarp.template = spm_file(out_Dwarp.template,'path',dn_dartel);
+    end
     
     % b) normalize to  MNI
     proc_Dnorm = proc_Dartel.values{3};
@@ -96,7 +112,7 @@ switch job.pipe_c
     case 2 % US+Dartel+smooth
         % Fit in DARTEL data
         job_smooth.vols_pm = out_Dnorm.vols_wpm;
-        job_smooth.vols_tc = out_Dnorm.vols_mwtc;
+        job_smooth.vols_tc = out_Dnorm.vols_mwc;
     otherwise
         error('hmri:pipeline', 'Wrong hmri-pipeline option.');
 end

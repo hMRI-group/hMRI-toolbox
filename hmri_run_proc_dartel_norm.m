@@ -10,8 +10,8 @@ function out = hmri_run_proc_dartel_norm(job)
 % Written by Christophe Phillips
 
 %  Build the output 'out' structure with created filenames in cell arrays
-out.vols_mwtc = {}; % filenames are organised as {1 x #TCs} of {#subj x 1}
-out.vols_wpm = {};  % filenames are organised as {1 x #PMs} of {#subj x 1} 
+out.vols_mwc = {}; % filenames are organised as {1 x #mwc} of {#subj x 1}
+out.vols_wpm = {};  % filenames are organised as {1 x #pm} of {#subj x 1} 
 
 
 % MFC - Setting up feds structure which has a copy of the (reordered) subject info:
@@ -36,11 +36,11 @@ feds.preserve = 1;
 out_tc = spm_dartel_norm_fun(feds);
 
 % Specify the output with created file names, based on out_tc
-out.vols_mwtc  = cell(1,numel(job.subjd(1).tc_vols));
+out.vols_mwc  = cell(1,numel(job.subjd(1).tc_vols));
 for ii=1:numel(job.subjd(1).tc_vols)
-    out.vols_mwtc{ii}  = cell(numel(job.subjd),1);
+    out.vols_mwc{ii}  = cell(numel(job.subjd),1);
     for jj=1:numel(job.subjd)
-        out.vols_mwtc{ii}{jj} = out_tc{jj}{ii};
+        out.vols_mwc{ii}{jj} = out_tc{jj}{ii};
     end
 end
 

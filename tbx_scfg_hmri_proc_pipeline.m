@@ -16,6 +16,54 @@ function proc_pipel = tbx_scfg_hmri_proc_pipeline
 
 % Written by Christophe Phillips
 
+% ---------------------------------------------------------------------
+% indir Input directory as output directory
+% ---------------------------------------------------------------------
+indir         = cfg_menu;
+indir.tag     = 'indir';
+indir.name    = 'Input directory';
+indir.help    = {['Output files will be written to the same folder as ',...
+    'each corresponding input file.']};
+indir.labels  = {'Yes'};
+indir.values  = {1};
+indir.val     = {1};
+
+% ---------------------------------------------------------------------
+% outdir Output directory for all data
+% ---------------------------------------------------------------------
+outdir         = cfg_files;
+outdir.tag     = 'outdir';
+outdir.name    = 'Output directory, all together';
+outdir.help    = {['Select a directory where all output files from all '... 
+    'subjects put together will be written to.']};
+outdir.filter = 'dir';
+outdir.ufilter = '.*';
+outdir.num     = [1 1];
+
+% ---------------------------------------------------------------------
+% outdir_ps Output directory for per-subject organisation
+% ---------------------------------------------------------------------
+outdir_ps         = cfg_files;
+outdir_ps.tag     = 'outdir_ps';
+outdir_ps.name    = 'Output directory, with per-subject sub-directory';
+outdir_ps.help    = {['Select a directory where output files will be '...
+    'written to, in each subject''s sub-directory.']};
+outdir_ps.filter = 'dir';
+outdir_ps.ufilter = '.*';
+outdir_ps.num     = [1 1];
+
+% ---------------------------------------------------------------------
+% output Output choice
+% ---------------------------------------------------------------------
+output         = cfg_choice;
+output.tag     = 'output';
+output.name    = 'Output choice';
+output.help    = {['Output directory can be the same as the input ',...
+    'directory for each input file or user selected (one for everything ',...
+    'or preserve a per-subject organisation).']};
+output.values  = {indir outdir outdir_ps };
+output.val     = {indir};
+
 % -------------------------------------------------------------------------
 % vols Volumes
 % ---------------------------------------------------------------------
@@ -100,7 +148,7 @@ proc_pipel.help    = {
     ['US+Dartel+Smooth -> applies US, builds Dartel template and warps' ...
     'into MNI, then smoothes (weighted-average)']
     }'; %#ok<*NBRAK>
-proc_pipel.val  = {vols many_pams fwhm pipe_c};
+proc_pipel.val  = {output vols many_pams fwhm pipe_c};
 proc_pipel.prog = @hmri_run_proc_pipeline;
 proc_pipel.vout = @vout_proc_pipeline;
 proc_pipel.check = @check_data;

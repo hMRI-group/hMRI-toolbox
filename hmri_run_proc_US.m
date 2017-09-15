@@ -38,6 +38,27 @@ out.def.fn = {};
 
 % looping over all the subjects.
 for nm = 1:length(job.subjc)
+    % Figure out where results are written out -> dn_output
+    % and create it of needs be (per-subject option)
+    same_dir = false;
+    % pathes to struct image and parametric maps, could be different ones.
+    struc_path = spm_file(job.subjc(nm).channel(1).vols{1},'path');
+    data_path = spm_file(job.subjc(nm).maps.vols_pm{1},'path');
+    if isfield(job.subjc(nm).output,'indir') && ...
+            job.subjc(nm).output.indir == 1
+        same_dir = true;
+        dn_output = data_path;
+    elseif isfield(job.subjc(nm).output,'outdir')
+        dn_output = job.subjc(nm).output.outdir{1};
+    elseif isfield(job.subjc(nm).output,'outdir_ps')
+        dn_subj = ''; % Get the subjects directory name
+        dn_output = fullfile(job.subjc(nm).output.outdir_ps{1},dn_subj);
+        if ~exist(dn_output,'dir')
+            % Create subject sub-directory if necessary
+            mkdir(dn_output);
+        end
+    end
+    
     % Prepare and run 'spm_preproc' -> get tissue maps + deformation
     defsa.channel = job.subjc(nm).channel;
     %     defsa.channel = job.subjc(nm).struct(1);
@@ -46,18 +67,37 @@ for nm = 1:length(job.subjc)
     defsa.warp    = job.warp;
     out.subjc(nm) = spm_preproc_run(defsa);
     
+    % Move segmentation output (if requested) and update 'out' structure:
+    % all *c*.nii images, deformation field (y_*.nii), parameters 
+    %  (*_seg8.mat), and bias corrections (m*.nii & BiasField_*.nii)
+    if ~same_dir
+        l_filter = {'^c[\d].*\.nii$','^rc[\d].*\.nii$', ...
+            '^wc[\d].*\.nii$','^mwc[\d].*\.nii$','^y_.*\.nii$', ...
+            '^.*_seg8.mat$','^BiasField_.*\.nii$'}; % ,'^m.*\.nii$'};
+        f2move = spm_select('FPList',struc_path,l_filter);
+        for ii=1:size(f2move,1)
+            movefile(deblank(f2move(ii,:)),dn_output);
+        end
+        % Carefull with m*.nii files, which could be original
+        % -> check channels
+        if ~isempty(out.subjc(nm).channel)
+            for ii = 1:numel(out.subjc(nm).channel)
+                if ~isempty(out.subjc(nm).channel(ii).biascorr)
+                    movefile(out.subjc(nm).channel(ii).biascorr{1},dn_output);
+                end
+            end
+        end
+        
+        % Get the filenames updated
+        out.subjc(nm) = update_path(out.subjc(nm),dn_output);
+    end
+    
     % Apply deformation on maps + get deformation map name
-    defs.comp{1}.def = spm_file(job.subjc(nm).channel(1).vols, ...
-        'prefix', 'y_', 'ext', '.nii'); % def map fname
+    defs.comp{1}.def = out.subjc(nm).fordef;
     % defs.ofname = '';
     if numel(job.subjc(nm).maps.vols_pm)
         defs.out{1}.pull.fnames = cellstr(char(char(job.subjc(nm).maps.vols_pm{:})));
-        if isfield(job.subjc(nm).output,'indir') && job.subjc(nm).output.indir == 1
-            defs.out{1}.pull.savedir.saveusr{1} = ...
-                spm_file(job.subjc(nm).maps.vols_pm{1},'path');
-        else
-            defs.out{1}.pull.savedir.saveusr{1} = job.subjc(nm).output.outdir{1};
-        end
+        defs.out{1}.pull.savedir.saveusr{1} = dn_output;
         defs.out{1}.pull.interp = 1;
         defs.out{1}.pull.mask = 1;
         defs.out{1}.pull.fwhm = [0 0 0]; % no smoothing requester,
@@ -67,7 +107,7 @@ for nm = 1:length(job.subjc)
         outdef.warped = {};
     end
     
-    % Save filenames as apropriate for 'out'
+    % Save filenames as apropriate for 'out', keeping track of moved files!
     for i=1:numel(out.subjc(1).tiss)
         if isfield(out.subjc(nm).tiss(i), 'c')
             out.tiss(i).c = [out.tiss(i).c; out.subjc(nm).tiss(i).c];
@@ -111,6 +151,62 @@ for ii = 1:nSubj
     for kk = 1:nPara
         job.subjc(ii).maps.vols_pm{end+1,1} = ...
             job.many_sdatas.vols_pm{kk}{ii};
+    end
+end
+end
+%_______________________________________________________________________
+
+function subjc_o = update_path(subjc_i,dn_output)
+% Function to update the path of created files, when results are moved to
+% another directory.
+% out.subjc(nm) = update_path(out.subjc(nm),dn_output);
+% subjc_i = out.subjc(nm)
+
+subjc_o = subjc_i; % At worst keep the same...
+
+% Channel
+if ~isempty(subjc_i.channel)
+    % deal with 'biasfield' and 'biascorr' path
+    for ii=1:numel(subjc_i.channel)
+        subjc_o.channel(ii) = update_struct_path(subjc_i.channel(ii),dn_output);
+    end
+end
+
+% Tissue
+if ~isempty(subjc_i.tiss)
+    for ii=1:numel(subjc_i.tiss)
+        subjc_o.tiss(ii) = update_struct_path(subjc_i.tiss(ii),dn_output);
+    end
+end
+    
+% Parameters
+if ~isempty(subjc_i.param)
+    subjc_o.param = spm_file(subjc_i.param,'path',dn_output);
+end
+
+% Inverse deformation
+if ~isempty(subjc_i.invdef)
+    subjc_o.invdef = spm_file(subjc_i.invdef,'path',dn_output);
+end
+
+% Forward deformation
+if ~isempty(subjc_i.fordef)
+    subjc_o.fordef = spm_file(subjc_i.fordef,'path',dn_output);
+end
+
+end
+%_______________________________________________________________________
+
+function st_o = update_struct_path(st_i,dn_o)
+% Small function to update the path of filenames stored in subfield of an
+% input structure 'st_i'.
+
+% st_i = subjc_i.tiss(1)
+field_nm = fieldnames(st_i);
+st_o = st_i;
+for ii = 1:numel(field_nm)
+    if ~isempty(st_i.(field_nm{ii}))
+        st_o.(field_nm{ii}) = spm_file(st_i.(field_nm{ii}),'path',dn_o);
     end
 end
 end

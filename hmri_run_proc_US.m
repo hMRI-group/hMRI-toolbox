@@ -8,13 +8,13 @@ function out = hmri_run_proc_US(job)
 % but largely inspired by the batch from the past VBQ toolbox.
 
 % Turning data organization from "per image type" into "per subject"
-% because data processed subject per subject.
+% because data are processed subject per subject.
 % This relies alos on the previous toolbox, which allowed explicitly for a
 % "per subject" setting of the data, so here we keep about the same code.
 job = preproc_perimage_to_persubject(job);
 
 % Initiliazign the output structure 'out'
-% .tiss : struct-array with subfields 
+% .tiss : struct-array with subfields
 %           .c and .rc, for the native and Dartel imported
 %           .wc and .mwc, for the warped and modulated
 %          tissue class images
@@ -27,36 +27,45 @@ for i=1:numel(job.tissue)
     out.tiss(i).wc = {};
     out.tiss(i).mwc = {};
 end
-for i=1:numel(job.subjc(1).maps.vols_pm)
-    out.maps(i).wvols_pm = {};
+if numel(job.subjc(1).maps.vols_pm)
+    for i=1:numel(job.subjc(1).maps.vols_pm)
+        out.maps(i).wvols_pm = {};
+    end
+else
+    out.maps.wvols_pm = {};
 end
 out.def.fn = {};
 
 % looping over all the subjects.
 for nm = 1:length(job.subjc)
     % Prepare and run 'spm_preproc' -> get tissue maps + deformation
-    defsa.channel = job.subjc(nm).struct(1);
-    defsa.channel.vols = job.subjc(nm).struct(1).s_vols;
+    defsa.channel = job.subjc(nm).channel;
+    %     defsa.channel = job.subjc(nm).struct(1);
+    %     defsa.channel.vols = job.subjc(nm).struct(1).s_vols;
     defsa.tissue  = job.tissue;
     defsa.warp    = job.warp;
     out.subjc(nm) = spm_preproc_run(defsa);
     
-    % Apply deformation on strcut/maps + build deformation map
-    defs.comp{1}.def = spm_file(job.subjc(nm).struct(1).s_vols, ...
+    % Apply deformation on maps + get deformation map name
+    defs.comp{1}.def = spm_file(job.subjc(nm).channel(1).vols, ...
         'prefix', 'y_', 'ext', '.nii'); % def map fname
     % defs.ofname = '';
-    defs.out{1}.pull.fnames = cellstr(char(char(job.subjc(nm).maps.vols_pm{:})));
-    if isfield(job.subjc(nm).output,'indir') && job.subjc(nm).output.indir == 1
-        defs.out{1}.pull.savedir.saveusr{1} = ...
-            spm_file(job.subjc(nm).maps.vols_pm{1},'path');
+    if numel(job.subjc(nm).maps.vols_pm)
+        defs.out{1}.pull.fnames = cellstr(char(char(job.subjc(nm).maps.vols_pm{:})));
+        if isfield(job.subjc(nm).output,'indir') && job.subjc(nm).output.indir == 1
+            defs.out{1}.pull.savedir.saveusr{1} = ...
+                spm_file(job.subjc(nm).maps.vols_pm{1},'path');
+        else
+            defs.out{1}.pull.savedir.saveusr{1} = job.subjc(nm).output.outdir{1};
+        end
+        defs.out{1}.pull.interp = 1;
+        defs.out{1}.pull.mask = 1;
+        defs.out{1}.pull.fwhm = [0 0 0]; % no smoothing requester,
+        % though at least vx_size/4 smoothing will still be applied!
+        outdef = spm_deformations(defs);
     else
-        defs.out{1}.pull.savedir.saveusr{1} = job.subjc(nm).output.outdir{1};
+        outdef.warped = {};
     end
-    defs.out{1}.pull.interp = 1;
-    defs.out{1}.pull.mask = 1;
-    defs.out{1}.pull.fwhm = [0 0 0]; % no smoothing requester,
-    % though at least vx_size/4 smoothing will still be applied!
-    outdef = spm_deformations(defs);
     
     % Save filenames as apropriate for 'out'
     for i=1:numel(out.subjc(1).tiss)
@@ -85,15 +94,23 @@ end
 % ========================================================================
 function job = preproc_perimage_to_persubject(job)
 % Rearrange data per subject for further preprocessing.
-for i = 1:numel(job.many_sdatas.rstruct.s_vols)
-    job.subjc(i).output = job.many_sdatas.output;
-    job.subjc(i).struct = job.many_sdatas.rstruct;
-    job.subjc(i).struct.s_vols = ...
-        job.many_sdatas.rstruct.s_vols(i);
-    job.subjc(i).maps.vols_pm = {};
-    for k = 1:numel(job.many_sdatas.vols_pm)
-        job.subjc(i).maps.vols_pm{end+1,1} = ...
-            job.many_sdatas.vols_pm{k}{i};
+
+% Number of subjects from 1st set of structurals for segmentation
+nSubj = numel(job.many_sdatas.channel(1).vols);
+nChan = numel(job.many_sdatas.channel);
+nPara = numel(job.many_sdatas.vols_pm);
+for ii = 1:nSubj
+    job.subjc(ii).output = job.many_sdatas.output;
+    % Collect structurals
+    job.subjc(ii).channel = job.many_sdatas.channel;
+    for jj = 1:nChan
+        job.subjc(ii).channel(jj).vols = job.many_sdatas.channel(jj).vols(ii);
+    end
+    % Collect parametric maps to warp, if any
+    job.subjc(ii).maps.vols_pm = {};
+    for kk = 1:nPara
+        job.subjc(ii).maps.vols_pm{end+1,1} = ...
+            job.many_sdatas.vols_pm{kk}{ii};
     end
 end
 end

@@ -34,7 +34,7 @@ vols.num        = [1 Inf];
 % ---------------------------------------------------------------------
 vols_pm         = cfg_files;
 vols_pm.tag     = 'vols_pm';
-vols_pm.name    = 'Parametric maps (single type)';
+vols_pm.name    = 'Maps (single type)';
 vols_pm.help    = {['Select whole brain parameter maps (e.g. MT, R2*, ',...
     'FA, etc.) from all subjects for processing.']};
 vols_pm.filter  = 'image';
@@ -103,6 +103,7 @@ proc_pipel.help    = {
 proc_pipel.val  = {vols many_pams fwhm pipe_c};
 proc_pipel.prog = @hmri_run_proc_pipeline;
 proc_pipel.vout = @vout_proc_pipeline;
+proc_pipel.check = @check_data;
 
 end
 
@@ -113,9 +114,6 @@ end
 %% =======================================================================
 % VOUT function
 % =======================================================================
-% TO ADD:
-% Need for a check function to ensure the same number of files in each
-% series of maps + reference structural.
 
 % Collect and prepare output
 function dep = vout_proc_pipeline(job)
@@ -130,7 +128,7 @@ n_TCs  = 2;                  % #tissue classes = 2, by default
 cdep = cfg_dep;
 for ii=1:n_TCs
     for jj=1:n_pams
-        cdep(end+1) = cfg_dep;
+        cdep(end+1) = cfg_dep; %#ok<*AGROW>
         cdep(end).sname = sprintf('TC #%d, pMap #%d', ii, jj);
         cdep(end).src_output = substruct('.', 'tc', '{}', {ii,jj});
         cdep(end).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
@@ -141,3 +139,25 @@ dep = cdep(2:end);
 
 end
 
+%% =======================================================================
+% CHECKING the data
+% ========================================================================
+function t = check_data(job)
+% Checking that the data are consistent.
+t   = {};
+
+nSubj = numel(job.s_vols); % number of subjects from #struct images
+nPara = numel(job.vols_pm); % number of maps type
+% Check number of structurals matches the number of parametric maps per
+% type
+if nPara>0
+    for ii=1:nPara
+        if numel(job.vols_pm{ii})~=0 && numel(job.vols_pm{ii})~=nSubj
+        t{1} = 'Number of maps not matching number of structural images/subjects!';
+            warndlg(t,'Maps numbers');
+            return
+        end    
+    end
+end
+
+end

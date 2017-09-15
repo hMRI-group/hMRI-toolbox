@@ -23,8 +23,15 @@ proc_us = tbx_scfg_hmri_proc_US;
 [~, job_US] = harvest(proc_us, proc_us, false, false);
 
 % Fill in the data now: parametric maps & structurals for segmentation
-job_US.many_sdatas.vols_pm = job.vols_pm;
-job_US.many_sdatas.rstruct.s_vols = job.s_vols;
+if job.pipe_c==1 % US+smooth -> warp the parametric maps here.
+    job_US.many_sdatas.vols_pm = job.vols_pm;
+end
+job_US.many_sdatas.channel.vols = job.s_vols;
+% job_US.many_sdatas.rstruct.s_vols = job.s_vols;
+
+% Only spit out CSF in native space (no Dartel imported) & warped (no modulation)
+job_US.tissue(3).native = [1 0];
+job_US.tissue(3).warped = [1 0];
 
 % Run the *_proc_US
 fprintf('\nhMRI-pipeline: running the US module.\n')
@@ -40,7 +47,7 @@ out_US = hmri_run_proc_US(job_US);
 
 % 2/ Proceed with dartel (only of requested)
 %-------------------------------------------
-% including tempalte create and warping into MNI space
+% including template create and warping into MNI space
 
 if job.pipe_c == 2
     % DARTEL processing: 
@@ -49,7 +56,7 @@ if job.pipe_c == 2
     proc_Dwarp = proc_Dartel.values{1};
     [~, job_Dwarp] = harvest(proc_Dwarp, proc_Dwarp, false, false);
     
-    % Fill in the filenames for rc1 and rc2, i.e. GM and WM
+    % Fill in the filenames for rc1 and rc2, i.e. *only* GM and WM
     for ii=1:2
         job_Dwarp.images{ii} = spm_file(out_US.tiss(ii).rc,'number',1);
     end
@@ -82,7 +89,7 @@ end
 proc_smooth = tbx_scfg_hmri_proc_smooth;
 [~, job_smooth] = harvest(proc_smooth, proc_smooth, false, false);
 
-% Get the image data, working only with mwc1 and mwc2 (GM and WM)
+% Get the image data, working *only* with mwc1 and mwc2 (GM and WM)
 switch job.pipe_c
     case 1 % US+smooth
         job_smooth = fill_fn_from_US(job_smooth,out_US);
@@ -132,7 +139,7 @@ end
 % NOTE:
 % Not sure it's necessary to add the ',1' to specify the volume for the
 % tissue class maps but that's how it looks when using the module with the
-% batch gui -> saty on the safe side and apply.
+% batch GUI -> stay on the safe side and apply.
 
 end
 %_______________________________________________________________________

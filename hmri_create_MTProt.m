@@ -768,6 +768,8 @@ if (mpm_params.QA.enable||(PDproc.PDmap)) && (PDidx && T1idx)
     Vsave.fname = spm_file(Vsave.fname,'suffix','_outer_suppressed');
     spm_write_vol(Vsave,MTtemp);
     
+    % all segmentation steps should now use US and identical TPMs for
+    % coherence and uniformity across the toolbox...
     clear matlabbatch
     matlabbatch{1}.spm.spatial.preproc.channel.vols = {Vsave.fname};
     matlabbatch{1}.spm.spatial.preproc.channel.write = [0 0];

@@ -68,7 +68,7 @@ if job.pipe_c == 2
     
     % Move if using specific per-subject subdirectory -> 'dart_files'
     if isfield(job.output,'outdir_ps')
-        dn_dartel = fullfile(job.output.outdir_ps{1},'dart_files');
+        dn_dartel = fullfile(job.output.outdir_ps{1},'Dartel_Templates');
         if ~exist(dn_dartel,'dir')
             mkdir(dn_dartel)
         end
@@ -94,6 +94,8 @@ if job.pipe_c == 2
     job_Dnorm.multsdata.vols_pm = job.vols_pm;
     % get the warps
     job_Dnorm.multsdata.vols_field = out_Dwarp.files;
+    % get the output directory
+    job_Dnorm.output = job.output;
     
     % Run the Dartel-Normalize-to-MNI job
     fprintf('\nhMRI-pipeline: running the Darte-normalize-to-MNI module.\n')

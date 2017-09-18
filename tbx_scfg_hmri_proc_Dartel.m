@@ -17,24 +17,94 @@ function proc_dart = tbx_scfg_hmri_proc_Dartel
 
 % TO DO
 % Define the dependencies and output from the "normalize to MNI module"!
-% 
-% QUESTION
-% For the tissue class images to warp into MNI, shold these be the
-% dartel-imported ones, i.e. rc*, or the simple c* ones?
 
 % ---------------------------------------------------------------------
-% warp Run DARTEL (create Templates)
+% Extract whole Dartel tbx configuration
 % ---------------------------------------------------------------------
-warp_dartel_cr = tbx_cfg_dartel;
-eval(['warp_dartel_cr = warp_dartel_cr', ...
-    cfg_expr_values(warp_dartel_cr, 'warp'),';']);
+cfg_dartel = tbx_cfg_dartel;
 
 % ---------------------------------------------------------------------
-% warp1 Run DARTEL (existing Templates)
+% indir Input directory as output directory
 % ---------------------------------------------------------------------
-warp_dartel_ex = tbx_cfg_dartel;
-eval(['warp_dartel_ex = warp_dartel_ex', ...
-    cfg_expr_values(warp_dartel_ex, 'warp1'),';']);
+indir         = cfg_menu;
+indir.tag     = 'indir';
+indir.name    = 'Input directory';
+indir.help    = {['Output files will be written to the same folder as ',...
+    'each corresponding input file.']};
+indir.labels  = {'Yes'};
+indir.values  = {1};
+indir.val     = {1};
+
+% ---------------------------------------------------------------------
+% outdir Output directory for all data
+% ---------------------------------------------------------------------
+outdir         = cfg_files;
+outdir.tag     = 'outdir';
+outdir.name    = 'Output directory, all together';
+outdir.help    = {['Select a directory where all output files from all '... 
+    'subjects put together will be written to.']};
+outdir.filter = 'dir';
+outdir.ufilter = '.*';
+outdir.num     = [1 1];
+
+% ---------------------------------------------------------------------
+% outdir_ps Output directory for per-subject organisation
+% ---------------------------------------------------------------------
+outdir_ps         = cfg_files;
+outdir_ps.tag     = 'outdir_ps';
+outdir_ps.name    = 'Output directory, with per-subject sub-directory';
+outdir_ps.help    = {['Select a directory where output files will be '...
+    'written to, in each subject''s sub-directory.']};
+outdir_ps.filter = 'dir';
+outdir_ps.ufilter = '.*';
+outdir_ps.num     = [1 1];
+
+% ---------------------------------------------------------------------
+% output Output choice
+% ---------------------------------------------------------------------
+output         = cfg_choice;
+output.tag     = 'output';
+output.name    = 'Output choice';
+output.help    = {['Output directory can be the same as the input ',...
+    'directory for each input file or user selected (one for everything ',...
+    'or preserve a per-subject organisation).']};
+output.values  = {indir outdir outdir_ps };
+output.val     = {indir};
+
+% ---------------------------------------------------------------------
+% warp_dartel_cr Run DARTEL (create Templates) -> extract from whole config
+% ---------------------------------------------------------------------
+eval(['warp_dartel_cr = cfg_dartel', ...
+    cfg_expr_values(cfg_dartel, 'warp'),';']);
+
+% Add the output directory chooice to the job structure, in 3rd position
+nFields = numel(warp_dartel_cr.val); %#ok<*NODEF>
+if nFields>1
+    for ii = nFields:-1:2
+        warp_dartel_cr.val{ii+1} = warp_dartel_cr.val{ii};
+    end
+end
+% Adjust 'output' for Dartel_Create -> set the help of each option
+help_txt = {...
+    'Template files will be written to the same folder as 1st subject input file.', ...
+    'Select a directory where the Templates files will be saved.', ...
+    'Select a directory in which a sub-directory ''Dartel_Templates'' will contain the Templates files.'};
+name_txt = {...
+    'Same folder as 1st subject input file', ...
+    'Output directory, all together', ...
+    'Output directory, with ''Dartel_Templates'' sub-directory'};
+output_dartel_cr = output;
+for ii=1:3
+    output_dartel_cr.values{ii}.name = name_txt{ii};
+    output_dartel_cr.values{ii}.help = help_txt(ii);
+end
+warp_dartel_cr.val{2} = output_dartel_cr;
+
+% ---------------------------------------------------------------------
+% warp_dartel_ex Run DARTEL (existing Templates) -> extract from whole config
+% ---------------------------------------------------------------------
+eval(['warp_dartel_ex = cfg_dartel', ...
+    cfg_expr_values(cfg_dartel, 'warp1'),';']);
 
 % ---------------------------------------------------------------------
 % vols_field Deformation fields
@@ -52,9 +122,9 @@ vols_field.num     = [1 Inf];
 % ---------------------------------------------------------------------
 vols_pm         = cfg_files;
 vols_pm.tag     = 'vols_pm';
-vols_pm.name    = 'Volumes';
+vols_pm.name    = 'Maps';
 vols_pm.help    = {['Select whole brain parameter maps (e.g. MT, R2*, ',...
-    'FA etc).']};
+    'FA etc), one type from all subjects (keep the order consistent!).']};
 vols_pm.filter  = 'image';
 vols_pm.ufilter = '.*';
 vols_pm.num     = [1 Inf];
@@ -90,7 +160,7 @@ m_TCs.tag        = 'maps';
 m_TCs.name       = 'Segmented tissue class';
 m_TCs.values     = {vols_tc };
 m_TCs.val        = {vols_tc };
-m_TCs.num = [1 Inf];
+m_TCs.num = [0 Inf];
 m_TCs.help       = {['Select the tissue segement images',...
     'of interest from all subjects. This should typically be the c1* ',...
     'and c2* images, for GM and WM, in 2 separate sets of images.']};
@@ -104,17 +174,32 @@ multsdata.name = 'Data';
 multsdata.val = {m_TCs m_pams vols_field};
 % multsdata.val = {multsdata_gm multsdata_wm multsdata_f multsdata_u};
 
-nrm_tmp = tbx_cfg_dartel;
-eval(['nrm = nrm_tmp', ...
-    cfg_expr_values(nrm_tmp, 'mni_norm'),';']);
+% ---------------------------------------------------------------------
+% nrm Normalize to MNI -> extract from whole config
+% ---------------------------------------------------------------------
+eval(['nrm = cfg_dartel', ...
+    cfg_expr_values(cfg_dartel, 'mni_norm'),';']);
 
-eval(['nrm' cfg_expr(nrm, 'data') '= multsdata;']); %#ok<NODEF>
+% ---------------------------------------------------------------------
+% Reorganize SPM-batch entries for the hMRI-batch
+% ---------------------------------------------------------------------
+eval(['nrm' cfg_expr(nrm, 'data') '= multsdata;']);
 % Drop out 2 fields:
 % - the 'preserve' field, as this is fixed in the run function
 % - the 'fwhm' field, as no smoothin applied here
 eval(['nrm' regexprep(cfg_expr(nrm, 'preserve'), '{([0-9]+)}$', '($1)') '=[];']);
 eval(['nrm' regexprep(cfg_expr(nrm, 'fwhm'), '{([0-9]+)}$', '($1)') '=[];']);
 
+% Add the output directory chooice to the job structure, in 3rd position
+nFields = numel(nrm.val);
+if nFields>2
+    for ii = nFields:-1:3
+        nrm.val{ii+1} = nrm.val{ii};
+    end
+end
+nrm.val{3} = output;
+
+% Function calls
 nrm.prog  = @hmri_run_proc_dartel_norm;
 nrm.vout  = @vout_norm_fun;
 nrm.check = [];
@@ -125,51 +210,6 @@ nrm.check = [];
 proc_dart         = cfg_choice;
 proc_dart.tag     = 'proc_dart';
 proc_dart.name    = 'Proc. hMRI -> Dartel';
-% proc_dart.help    = {
-%     ['This toolbox is based around the ''A Fast Diffeomorphic ',...
-%     'Registration Algorithm'''' paper/* \cite{ashburner07} */. The idea ',...
-%     'is to register images by computing a ''flow field'''', which can ',...
-%     'then be ''exponentiated'''' to generate both forward and backward ',...
-%     'deformations. Currently, the software only works with images that ',...
-%     'have isotropic voxels, identical dimensions and which are in ',...
-%     'approximate alignment with each other. One of the reasons for this ',...
-%     'is that the approach assumes circulant boundary conditions, ',...
-%     'which makes modelling global rotations impossible. Another reason ',...
-%     'why the images should be approximately aligned is because there ',...
-%     'are interactions among the transformations that are minimised by ',...
-%     'beginning with images that are already almost in register. This ',...
-%     'problem could be alleviated by a time varying flow field, but ',...
-%     'this is currently computationally impractical.']
-%     ['Because of these limitations, images should first be imported. This ',...
-%     'involves taking the ''*_seg_sn.mat'''' files produced by the ',...
-%     'segmentation code of SPM12, and writing out rigidly transformed ',...
-%     'versions of the tissue class images, such that they are in as close ',...
-%     'alignment as possible with the tissue probability maps. Rigidly ',...
-%     'transformed original images can also be generated, with the option ',...
-%     'to have skull-stripped versions.']
-%     ['The next step is the registration itself.  This can involve ',...
-%     'matching single images together, or it can involve the simultaneous ',...
-%     'registration of e.g. GM with GM, WM with WM and 1-(GM+WM) with ',...
-%     '1-(GM+WM) (when needed, the 1-(GM+WM) class is generated ',...
-%     'implicitly, so there is no need to include this class yourself). ',...
-%     'This procedure begins by creating a mean of all the images, which ',...
-%     'is used as an initial template. Deformations from this template to ',...
-%     'each of the individual images are computed, and the template is ',...
-%     'then re-generated by applying the inverses of the deformations to ',...
-%     'the images and averaging. This procedure is repeated a number of times.',...
-%     'Finally, warped versions of the images (or other images that are ',...
-%     'in alignment with them) can be generated. ']
-%     ''
-%     ['This toolbox is not yet seamlessly integrated into the SPM package. ',...
-%     'Eventually, the plan is to use many of the ideas here as the ',...
-%     'default strategy for spatial normalisation. The toolbox may change ',...
-%     'with future updates.  There will also be a number of other (as ',...
-%     'yet unspecified) extensions, which may include a variable velocity ',...
-%     'version (related to LDDMM). Note that the Fast Diffeomorphism paper ',...
-%     'only describes a sum of squares objective function. The multinomial ',...
-%     'objective function is an extension, based on a more appropriate ',...
-%     'model for aligning binary data to a template.']
-%     }';
 proc_dart.values  = {warp_dartel_cr warp_dartel_ex nrm };
 %dartel.num     = [0 Inf];
 

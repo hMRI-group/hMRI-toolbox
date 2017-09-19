@@ -11,7 +11,8 @@ function out = hmri_run_proc_dartel_norm(job)
 
 %  Build the output 'out' structure with created filenames in cell arrays
 out.vols_mwc = {}; % filenames are organised as {1 x #mwc} of {#subj x 1}
-out.vols_wpm = {};  % filenames are organised as {1 x #pm} of {#subj x 1}
+out.vols_wc = {};  % filenames are organised as {1 x #wc} of {#subj x 1}
+out.vols_wpm = {}; % filenames are organised as {1 x #pm} of {#subj x 1}
 
 % MFC - Setting up feds structure which has a copy of the (reordered) subject info:
 job = dartel_perimage_to_persubject(job);
@@ -32,20 +33,42 @@ feds.preserve = 1;
 % This produces w = |Dphi|t(phi), the product of the Jacobian determinants
 % of deformation phi and the tissue class image warped by phi, as per
 % Draganski 2011, NeuroImage.
-out_tc = spm_dartel_norm_fun(feds);
-
-% Specify the output with created file names, based on out_tc
-out.vols_mwc  = cell(1,numel(job.subjd(1).tc_vols));
-for ii=1:numel(job.subjd(1).tc_vols)
-    out.vols_mwc{ii}  = cell(numel(job.subjd),1);
-    for jj=1:numel(job.subjd)
-        out.vols_mwc{ii}{jj} = out_tc{jj}{ii};
+if isempty(job.multsdata.vols_tc)
+    fprintf('\nNo tissue segment images to normalize.\n');
+else
+    out_tc = spm_dartel_norm_fun(feds);
+    
+    % Specify the output with created file names, based on out_tc
+    out.vols_mwc  = cell(1,numel(job.subjd(1).tc_vols));
+    for ii=1:numel(job.subjd(1).tc_vols)
+        out.vols_mwc{ii}  = cell(numel(job.subjd),1);
+        for jj=1:numel(job.subjd)
+            out.vols_mwc{ii}{jj} = out_tc{jj}{ii};
+        end
     end
 end
 
-% Now take the MPMs and do a regular normalisation but don't apply
-% Jacobian modulation. Produces ws* images.
+
+% No jacobian modulation
 feds.preserve = 0;
+
+% Now take the MPMs and c* iamges and do a regular normalisation
+% -> produce ws and wc images
+if isempty(job.multsdata.vols_tc)
+    fprintf('\nNo tissue segment images to normalize.\n');
+else
+    out_tc = spm_dartel_norm_fun(feds);
+    
+    % Specify the output with created file names, based on out_tc
+    out.vols_wc  = cell(1,numel(job.subjd(1).tc_vols));
+    for ii=1:numel(job.subjd(1).tc_vols)
+        out.vols_wc{ii}  = cell(numel(job.subjd),1);
+        for jj=1:numel(job.subjd)
+            out.vols_wc{ii}{jj} = out_tc{jj}{ii};
+        end
+    end
+end
+
 for mm = 1:length(job.subjd)
     feds.data.subj(mm).images = job.subjd(mm).mp_vols;
 end
@@ -63,7 +86,7 @@ else
             dn_output = job.output.outdir{1};
         elseif isfield(job.output,'outdir_ps')
             % Get the subjects directory name, from maps
-            dn_subj = get_subject_dn(job.subjd(1).mp_vols{1});
+            dn_subj = get_subject_dn(spm_file(job.subjd(ii).mp_vols{1},'path'));
             dn_output = fullfile(job.output.outdir_ps{1},dn_subj);
             if ~exist(dn_output,'dir')
                 % Create subject sub-directory if necessary
@@ -109,21 +132,6 @@ for i=1:numel(job.multsdata.vols_field)
     job.subjd(i).mp_vols = {};
     for j=1:numel(job.multsdata.vols_pm)
         job.subjd(i).mp_vols{j,1} = job.multsdata.vols_pm{j}{i};
-    end
-end
-end
-%_______________________________________________________________________
-
-
-function st_o = update_struct_path(st_i,dn_o)
-% Small function to update the path of filenames stored in subfield of an
-% input structure 'st_i'.
-
-field_nm = fieldnames(st_i);
-st_o = st_i;
-for ii = 1:numel(field_nm)
-    if ~isempty(st_i.(field_nm{ii}))
-        st_o.(field_nm{ii}) = spm_file(st_i.(field_nm{ii}),'path',dn_o);
     end
 end
 end

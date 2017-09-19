@@ -227,11 +227,18 @@ end
 
 function dep = vout_norm_fun(job) %#ok<*INUSD>
 cdep = cfg_dep;
-% deal with mwTC's
+% deal with mwc's
 for ii=1:numel(job.multsdata.vols_tc)
     cdep(end+1) = cfg_dep;
-    cdep(end).sname      = sprintf('mw TC #%d',ii);
+    cdep(end).sname      = sprintf('mwc#%d',ii);
     cdep(end).src_output = substruct('.','vols_mwc','{}',{ii});
+    cdep(end).tgt_spec   = cfg_findspec({{'filter','nifti'}});
+end
+% deal with wc's
+for ii=1:numel(job.multsdata.vols_tc)
+    cdep(end+1) = cfg_dep;
+    cdep(end).sname      = sprintf('mwc#%d',ii);
+    cdep(end).src_output = substruct('.','vols_wc','{}',{ii});
     cdep(end).tgt_spec   = cfg_findspec({{'filter','nifti'}});
 end
 %deal with wPM's

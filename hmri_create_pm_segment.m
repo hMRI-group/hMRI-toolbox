@@ -8,27 +8,25 @@ function VO = hmri_create_pm_segment(InputImage)
 %========================================================================== 
 % Written by Lester Melie-Garcia
 % LREN, CHUV, Lausanne, October 2014
+% Adapted by Evelyne Balteau, CRC, Liège, September 2017...
+% to use unified segmentation for "forward" compatibility!
 %========================================================================== 
 
-[ImagePath,ImageName,ImageExt] = fileparts(InputImage);
-Vimg = spm_vol(InputImage);
+% use unified segmentation instead of OldSegment
+% use default parameters:
+job = hmri_get_defaults('segment');
+job.channel.vols = {InputImage};
+% except for:
+for ctis=4:length(job.tissue)
+    job.tissue(ctis).native = [0 0]; % no need to write c4, c5, ...
+end
+job.channel.write = [0 0]; % no need to write BiasField nor BiasCorrected volume
+% run segmentation
+segm_output = spm_preproc_run(job);
 
-writeOpts.biascor = 1;
-writeOpts.GM  = [0 0 1];
-writeOpts.WM  = [0 0 1];
-writeOpts.CSF = [0 0 1];
-%writeOpts.EXTRA1 = [0 0 1];
-%writeOpts.EXTRA2 = [0 0 1];
-
-writeOpts.cleanup = 0;
-
-results   = spm_preproc(Vimg);
-[po,pin] = spm_prep2sn(results); %#ok
-spm_preproc_write(po,writeOpts);
-
-GMImage  = [ImagePath,filesep,'c1',ImageName,ImageExt];
-WMImage  = [ImagePath,filesep,'c2',ImageName,ImageExt];
-CSFImage = [ImagePath,filesep,'c3',ImageName,ImageExt];
+GMImage  = segm_output.tiss(1).c{1};
+WMImage  = segm_output.tiss(2).c{1};
+CSFImage = segm_output.tiss(3).c{1};
 
 VO(1).dat = spm_read_vols(spm_vol(GMImage));
 VO(2).dat = spm_read_vols(spm_vol(WMImage));

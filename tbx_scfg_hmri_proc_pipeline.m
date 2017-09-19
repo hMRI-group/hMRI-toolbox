@@ -141,11 +141,12 @@ proc_pipel.tag     = 'proc_pipel';
 proc_pipel.name    = 'Proc. hMRI -> Pipelines';
 proc_pipel.help    = {
     ['Parameter maps are spatially processed and brought into standard space',...
-    'for furhter statistical analysis.']
+    'for furhter statistical analysis. Only 2 tissue classes, GM & WM, '...
+    'are considered.']
     [' ']
     ['For simplicity, 2 standard pipelines are also set up:']
     ['- US+Smooth -> applies US, warps into MNI, then smoothes (weighted-average)']
-    ['US+Dartel+Smooth -> applies US, builds Dartel template and warps' ...
+    ['- US+Dartel+Smooth -> applies US, builds Dartel template and warps' ...
     'into MNI, then smoothes (weighted-average)']
     }'; %#ok<*NBRAK>
 proc_pipel.val  = {output vols many_pams fwhm pipe_c};
@@ -177,7 +178,7 @@ cdep = cfg_dep;
 for ii=1:n_TCs
     for jj=1:n_pams
         cdep(end+1) = cfg_dep; %#ok<*AGROW>
-        cdep(end).sname = sprintf('TC #%d, pMap #%d', ii, jj);
+        cdep(end).sname = sprintf('c#%d, pMap #%d', ii, jj);
         cdep(end).src_output = substruct('.', 'tc', '{}', {ii,jj});
         cdep(end).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
     end

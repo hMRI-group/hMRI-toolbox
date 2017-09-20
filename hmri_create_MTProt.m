@@ -761,20 +761,20 @@ if (mpm_params.QA.enable||(PDproc.PDmap)) && (PDidx && T1idx)
         Vsave = spm_vol(fR1); 
     end
     MTtemp = spm_read_vols(Vsave);
-    %The 5 outer voxels in all directions are nulled in order to remove artefactual effects from the MT map on segmentation:
+    % The 5 outer voxels in all directions are nulled in order to remove
+    % artefactual effects from the MT map on segmentation: 
     MTtemp(1:5,:,:)=0; MTtemp(end-5:end,:,:)=0;
     MTtemp(:,1:5,:)=0; MTtemp(:,end-5:end,:)=0;
     MTtemp(:,:,1:5)=0; MTtemp(:,:,end-5:end)=0;
     Vsave.fname = spm_file(Vsave.fname,'suffix','_outer_suppressed');
     spm_write_vol(Vsave,MTtemp);
     
-    % all segmentation steps should now use US and identical TPMs for
-    % coherence and uniformity across the toolbox...
-    clear matlabbatch
-    matlabbatch{1}.spm.spatial.preproc.channel.vols = {Vsave.fname};
-    matlabbatch{1}.spm.spatial.preproc.channel.write = [0 0];
-    output_list = spm_jobman('run', matlabbatch);
-    fTPM = char(cat(1,output_list{1}.tiss.c));
+    % use unified segmentation with uniform defaults across the toobox:
+    job_brainmask = hmri_get_defaults('segment');
+    job_brainmask.channel.vols = {Vsave.fname};
+    job_brainmask.channel.write = [0 0]; % no need to write BiasField nor BiasCorrected image
+    output_list = spm_preproc_run(job_brainmask);
+    fTPM = char(cat(1,output_list.tiss.c));
 end
 
 % for quality assessment - the above segmentation must have run
@@ -953,18 +953,22 @@ maskedA(maskedA==threshA) = 0;
 spm_write_vol(V_maskedA,maskedA);
 
 % Bias-field correction of masked A map
-clear matlabbatch
-matlabbatch{1}.spm.spatial.preproc.channel.vols = {V_maskedA.fname};
-matlabbatch{1}.spm.spatial.preproc.channel.biasreg = PDproc.biasreg;
-matlabbatch{1}.spm.spatial.preproc.channel.biasfwhm = PDproc.biasfwhm;
-matlabbatch{1}.spm.spatial.preproc.channel.write = [1 0];
-output_list = spm_jobman('run', matlabbatch);
+% use unified segmentation with uniform defaults across the toobox:
+job_bfcorr = hmri_get_defaults('segment');
+job_bfcorr.channel.vols = {V_maskedA.fname};
+job_bfcorr.channel.biasreg = PDproc.biasreg;
+job_bfcorr.channel.biasfwhm = PDproc.biasfwhm;
+job_bfcorr.channel.write = [1 0]; % need the BiasField, obviously!
+for ctis=1:length(job_bfcorr.tissue)
+    job_bfcorr.tissue(ctis).native = [0 0]; % no need to write c* volumes
+end
+output_list = spm_preproc_run(job_bfcorr);
 
 % Bias field correction of A map. 
 % Bias field calculation is based on the masked A map, while correction
 % must be applied to the unmasked A map. The BiasField is therefore
 % retrieved from previous step and applied onto the original A map. 
-BFfnam = output_list{1}.channel.biasfield{1};
+BFfnam = output_list.channel.biasfield{1};
 BF = double(spm_read_vols(spm_vol(BFfnam)));
 Y = BF.*spm_read_vols(spm_vol(fA));
 

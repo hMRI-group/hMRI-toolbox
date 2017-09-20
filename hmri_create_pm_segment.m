@@ -14,15 +14,15 @@ function VO = hmri_create_pm_segment(InputImage)
 
 % use unified segmentation instead of OldSegment
 % use default parameters:
-job = hmri_get_defaults('segment');
-job.channel.vols = {InputImage};
+job_brainmask = hmri_get_defaults('segment');
+job_brainmask.channel.vols = {InputImage};
 % except for:
-for ctis=4:length(job.tissue)
-    job.tissue(ctis).native = [0 0]; % no need to write c4, c5, ...
+for ctis=4:length(job_brainmask.tissue)
+    job_brainmask.tissue(ctis).native = [0 0]; % no need to write c4, c5, ...
 end
-job.channel.write = [0 0]; % no need to write BiasField nor BiasCorrected volume
+job_brainmask.channel.write = [0 0]; % no need to write BiasField nor BiasCorrected volume
 % run segmentation
-segm_output = spm_preproc_run(job);
+segm_output = spm_preproc_run(job_brainmask);
 
 GMImage  = segm_output.tiss(1).c{1};
 WMImage  = segm_output.tiss(2).c{1};

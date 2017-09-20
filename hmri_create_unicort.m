@@ -104,6 +104,7 @@ end
 job_US.tissue(1).ngaus = 2; % default is 1
 job_US.tissue(2).ngaus = 2; % default is 1
 job_US.warp.mrf = 0; % default is 1
+job_US.warp.cleanup = 0; % default is 1
 
 %% run prepared "New Segment" job
 output_list = spm_preproc_run(job_US);

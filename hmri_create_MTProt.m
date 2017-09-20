@@ -773,8 +773,6 @@ if (mpm_params.QA.enable||(PDproc.PDmap)) && (PDidx && T1idx)
     job_brainmask = hmri_get_defaults('segment');
     job_brainmask.channel.vols = {Vsave.fname};
     job_brainmask.channel.write = [0 0]; % no need to write BiasField nor BiasCorrected image
-    job_brainmask.warp.mrf = 0; % default is 1
-    job_brainmask.warp.cleanup = 0; % default is 1
     output_list = spm_preproc_run(job_brainmask);
     fTPM = char(cat(1,output_list.tiss.c));
 end
@@ -961,8 +959,6 @@ job_bfcorr.channel.vols = {V_maskedA.fname};
 job_bfcorr.channel.biasreg = PDproc.biasreg;
 job_bfcorr.channel.biasfwhm = PDproc.biasfwhm;
 job_bfcorr.channel.write = [1 0]; % need the BiasField, obviously!
-job_bfcorr.warp.mrf = 0; % default is 1
-job_bfcorr.warp.cleanup = 0; % default is 1
 for ctis=1:length(job_bfcorr.tissue)
     job_bfcorr.tissue(ctis).native = [0 0]; % no need to write c* volumes
 end

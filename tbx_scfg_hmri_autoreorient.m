@@ -143,7 +143,7 @@ function dep = vout_autoreorient(job) %#ok<*INUSD>
 if strcmp(job.dep,'grouped')
     dep(1)            = cfg_dep;
     dep(1).sname      = 'Auto-reoriented Image(s)';
-    dep(1).src_output = substruct('.','afiles');
+    dep(1).src_output = substruct('.','files');
     dep(1).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
 else
     dep(numel(job.other)+1,1) = cfg_dep;
@@ -151,7 +151,7 @@ else
     fnam = spm_file(char(job.reference),'basename');
     dep(1)            = cfg_dep;
     dep(1).sname      = fnam;
-    dep(1).src_output = substruct('.','afiles','{}',{1});%,'()',{':'});
+    dep(1).src_output = substruct('.','files','{}',{1});%,'()',{':'});
     dep(1).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
     
     % then the others...
@@ -159,7 +159,7 @@ else
         fnam = spm_file(char(job.other{cdep-1}),'basename');
         dep(cdep)            = cfg_dep;
         dep(cdep).sname      = fnam;
-        dep(cdep).src_output = substruct('.','afiles','{}',{cdep});%,'()',{':'});
+        dep(cdep).src_output = substruct('.','files','{}',{cdep});%,'()',{':'});
         dep(cdep).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
     end
 end
@@ -191,14 +191,21 @@ if isfield(output,'outdir')
         try copyfile([spm_str_manip(other(cother,:),'r') '.json'],[spm_str_manip(copyother{cother},'r') '.json']); end %#ok<*TRYNC>
     end
     other = char(copyother);
+else 
+    outpath = fileparts(ref);
 end
 
-out.afiles = hmri_autoreorient(ref, template, other);
+out = hmri_autoreorient(ref, template, other);
+
 if strcmp(job.dep,'individual')
-    for cout=1:length(out.afiles)
-        out.afiles{cout} = cellstr(out.afiles{cout});
+    for cout=1:length(out.files)
+        out.files{cout} = cellstr(out.files{cout});
     end
 end
+
+job.M = out.M;
+spm_jsonwrite(fullfile(outpath,'AutoReorient_params.json'),job,struct('indent','\t'));
+
 return;
 end
 %------------------------------------------------------------------------

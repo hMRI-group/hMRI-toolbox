@@ -1,4 +1,4 @@
-function outfiles = hmri_autoreorient(ref, template, other)
+function out = hmri_autoreorient(ref, template, other)
 
 % FORMAT outfiles = hmri_autoreorient(ref, template, other)
 %
@@ -78,6 +78,7 @@ for cother = 1:Nother
 end
 spm_progress_bar('Clear');        
 
-outfiles = cellstr(char(ref,other));
+out.files = cellstr(char(ref,other));
+out.M = M;
 
 end

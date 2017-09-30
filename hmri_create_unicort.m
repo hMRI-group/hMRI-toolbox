@@ -101,10 +101,13 @@ job_US.channel.write = [1 1]; % write both BiasField and BiasCorrected volume
 for ctis=1:length(job_US.tissue)
     job_US.tissue(ctis).native = [0 0]; % no need to write c* volumes
 end
-job_US.tissue(1).ngaus = 2; % default is 1
-job_US.tissue(2).ngaus = 2; % default is 1
-job_US.warp.mrf = 0; % default is 1
-job_US.warp.cleanup = 0; % default is 1
+% The following were the parameter used in 2010 for the UNICROT paper, now
+% updated to current recommendations for unified segmentation (SPM12 - John
+% Ashburner)
+% job_US.tissue(1).ngaus = 2; % default is 1
+% job_US.tissue(2).ngaus = 2; % default is 1
+% job_US.warp.mrf = 0; % default is 1
+% job_US.warp.cleanup = 0; % default is 1
 
 %% run prepared "New Segment" job
 output_list = spm_preproc_run(job_US);

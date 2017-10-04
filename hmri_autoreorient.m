@@ -19,8 +19,11 @@ function out = hmri_autoreorient(ref, template, other)
 %              reference image.
 %
 % OUT:
-% - outfiles : the list (cell array of strings) of reoriented images 
-%              listed in the same order as the input (ref, then other).
+% - out, a structure with fields:
+%       - files  : the list (cell array of strings) of reoriented images 
+%                  listed in the same order as the input (ref, then other).
+%       - M      : the rigid-body transformation matrix 
+%       - invM   : the rigid-body transformation matrix inverted
 %__________________________________________________________________________
 % Copyright (C) 2011 Cyclotron Research Centre
 
@@ -80,5 +83,6 @@ spm_progress_bar('Clear');
 
 out.files = cellstr(char(ref,other));
 out.M = M;
+out.invM = inv(M);
 
 end

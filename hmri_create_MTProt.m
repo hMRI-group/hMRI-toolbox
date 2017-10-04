@@ -771,7 +771,6 @@ if (mpm_params.QA.enable||(PDproc.PDmap)) && (PDidx && T1idx)
     clear matlabbatch
     matlabbatch{1}.spm.spatial.preproc.channel.vols = {Vsave.fname};
     matlabbatch{1}.spm.spatial.preproc.channel.write = [0 0];
-    matlabbatch{1}.spm.spatial.preproc.warp.cleanup = 0;
     output_list = spm_jobman('run', matlabbatch);
     fTPM = char(cat(1,output_list{1}.tiss.c));
 end

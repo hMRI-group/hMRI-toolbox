@@ -93,7 +93,7 @@ hmri_def.RFsens.smooth_kernel = 12;
 % quantitative maps: quality evaluation and realignment to MNI
 %--------------------------------------------------------------------------
 hmri_def.qMRI_maps.QA          = 1; % creates a matlab structure containing markers of data quality
-hmri_def.qMRI_maps.ACPCrealign = 1; % realigns qMRI maps to MNI
+hmri_def.qMRI_maps.ACPCrealign = 0; % realigns qMRI maps to MNI
 
 %--------------------------------------------------------------------------
 % Threshold values for qMRI maps

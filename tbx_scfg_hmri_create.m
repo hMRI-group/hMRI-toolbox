@@ -251,7 +251,9 @@ sraws3MT.name     = 'RF sensitivity maps for MTw images';
 sraws3MT.help     = {'Select low resolution RF sensitivity maps acquired with the head and body coils respectively, in that order.'};
 sraws3MT.filter   = 'image';
 sraws3MT.ufilter  = '.*';
-sraws3MT.num      = [2 2];
+% sraws3MT.num      = [2 2];
+sraws3MT.num       = [0 2];
+sraws3MT.val       = {''};
 % ---------------------------------------------------------------------
 % Input images for RF sensitivity - RF sensitivity maps for PDw images
 % ---------------------------------------------------------------------
@@ -261,7 +263,9 @@ sraws3PD.name     = 'RF sensitivity maps for PDw images';
 sraws3PD.help     = {'Select low resolution RF sensitivity maps acquired with the head and body coils respectively, in that order.'};
 sraws3PD.filter   = 'image';
 sraws3PD.ufilter  = '.*';
-sraws3PD.num      = [2 2];
+% sraws3PD.num      = [2 2];
+sraws3PD.num       = [0 2];
+sraws3PD.val       = {''};
 % ---------------------------------------------------------------------
 % Input images for RF sensitivity - RF sensitivity maps for T1w images
 % ---------------------------------------------------------------------
@@ -271,7 +275,9 @@ sraws3T1.name     = 'RF sensitivity maps for T1w images';
 sraws3T1.help     = {'Select low resolution RF sensitivity maps acquired with the head and body coils respectively, in that order.'};
 sraws3T1.filter   = 'image';
 sraws3T1.ufilter  = '.*';
-sraws3T1.num      = [2 2];
+% sraws3T1.num      = [2 2];
+sraws3T1.num       = [0 2];
+sraws3T1.val       = {''};
 % ---------------------------------------------------------------------
 % x0 No RF sensitivity
 % ---------------------------------------------------------------------

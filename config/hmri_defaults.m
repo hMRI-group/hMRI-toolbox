@@ -45,6 +45,8 @@ hmri_def.json = struct('extended',false,'separate',true,'anonym','none',...
     'overwrite',true, 'indent','\t'); 
 % recommended TPM for segmentation and spatial processing
 hmri_def.TPM = fullfile(fileparts(fileparts(mfilename('fullpath'))),'etpm','eTPM.nii');
+% default template for auto-reorientation
+hmri_def.autoreorient_template = {fullfile(spm('dir'),'canonical','avg152T1.nii')};
 
 %==========================================================================
 % Default parameters for segmentation
@@ -141,7 +143,7 @@ hmri_def.RFsens.smooth_kernel = 12;
 % quantitative maps: quality evaluation and realignment to MNI
 %--------------------------------------------------------------------------
 hmri_def.qMRI_maps.QA          = 1; % creates a matlab structure containing markers of data quality
-hmri_def.qMRI_maps.ACPCrealign = 1; % realigns qMRI maps to MNI
+hmri_def.qMRI_maps.ACPCrealign = 0; % realigns qMRI maps to MNI
 
 %--------------------------------------------------------------------------
 % Threshold values for qMRI maps

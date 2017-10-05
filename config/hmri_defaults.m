@@ -53,8 +53,9 @@ hmri_def.autoreorient_template = {fullfile(spm('dir'),'canonical','avg152T1.nii'
 % hmri_def.segment is effectively the job to be handed to spm_preproc_run
 % By default, parameters are set to
 % - create tissue class images (c*) in the native space of the source image
-%   (tissue(*).native = [1 0])
+%   (tissue(*).native = [1 0]) for tissue classes 1-5
 % - save both BiasField and BiasCorrected volume (channel.write = [1 1])
+% - recommended values from SPM12 (October 2017)
 %==========================================================================
 
 % hmri_def.segment.channel.vols = cell array of file names, 
@@ -142,8 +143,16 @@ hmri_def.RFsens.smooth_kernel = 12;
 %--------------------------------------------------------------------------
 % quantitative maps: quality evaluation and realignment to MNI
 %--------------------------------------------------------------------------
-hmri_def.qMRI_maps.QA          = 1; % creates a matlab structure containing markers of data quality
-hmri_def.qMRI_maps.ACPCrealign = 0; % realigns qMRI maps to MNI
+% creates a matlab structure containing markers of data quality
+hmri_def.qMRI_maps.QA          = 1; 
+% realigns qMRI maps to MNI: the following parameter corresponds to the
+% realignment implemented as part of the map calculation (see
+% hmri_create_MTProt.m). Left here for backward compatibility while it is
+% recommended to rather reorient all images prior any processing using the
+% Auto-Reorient module provided with the toolbox (type "help
+% hmri_autoreorient" for details or open the SPM > Tools > hMRI Tools >
+% Auto-Reorient module in the Batch GUI).
+hmri_def.qMRI_maps.ACPCrealign = 0; 
 
 %--------------------------------------------------------------------------
 % Threshold values for qMRI maps

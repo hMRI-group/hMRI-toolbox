@@ -1,20 +1,26 @@
 function out = hmri_autoreorient(ref, template, other)
 
-% FORMAT outfiles = hmri_autoreorient(ref, template, other)
+% FORMAT out = hmri_autoreorient(ref, template, other)
 %
-% Function to automatically (but approximately) rigid-body reorient a T1
-% image (or any other usual image modality) in the MNI space, i.e. mainly
-% set the AC location and correct for head rotation, in order to further
-% proceed with the segmentation/normalisation of the image.
-% A set of other images can be reoriented along the 1st (reference) one.
-% They should be specified as "Other Images".
-% This is useful as the "unified segmentation" process is rather sensitive
-% to the starting orientation of the image.
+% PURPOSE: Reorientation of the images towards the MNI space is a standard
+% step in neuroimage processing, and often a prerequisite for successful
+% segmentation. The Unified Segmentation process is indeed rather sensitive
+% to the initial orientation of the image. We provide you with a simple
+% tool for reorientation of all images prior to any further processing
+% (including multiparameter map calculation). 
+%
+% METHODS: Reorientation is based on rigid-body coregistration of a
+% suitable image (i.e. contrast must be well enough defined to allow for
+% reliable coregistration) to the MNI space (i.e. mainly set the AC
+% location and correct for head rotation) and application of the
+% coregistration matrix to all images acquired during the same session
+% (specified as "other images"). The code makes use of spm_affreg and
+% templates available in SPM. 
 %
 % IN:
 % - ref      : filename of the reference image to reorient,
 % - template : a template image, already in the MNI space, to which the
-%              image is reoriented,
+%              reference image is reoriented,
 % - other    : filenames of other images to be reoriented along with the
 %              reference image.
 %

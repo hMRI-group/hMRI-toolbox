@@ -95,6 +95,54 @@ fwhm.help    = {['Specify the full-width at half maximum (FWHM) of the ',...
     'Gaussian blurring kernel in mm. Three values should be entered',...
     'denoting the FWHM in the x, y and z directions.']};
 
+% ---------------------------------------------------------------------
+% indir Input directory as output directory
+% ---------------------------------------------------------------------
+indir         = cfg_menu;
+indir.tag     = 'indir';
+indir.name    = 'Input directory';
+indir.help    = {['Output files will be written to the same folder as ',...
+    'each corresponding input file.']};
+indir.labels  = {'Yes'};
+indir.values  = {1};
+indir.val     = {1};
+
+% ---------------------------------------------------------------------
+% outdir Output directory for all data
+% ---------------------------------------------------------------------
+outdir         = cfg_files;
+outdir.tag     = 'outdir';
+outdir.name    = 'Output directory, all together';
+outdir.help    = {['Select a directory where all output files from all '... 
+    'subjects put together will be written to.']};
+outdir.filter = 'dir';
+outdir.ufilter = '.*';
+outdir.num     = [1 1];
+
+% ---------------------------------------------------------------------
+% outdir_ps Output directory for per-subject organisation
+% ---------------------------------------------------------------------
+outdir_ps         = cfg_files;
+outdir_ps.tag     = 'outdir_ps';
+outdir_ps.name    = 'Output directory, with per-subject sub-directory';
+outdir_ps.help    = {['Select a directory where output files will be '...
+    'written to, in each subject''s sub-directory.']};
+outdir_ps.filter = 'dir';
+outdir_ps.ufilter = '.*';
+outdir_ps.num     = [1 1];
+
+% ---------------------------------------------------------------------
+% output Output choice
+% ---------------------------------------------------------------------
+output         = cfg_choice;
+output.tag     = 'output';
+output.name    = 'Output choice';
+output.help    = {['Output directory can be the same as the input ',...
+    'directory for each input file or user selected (one for everything ',...
+    'or preserve a per-subject organisation).']};
+output.values  = {indir outdir outdir_ps };
+output.val     = {indir};
+
 %% EXEC function
 % ---------------------------------------------------------------------
 % proc_smooth Processing hMRI -> smoothing
@@ -102,7 +150,7 @@ fwhm.help    = {['Specify the full-width at half maximum (FWHM) of the ',...
 proc_smooth         = cfg_exbranch;
 proc_smooth.tag     = 'proc_smooth';
 proc_smooth.name    = 'Proc. hMRI -> Smoothing';
-proc_smooth.val     = {m_pams m_MWCs tpm fwhm};
+proc_smooth.val     = {m_pams m_MWCs tpm fwhm output};
 proc_smooth.check   = @check_proc_smooth;
 proc_smooth.help    = { 
     'Applying tissue specific smoothing, aka. weighted averaging, ', ...
@@ -124,7 +172,7 @@ function dep = vout_smooth(job)
 % e.g. in the usual case of 4 MPMs and GM/WM -> 8 series of image
 
 n_pams = numel(job.vols_pm);     % #parametric image types
-n_TCs = numel(job.vols_mwc);      % #tissue classes
+n_TCs = numel(job.vols_mwc);     % #tissue classes
 
 cdep = cfg_dep;
 for ii=1:n_TCs

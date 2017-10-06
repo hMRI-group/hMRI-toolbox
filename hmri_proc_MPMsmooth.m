@@ -1,6 +1,8 @@
-function fn_out = hmri_proc_MPMsmooth(fn_wMPM, fn_mwTC, fn_TPM, fwhm, l_TC)
+function fn_out = hmri_proc_MPMsmooth(fn_wMPM, fn_mwTC, fn_TPM, fwhm, l_TC, pth_out)
 % Applying tissue specific smoothing, aka. weighted averaging, in order to 
 % limit partial volume effect. 
+% This works on multiple parametric and tissue class maps from a *single*
+% subject.
 % 
 % FORMAT
 %   fn_out = hmri_proc_MPMsmooth(fn_wMPM, fn_mwTC, fn_TPM, fwhm)
@@ -14,6 +16,7 @@ function fn_out = hmri_proc_MPMsmooth(fn_wMPM, fn_mwTC, fn_TPM, fwhm, l_TC)
 %             maps to use, matching those in fn_mwTC
 % - fwhm    : width of smoothing kernel in mm [6 by def.]
 % - l_TC    : explicit list of tissue classes used [1:nTC by def.]
+% - pth_out : output path [empty by default -> same as input maps]
 % 
 % OUTPUT
 % - fn_out  : cell array (one cell per MPM) of filenames (char array) of 
@@ -56,11 +59,13 @@ function fn_out = hmri_proc_MPMsmooth(fn_wMPM, fn_mwTC, fn_TPM, fwhm, l_TC)
 % FUTURE:
 % With present computer having large amounts of RAM, we could do most of
 % the image calculation direction by loading the nifti files directly. This
-% would eschew the use of spm_imcalc and its annoying messages...) and
-% possibly be a bit faster. 
+% would eschew the use of spm_imcalc (and its annoying messages...) and
+% likely be a bit faster. 
 % Not sure how to perform the Gaussian smoothingn though. Probably some
 % re-implementation could do the trick.
 
+% Check input
+if nargin<6, pth_out = []; end
 if nargin<4, fwhm = 6; end
 if nargin<3,
     error('hMRI:smoothing','Provide 4 input, see help.');
@@ -118,6 +123,10 @@ for ii=1:nMPM
     q = cell(nTC,1);
     for jj=1:nTC
         q{jj} = spm_file(p{jj},'prefix','wa');
+        if ~isempty(pth_out)
+            % update output path if provided
+            q{jj} = spm_file(p{jj},'path',pth_out);
+        end
         spm_imcalc(char(n{jj},m{jj}), ... % i1, i2
             q{jj}, ...
             '(i1./i2).*(i2>0.05)',ic_flag);

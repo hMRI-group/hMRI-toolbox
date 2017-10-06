@@ -15,9 +15,6 @@ function proc_dart = tbx_scfg_hmri_proc_Dartel
 % Written by Christophe Phillips
 % but largely inspired by the batch from the past VBQ toolbox.
 
-% TO DO
-% Define the dependencies and output from the "normalize to MNI module"!
-
 % ---------------------------------------------------------------------
 % Extract whole Dartel tbx configuration
 % ---------------------------------------------------------------------
@@ -67,44 +64,60 @@ output.tag     = 'output';
 output.name    = 'Output choice';
 output.help    = {['Output directory can be the same as the input ',...
     'directory for each input file or user selected (one for everything ',...
-    'or preserve a per-subject organisation).']};
+    'or preserving a per-subject organisation).']};
 output.values  = {indir outdir outdir_ps };
 output.val     = {indir};
 
 % ---------------------------------------------------------------------
-% warp_dartel_cr Run DARTEL (create Templates) -> extract from whole config
+%% warp_dartel_cr Run DARTEL (create Templates) -> extract from whole config
 % ---------------------------------------------------------------------
 eval(['warp_dartel_cr = cfg_dartel', ...
     cfg_expr_values(cfg_dartel, 'warp'),';']);
 
-% Add the output directory chooice to the job structure, in 3rd position
+% Add the output directory choice to the job structure, in 2nd position
+% -> move the 'settings' to 3rd position
 nFields = numel(warp_dartel_cr.val); %#ok<*NODEF>
 if nFields>1
     for ii = nFields:-1:2
         warp_dartel_cr.val{ii+1} = warp_dartel_cr.val{ii};
     end
 end
-% Adjust 'output' for Dartel_Create -> set the help of each option
-help_txt = {...
-    'Template files will be written to the same folder as 1st subject input file.', ...
-    'Select a directory where the Templates files will be saved.', ...
-    'Select a directory in which a sub-directory ''Dartel_Templates'' will contain the Templates files.'};
-name_txt = {...
-    'Same folder as 1st subject input file', ...
-    'Output directory, all together', ...
-    'Output directory, with ''Dartel_Templates'' sub-directory'};
 output_dartel_cr = output;
-for ii=1:3
-    output_dartel_cr.values{ii}.name = name_txt{ii};
-    output_dartel_cr.values{ii}.help = help_txt(ii);
-end
+
+% % Adjust 'output' for Dartel_Create -> set the help of each option
+% help_txt = {...
+%     'Template files will be written to the same folder as 1st subject input file.', ...
+%     'Select a directory where the Templates files will be saved.', ...
+%     'Select a directory in which a sub-directory ''Dartel_Templates'' will contain the Templates files.'};
+% name_txt = {...
+%     'Same folder as 1st subject input file', ...
+%     'Output directory, all together', ...
+%     'Output directory, with ''DartelTemplates'' sub-directory'};
+% for ii=1:3
+%     output_dartel_cr.values{ii}.name = name_txt{ii};
+%     output_dartel_cr.values{ii}.help = help_txt(ii);
+% end
 warp_dartel_cr.val{2} = output_dartel_cr;
+warp_dartel_cr.prog  = @hmri_run_proc_dartel_template;
 
 % ---------------------------------------------------------------------
-% warp_dartel_ex Run DARTEL (existing Templates) -> extract from whole config
+%% warp_dartel_ex Run DARTEL (existing Templates) -> extract from whole config
 % ---------------------------------------------------------------------
 eval(['warp_dartel_ex = cfg_dartel', ...
     cfg_expr_values(cfg_dartel, 'warp1'),';']);
+
+% Add the output directory choice to the job structure, in 2nd position
+% -> move the 'settings' to 3rd position
+nFields = numel(warp_dartel_ex.val); %#ok<*NODEF>
+if nFields>1
+    for ii = nFields:-1:2
+        warp_dartel_ex.val{ii+1} = warp_dartel_ex.val{ii};
+    end
+end
+output_dartel_cr = output;
+
+warp_dartel_ex.val{2} = output_dartel_cr;
+warp_dartel_ex.prog  = @hmri_run_proc_dartel_warp;
 
 % ---------------------------------------------------------------------
 % vols_field Deformation fields
@@ -175,7 +188,7 @@ multsdata.val = {m_TCs m_pams vols_field};
 % multsdata.val = {multsdata_gm multsdata_wm multsdata_f multsdata_u};
 
 % ---------------------------------------------------------------------
-% nrm Normalize to MNI -> extract from whole config
+%% nrm Normalize to MNI -> extract from whole config
 % ---------------------------------------------------------------------
 eval(['nrm = cfg_dartel', ...
     cfg_expr_values(cfg_dartel, 'mni_norm'),';']);

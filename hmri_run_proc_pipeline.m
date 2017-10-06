@@ -8,9 +8,9 @@ function out = hmri_run_proc_pipeline(job)
 % other options are hard-coded!
 % By default, these pipelines focus only on the first 2 tissue classes,
 % i.e. GM and WM only.
-% 
+%
 % For more flexibility, individual modules can be combined. :-)
-% 
+%
 %_______________________________________________________________________
 % Copyright (C) 2017 Cyclotron Research Centre
 
@@ -52,7 +52,15 @@ out_US = hmri_run_proc_US(job_US);
 % including template create and warping into MNI space
 
 if job.pipe_c == 2
-    % DARTEL processing: 
+    
+    if str2double(spm('Ver','spm_dartel_norm_fun'))>=7180
+        % Knows how to handle output specification
+        use_spm_output_handling = true;
+    else
+        use_spm_output_handling = false;
+    end
+    
+    % DARTEL processing:
     proc_Dartel = tbx_scfg_hmri_proc_Dartel;
     % a) warping with template creation
     proc_Dwarp = proc_Dartel.values{1};
@@ -62,22 +70,27 @@ if job.pipe_c == 2
     for ii=1:2
         job_Dwarp.images{ii} = spm_file(out_US.tiss(ii).rc,'number',1);
     end
+    job_Dwarp.output = job.output;
     % Run the Dartel-warp job
     fprintf('\nhMRI-pipeline: running the Darte-warp module.\n')
-    out_Dwarp = spm_dartel_template(job_Dwarp);
+    out_Dwarp = hmri_run_proc_dartel_template(job_Dwarp);
+    %     out_Dwarp = spm_dartel_template(job_Dwarp);
     
-    % Move if using specific per-subject subdirectory -> 'dart_files'
-    if isfield(job.output,'outdir_ps')
-        dn_dartel = fullfile(job.output.outdir_ps{1},'Dartel_Templates');
-        if ~exist(dn_dartel,'dir')
-            mkdir(dn_dartel)
+    if ~use_spm_output_handling
+        % Move if using specific per-subject subdirectory -> 'dart_files'
+        % This should also include the flow fields!
+        if isfield(job.output,'outdir_ps')
+            dn_dartel = fullfile(job.output.outdir_ps{1},'Dartel_Templates');
+            if ~exist(dn_dartel,'dir')
+                mkdir(dn_dartel)
+            end
+            current_path = spm_file(out_Dwarp.template{1},'path');
+            f2move = spm_select('FPList',current_path,'^Template_[\d]\.nii$');
+            for ii=1:size(f2move,1)
+                movefile(deblank(f2move(ii,:)),dn_dartel);
+            end
+            out_Dwarp.template = spm_file(out_Dwarp.template,'path',dn_dartel);
         end
-        current_path = spm_file(out_Dwarp.template{1},'path');
-        f2move = spm_select('FPList',current_path,'^Template_[\d]\.nii$');
-        for ii=1:size(f2move,1)
-            movefile(deblank(f2move(ii,:)),dn_dartel);
-        end
-        out_Dwarp.template = spm_file(out_Dwarp.template,'path',dn_dartel);
     end
     
     % b) normalize to  MNI
@@ -114,7 +127,7 @@ switch job.pipe_c
     case 2 % US+Dartel+smooth
         % Fit in DARTEL data
         job_smooth.vols_pm = out_Dnorm.vols_wpm;
-        job_smooth.vols_tc = out_Dnorm.vols_mwc;
+        job_smooth.vols_mwc = out_Dnorm.vols_mwc;
     otherwise
         error('hmri:pipeline', 'Wrong hmri-pipeline option.');
 end
@@ -151,7 +164,7 @@ for ii=1:N_pm
 end
 % Tissue classes -> use GM and WM, i.e. #1 and #2
 for ii=1:2
-    job_smooth.vols_tc{ii} = spm_file(out_US.tiss(ii).mwc,'number',1);
+    job_smooth.vols_mwc{ii} = spm_file(out_US.tiss(ii).mwc,'number',1);
 end
 
 % NOTE:

@@ -26,6 +26,29 @@ for m = 1:length(job.subjd)
     feds.data.subj(m).images    = job.subjd(m).tc_vols;
 end
 
+% Define output folder for SPM function
+output = struct('outDir', [], 'option', 'same');
+if isfield(job.output,'outdir') % -> everything in the same
+    output.outDir = job.output.outdir{1};
+    output.option = 'allin';
+elseif isfield(job.output,'outdir_ps') % -> per suject organization
+    output.outDir = job.output.outdir_ps{1};
+    output.option = 'subjspec';
+end
+feds.output = output;
+
+if str2double(spm('Ver','spm_dartel_norm_fun'))>=7180
+    % Knows how to handle output specification
+    use_spm_output_handling = true;
+else
+    use_spm_output_handling = false;
+end
+
+% Define eTPM as the tissue probability maps to use for MNI space reference
+feds.tpm = struct(...
+    'fn', hmri_get_defaults('proc.TPM'),...
+    'k', 6); % Need to provide #tissue classes considered
+
 % Jacobian modulation correction to preserve total signal intensity:
 feds.preserve = 1;
 
@@ -47,7 +70,6 @@ else
         end
     end
 end
-
 
 % No jacobian modulation
 feds.preserve = 0;
@@ -74,34 +96,39 @@ for mm = 1:length(job.subjd)
 end
 out_pm = spm_dartel_norm_fun(feds);
 
-% Move things and update path of saved filenames
-% NOTE: to be removed if this ends up part of the native Dartel function!
-if isfield(job.output,'indir') && ...
-        job.output.indir == 1
-    % leave as it is and do nothing. :-)
-else
-    for ii=1:numel(out_pm) % for each subject
-        % find output directory
-        if isfield(job.output,'outdir') % -> everything in the same
-            dn_output = job.output.outdir{1};
-        elseif isfield(job.output,'outdir_ps')
-            % Get the subjects directory name, from maps
-            dn_subj = get_subject_dn(spm_file(job.subjd(ii).mp_vols{1},'path'));
-            dn_output = fullfile(job.output.outdir_ps{1},dn_subj);
-            if ~exist(dn_output,'dir')
-                % Create subject sub-directory if necessary
-                mkdir(dn_output);
+if ~use_spm_output_handling
+    % Move things and update path of saved filenames
+    % NOTE: to be removed if this ends up part of the native Dartel function!
+    if isfield(job.output,'indir') && ...
+            job.output.indir == 1
+        % leave as it is and do nothing. :-)
+    else
+        for ii=1:numel(out_pm) % for each subject
+            % find output directory
+            if isfield(job.output,'outdir') % -> everything in the same
+                dn_output = job.output.outdir{1};
+            elseif isfield(job.output,'outdir_ps')
+                % Get the subjects directory name, from maps
+                data_path = spm_file(job.subjd(ii).mp_vols{1},'path');
+                l_fsep = strfind(data_path,filesep);
+                lp_fsep = [0 l_fsep length(data_path)+1];
+                dn_subj = data_path(lp_fsep(end-1)+1:lp_fsep(end)-1);
+                dn_output = fullfile(job.output.outdir_ps{1},dn_subj);
+                if ~exist(dn_output,'dir')
+                    % Create subject sub-directory if necessary
+                    mkdir(dn_output);
+                end
+            else
+                warning('hmri:norm2mni','Incorrect output directory specification.');
+                break
             end
-        else
-            warning('hmri:norm2mni','Incorrect output directory specification.');
-            break
+            % move files
+            for jj=1:numel(out_pm{ii})
+                movefile(out_pm{ii}{jj},dn_output)
+            end
+            % update path
+            out_pm{ii} = spm_file(out_pm{ii},'path',dn_output);
         end
-        % move files
-        for jj=1:numel(out_pm{ii})
-            movefile(out_pm{ii}{jj},dn_output)
-        end
-        % update path
-        out_pm{ii} = spm_file(out_pm{ii},'path',dn_output);
     end
 end
 
@@ -115,11 +142,10 @@ for ii = 1:numel(job.subjd(1).mp_vols)
 end
 
 end
+%_______________________________________________________________________
 
-% ========================================================================
 %% SUBFUNCTIONS
-% ========================================================================
-
+%_______________________________________________________________________
 function job = dartel_perimage_to_persubject(job)
 % Rearrange data per subject for dartel processing.
 for i=1:numel(job.multsdata.vols_field)
@@ -134,23 +160,5 @@ for i=1:numel(job.multsdata.vols_field)
         job.subjd(i).mp_vols{j,1} = job.multsdata.vols_pm{j}{i};
     end
 end
-end
-%_______________________________________________________________________
-
-function dn_subj = get_subject_dn(data_path)
-% Extract the subject's directory name from the path to its data
-
-% Fist split the path into its sub-parts
-l_fsep = strfind(data_path,filesep);
-n_fsep = numel(l_fsep);
-lp_fsep = [0 l_fsep length(data_path)+1];
-pth_parts = cell(1,n_fsep);
-for ii=1:(n_fsep+1)
-    pth_parts{ii} = data_path(lp_fsep(ii)+1:lp_fsep(ii+1)-1);
-end
-
-% Pick up last one
-dn_subj = pth_parts{end};
-
 end
 %_______________________________________________________________________

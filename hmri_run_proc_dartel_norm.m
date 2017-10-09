@@ -37,7 +37,7 @@ elseif isfield(job.output,'outdir_ps') % -> per suject organization
 end
 feds.output = output;
 
-if str2double(spm('Ver','spm_dartel_norm_fun'))>=7180
+if str2double(spm('Ver','spm_dartel_norm_fun'))>=7182
     % Knows how to handle output specification
     use_spm_output_handling = true;
 else

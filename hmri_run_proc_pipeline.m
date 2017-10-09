@@ -53,7 +53,7 @@ out_US = hmri_run_proc_US(job_US);
 
 if job.pipe_c == 2
     
-    if str2double(spm('Ver','spm_dartel_norm_fun'))>=7180
+    if str2double(spm('Ver','spm_dartel_norm_fun'))>=7182
         % Knows how to handle output specification
         use_spm_output_handling = true;
     else

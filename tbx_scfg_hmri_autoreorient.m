@@ -70,7 +70,8 @@ other.num     = [0 Inf];
 indir         = cfg_entry;
 indir.tag     = 'indir';
 indir.name    = 'Input directory';
-indir.help    = {'Auto-reorientation is applied to the input files directly.'};
+indir.help    = {'Auto-reorientation is applied to the input files directly.'
+    'WARNING: the header of the input images will be modified.'};
 indir.strtype = 's';
 indir.num     = [1 Inf];
 indir.val     = {'yes'};
@@ -80,7 +81,9 @@ indir.val     = {'yes'};
 outdir         = cfg_files;
 outdir.tag     = 'outdir';
 outdir.name    = 'Output directory';
-outdir.help    = {'Input files are first copied to the selected directory before auto-reorientation.'};
+outdir.help    = {['An "AutoReorient" directory will be created within the selected ' ...
+    'output directory. Input files are first copied to the "AutoReorient" directory, ' ...
+    'before auto-reorientation. The input files are therefore kept untouched.']};
 outdir.filter = 'dir';
 outdir.ufilter = '.*';
 outdir.num     = [1 1];
@@ -94,7 +97,8 @@ output         = cfg_choice;
 output.tag     = 'output';
 output.name    = 'Output choice';
 output.help    = {['Output directory can be the same as the input ' ...
-    'directory or user selected.']};
+    'directory or user selected. WARNING: in the former case, the header ' ...
+    'of the input images will be modified.']};
 output.values  = {indir outdir };
 output.val = {indir};
 
@@ -199,6 +203,7 @@ if ~isempty(other); Nother = size(other,1); end
 
 % create AutoReorient directory and copy input files to it if required
 if isfield(output,'outdir')
+    ref = deblank(ref);
     outpath = fullfile(output.outdir{1},'AutoReorient'); % case outdir
     if ~exist(outpath,'dir'); mkdir(outpath); end
     copyref = fullfile(outpath, spm_file(ref,'filename'));
@@ -207,9 +212,10 @@ if isfield(output,'outdir')
     ref = copyref;
     copyother = cell(Nother,1);
     for cother=1:Nother
-        copyother{cother} = fullfile(outpath, spm_file(other(cother,:),'filename'));
-        copyfile(other(cother,:),copyother{cother});
-        try copyfile([spm_str_manip(other(cother,:),'r') '.json'],[spm_str_manip(copyother{cother},'r') '.json']); end %#ok<*TRYNC>
+        cotherfile = deblank(other(cother,:));
+        copyother{cother} = deblank(fullfile(outpath, spm_file(cotherfile,'filename')));
+        copyfile(cotherfile,copyother{cother});
+        try copyfile([spm_str_manip(cotherfile,'r') '.json'],[spm_str_manip(copyother{cother},'r') '.json']); end %#ok<*TRYNC>
     end
     other = char(copyother);
 else 

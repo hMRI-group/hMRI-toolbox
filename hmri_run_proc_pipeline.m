@@ -8,9 +8,9 @@ function out = hmri_run_proc_pipeline(job)
 % other options are hard-coded!
 % By default, these pipelines focus only on the first 2 tissue classes,
 % i.e. GM and WM only.
-% 
+%
 % For more flexibility, individual modules can be combined. :-)
-% 
+%
 %_______________________________________________________________________
 % Copyright (C) 2017 Cyclotron Research Centre
 
@@ -23,8 +23,17 @@ proc_us = tbx_scfg_hmri_proc_US;
 [~, job_US] = harvest(proc_us, proc_us, false, false);
 
 % Fill in the data now: parametric maps & structurals for segmentation
-job_US.many_sdatas.vols_pm = job.vols_pm;
-job_US.many_sdatas.rstruct.s_vols = job.s_vols;
+if job.pipe_c==1 % US+smooth -> warp the parametric maps here.
+    job_US.many_sdatas.vols_pm = job.vols_pm;
+end
+job_US.many_sdatas.channel.vols = job.s_vols;
+
+% Only spit out CSF in native space (no Dartel imported) & warped (no modulation)
+job_US.tissue(3).native = [1 0];
+job_US.tissue(3).warped = [0 0];
+
+% Get the output direcotry across
+job_US.many_sdatas.output = job.output;
 
 % Run the *_proc_US
 fprintf('\nhMRI-pipeline: running the US module.\n')
@@ -40,22 +49,49 @@ out_US = hmri_run_proc_US(job_US);
 
 % 2/ Proceed with dartel (only of requested)
 %-------------------------------------------
-% including tempalte create and warping into MNI space
+% including template create and warping into MNI space
 
 if job.pipe_c == 2
-    % DARTEL processing: 
+    
+    if str2double(spm('Ver','spm_dartel_norm_fun'))>=7182
+        % Knows how to handle output specification
+        use_spm_output_handling = true;
+    else
+        use_spm_output_handling = false;
+    end
+    
+    % DARTEL processing:
     proc_Dartel = tbx_scfg_hmri_proc_Dartel;
     % a) warping with template creation
     proc_Dwarp = proc_Dartel.values{1};
     [~, job_Dwarp] = harvest(proc_Dwarp, proc_Dwarp, false, false);
     
-    % Fill in the filenames for rc1 and rc2, i.e. GM and WM
+    % Fill in the filenames for rc1 and rc2, i.e. *only* GM and WM
     for ii=1:2
         job_Dwarp.images{ii} = spm_file(out_US.tiss(ii).rc,'number',1);
     end
+    job_Dwarp.output = job.output;
     % Run the Dartel-warp job
     fprintf('\nhMRI-pipeline: running the Darte-warp module.\n')
-    out_Dwarp = spm_dartel_template(job_Dwarp);
+    out_Dwarp = hmri_run_proc_dartel_template(job_Dwarp);
+    %     out_Dwarp = spm_dartel_template(job_Dwarp);
+    
+    if ~use_spm_output_handling
+        % Move if using specific per-subject subdirectory -> 'dart_files'
+        % This should also include the flow fields!
+        if isfield(job.output,'outdir_ps')
+            dn_dartel = fullfile(job.output.outdir_ps{1},'Dartel_Templates');
+            if ~exist(dn_dartel,'dir')
+                mkdir(dn_dartel)
+            end
+            current_path = spm_file(out_Dwarp.template{1},'path');
+            f2move = spm_select('FPList',current_path,'^Template_[\d]\.nii$');
+            for ii=1:size(f2move,1)
+                movefile(deblank(f2move(ii,:)),dn_dartel);
+            end
+            out_Dwarp.template = spm_file(out_Dwarp.template,'path',dn_dartel);
+        end
+    end
     
     % b) normalize to  MNI
     proc_Dnorm = proc_Dartel.values{3};
@@ -71,6 +107,8 @@ if job.pipe_c == 2
     job_Dnorm.multsdata.vols_pm = job.vols_pm;
     % get the warps
     job_Dnorm.multsdata.vols_field = out_Dwarp.files;
+    % get the output directory
+    job_Dnorm.output = job.output;
     
     % Run the Dartel-Normalize-to-MNI job
     fprintf('\nhMRI-pipeline: running the Darte-normalize-to-MNI module.\n')
@@ -82,14 +120,14 @@ end
 proc_smooth = tbx_scfg_hmri_proc_smooth;
 [~, job_smooth] = harvest(proc_smooth, proc_smooth, false, false);
 
-% Get the image data, working only with mwc1 and mwc2 (GM and WM)
+% Get the image data, working *only* with mwc1 and mwc2 (GM and WM)
 switch job.pipe_c
     case 1 % US+smooth
         job_smooth = fill_fn_from_US(job_smooth,out_US);
     case 2 % US+Dartel+smooth
         % Fit in DARTEL data
         job_smooth.vols_pm = out_Dnorm.vols_wpm;
-        job_smooth.vols_tc = out_Dnorm.vols_mwtc;
+        job_smooth.vols_mwc = out_Dnorm.vols_mwc;
     otherwise
         error('hmri:pipeline', 'Wrong hmri-pipeline option.');
 end
@@ -126,13 +164,13 @@ for ii=1:N_pm
 end
 % Tissue classes -> use GM and WM, i.e. #1 and #2
 for ii=1:2
-    job_smooth.vols_tc{ii} = spm_file(out_US.tiss(ii).mwc,'number',1);
+    job_smooth.vols_mwc{ii} = spm_file(out_US.tiss(ii).mwc,'number',1);
 end
 
 % NOTE:
 % Not sure it's necessary to add the ',1' to specify the volume for the
 % tissue class maps but that's how it looks when using the module with the
-% batch gui -> saty on the safe side and apply.
+% batch GUI -> stay on the safe side and apply.
 
 end
 %_______________________________________________________________________

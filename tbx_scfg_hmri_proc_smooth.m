@@ -41,32 +41,38 @@ m_pams.help       = {['Select whole brain parameter maps (e.g. MT, ',...
     'R2*, FA etc) warped into MNI space.']};
 
 % ---------------------------------------------------------------------
-% vols_tc Parametric volumes
+% vols_mwc Modulated warped tissue segement volumes
 % ---------------------------------------------------------------------
-vols_tc         = cfg_files;
-vols_tc.tag     = 'vols_tc';
-vols_tc.name    = 'mwTC images';
-vols_tc.help    = {'Select the modulated warped tissue classes (mwc*)'};
-vols_tc.filter  = 'image';
-vols_tc.ufilter = '^mwc.*';
-vols_tc.num     = [1 Inf];
+vols_mwc         = cfg_files;
+vols_mwc.tag     = 'vols_mwc';
+vols_mwc.name    = 'mwc images';
+vols_mwc.help    = {'Select the modulated warped tissue segements (mwc*).', ... 
+    'Pick only one type of mwc* images across all subjects!.'};
+vols_mwc.filter  = 'image';
+vols_mwc.ufilter = '^mwc.*';
+vols_mwc.num     = [1 Inf];
 
 % ---------------------------------------------------------------------
-% m_TCs Tissue class (TC) maps, used for 'many subjects'
+% m_MWCs Modulate warped tissue segement (MWC) maps
 % ---------------------------------------------------------------------
-m_TCs            = cfg_repeat;
-m_TCs.tag        = 'maps';
-m_TCs.name       = 'Modulated warped tissue class';
-m_TCs.values     = {vols_tc };
-m_TCs.val        = {vols_tc };
-m_TCs.num = [1 Inf];
-m_TCs.help       = {['Select the modulated warped tissue classes (TC) ',...
-    'of interest from all subjects. This ould typically be the mwc1* ',...
-    'and mwc2* images for GM and WM.']};
+m_MWCs            = cfg_repeat;
+m_MWCs.tag        = 'm_MWCs';
+m_MWCs.name       = 'Modulated warped tissue segements';
+m_MWCs.values     = {vols_mwc };
+m_MWCs.val        = {vols_mwc };
+m_MWCs.num = [1 Inf];
+m_MWCs.help       = {['Select the modulated warped tissue segments ',...
+    'of interest from all subjects.'], ...
+    ['For the typical case of GM and WM, you would selectall the mwc1* images ', ...
+    'in one set of ''mwc_images'' and the mwc2* ones in second set of ', ...
+    '''mwc_images''!']};
 
 % ---------------------------------------------------------------------
 % tpm Tissue Probability Maps
 % ---------------------------------------------------------------------
+% use the hMRI specific TPMs.
+fn_tpm = hmri_get_defaults('proc.TPM');
+
 tpm         = cfg_files;
 tpm.tag     = 'tpm';
 tpm.name    = 'Tissue probability maps';
@@ -74,7 +80,7 @@ tpm.help    = {'Select the TPM used for the segmentation.'};
 tpm.filter  = 'image';
 tpm.ufilter = '.*';
 tpm.num     = [1 1];
-tpm.val     = {{fullfile(spm('dir'),'toolbox','hmri','etpm','eTPM.nii,1')}};
+tpm.val     = {{fn_tpm}};
 
 % ---------------------------------------------------------------------
 % Gaussian FWHM
@@ -89,6 +95,54 @@ fwhm.help    = {['Specify the full-width at half maximum (FWHM) of the ',...
     'Gaussian blurring kernel in mm. Three values should be entered',...
     'denoting the FWHM in the x, y and z directions.']};
 
+% ---------------------------------------------------------------------
+% indir Input directory as output directory
+% ---------------------------------------------------------------------
+indir         = cfg_menu;
+indir.tag     = 'indir';
+indir.name    = 'Input directory';
+indir.help    = {['Output files will be written to the same folder as ',...
+    'each corresponding input file.']};
+indir.labels  = {'Yes'};
+indir.values  = {1};
+indir.val     = {1};
+
+% ---------------------------------------------------------------------
+% outdir Output directory for all data
+% ---------------------------------------------------------------------
+outdir         = cfg_files;
+outdir.tag     = 'outdir';
+outdir.name    = 'Output directory, all together';
+outdir.help    = {['Select a directory where all output files from all '... 
+    'subjects put together will be written to.']};
+outdir.filter = 'dir';
+outdir.ufilter = '.*';
+outdir.num     = [1 1];
+
+% ---------------------------------------------------------------------
+% outdir_ps Output directory for per-subject organisation
+% ---------------------------------------------------------------------
+outdir_ps         = cfg_files;
+outdir_ps.tag     = 'outdir_ps';
+outdir_ps.name    = 'Output directory, with per-subject sub-directory';
+outdir_ps.help    = {['Select a directory where output files will be '...
+    'written to, in each subject''s sub-directory.']};
+outdir_ps.filter = 'dir';
+outdir_ps.ufilter = '.*';
+outdir_ps.num     = [1 1];
+
+% ---------------------------------------------------------------------
+% output Output choice
+% ---------------------------------------------------------------------
+output         = cfg_choice;
+output.tag     = 'output';
+output.name    = 'Output choice';
+output.help    = {['Output directory can be the same as the input ',...
+    'directory for each input file or user selected (one for everything ',...
+    'or preserve a per-subject organisation).']};
+output.values  = {indir outdir outdir_ps };
+output.val     = {indir};
+
 %% EXEC function
 % ---------------------------------------------------------------------
 % proc_smooth Processing hMRI -> smoothing
@@ -96,7 +150,7 @@ fwhm.help    = {['Specify the full-width at half maximum (FWHM) of the ',...
 proc_smooth         = cfg_exbranch;
 proc_smooth.tag     = 'proc_smooth';
 proc_smooth.name    = 'Proc. hMRI -> Smoothing';
-proc_smooth.val     = {m_pams m_TCs tpm fwhm};
+proc_smooth.val     = {m_pams m_MWCs tpm fwhm output};
 proc_smooth.check   = @check_proc_smooth;
 proc_smooth.help    = { 
     'Applying tissue specific smoothing, aka. weighted averaging, ', ...
@@ -118,7 +172,7 @@ function dep = vout_smooth(job)
 % e.g. in the usual case of 4 MPMs and GM/WM -> 8 series of image
 
 n_pams = numel(job.vols_pm);     % #parametric image types
-n_TCs = numel(job.vols_tc);      % #tissue classes
+n_TCs = numel(job.vols_mwc);     % #tissue classes
 
 cdep = cfg_dep;
 for ii=1:n_TCs
@@ -139,7 +193,7 @@ function chk = check_proc_smooth(job)
 % ensure they are the same for each list of files, one of each per subject.
 
 n_pams = numel(job.vols_pm);
-n_TCs = numel(job.vols_tc);
+n_TCs = numel(job.vols_mwc);
 chk = '';
 
 if n_pams>1
@@ -152,17 +206,17 @@ if n_pams>1
     end
 end
 if n_TCs>1
-    ni_TC = numel(job.vols_tc{1});
+    ni_TC = numel(job.vols_mwc{1});
     for ii=2:n_TCs
-        if ni_TC ~= numel(job.vols_tc{ii})
-            chk = [chk 'Incompatible number of TCs. ']; %#ok<*AGROW>
+        if ni_TC ~= numel(job.vols_mwc{ii})
+            chk = [chk 'Incompatible number of tissue segments. ']; %#ok<*AGROW>
             break
         end
     end
 end
 if n_pams>0 && n_TCs>0
-    if numel(job.vols_pm{1}) ~= numel(job.vols_tc{1})
-        chk = [chk 'Incompatible number of maps & TCs.'];
+    if numel(job.vols_pm{1}) ~= numel(job.vols_mwc{1})
+        chk = [chk 'Incompatible number of maps & tissue segments.'];
     end
 end
 

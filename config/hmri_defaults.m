@@ -117,7 +117,7 @@ hmri_def.interp = 3;
 
 % Define the OLS fit as default. OLS fit at TE=0 is used instead of
 % averaged contrast images for the map calculation
-hmri_def.fullOLS = false;
+hmri_def.fullOLS = true;
 
 %--------------------------------------------------------------------------
 % PD maps processing parameters
@@ -134,7 +134,8 @@ hmri_def.PDproc.nr_echoes_forA = 1; % NOTE: in order to minimize R2* bias
     % over more echoes might be preferable when PD map's SNR is too poor,
     % but be aware that the gain in SNR will be balanced by an increased
     % R2* bias in PD values (in particular in the GM).
-                         
+hmri_def.PDproc.T2scorr = 1; % to correct A map for T2*-weighting bias before PD map calculation
+
 %--------------------------------------------------------------------------
 % RF sensitivity bias correction
 %--------------------------------------------------------------------------

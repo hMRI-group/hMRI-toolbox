@@ -806,6 +806,52 @@ end
 
 % PD map calculation
 if ~isempty(f_T) && isempty(f_R) && PDproc.PDmap
+    
+    % for correction of the R2s bias in the A map if that option is enabled...
+    if PDproc.T2scorr
+        % uses OLS it if available - less noisy
+        if exist('fR2s_OLS','var')
+            PR2s = fR2s_OLS;
+        else
+            PR2s = fR2s;
+        end
+        
+        % calculate correction (expected to be between 1 and 1.5 approx)
+        R2s = spm_read_vols(spm_vol(PR2s));
+        R2scorr4A = zeros(size(R2s));
+        for cecho=1:mpm_params.proc.PD.nr_echoes_forA
+            TE = mpm_params.input(PDidx).TE(cecho)*0.001; % in seconds
+            R2scorr4A = R2scorr4A + exp(-TE.*R2s);
+        end
+        R2scorr4A = R2scorr4A/mpm_params.proc.PD.nr_echoes_forA;
+        
+        % save correction for inspection
+        dm         = V_pdw(1).dim;
+        NiR2scorr4A         = nifti;
+        NiR2scorr4A.mat     = V_pdw(1).mat;
+        NiR2scorr4A.mat0    = V_pdw(1).mat;
+        NiR2scorr4A.descrip = descrip{ii};
+        fR2scorr4A = spm_file(PR2s,'suffix','_corr4A');
+        NiR2scorr4A.dat     = file_array(fR2scorr4A,dm,dt, 0,1,0);
+        create(NiR2scorr4A);
+        NiR2scorr4A.dat(:,:,:) = R2scorr4A;
+        
+        % apply correction
+        dm         = V_pdw(1).dim;
+        NiAcorr         = nifti;
+        NiAcorr.mat     = V_pdw(1).mat;
+        NiAcorr.mat0    = V_pdw(1).mat;
+        NiAcorr.descrip = descrip{ii};
+        fAcorr = spm_file(fA,'suffix','_R2scorr');
+        NiAcorr.dat     = file_array(fAcorr,dm,dt, 0,1,0);
+        create(NiAcorr);
+        tmp = spm_read_vols(spm_vol(fA))./(R2scorr4A+eps);
+        tmp(isnan(tmp)|isinf(tmp)) = 0;
+        tmp = max(min(tmp,threshall.A),-threshall.A);
+        NiAcorr.dat(:,:,:) = tmp;
+        fA = fAcorr;
+    end
+    
     PDcalculation(fA,fTPM,mpm_params);
 end
 

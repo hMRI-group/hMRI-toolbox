@@ -143,7 +143,7 @@ spm_progress_bar('Init',dm(3),'R2* fit','planes completed');
 Ni          = nifti;
 Ni.mat      = V_pdw(1).mat;
 Ni.mat0     = V_pdw(1).mat;
-Ni.descrip  = 'R2* map [1/ms]';
+Ni.descrip  = 'R2* map [s-1]';
 Ni.dat      = file_array(fullfile(calcpath,[outbasename '_R2s' '.nii']),dm,dt, 0,1,0);
 create(Ni);
 fR2s = fullfile(calcpath,[outbasename '_R2s' '.nii']);
@@ -159,7 +159,7 @@ for p = 1:dm(3)
         M1 = V_pdw(i).mat\V_pdw(1).mat*M;
         Y  = Y + W(i)*log(max(spm_slice_vol(V_pdw(i),M1,dm(1:2),mpm_params.interp),1));
     end
-    Ni.dat(:,:,p) = max(min(Y,threshall.R2s),-threshall.R2s); % threshold T2* at +/- 0.1ms or R2* at +/- 10000 *(1/sec), negative values are allowed to preserve Gaussian distribution
+    Ni.dat(:,:,p) = max(min(Y,threshall.R2s),-threshall.R2s)*1000; % threshold T2* at +/- 0.1ms or R2* at +/- 10000 *(1/sec), negative values are allowed to preserve Gaussian distribution
     spm_progress_bar('Set',p);
 end
 spm_progress_bar('Clear');
@@ -168,7 +168,7 @@ spm_progress_bar('Clear');
 input_files = mpm_params.input(PDidx).fnam;
 Output_hdr = init_mpm_output_metadata(input_files, mpm_params);
 Output_hdr.history.output.imtype = 'R2* map';
-Output_hdr.history.output.units = 'ms-1';
+Output_hdr.history.output.units = 's-1';
 set_metadata(fR2s,Output_hdr,mpm_params.json);
 
 
@@ -302,7 +302,7 @@ if mpm_params.QA.enable
         Ni        = nifti;
         Ni.mat    = V_pdw(1).mat;
         Ni.mat0   = V_pdw(1).mat;
-        Ni.descrip='OLS R2* map [1/ms]';
+        Ni.descrip='OLS R2* map [s-1]';
         Ni.dat    = file_array(fullfile(calcpath,[outbasename '_R2s_' mpm_params.input(ccon).tag 'w.nii']),dm,dt, 0,1,0);
         create(Ni);
         
@@ -340,7 +340,7 @@ if mpm_params.QA.enable
             % NB: mat field defined by V_pdw => first PDw echo
             % threshold T2* at +/- 0.1ms or R2* at +/- 10000 *(1/sec),
             % negative values are allowed to preserve Gaussian distribution
-            Ni.dat(:,:,p) = max(min(Y,threshall.R2s),-threshall.R2s); 
+            Ni.dat(:,:,p) = max(min(Y,threshall.R2s),-threshall.R2s)*1000; 
             spm_progress_bar('Set',p);
         end
         spm_progress_bar('Clear');
@@ -388,7 +388,7 @@ if mpm_params.proc.R2sOLS
     Ni          = nifti;
     Ni.mat      = V_pdw(1).mat;
     Ni.mat0     = V_pdw(1).mat;
-    Ni.descrip  = 'OLS R2* map [1/ms]';
+    Ni.descrip  = 'OLS R2* map [s-1]';
     Ni.dat      = file_array(fR2s_OLS,dm,dt,0,1,0);
     create(Ni);
     
@@ -444,7 +444,7 @@ if mpm_params.proc.R2sOLS
         % NB: mat field defined by V_pdw => first PDw echo
         % threshold T2* at +/- 0.1ms or R2* at +/- 10000 *(1/sec), 
         % negative values are allowed to preserve Gaussian distribution.
-        Ni.dat(:,:,p) = max(min(Y,threshall.R2s),-threshall.R2s); 
+        Ni.dat(:,:,p) = max(min(Y,threshall.R2s),-threshall.R2s)*1000; 
         spm_progress_bar('Set',p);
     end
     spm_progress_bar('Clear');
@@ -455,7 +455,7 @@ if mpm_params.proc.R2sOLS
     if (MTidx); input_files = char(input_files, mpm_params.input(MTidx).fnam); end
     Output_hdr = init_mpm_output_metadata(input_files, mpm_params);
     Output_hdr.history.output.imtype = 'R2*-OLS map';
-    Output_hdr.history.output.units = 'ms-1';
+    Output_hdr.history.output.units = 's-1';
     set_metadata(fullfile(calcpath,[outbasename '_R2s_OLS' '.nii']),Output_hdr,mpm_params.json);
    
 end % OLS code
@@ -480,11 +480,11 @@ coutput = 0;
 if T1idx
     coutput = coutput+1;
     output_suffix{coutput} = 'R1';
-    units{coutput} = '1000/s';
+    units{coutput} = 's-1';
     if isempty(V_trans)
         descrip{coutput} = 'R1 map (no B1+ bias correction applied)';
     else
-        descrip{coutput} = 'R1 map (with B1+ bias correction)';
+        descrip{coutput} = 'R1 map (with B1+ bias correction) [s-1]';
     end
     R1map_idx = coutput;
 end
@@ -640,7 +640,7 @@ for p = 1:dm(3)
         T1       = max(T1,0);
         R1(R1<0) = 0;
         tmp      = R1;
-        Nmap(R1map_idx).dat(:,:,p) = min(max(tmp,-threshall.R1),threshall.R1); % truncating images
+        Nmap(R1map_idx).dat(:,:,p) = min(max(tmp,-threshall.R1),threshall.R1)*0.001; % truncating images
         
         % A values proportional to PD
         if (~isempty(f_T)) && (~isempty(f_R))
@@ -820,7 +820,7 @@ if ~isempty(f_T) && isempty(f_R) && PDproc.PDmap
         R2s = spm_read_vols(spm_vol(PR2s));
         R2scorr4A = zeros(size(R2s));
         for cecho=1:mpm_params.proc.PD.nr_echoes_forA
-            TE = mpm_params.input(PDidx).TE(cecho); % in seconds
+            TE = mpm_params.input(PDidx).TE(cecho)*0.001; % in seconds
             R2scorr4A = R2scorr4A + exp(-TE.*R2s);
         end
         R2scorr4A = R2scorr4A/mpm_params.proc.PD.nr_echoes_forA;

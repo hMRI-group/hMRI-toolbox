@@ -820,7 +820,7 @@ if ~isempty(f_T) && isempty(f_R) && PDproc.PDmap
         R2s = spm_read_vols(spm_vol(PR2s));
         R2scorr4A = zeros(size(R2s));
         for cecho=1:mpm_params.proc.PD.nr_echoes_forA
-            TE = mpm_params.input(PDidx).TE(cecho)*0.001; % in seconds
+            TE = mpm_params.input(PDidx).TE(cecho); % in seconds
             R2scorr4A = R2scorr4A + exp(-TE.*R2s);
         end
         R2scorr4A = R2scorr4A/mpm_params.proc.PD.nr_echoes_forA;
@@ -1197,6 +1197,12 @@ if ~mpm_params.T1idx && mpm_params.proc.PD.PDmap
     fprintf(1,'\nWARNING: PD map calculation enabled but T1w images not available.\n\tPD map won''t be calculated.\n');
     mpm_params.proc.PD.PDmap = 0;
 end
+% if fullOLS, T2*-weighting bias correction must not be applied
+if mpm_params.fullOLS && mpm_params.proc.PD.T2scorr
+    fprintf(1,'\nWARNING: if TE=0 fit is enabled (fullOLS option), no T2*-weighting \nbias correction is required. T2scorr disabled.\n');
+    mpm_params.proc.PD.T2scorr = 0;
+end    
+    
 % whether OLS R2* is calculated
 mpm_params.proc.R2sOLS = hmri_get_defaults('R2sOLS');
 

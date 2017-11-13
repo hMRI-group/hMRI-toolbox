@@ -27,6 +27,9 @@ if job.pipe_c==1 % US+smooth -> warp the parametric maps here.
     job_US.many_sdatas.vols_pm = job.vols_pm;
 end
 job_US.many_sdatas.channel.vols = job.s_vols;
+% Set voxel sizes & BB
+job_US.many_sdatas.vox = job.vox;
+job_US.many_sdatas.bb  = job.bb;
 
 % Only spit out CSF in native space (no Dartel imported) & warped (no modulation)
 job_US.tissue(3).native = [1 0];
@@ -47,7 +50,7 @@ out_US = hmri_run_proc_US(job_US);
 %         maps
 % .def  : cell-array with the deformations for each subject.
 
-% 2/ Proceed with dartel (only of requested)
+% 2/ Proceed with dartel (only if requested)
 %-------------------------------------------
 % including template create and warping into MNI space
 
@@ -107,6 +110,9 @@ if job.pipe_c == 2
     job_Dnorm.multsdata.vols_pm = job.vols_pm;
     % get the warps
     job_Dnorm.multsdata.vols_field = out_Dwarp.files;
+    % Set voxel sizes
+    job_Dnorm.vox = job.vox;
+    job_Dnorm.bb  = job.bb;
     % get the output directory
     job_Dnorm.output = job.output;
     

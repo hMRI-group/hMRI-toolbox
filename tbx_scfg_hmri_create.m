@@ -251,7 +251,9 @@ sraws3MT.name     = 'RF sensitivity maps for MTw images';
 sraws3MT.help     = {'Select low resolution RF sensitivity maps acquired with the head and body coils respectively, in that order.'};
 sraws3MT.filter   = 'image';
 sraws3MT.ufilter  = '.*';
-sraws3MT.num      = [2 2];
+% sraws3MT.num      = [2 2];
+sraws3MT.num       = [0 2];
+sraws3MT.val       = {''};
 % ---------------------------------------------------------------------
 % Input images for RF sensitivity - RF sensitivity maps for PDw images
 % ---------------------------------------------------------------------
@@ -261,7 +263,9 @@ sraws3PD.name     = 'RF sensitivity maps for PDw images';
 sraws3PD.help     = {'Select low resolution RF sensitivity maps acquired with the head and body coils respectively, in that order.'};
 sraws3PD.filter   = 'image';
 sraws3PD.ufilter  = '.*';
-sraws3PD.num      = [2 2];
+% sraws3PD.num      = [2 2];
+sraws3PD.num       = [0 2];
+sraws3PD.val       = {''};
 % ---------------------------------------------------------------------
 % Input images for RF sensitivity - RF sensitivity maps for T1w images
 % ---------------------------------------------------------------------
@@ -271,7 +275,9 @@ sraws3T1.name     = 'RF sensitivity maps for T1w images';
 sraws3T1.help     = {'Select low resolution RF sensitivity maps acquired with the head and body coils respectively, in that order.'};
 sraws3T1.filter   = 'image';
 sraws3T1.ufilter  = '.*';
-sraws3T1.num      = [2 2];
+% sraws3T1.num      = [2 2];
+sraws3T1.num       = [0 2];
+sraws3T1.val       = {''};
 % ---------------------------------------------------------------------
 % x0 No RF sensitivity
 % ---------------------------------------------------------------------
@@ -369,32 +375,12 @@ sdata.val       = {subj };
 sdata.values    = {subj };
 
 % ---------------------------------------------------------------------
-% sdata_multi
-% ---------------------------------------------------------------------
-sdata_multi = cfg_branch;
-sdata_multi.name = 'Many Subjects';
-sdata_multi.tag = 'sdata_multi';
-sdata_multi.help = {'Specify data with many subjects.'};
-sdata_multi.val  = { output unlimit(sensitivity) unlimit(b1_type) unlimit(raws) };
-
-% ---------------------------------------------------------------------
-% data_spec
-% ---------------------------------------------------------------------
-data_spec        = cfg_choice;
-data_spec.name   = 'Data Specification Method';
-data_spec.tag    = 'data_spec';
-data_spec.help   = {'Specify data with either few or many subjects. The ',...
-    'latter can be used with SmartDep toolbox.'};
-data_spec.values = { sdata sdata_multi };
-data_spec.val    = { sdata };
-
-% ---------------------------------------------------------------------
 % create_mpr Create MPR maps (whether B0/B1 maps are available or not)
 % ---------------------------------------------------------------------
 create_mpm         = cfg_exbranch;
 create_mpm.tag     = 'create_mpm';
 create_mpm.name    = 'Create hMRI maps';
-create_mpm.val     = { data_spec };
+create_mpm.val     = { sdata };
 create_mpm.help    = {'hMRI map creation based on multi-echo FLASH sequences including optional receive/transmit bias correction.'};
 create_mpm.prog    = @hmri_run_create;
 create_mpm.vout    = @vout_create;
@@ -414,94 +400,61 @@ function dep = vout_create(job)
 % This depends on job contents, which may not be present when virtual
 % outputs are calculated.
 
-if ~isfield(job, 'subj') % Many subjects
-    dep(1) = cfg_dep;
-    dep(1).sname = 'R1 Maps';
-    dep(1).src_output = substruct('.','R1','()',{':'});
-    dep(1).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
+k=1;
+cdep(5*numel(job.subj),1) = cfg_dep;
+for i=1:numel(job.subj)
     
-    dep(2) = cfg_dep;
-    dep(2).sname = 'R2s Maps';
-    dep(2).src_output = substruct('.','R2s','()',{':'});
-    dep(2).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
+    cdep(k)            = cfg_dep;
+    cdep(k).sname      = sprintf('R1_subj%d',i);
+    cdep(k).src_output = substruct('.','subj','()',{i},'.','R1','()',{':'});
+    cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
     
-    dep(3) = cfg_dep;
-    dep(3).sname = 'MT Maps';
-    dep(3).src_output = substruct('.','MT','()',{':'});
-    dep(3).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
+    k=k+1;
     
-    dep(4) = cfg_dep;
-    dep(4).sname = 'A Maps';
-    dep(4).src_output = substruct('.','A','()',{':'});
-    dep(4).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
+    cdep(k)            = cfg_dep;
+    cdep(k).sname      = sprintf('R2s_subj%d',i);
+    cdep(k).src_output = substruct('.','subj','()',{i},'.','R2s','()',{':'});
+    cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
     
-    dep(5) = cfg_dep;
-    dep(5).sname = 'T1w Maps';
-    dep(5).src_output = substruct('.','T1w','()',{':'});
-    dep(5).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
+    k=k+1;
     
-else
-    k=1;
-    cdep(5*numel(job.subj),1) = cfg_dep;
-    for i=1:numel(job.subj)
-        
-        cdep(k)            = cfg_dep;
-        cdep(k).sname      = sprintf('R1_subj%d',i);
-        cdep(k).src_output = substruct('.','subj','()',{i},'.','R1','()',{':'});
-        cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
-        
-        k=k+1;
-        
-        cdep(k)            = cfg_dep;
-        cdep(k).sname      = sprintf('R2s_subj%d',i);
-        cdep(k).src_output = substruct('.','subj','()',{i},'.','R2s','()',{':'});
-        cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
-        
-        k=k+1;
-        
-        cdep(k)            = cfg_dep;
-        cdep(k).sname      = sprintf('MT_subj%d',i);
-        cdep(k).src_output = substruct('.','subj','()',{i},'.','MT','()',{':'});
-        cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
-        
-        k=k+1;
-        
-        cdep(k)            = cfg_dep;
-        cdep(k).sname      = sprintf('A_subj%d',i);
-        cdep(k).src_output = substruct('.','subj','()',{i},'.','A','()',{':'});
-        cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
-        
-        k=k+1;
-        
-        cdep(k)            = cfg_dep;
-        cdep(k).sname      = sprintf('T1w_subj%d',i);
-        cdep(k).src_output = substruct('.','subj','()',{i},'.','T1w','()',{':'});
-        cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
-        
-        k=k+1;
-    end
-    dep = cdep;
+    cdep(k)            = cfg_dep;
+    cdep(k).sname      = sprintf('MT_subj%d',i);
+    cdep(k).src_output = substruct('.','subj','()',{i},'.','MT','()',{':'});
+    cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
+    
+    k=k+1;
+    
+    cdep(k)            = cfg_dep;
+    cdep(k).sname      = sprintf('A_subj%d',i);
+    cdep(k).src_output = substruct('.','subj','()',{i},'.','A','()',{':'});
+    cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
+    
+    k=k+1;
+    
+    cdep(k)            = cfg_dep;
+    cdep(k).sname      = sprintf('T1w_subj%d',i);
+    cdep(k).src_output = substruct('.','subj','()',{i},'.','T1w','()',{':'});
+    cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
+    
+    k=k+1;
+    
+    cdep(k)            = cfg_dep;
+    cdep(k).sname      = sprintf('MTw_subj%d',i);
+    cdep(k).src_output = substruct('.','subj','()',{i},'.','MTw','()',{':'});
+    cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
+    
+    k=k+1;
+    
+    cdep(k)            = cfg_dep;
+    cdep(k).sname      = sprintf('PDw_subj%d',i);
+    cdep(k).src_output = substruct('.','subj','()',{i},'.','PDw','()',{':'});
+    cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
+    
+    k=k+1;
     
 end
-end
-%_______________________________________________________________________
-
-
-
-
-%%%%%%%%%%%%%%%%%%%%
-function c = unlimit(c)
-try
-    if isa(c, 'cfg_files')
-        c.num = [0 Inf];
-    end
-catch e %#ok<*NASGU>
-end
-try
-    for i=1:numel(c.val)
-        c.val{i} = unlimit(c.val{i});
-    end
-catch e
-end
+dep = cdep;
+    
 end
 %_______________________________________________________________________

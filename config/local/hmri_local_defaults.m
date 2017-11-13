@@ -45,6 +45,59 @@ hmri_def.json = struct('extended',false,'separate',true,'anonym','none',...
     'overwrite',true, 'indent','\t'); 
 % recommended TPM for segmentation and spatial processing
 hmri_def.TPM = fullfile(fileparts(fileparts(fileparts(mfilename('fullpath')))),'etpm','eTPM.nii');
+% default template for auto-reorientation
+hmri_def.autoreorient_template = {fullfile(spm('dir'),'canonical','avg152T1.nii')};
+
+%==========================================================================
+% Default parameters for segmentation
+% hmri_def.segment is effectively the job to be handed to spm_preproc_run
+% By default, parameters are set to
+% - create tissue class images (c*) in the native space of the source image
+%   (tissue(*).native = [1 0]) for tissue classes 1-5
+% - save both BiasField and BiasCorrected volume (channel.write = [1 1])
+% - recommended values from SPM12 (October 2017)
+%==========================================================================
+
+% hmri_def.segment.channel.vols = cell array of file names, 
+%                       must be defined before calling spm_preproc_run
+hmri_def.segment.channel.biasreg = 0.001;
+hmri_def.segment.channel.biasfwhm = 60;
+% hmri_def.segment.channel.write = [0 0]; % save nothing
+% hmri_def.segment.channel.write = [1 0]; % save BiasField
+% hmri_def.segment.channel.write = [0 1]; % save BiasCorrected volume
+hmri_def.segment.channel.write = [1 1]; % save BiasField and BiasCorrected volume
+
+hmri_def.segment.tissue(1).tpm = {[hmri_def.TPM ',1']};
+hmri_def.segment.tissue(1).ngaus = 1;
+hmri_def.segment.tissue(1).native = [1 0];
+hmri_def.segment.tissue(1).warped = [0 0];
+hmri_def.segment.tissue(2).tpm = {[hmri_def.TPM ',2']};
+hmri_def.segment.tissue(2).ngaus = 1;
+hmri_def.segment.tissue(2).native = [1 0];
+hmri_def.segment.tissue(2).warped = [0 0];
+hmri_def.segment.tissue(3).tpm = {[hmri_def.TPM ',3']};
+hmri_def.segment.tissue(3).ngaus = 2;
+hmri_def.segment.tissue(3).native = [1 0];
+hmri_def.segment.tissue(3).warped = [0 0];
+hmri_def.segment.tissue(4).tpm = {[hmri_def.TPM ',4']};
+hmri_def.segment.tissue(4).ngaus = 3;
+hmri_def.segment.tissue(4).native = [1 0];
+hmri_def.segment.tissue(4).warped = [0 0];
+hmri_def.segment.tissue(5).tpm = {[hmri_def.TPM ',5']};
+hmri_def.segment.tissue(5).ngaus = 4;
+hmri_def.segment.tissue(5).native = [1 0];
+hmri_def.segment.tissue(5).warped = [0 0];
+hmri_def.segment.tissue(6).tpm = {[hmri_def.TPM ',6']};
+hmri_def.segment.tissue(6).ngaus = 2;
+hmri_def.segment.tissue(6).native = [0 0];
+hmri_def.segment.tissue(6).warped = [0 0];
+hmri_def.segment.warp.mrf = 1;
+hmri_def.segment.warp.cleanup = 1;
+hmri_def.segment.warp.reg = [0 0.001 0.5 0.05 0.2];
+hmri_def.segment.warp.affreg = 'mni';
+hmri_def.segment.warp.fwhm = 0;
+hmri_def.segment.warp.samp = 3;
+hmri_def.segment.warp.write = [0 0];
 
 %==========================================================================
 % R1/PD/R2s/MT map creation parameters
@@ -64,7 +117,7 @@ hmri_def.interp = 3;
 
 % Define the OLS fit as default. OLS fit at TE=0 is used instead of
 % averaged contrast images for the map calculation
-hmri_def.fullOLS = false;
+hmri_def.fullOLS = true;
 
 %--------------------------------------------------------------------------
 % PD maps processing parameters
@@ -74,14 +127,14 @@ hmri_def.PDproc.WBMaskTh = 0.1;  % Threshold for calculation of whole-brain mask
 hmri_def.PDproc.WMMaskTh = 0.95; % Threshold for calculation of white-matter mask from TPMs
 hmri_def.PDproc.biasreg  = 10^(-5);
 hmri_def.PDproc.biasfwhm = 50;
-hmri_def.PDproc.nr_echoes_forA = 1; % NOTE: in order to minimize R2* bias 
+hmri_def.PDproc.nr_echoes_forA = 6; % NOTE: in order to minimize R2* bias 
     % on the PD estimates and gain in robustness for bias-field
-    % correction, the first echo of the T1w series is used ("average"
-    % calculated over the first echo only) for PD calculation. An average
-    % over more echoes might be preferable when PD map's SNR is too poor,
-    % but be aware that the gain in SNR will be balanced by an increased
-    % R2* bias in PD values (in particular in the GM).
-                         
+    % correction, the number of echoes should be minimum ("average"
+    % calculated over the first echo only) for PD calculation. However,
+    % with T2*-weighting bias correction (see below), a higher number of
+    % echoes is preferred in order to provide good SNR.
+hmri_def.PDproc.T2scorr = 1; % to correct A map for T2*-weighting bias before PD map calculation
+
 %--------------------------------------------------------------------------
 % RF sensitivity bias correction
 %--------------------------------------------------------------------------
@@ -90,8 +143,16 @@ hmri_def.RFsens.smooth_kernel = 12;
 %--------------------------------------------------------------------------
 % quantitative maps: quality evaluation and realignment to MNI
 %--------------------------------------------------------------------------
-hmri_def.qMRI_maps.QA          = 1; % creates a matlab structure containing markers of data quality
-hmri_def.qMRI_maps.ACPCrealign = 1; % realigns qMRI maps to MNI
+% creates a matlab structure containing markers of data quality
+hmri_def.qMRI_maps.QA          = 1; 
+% realigns qMRI maps to MNI: the following parameter corresponds to the
+% realignment implemented as part of the map calculation (see
+% hmri_create_MTProt.m). Left here for backward compatibility while it is
+% recommended to rather reorient all images prior any processing using the
+% Auto-Reorient module provided with the toolbox (type "help
+% hmri_autoreorient" for details or open the SPM > Tools > hMRI Tools >
+% Auto-Reorient module in the Batch GUI).
+hmri_def.qMRI_maps.ACPCrealign = 0; 
 
 %--------------------------------------------------------------------------
 % Threshold values for qMRI maps
@@ -223,3 +284,4 @@ hmri_def.rfcorr.v3star.RFCorr = true;
 % Unknwon protocol
 hmri_def.rfcorr.Unknown.tag = 'Unknown protocol. No spoiling correction defined.';
 hmri_def.rfcorr.Unknown.RFCorr = false;
+end

@@ -44,7 +44,7 @@ end;
 % 2. picking all the functions help files and put them into functions.tex
 fp = fopen(fullfile(hMRIdir,'manual','functions_help_section.txt'),'w');
 if fp==-1, return; end;
-excluded = {'MiscFunctions','manual','tbx_cfg','tbx_scfg','etpm'};
+excluded = {'MiscFunctions','manual','tbx_cfg','tbx_scfg','etpm','unittest'};
 
 % List all scripts
 f = spm_select('FPListRec',hMRIdir,'.*\.m$');

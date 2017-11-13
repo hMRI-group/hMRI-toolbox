@@ -5,13 +5,14 @@ function out = hmri_run_create(job)
 % If no B1 maps available, one can choose not to correct for B1 bias or
 % apply UNICORT.
 %==========================================================================
-job = hmri_create_process_data_spec(job);
 
 out.R1 = {};
 out.R2s = {};
 out.A = {};
 out.MT = {};
 out.T1w = {};
+out.MTw = {};
+out.PDw = {};
 
 % loop over subjects in the main function, calling the local function for
 % each subject:
@@ -24,6 +25,8 @@ for in=1:numel(job.subj)
     out.MT{end+1}  = out.subj(in).MT{1};
     out.A{end+1}   = out.subj(in).A{1};
     out.T1w{end+1} = out.subj(in).T1w{1};
+    out.MTw{end+1} = out.subj(in).MTw{1};
+    out.PDw{end+1} = out.subj(in).PDw{1};
 end
 end
 
@@ -106,10 +109,10 @@ end
 P_receiv = [];
 
 % run hmri_create_MTProt to evaluate the parameter maps
-[fR1, fR2s, fMT, fA, PPDw, PT1w]  = hmri_create_MTProt(job.subj, P_trans, P_receiv);
+[fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw]  = hmri_create_MTProt(job.subj, P_trans, P_receiv);
 
 % apply UNICORT if required, and collect outputs:
-if isfield(job.subj.b1_type,'UNICORT')
+if (isfield(job.subj.b1_type,'UNICORT') && ~isempty(fR1) && ~isempty(PPDw))
     out_unicort = hmri_create_unicort(PPDw, fR1, job.subj);
     out_loc.subj.R1  = {out_unicort.R1u};
 else
@@ -119,6 +122,8 @@ out_loc.subj.R2s = {fR2s};
 out_loc.subj.MT  = {fMT};
 out_loc.subj.A   = {fA};
 out_loc.subj.T1w = {PT1w};
+out_loc.subj.MTw = {PMTw};
+out_loc.subj.PDw = {PPDw};
 
 % clean after if required
 if hmri_get_defaults('cleanup')

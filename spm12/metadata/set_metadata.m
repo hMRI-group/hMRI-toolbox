@@ -111,8 +111,15 @@ for cfile = 1:size(filelist,1)
         spm_jsonwrite(fullfile(pth, [fnam '.json']),mstruc,opts);
     end
     if json.extended
-        % read and store the data for later
-        Y = spm_read_vols(spm_vol(fullfile(pth, [fnam '.nii'])));
+        % read and store the data for later. If nifti file has been
+        % initialised but not filled up yet, there are no data to read and
+        % spm_read_vols returns an error. But the extended header still can
+        % be created...
+        try
+            Y = spm_read_vols(spm_vol(fullfile(pth, [fnam '.nii'])));
+        catch
+            Y = [];
+        end
         % create handle to NIFTI object
         N = nifti(fullfile(pth, [fnam '.nii']));
         % create JSONified header and calculate NIFTI extended offset
@@ -122,8 +129,15 @@ for cfile = 1:size(filelist,1)
         % make this change effective by rewriting the NIFTI header
         create(N);
         % rewrite the data (done according to the updated offset)
-        for cv = 1:size(Y,4)
-            N.dat(:,:,:,cv) = Y(:,:,:,cv);
+        if isempty(Y)
+            fprintf(1,['\nWARNING: setting extended metadata for an empty NIFTI file.' ...
+                '\nMake sure the data are subsequently written with the right offset.' ...
+                '\nThe metadata will be overwritten otherwise and the file won''t be' ...
+                '\nreadable any longer (offset & datalength mismatch).\n']);
+        else
+            for cv = 1:size(Y,4)
+                N.dat(:,:,:,cv) = Y(:,:,:,cv);
+            end
         end
         % write the extended header
         write_extended_header(fullfile(pth, [fnam '.nii']),jhdr);

@@ -84,53 +84,33 @@ Output_hdr.history.output.units = 'ms-1';
 set_metadata(P_R1_mask,Output_hdr,json);
 
 
-%% preparation of spm structure for "New Segment" tool
-
-% clear('matlabbatch');
-tpm_nam = hmri_get_defaults('TPM'); % eTPM.nii instead of TPM.nii
+%% preparation of job for Unified Segmentation
+% uniform defaults used across the toolbox, in particular, enhanced TPMs
+% (provided with the toolbox) are preferred instead of SPM's TPM.nii -
 % see http://www.unil.ch/lren/home/menuinst/data--utilities.html
 % Lorio S, Fresard S, Adaszewski S, Kherif F, Chowdhury R, Frackowiak RS,
 % Ashburner J, Helms G, Weiskopf N, Lutti A, Draganski B. New tissue priors
 % for improved automated classification of subcortical brain structures on MRI.
 % Neuroimage. 2016 Apr 15;130:157-66. doi: 10.1016/j.neuroimage.2016.01.062
 
-preproc8.channel.write = [1 1];
-preproc8.tissue(1).tpm = {[tpm_nam ',1']};
-preproc8.tissue(1).ngaus = 2;
-preproc8.tissue(1).native = [0 0];
-preproc8.tissue(1).warped = [0 0];
-preproc8.tissue(2).tpm = {[tpm_nam ',2']};
-preproc8.tissue(2).ngaus = 2;
-preproc8.tissue(2).native = [0 0];
-preproc8.tissue(2).warped = [0 0];
-preproc8.tissue(3).tpm = {[tpm_nam ',3']};
-preproc8.tissue(3).ngaus = 2;
-preproc8.tissue(3).native = [0 0];
-preproc8.tissue(3).warped = [0 0];
-preproc8.tissue(4).tpm = {[tpm_nam ',4']};
-preproc8.tissue(4).ngaus = 3;
-preproc8.tissue(4).native = [0 0];
-preproc8.tissue(4).warped = [0 0];
-preproc8.tissue(5).tpm = {[tpm_nam ',5']};
-preproc8.tissue(5).ngaus = 4;
-preproc8.tissue(5).native = [0 0];
-preproc8.tissue(5).warped = [0 0];
-preproc8.tissue(6).tpm = {[tpm_nam ',6']};
-preproc8.tissue(6).ngaus = 2;
-preproc8.tissue(6).native = [0 0];
-preproc8.tissue(6).warped = [0 0];
-preproc8.warp.reg = [0   0.001   0.5   0.05   0.2];
-preproc8.warp.affreg = 'mni';
-preproc8.warp.samp = 3;
-preproc8.warp.write = [0 0];
-preproc8.warp.mrf = 0;
-% set parameters different from defaults
-preproc8.channel.biasfwhm = FWHM;
-preproc8.channel.biasreg = reg;
-preproc8.channel.vols = {P_R1_mask};
+job_US = hmri_get_defaults('segment');
+job_US.channel.vols = {P_R1_mask};
+job_US.channel.biasreg = reg;
+job_US.channel.biasfwhm = FWHM;
+job_US.channel.write = [1 1]; % write both BiasField and BiasCorrected volume
+for ctis=1:length(job_US.tissue)
+    job_US.tissue(ctis).native = [0 0]; % no need to write c* volumes
+end
+% The following were the parameter used in 2010 for the UNICROT paper, now
+% updated to current recommendations for unified segmentation (SPM12 - John
+% Ashburner)
+% job_US.tissue(1).ngaus = 2; % default is 1
+% job_US.tissue(2).ngaus = 2; % default is 1
+% job_US.warp.mrf = 0; % default is 1
+% job_US.warp.cleanup = 0; % default is 1
 
 %% run prepared "New Segment" job
-output_list = spm_preproc_run(preproc8);
+output_list = spm_preproc_run(job_US);
 
 %% calculate B1+ map from bias field
 P_biasmap = output_list.channel.biasfield{1};

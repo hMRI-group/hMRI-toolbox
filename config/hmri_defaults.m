@@ -295,5 +295,30 @@ hmri_def.rfcorr.Unknown.RFCorr = false;
 
 hmri_b1_standard_defaults;
 
+%==========================================================================
+% Maps processing parameters
+%==========================================================================
+
+%--------------------------------------------------------------------------
+% US segmentation parameters
+%--------------------------------------------------------------------------
+
+% recommended TPM for segmentation
+hmri_def.proc.TPM = hmri_def.TPM ;
+% Use the same as for the maps creation but one could (want to) use another
+% one at some point. 
+% Map creation works with "standard" weighted-MR images to build the 
+% parametric maps. In the end these parametric maps taken together for a 
+% multichannel-segmention could show more details (for example subcortical 
+% nuclei?) and would therefore require a specific TPM. This TPM is of 
+% course still to be built at the moment...
+
+% Flags to write out posterior tissue classes in native & warped space
+% - GM/WM/CSF -> write warped, mod+unmod, and native, native+dartelImp.
+% - others -> nothing
+hmri_def.proc.w_native = [[1 1];[1 1];[1 1];[0 0];[0 0];[0 0]];
+hmri_def.proc.w_warped = [[1 1];[1 1];[1 1];[0 0];[0 0];[0 0]];
+% Number of Gaussians per tissue class
+hmri_def.proc.nGauss = [2 2 2 3 4 2]; % originally in SPM [1 1 2 3 4 2]
 
 end

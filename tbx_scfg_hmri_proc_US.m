@@ -123,12 +123,37 @@ many_pams.help       = {['Select whole brain parameter maps (e.g. MT, ',...
     'R2*, FA, etc.) from all subjects for processing, one type per entry.']};
 
 % ---------------------------------------------------------------------
+% vox Voxel sizes
+% ---------------------------------------------------------------------
+vox          = cfg_entry;
+vox.tag      = 'vox';
+vox.name     = 'Voxel sizes';
+vox.num      = [1 3];
+vox.strtype  = 'e';
+vox.val      = {[1 1 1]};
+vox.help     = {[...
+'Specify the voxel sizes of the deformation field and tissue classes ',...
+'to be produced. Non-finite values will default to the voxel sizes of ',...
+'the template image that was originally used to estimate the deformation.']};
+
+%--------------------------------------------------------------------------
+% bb Bounding box
+%--------------------------------------------------------------------------
+bb         = cfg_entry;
+bb.tag     = 'bb';
+bb.name    = 'Bounding box';
+bb.help    = {'The bounding box (in mm) of the volume which is to be written (relative to the anterior commissure).'};
+bb.strtype = 'r';
+bb.num     = [2 3];
+bb.def     = @(val)spm_get_defaults('normalise.write.bb', val{:});
+
+% ---------------------------------------------------------------------
 % many_sdatas Many subjects data
 % ---------------------------------------------------------------------
 many_sdatas = cfg_branch;
 many_sdatas.tag = 'many_sdatas';
 many_sdatas.name = 'Data & options';
-many_sdatas.val = {output unlimit(rstruct) many_pams};
+many_sdatas.val = {output unlimit(rstruct) many_pams vox bb};
 many_sdatas.help = {'Specify images for many subjects at once.' , ...
     ['Processing will work on 1 subject at the time, using his ',...
     'structural image(s) to estimate the segmentation and warping parameters. ', ...

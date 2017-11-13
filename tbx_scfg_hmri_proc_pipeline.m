@@ -134,6 +134,31 @@ fwhm.help    = {['Specify the full-width at half maximum (FWHM) of the ',...
     'denoting the FWHM in the x, y and z directions.']};
 
 % ---------------------------------------------------------------------
+% vox Voxel sizes
+% ---------------------------------------------------------------------
+vox          = cfg_entry;
+vox.tag      = 'vox';
+vox.name     = 'Voxel sizes';
+vox.num      = [1 3];
+vox.strtype  = 'e';
+vox.val      = {[1 1 1]};
+vox.help     = {[...
+'Specify the voxel sizes of the deformation field and tissue classes ',...
+'to be produced. Non-finite values will default to the voxel sizes of ',...
+'the template image that was originally used to estimate the deformation.']};
+
+%--------------------------------------------------------------------------
+% bb Bounding box
+%--------------------------------------------------------------------------
+bb         = cfg_entry;
+bb.tag     = 'bb';
+bb.name    = 'Bounding box';
+bb.help    = {'The bounding box (in mm) of the volume which is to be written (relative to the anterior commissure).'};
+bb.strtype = 'r';
+bb.num     = [2 3];
+bb.def     = @(val)spm_get_defaults('normalise.write.bb', val{:});
+
+% ---------------------------------------------------------------------
 % proc_pipel Preprocess maps -> pipelines
 % ---------------------------------------------------------------------
 proc_pipel         = cfg_exbranch;
@@ -149,7 +174,7 @@ proc_pipel.help    = {
     ['- US+Dartel+Smooth -> applies US, builds Dartel template and warps' ...
     'into MNI, then smoothes (weighted-average)']
     }'; %#ok<*NBRAK>
-proc_pipel.val  = {output vols many_pams fwhm pipe_c};
+proc_pipel.val  = {output vols many_pams vox bb fwhm pipe_c};
 proc_pipel.prog = @hmri_run_proc_pipeline;
 proc_pipel.vout = @vout_proc_pipeline;
 proc_pipel.check = @check_data;

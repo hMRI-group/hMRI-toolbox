@@ -65,10 +65,12 @@ for nm = 1:length(job.subjc)
     end
     
     % Prepare and run 'spm_preproc' -> get tissue maps + deformation
-    defsa.channel = job.subjc(nm).channel;
-    defsa.tissue  = job.tissue;
-    defsa.warp    = job.warp;
-    out.subjc(nm) = spm_preproc_run(defsa);
+    defsa.channel  = job.subjc(nm).channel;
+    defsa.tissue   = job.tissue;
+    defsa.warp     = job.warp;
+    defsa.warp.vox = mean(job.many_sdatas.vox);
+    defsa.warp.bb  = job.many_sdatas.bb;
+    out.subjc(nm)  = spm_preproc_run(defsa);
     
     % Move segmentation output (if requested) and update 'out' structure:
     % all *c*.nii images, deformation field (y_*.nii), parameters 

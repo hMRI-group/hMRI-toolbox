@@ -104,6 +104,13 @@ hmri_def.segment.warp.write = [0 0];
 %==========================================================================
 
 %--------------------------------------------------------------------------
+% Coregistration of all input images to the average (or TE=0 fit) PDw image
+%--------------------------------------------------------------------------
+% The coregistration step can be disabled using the following flag (not
+% recommended): 
+hmri_def.coreg2PDw = 1; 
+
+%--------------------------------------------------------------------------
 % Ordinary Least Squares & fit at TE=0
 %--------------------------------------------------------------------------
 % create an Ordinary Least Squares R2* map?

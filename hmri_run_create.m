@@ -40,7 +40,7 @@ try
     outpath = job.subj.output.outdir{1}; % case outdir
     if ~exist(outpath,'dir'); mkdir(outpath); end
 catch  %#ok<CTCH>
-    Pin = char(job.subj.raw_mpm.MT);
+    Pin = char(job.subj.raw_mpm.PD);
     outpath = fileparts(Pin(1,:)); % case indir
 end
 % save outpath as default for this job

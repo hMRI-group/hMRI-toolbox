@@ -88,7 +88,7 @@ mformat.labels  = {'None'
                     'Extended nii header'
                     'Both'}';
 mformat.values  = {'' 'sep' 'ext' 'sepext'};
-mformat.val     = {''};
+mformat.val     = {'sep'};
 
 % ---------------------------------------------------------------------
 % Options for metadata content: anonymisation

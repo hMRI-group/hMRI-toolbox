@@ -18,6 +18,14 @@ function hmri_defaults
 %
 % The structure and content of this file are largely inspired by the
 % equivalent file in SPM.
+%
+% DOCUMENTATION
+% A brief description of each parameter is provided together with
+% guidelines and recommendations to modify these parameters. With few
+% exceptions, parameters should ONLY be MODIFIED and customized BY ADVANCED
+% USERS, having a good knowledge of the underlying algorithms and
+% implementation. Please refer to the documentation in the github WIKI for
+% more details.  
 %__________________________________________________________________________
 % Copyright (C) 2013 Wellcome Trust Centre for Neuroimaging
 
@@ -38,18 +46,34 @@ hmri_def.local_defaults = {fullfile(fileparts(mfilename('fullpath')),'local','hm
 % Common processing parameters 
 %==========================================================================
 
-% cleanup temporary directories. If set to true, all  
+% cleanup temporary directories. If set to true, all temporary directories
+% are deleted at the end of map creation, only the "Results" directory and
+% "Supplementary" subdirectory are kept. Setting "cleanup" to "false" might
+% be convenient if one desires to have a closer look at intermediate
+% processing steps. Otherwise "cleanup = true" is recommended for saving
+% disk space.
 hmri_def.cleanup = true;
-% settings for JSON metadata
+% settings for JSON metadata: by default, separate JSON files are used to
+% store the metadata (information on data acquisition and processing,
+% tracking of input and output files), as JSON-formatted, tab-indented
+% text. The following settings are recommended. No modification currently
+% foreseen as useful...
 hmri_def.json = struct('extended',false,'separate',true,'anonym','none',...
     'overwrite',true, 'indent','\t'); 
-% recommended TPM for segmentation and spatial processing
+% recommended TPM for segmentation and spatial processing. The hMRI toolbox
+% provides a series of tissue probability maps. These TPMs could be
+% replaced by other TPMs, to better match the population studied. 
+% ADVANCED USER ONLY.
 hmri_def.TPM = fullfile(fileparts(fileparts(mfilename('fullpath'))),'etpm','eTPM.nii');
-% default template for auto-reorientation
+% default template for auto-reorientation. The template can be selected
+% within the Auto-reorient module. The following is the default suggested
+% for T1w images. Please refer to the Auto-reorient documentation for an
+% appropriate choice of the template.
 hmri_def.autoreorient_template = {fullfile(spm('dir'),'canonical','avg152T1.nii')};
 
 %==========================================================================
 % Default parameters for segmentation
+% ADVANCED USERS ONLY!
 % hmri_def.segment is effectively the job to be handed to spm_preproc_run
 % By default, parameters are set to
 % - create tissue class images (c*) in the native space of the source image
@@ -107,27 +131,32 @@ hmri_def.segment.warp.write = [0 0];
 % Coregistration of all input images to the average (or TE=0 fit) PDw image
 %--------------------------------------------------------------------------
 % The coregistration step can be disabled using the following flag (not
-% recommended): 
+% recommended). ADVANCED USER ONLY. 
 hmri_def.coreg2PDw = 1; 
 
 %--------------------------------------------------------------------------
 % Ordinary Least Squares & fit at TE=0
 %--------------------------------------------------------------------------
-% create an Ordinary Least Squares R2* map?
+% create an Ordinary Least Squares R2* map. The ESTATICS model is applied
+% to calculate R2* map from all available contrasts. 
+% ADVANCED USER ONLY.
 hmri_def.R2sOLS = 1; 
 
 % Define a coherent interpolation factor used all through the map creation
 % process. Default is 3, but if you want to keep SNR and resolution as far
 % as possible the same, it is recommended to use sinc interpolation (at
-% least -4, in Siawoosh's experience -7 gives decent results)
+% least -4, in Siawoosh's experience -7 gives decent results). 
+% ADVANCED USER ONLY. 
 hmri_def.interp = 3;
 
-% Define the OLS fit as default. OLS fit at TE=0 is used instead of
-% averaged contrast images for the map calculation
+% Define the OLS fit as default. OLS fit at TE=0 for each contrast is used
+% instead of averaged contrast images for the map calculation.
+% ADVANCED USER ONLY. 
 hmri_def.fullOLS = true;
 
 %--------------------------------------------------------------------------
 % PD maps processing parameters
+% ADVANCED USER ONLY.
 %--------------------------------------------------------------------------
 hmri_def.PDproc.PDmap    = 1;    % Calculation of PD maps requires a B1 map. Set to 0 if a B1 map is not available
 hmri_def.PDproc.WBMaskTh = 0.1;  % Threshold for calculation of whole-brain mask from TPMs
@@ -139,11 +168,15 @@ hmri_def.PDproc.nr_echoes_forA = 6; % NOTE: in order to minimize R2* bias
     % correction, the number of echoes should be minimum ("average"
     % calculated over the first echo only) for PD calculation. However,
     % with T2*-weighting bias correction (see below), a higher number of
-    % echoes is preferred in order to provide good SNR.
-hmri_def.PDproc.T2scorr = 1; % to correct A map for T2*-weighting bias before PD map calculation
+    % echoes is preferred in order to provide good SNR. Note that when
+    % "fullOLS = true", this parameter has no impact whatsovever.
+hmri_def.PDproc.T2scorr = 1; % to correct A map for T2*-weighting bias 
+    % before PD map calculation. The correction is not required when
+    % "fullOLS = true" (TE=0 fit) and will be automatically disabled.
 
 %--------------------------------------------------------------------------
-% RF sensitivity bias correction
+% RF sensitivity bias correction: kernel for sensitivity map smoothing.
+% ADVANCED USER ONLY.
 %--------------------------------------------------------------------------
 hmri_def.RFsens.smooth_kernel = 12;
 
@@ -154,46 +187,66 @@ hmri_def.RFsens.smooth_kernel = 12;
 hmri_def.qMRI_maps.QA          = 1; 
 % realigns qMRI maps to MNI: the following parameter corresponds to the
 % realignment implemented as part of the map calculation (see
-% hmri_create_MTProt.m). Left here for backward compatibility while it is
-% recommended to rather reorient all images prior any processing using the
-% Auto-Reorient module provided with the toolbox (type "help
+% hmri_create_MTProt.m). Left here for backward compatibility. It is
+% STRONGLY RECOMMENDED to reorient all images prior any processing using 
+% the Auto-Reorient module provided with the toolbox (type "help
 % hmri_autoreorient" for details or open the SPM > Tools > hMRI Tools >
-% Auto-Reorient module in the Batch GUI).
+% Auto-Reorient module in the Batch GUI). ADVANCED USER ONLY.
 hmri_def.qMRI_maps.ACPCrealign = 0; 
 
 %--------------------------------------------------------------------------
 % Threshold values for qMRI maps
+% The thresholds are meant to discard outliers generally due to low SNR in
+% some brain areas, leading to physical non-sense values. Thresholding is
+% required to process further the maps generated, when e.g. used
+% segmentation algorithms make assumptions incompatible with existing
+% outliers.
+% NOTE that thresholding modifies the signal distribution and may alter
+% the statistical results.
+% ADVANCED USER ONLY.
 %--------------------------------------------------------------------------
-hmri_def.qMRI_maps_thresh.R1       = 2000;
-hmri_def.qMRI_maps_thresh.A        = 10^5;
-hmri_def.qMRI_maps_thresh.R2s      = 10;
+hmri_def.qMRI_maps_thresh.R1       = 2000; % 1000*[s-1]
+hmri_def.qMRI_maps_thresh.A        = 10^5; % [a.u.] based on input images with intensities ranging approx. [0 4096].
+hmri_def.qMRI_maps_thresh.R2s      = 10;   % 1000*[s-1]
 hmri_def.qMRI_maps_thresh.MTR      = 50;
 hmri_def.qMRI_maps_thresh.MTR_synt = 50;
-hmri_def.qMRI_maps_thresh.MT       = 5; 
+hmri_def.qMRI_maps_thresh.MT       = 5;    % [p.u.]
 
 %--------------------------------------------------------------------------
 % MPM acquisition parameters and RF spoiling correction parameters
 %--------------------------------------------------------------------------
-% these value are initialised with defaults (v2k protocol - Prisma) for the
-% first pass through this script only. They're updated at run-time with
-% actual acquisition values (see hmri_MTProt.m).
-% The coefficients for R.Deichmann steady state correction are also
-% determined and stored as part of the defaults parameters for the current
-% processing so they can be stored for reccord.
-
-% Default MPMacq values to begin with
-hmri_def.MPMacq.TE_mtw = 2.34;
-hmri_def.MPMacq.TE_t1w = 2.34;
-hmri_def.MPMacq.TE_pdw = 2.34;
-hmri_def.MPMacq.TR_mtw = 24.5;
-hmri_def.MPMacq.TR_t1w = 24.5;   % <-
-hmri_def.MPMacq.TR_pdw = 24.5;   % <-
-hmri_def.MPMacq.fa_mtw = 6;
-hmri_def.MPMacq.fa_t1w = 21;     % <-
-hmri_def.MPMacq.fa_pdw = 6;      % <-
+% ACQUISITION PARAMETERS: these values are initialised with defaults (v2k
+% protocol - Prisma) and are updated at run-time with actual acquisition
+% values (see hmri_create_MTProt.m). If TR/TE/FA cannot be determined from
+% the input images, the following values will be used. If they don't match
+% your own protocol values and if no TR/TE/FA values can be retrieved by
+% the toolbox from your data, the following values should be adapted in the
+% local defaults file. 
+% ADVANCED USER ONLY
+hmri_def.MPMacq.TE_mtw = 2.34; % [ms]
+hmri_def.MPMacq.TE_t1w = 2.34; % [ms]
+hmri_def.MPMacq.TE_pdw = 2.34; % [ms]
+hmri_def.MPMacq.TR_mtw = 24.5; % [ms]
+hmri_def.MPMacq.TR_t1w = 24.5; % [ms]
+hmri_def.MPMacq.TR_pdw = 24.5; % [ms]
+hmri_def.MPMacq.fa_mtw = 6;    % [deg]
+hmri_def.MPMacq.fa_t1w = 21;   % [deg]
+hmri_def.MPMacq.fa_pdw = 6;    % [deg]
 hmri_def.MPMacq.tag    = 'v2k';
 
-% Defining the MPMacq paramters distinguishing the different protocols
+% IMPREFECT RF SPOILING CORRECTION PARAMETERS 
+% (Preibisch and Deichmann, MRM 61:125-135 (2009))
+% No run-time calculation of the correction parametes is currently
+% performed in the toolbox. They've been calculated and stored here for a
+% series of standard protocols, and are selected at run-time according to
+% effective TR and FA values (more precisely: [TR_pdw TR_t1w fa_pdw
+% fa_t1w]). If the used TR and FA values don't match any of the predefined
+% types, no correction is applied. Additional protocol types and correction
+% factors can be computed off-line (see more details below) and added to
+% the local defaults file to apply proper RF correction.
+% ADVANCED USER ONLY.
+
+% A) Defining the MPMacq parameters distinguishing the different protocols
 %--------------------------------------------------------------------------
 % Using the following parameter order: [TR_pdw TR_t1w fa_pdw fa_t1w]
 % NOTE: all tags MUST 
@@ -242,17 +295,15 @@ hmri_def.MPMacq_set.names{7} = 'v3star protocol';
 hmri_def.MPMacq_set.tags{7}  = 'v3star';
 hmri_def.MPMacq_set.vals{7}  = [25 25 6 21];
 
-% Defining the RFCorr parameters for the different protocols
+% B) Defining the RFCorr parameters for the different protocols
 %--------------------------------------------------------------------------
 % Antoine Lutti 15/01/09
-% Correction parameters used in hmri_MTProt to correct for imperfect RF
-% spoiling when a B1 map is loaded. Correction based on Preibisch and
-% Deichmann's paper MRM 61:125-135 (2009). The values for P2_a and P2_b
-% below were obtained using the code supplied by R. Deichmann with the
-% experimental parameters used to get our PDw and T1w images. Correction
-% parameters were calculated for the following parameter sets using
-% T2 = 64 ms at 3T.
-%
+% The following correction parameters are based on 
+% [Preibisch and Deichmann, Magn Reson Med 61:125-135 (2009)]. The values
+% for P2_a and P2_b below were obtained using the code supplied by R.
+% Deichmann with the experimental parameters used for the standard MPM
+% protocol and assuming T2 = 64 ms at 3T.
+
 % 1) classic FIL protocol (Weiskopf et al., Neuroimage 2011):
 hmri_def.rfcorr.ClassicFIL.tag = 'Classic FIL protocol';
 hmri_def.rfcorr.ClassicFIL.P2_a = [78.9228195006542,-101.113338489192,47.8783287525126];

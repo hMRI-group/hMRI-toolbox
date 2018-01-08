@@ -1,5 +1,6 @@
 # The hMRI Toolbox
-# Analysis Tools for Quantitative MRI and In-Vivo Histology using MRI (hMRI)
+
+Analysis tools for quantitative MRI and in-vivo histology using MRI (hMRI)
 
 ## Background
 

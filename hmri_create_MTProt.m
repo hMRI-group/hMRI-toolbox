@@ -120,7 +120,7 @@ threshall = mpm_params.proc.threshall;
 PDproc = mpm_params.proc.PD;
 RFC = mpm_params.proc.RFC;
 dt = [spm_type('float32'),spm_platform('bigend')]; % for nifti output
-outbasename = spm_file(mpm_params.input(end).fnam(1,:),'basename'); % for all output files
+outbasename = spm_file(mpm_params.input(PDidx).fnam(1,:),'basename'); % for all output files
 calcpath = mpm_params.calcpath;
 mpm_params.outbasename = outbasename;
 respath = mpm_params.respath;
@@ -242,13 +242,20 @@ end
 % Coregistering the images
 %=========================================================================%
 fprintf(1,'\n    -------- Coregistering the images  --------\n');
+% NOTE: coregistration can be disabled using the hmri_def.coreg2PDw flag
 
-x_MT2PD = [];
-if MTidx; x_MT2PD = coreg_mt(Pavg{PDidx}, Pavg{MTidx}); end
-x_T12PD = [];   
+x_MT2PD = [0 0 0 0 0 0];
+if MTidx; 
+    if mpm_params.coreg
+        x_MT2PD = coreg_mt(Pavg{PDidx}, Pavg{MTidx});
+    end
+end
+x_T12PD = [0 0 0 0 0 0];   
 if T1idx; 
-    x_T12PD = coreg_mt(Pavg{PDidx}, Pavg{T1idx});
-    coreg_mt(Pavg{PDidx}, PT1w_forA);
+    if mpm_params.coreg
+        x_T12PD = coreg_mt(Pavg{PDidx}, Pavg{T1idx});
+        coreg_mt(Pavg{PDidx}, PT1w_forA);
+    end
 end
 
 V_trans = [];
@@ -256,7 +263,9 @@ if ~isempty(P_trans)
     % Load B1 mapping data if available and coregister to PDw
     % P_trans(1,:) = magnitude image (anatomical reference for coregistration) 
     % P_trans(2,:) = B1 map (p.u.)
-    coreg_bias_map(Pavg{PDidx}, P_trans);
+    if mpm_params.coreg
+        coreg_bias_map(Pavg{PDidx}, P_trans);
+    end
     V_trans = spm_vol(P_trans);
 end
 
@@ -265,7 +274,9 @@ if ~isempty(P_receiv)
     % Load sensitivity map if available and coregister to PDw
     % P_receiv(1,:) = magnitude image (anatomical reference for coregistration) 
     % P_receiv(2,:) = sensitivity map
-    coreg_bias_map(Pavg{PDidx}, P_receiv);
+    if mpm_params.coreg
+        coreg_bias_map(Pavg{PDidx}, P_receiv);
+    end
     V_receiv = spm_vol(P_receiv);
 end
 
@@ -1216,6 +1227,9 @@ if mpm_params.PDidx && mpm_params.T1idx
         mpm_params.proc.PD.nr_echoes_forA = size(mpm_params.input(T1idx).fnam,1);
     end
 end
+
+% coregistration of all images to the PDw average (or TE=0 fit):
+mpm_params.coreg = hmri_get_defaults('coreg2PDw');
 
 end
 

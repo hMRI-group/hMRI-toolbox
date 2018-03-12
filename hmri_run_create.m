@@ -102,14 +102,12 @@ P_trans = hmri_create_b1map(job.subj);
 
 % check, if RF sensitivity profile was acquired and do the recalculation
 % accordingly
-if ~isfield(job.subj.sensitivity,'RF_none')
+if isfield(job.subj.sensitivity,'RF_once') || isfield(job.subj.sensitivity,'RF_per_contrast')
   job.subj = hmri_create_RFsens(job.subj);
 end
 
-P_receiv = [];
-
 % run hmri_create_MTProt to evaluate the parameter maps
-[fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw]  = hmri_create_MTProt(job.subj, P_trans, P_receiv);
+[fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw]  = hmri_create_MTProt(job.subj, P_trans);
 
 % apply UNICORT if required, and collect outputs:
 if (isfield(job.subj.b1_type,'UNICORT') && ~isempty(fR1) && ~isempty(PPDw))

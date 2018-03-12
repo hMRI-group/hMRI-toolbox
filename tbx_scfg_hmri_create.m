@@ -279,15 +279,28 @@ sraws3T1.ufilter  = '.*';
 sraws3T1.num       = [0 2];
 sraws3T1.val       = {''};
 % ---------------------------------------------------------------------
+% xNULL No RF sensitivity bias correction applied at all
+% ---------------------------------------------------------------------
+xNULL         = cfg_entry;
+xNULL.tag     = 'RF_none';
+xNULL.name    = 'None';
+xNULL.help    = {'No RF sensitivity bias correction will be applied.'};
+xNULL.strtype = 's';
+xNULL.num     = [1 Inf];
+xNULL.val     = {'-'};
+% ---------------------------------------------------------------------
 % x0 No RF sensitivity
 % ---------------------------------------------------------------------
 x0         = cfg_entry;
-x0.tag     = 'RF_none';
-x0.name    = 'None';
-x0.help    = {'No RF sensitivity map was acquired.'};
+x0.tag     = 'RF_unicort';
+x0.name    = 'UNICORT';
+x0.help    = {['RF sensitivity bias correction based on the UNICORT approach ' ...
+    '[Weiskopf et al. (2011) Unified segmentation based correction of R1 ' ...
+    'brain maps for RF transmit field inhomogeneities (UNICORT). NeuroImage ' ...
+    '54(3):2116–2124]. No RF sensitivity map is required.']};
 x0.strtype = 's';
 x0.num     = [1 Inf];
-x0.val     = {'noRF'};
+x0.val     = {'-'};
 % ---------------------------------------------------------------------
 % x1 Single RF sensitivity maps acquired for all contrasts
 % ---------------------------------------------------------------------
@@ -314,12 +327,13 @@ x3.val     = {sraws3MT sraws3PD sraws3T1};
 sensitivity         = cfg_choice;
 sensitivity.tag     = 'sensitivity';
 sensitivity.name    = 'RF sensitivity bias correction';
-sensitivity.help    = {['Specify whether RF sensitivity maps have been acquired. ' ...
-    'You can select either:']
-    '- None: no RF sensitivity map has been acquired,'
-    '- Single: single set of RF sensitivity maps acquired for all contrasts,'
-    '- Per contrast: one set of RF sensitivity maps acquired for each contrast.'};
-sensitivity.values  = {x0 x1 x3};
+sensitivity.help    = {'Specify the type of RF sensitivity bias correction to be applied. '
+    'You can select either:'
+    '- None: no correction will be applied,'
+    '- UNICORT: based on UNICORT, no RF sensitivity map required,'
+    '- Single: based on a single set of RF sensitivity maps for all contrasts,'
+    '- Per contrast: based on one set of RF sensitivity maps acquired for each contrast.'};
+sensitivity.values  = {xNULL x0 x1 x3};
 sensitivity.val     = {x0};
 
 % ---------------------------------------------------------------------

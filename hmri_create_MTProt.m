@@ -489,7 +489,7 @@ end
 
 if T1idx
     coutput = coutput+1;
-    if PDproc.calibr && ~isfield(mpm_params.RFsenscorr,'RF_none') && ~isempty(V_trans)
+    if PDproc.quantitative && ~isempty(V_trans)
         output_suffix{coutput} = 'PD';
         descrip{coutput} = 'Water concentration [%]';
         units{coutput} = '%';
@@ -1194,7 +1194,7 @@ mpm_params.proc.threshall = hmri_get_defaults('qMRI_maps_thresh');
 mpm_params.proc.PD = hmri_get_defaults('PDproc');
 % if no RF sensitivity bias correction applied, not worth trying any
 % calibration:
-if isfield(mpm_params.RFsenscorr,'RF_none') && mpm_params.proc.PD.calibr
+if isfield(mpm_params.proc.RFsenscorr,'RF_none') && mpm_params.proc.PD.calibr
     fprintf(1,['\nWARNING: if no RF sensitivity bias correction applied, no quantitative ' ...
         '\nPD map will be output and not calibration will be performed. ' ...
         '\nAn amplitude "A" map will be output instead of a quantitative ' ...
@@ -1217,7 +1217,7 @@ if ~mpm_params.fullOLS && ~mpm_params.proc.PD.T2scorr
         '\nrecommended to have either of these options enabled!\n']);
 end   
 % defines the type of PD or A map output:
-mpm_params.proc.PD.quantitative = mpm_params.proc.PD.calibr && ~isfield(mpm_params.RFsenscorr,'RF_none');
+mpm_params.proc.PD.quantitative = mpm_params.proc.PD.calibr && ~isfield(mpm_params.proc.RFsenscorr,'RF_none');
     
 % whether OLS R2* is calculated
 mpm_params.proc.R2sOLS = hmri_get_defaults('R2sOLS');

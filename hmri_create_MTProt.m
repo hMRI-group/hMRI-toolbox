@@ -991,7 +991,7 @@ spm_write_vol(V_maskedA,maskedA);
 
 % Bias-field correction of masked A map
 % use unified segmentation with uniform defaults across the toolbox:
-if isfield(mpm_params.sensitivity,'RF_unicort')
+if isfield(mpm_params.proc.RFsenscorr,'RF_unicort')
     job_bfcorr = hmri_get_defaults('segment');
     job_bfcorr.channel.vols = {V_maskedA.fname};
     job_bfcorr.channel.biasreg = PDproc.biasreg;
@@ -1026,8 +1026,8 @@ Vsave = spm_vol(fA);
 Vsave.descrip = [Vsave.descrip '. Error Estimate: ', num2str(errorEstimate)];
 if errorEstimate > 0.06 %#ok<BDSCI>
     % MFC: Testing on 15 subjects showed 6% is a good cut-off:
-    fprintf(1,['\nWARNING: Error estimate is high for calculated PD map:\n%s' ...
-        '\nError higher than 6% may indicate motion.\n'], Vsave.fname);
+    fprintf(1,['\nWARNING: Error estimate is high (%.1f%%) for calculated PD map:\n%s' ...
+        '\nError higher than 6%% may indicate motion.\n'], errorEstimate*100, Vsave.fname);
 end
 if mpm_params.QA.enable
     if exist(mpm_params.QA.fnam,'file')

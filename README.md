@@ -1,10 +1,11 @@
 # The hMRI Toolbox
-# Analysis Tools for Quantitative MRI and In-Vivo Histology using MRI (hMRI)
+
+Analysis tools for quantitative MRI and in-vivo histology using MRI (hMRI)
 
 ## Background
 
 Quantitative MRI finds increasing application in neuroscience and clinical research due to its greater specificity and its sensitivity to microstructural properties of brain tissue - myelin, iron and water concentration (Weiskopf et al., 2015). 
-The hMRI toolbox is an easy-to-use open-source tool for data handling and processing of quantitative MRI data. This toolbox, embedded in the SPM framework (http://www.fil.ion.ucl.ac.uk/spm), allows the estimation of quantitative MRI maps (longitudinal and transverse relaxation rates R1 and R2*, proton density PD, and magnetization transfer MT) (Weiskopf et al., 2013), followed by spatial registration in common space for statistical analysis (Draganski et al., 2011). It also offers flexibility for calculation of novel MRI biomarkers of tissue microstructure (Mohammadi et al., 2015).
+The hMRI toolbox is an easy-to-use open-source tool for data handling and processing of quantitative MRI data. This toolbox, embedded in the [SPM framework](http://www.fil.ion.ucl.ac.uk/spm), allows the estimation of quantitative MRI maps (longitudinal and transverse relaxation rates R1 and R2*, proton density PD, and magnetization transfer MT) (Weiskopf et al., 2013), followed by spatial registration in common space for statistical analysis (Draganski et al., 2011). It also offers flexibility for calculation of novel MRI biomarkers of tissue microstructure (Mohammadi et al., 2015).
 
 ## Licence
 
@@ -49,4 +50,5 @@ The development of the hMRI toolbox is an international collaborative effort inc
 - NW and SM received funding from the BMBF (01EW1711A and B) in the framework of ERA-NET NEURON. BD is supported by the Swiss National Science Foundation (NCCR Synapsy, project grant Nr 32003B_159780) and Foundation Synapsis. LREN is very grateful to the Roger De Spoelberch and Partridge Foundations for their generous financial support. 
 - MFC is supported by the MRC and Spinal Research Charity through the ERA-NET Neuron joint call (MR/R000050/1). 
 - The Wellcome Centre for Human Neuroimaging is supported by core funding from the Wellcome [203147/Z/16/Z]. 
-- CP is supported by the F.R.S.-FNRS, Belgium. The hMRI Toolbox project is supported by the Max Planck Society.
+- CP is supported by the [F.R.S.-FNRS](http://www.fnrs.be/en/), Belgium. 
+- The hMRI Toolbox project is supported by the Max Planck Society.

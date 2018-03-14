@@ -292,12 +292,12 @@ xNULL.val     = {'-'};
 % x0 No RF sensitivity
 % ---------------------------------------------------------------------
 x0         = cfg_entry;
-x0.tag     = 'RF_unicort';
-x0.name    = 'UNICORT';
-x0.help    = {['RF sensitivity bias correction based on the UNICORT approach ' ...
-    '[Weiskopf et al. (2011) Unified segmentation based correction of R1 ' ...
-    'brain maps for RF transmit field inhomogeneities (UNICORT). NeuroImage ' ...
-    '54(3):2116–2124]. No RF sensitivity map is required.']};
+x0.tag     = 'RF_us';
+x0.name    = 'Unified Segmentation';
+x0.help    = {['RF sensitivity bias correction based on the Unified Segmentation ' ...
+    '(US) approach. The resulting Bias Field estimate is used to correct for ' ...
+    'RF sensitivity bias (applies to the PD map calculation only). ' ...
+    'No RF sensitivity map is required.']};
 x0.strtype = 's';
 x0.num     = [1 Inf];
 x0.val     = {'-'};
@@ -330,7 +330,7 @@ sensitivity.name    = 'RF sensitivity bias correction';
 sensitivity.help    = {'Specify the type of RF sensitivity bias correction to be applied. '
     'You can select either:'
     '- None: no correction will be applied,'
-    '- UNICORT: based on UNICORT, no RF sensitivity map required,'
+    '- Unified Segmentation: based on US, no RF sensitivity map required,'
     '- Single: based on a single set of RF sensitivity maps for all contrasts,'
     '- Per contrast: based on one set of RF sensitivity maps acquired for each contrast.'};
 sensitivity.values  = {xNULL x0 x1 x3};

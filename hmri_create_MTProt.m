@@ -839,8 +839,8 @@ if ~isempty(f_T)
         fA = fAcorr;
     end
     
-    % if calibration enabled, do the UNICORT bias correction if required
-    % and calibrate the PD map
+    % if calibration enabled, do the Unified Segmentation bias correction
+    % if required and calibrate the PD map
     if PDproc.calibr
         PDcalculation(fA,fTPM,mpm_params);
     end
@@ -991,7 +991,7 @@ spm_write_vol(V_maskedA,maskedA);
 
 % Bias-field correction of masked A map
 % use unified segmentation with uniform defaults across the toolbox:
-if isfield(mpm_params.proc.RFsenscorr,'RF_unicort')
+if isfield(mpm_params.proc.RFsenscorr,'RF_us')
     job_bfcorr = hmri_get_defaults('segment');
     job_bfcorr.channel.vols = {V_maskedA.fname};
     job_bfcorr.channel.biasreg = PDproc.biasreg;

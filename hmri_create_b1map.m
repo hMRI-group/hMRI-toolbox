@@ -302,8 +302,8 @@ set_metadata(X_save.fname,Output_hdr,json);
 Qtmp = cell(size(Q,1),1);
 for i=1:size(Q,1)
     Qtmp{i} = fullfile(outpath, spm_file(Q(i,:), 'filename'));
-    copyfile(Q(i,:), Qtmp{i});
-    try copyfile([spm_str_manip(Q(i,:),'r') '.json'],[spm_str_manip(Qtmp{i},'r') '.json']); end %#ok<*TRYNC>
+    copyfile(deblank(Q(i,:)), Qtmp{i});
+    try copyfile([spm_str_manip(deblank(Q(i,:)),'r') '.json'],[spm_str_manip(Qtmp{i},'r') '.json']); end %#ok<*TRYNC>
 end
 Q = char(Qtmp);
 

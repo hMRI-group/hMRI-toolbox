@@ -1,4 +1,4 @@
-function [fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw]  = hmri_create_MTProt(jobsubj, P_trans, P_receiv) %#ok<*STOUT>
+function [fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw]  = hmri_create_MTProt(jobsubj, P_trans) %#ok<*STOUT>
 %==========================================================================
 % This is hmri_create_MTProt, part of the hMRI-Toolbox.
 %
@@ -15,8 +15,6 @@ function [fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw]  = hmri_create_MTProt(jobsubj, P
 %               PROCESSED HERE, LOOP OVER SUBJECTS DONE AT HIGHER LEVEL.
 %   P_trans     filenames of a pair of magnitude image + transmit bias map
 %               [p.u.] of B1+ field (not mandatory) 
-%   P_receive   filenames of a pair of magnitude image + sensitivity map of
-%               phased-array coil relative to BC [p.u.] (not mandatory) 
 %
 % OUTPUTS
 %   fR1     R1 map output filename (only quantitative if B1+ map provided)
@@ -24,8 +22,8 @@ function [fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw]  = hmri_create_MTProt(jobsubj, P
 %           all contrasts, according to defaults settings)
 %   fMT     Magnetization transfer (MT) map output filename  
 %   fA      Proton density map output filename (free water concentration
-%           (PD) [%] or signal amplitude (A) [a.u.] depending on defaults
-%           settings (PDproc.PDmap)). 
+%           (PD) [%] or signal amplitude (A) [a.u.] depending on job and
+%           defaults settings (PDproc & RF sensitivity bias correction)). 
 %   PPDw    averate PD-weighted image filename (or OLS fit at TE=0 if fullOLS = true) 
 %   PT1w    average T1-weighted image filename (or OLS fit at TE=0 if fullOLS = true)  
 %   PMTw    average MT-weighted image filename (or OLS fit at TE=0 if fullOLS = true)  
@@ -269,17 +267,6 @@ if ~isempty(P_trans)
     V_trans = spm_vol(P_trans);
 end
 
-V_receiv   = [];
-if ~isempty(P_receiv)
-    % Load sensitivity map if available and coregister to PDw
-    % P_receiv(1,:) = magnitude image (anatomical reference for coregistration) 
-    % P_receiv(2,:) = sensitivity map
-    if mpm_params.coreg
-        coreg_bias_map(Pavg{PDidx}, P_receiv);
-    end
-    V_receiv = spm_vol(P_receiv);
-end
-
 % parameters saved for quality assessment
 if mpm_params.QA.enable
     if exist(mpm_params.QA.fnam,'file')
@@ -502,7 +489,7 @@ end
 
 if T1idx
     coutput = coutput+1;
-    if PDproc.PDmap && ~isempty(V_trans)
+    if PDproc.quantitative && ~isempty(V_trans)
         output_suffix{coutput} = 'PD';
         descrip{coutput} = 'Water concentration [%]';
         units{coutput} = '%';
@@ -584,12 +571,6 @@ for p = 1:dm(3)
     else
         f_T = [];
     end
-    if ~isempty(V_receiv) && ~isempty(V_trans)
-        f_R = spm_slice_vol(V_receiv(2,:),V_receiv(2,:).mat\M,dm(1:2),mpm_params.interp)/100; % divide by 100, since p.u. maps
-        f_R = f_R .* f_T; % f_R is only the sensitivity map and not the true receive bias map, therefore needs to be multiplied by transmit bias (B1+ approx. B1- map)
-    else
-        f_R = [];
-    end
     
     % Standard magnetization transfer ratio (MTR) in percent units [p.u.]
     % only if trpd = trmt and fapd = famt and if PDw and MTw images are
@@ -654,12 +635,7 @@ for p = 1:dm(3)
         Nmap(R1map_idx).dat(:,:,p) = min(max(tmp,-threshall.R1),threshall.R1)*0.001; % truncating images
         
         % A values proportional to PD
-        if (~isempty(f_T)) && (~isempty(f_R))
-            % Transmit and receive bias corrected quantitative A values
-            % again: correct A for transmit bias f_T and receive bias f_R
-            % Acorr = A / f_T / f_R , proportional PD
-            A = (T1 .* (T1w_forA * fa_t1w_rad / 2 / TR_t1w) + (T1w_forA / fa_t1w_rad))./f_T./f_R;
-        elseif(~isempty(f_T))&&(isempty(f_R))%&&(PDproc.PDmap)
+        if(~isempty(f_T))
             A = T1 .* (T1w_forA .*(fa_t1w_rad*f_T) / 2 / TR_t1w) + (T1w_forA ./ (fa_t1w_rad*f_T));
         else
             % semi-quantitative A
@@ -765,7 +741,7 @@ end
 % segmentation preferentially performed on MT map but can be done on R1 map
 % if no MT map available. Therefore, we must at least have R1 available,
 % i.e. both PDw and T1w inputs...
-if (mpm_params.QA.enable||(PDproc.PDmap)) && (PDidx && T1idx)
+if (mpm_params.QA.enable||(PDproc.calibr)) && (PDidx && T1idx)
     if ~isempty(fMT); 
         Vsave = spm_vol(fMT);
     else % ~isempty(fR1); 
@@ -816,7 +792,7 @@ if mpm_params.QA.enable && exist('fTPM','var')
 end
 
 % PD map calculation
-if ~isempty(f_T) && isempty(f_R) && PDproc.PDmap
+if ~isempty(f_T)
     
     % for correction of the R2s bias in the A map if that option is enabled...
     if PDproc.T2scorr
@@ -863,7 +839,11 @@ if ~isempty(f_T) && isempty(f_R) && PDproc.PDmap
         fA = fAcorr;
     end
     
-    PDcalculation(fA,fTPM,mpm_params);
+    % if calibration enabled, do the Unified Segmentation bias correction
+    % if required and calibrate the PD map
+    if PDproc.calibr
+        PDcalculation(fA,fTPM,mpm_params);
+    end
 end
 
 % copy final result files into Results directory
@@ -1010,24 +990,28 @@ maskedA(maskedA==threshA) = 0;
 spm_write_vol(V_maskedA,maskedA);
 
 % Bias-field correction of masked A map
-% use unified segmentation with uniform defaults across the toobox:
-job_bfcorr = hmri_get_defaults('segment');
-job_bfcorr.channel.vols = {V_maskedA.fname};
-job_bfcorr.channel.biasreg = PDproc.biasreg;
-job_bfcorr.channel.biasfwhm = PDproc.biasfwhm;
-job_bfcorr.channel.write = [1 0]; % need the BiasField, obviously!
-for ctis=1:length(job_bfcorr.tissue)
-    job_bfcorr.tissue(ctis).native = [0 0]; % no need to write c* volumes
+% use unified segmentation with uniform defaults across the toolbox:
+if isfield(mpm_params.proc.RFsenscorr,'RF_us')
+    job_bfcorr = hmri_get_defaults('segment');
+    job_bfcorr.channel.vols = {V_maskedA.fname};
+    job_bfcorr.channel.biasreg = PDproc.biasreg;
+    job_bfcorr.channel.biasfwhm = PDproc.biasfwhm;
+    job_bfcorr.channel.write = [1 0]; % need the BiasField, obviously!
+    for ctis=1:length(job_bfcorr.tissue)
+        job_bfcorr.tissue(ctis).native = [0 0]; % no need to write c* volumes
+    end
+    output_list = spm_preproc_run(job_bfcorr);
+    
+    % Bias field correction of A map.
+    % Bias field calculation is based on the masked A map, while correction
+    % must be applied to the unmasked A map. The BiasField is therefore
+    % retrieved from previous step and applied onto the original A map.
+    BFfnam = output_list.channel.biasfield{1};
+    BF = double(spm_read_vols(spm_vol(BFfnam)));
+    Y = BF.*spm_read_vols(spm_vol(fA));
+else
+    Y = spm_read_vols(spm_vol(fA));
 end
-output_list = spm_preproc_run(job_bfcorr);
-
-% Bias field correction of A map. 
-% Bias field calculation is based on the masked A map, while correction
-% must be applied to the unmasked A map. The BiasField is therefore
-% retrieved from previous step and applied onto the original A map. 
-BFfnam = output_list.channel.biasfield{1};
-BF = double(spm_read_vols(spm_vol(BFfnam)));
-Y = BF.*spm_read_vols(spm_vol(fA));
 
 % Calibration of flattened A map to % water content using typical white
 % matter value from the litterature (69%)
@@ -1042,8 +1026,8 @@ Vsave = spm_vol(fA);
 Vsave.descrip = [Vsave.descrip '. Error Estimate: ', num2str(errorEstimate)];
 if errorEstimate > 0.06 %#ok<BDSCI>
     % MFC: Testing on 15 subjects showed 6% is a good cut-off:
-    fprintf(1,['\nWARNING: Error estimate is high for calculated PD map:\n%s' ...
-        '\nError higher than 6% may indicate motion.\n'], Vsave.fname);
+    fprintf(1,['\nWARNING: Error estimate is high (%.1f%%) for calculated PD map:\n%s' ...
+        '\nError higher than 6%% may indicate motion.\n'], errorEstimate*100, Vsave.fname);
 end
 if mpm_params.QA.enable
     if exist(mpm_params.QA.fnam,'file')
@@ -1199,20 +1183,41 @@ end
 % now retrieve RF spoiling correction parameters
 mpm_params.proc.RFC = hmri_get_defaults(['rfcorr.',prot_tag]);
 
+% RF sensitivity bias correction
+mpm_params.proc.RFsenscorr = jobsubj.sensitivity;
+
 % other processing parameters from defaults
 % load threshold to save qMRI maps
 mpm_params.proc.threshall = hmri_get_defaults('qMRI_maps_thresh');
-% load PD maps processing parameters
+% load PD maps processing parameters (including calibr (calibration
+% parameter) and T2scorr (T2s correction) fields)
 mpm_params.proc.PD = hmri_get_defaults('PDproc');
-if ~mpm_params.T1idx && mpm_params.proc.PD.PDmap
-    fprintf(1,'\nWARNING: PD map calculation enabled but T1w images not available.\n\tPD map won''t be calculated.\n');
-    mpm_params.proc.PD.PDmap = 0;
-end
+% if no RF sensitivity bias correction applied, not worth trying any
+% calibration:
+if isfield(mpm_params.proc.RFsenscorr,'RF_none') && mpm_params.proc.PD.calibr
+    fprintf(1,['\nWARNING: if no RF sensitivity bias correction applied, no quantitative ' ...
+        '\nPD map will be output and not calibration will be performed. ' ...
+        '\nAn amplitude "A" map will be output instead of a quantitative ' ...
+        '\nPD map. PD map calibration has been disabled.\n']);
+    mpm_params.proc.PD.calibr = 0;
+end    
 % if fullOLS, T2*-weighting bias correction must not be applied
 if mpm_params.fullOLS && mpm_params.proc.PD.T2scorr
     fprintf(1,'\nWARNING: if TE=0 fit is enabled (fullOLS option), no T2*-weighting \nbias correction is required. T2scorr disabled.\n');
     mpm_params.proc.PD.T2scorr = 0;
-end    
+end   
+% T2*-weighting bias correction must always be applied somehow. If neither
+% the fullOLS nor the T2scorr options are enabled, we don't force it to be
+% applied (could still be usefull for comparison purposes) but throw a
+% warning:
+if ~mpm_params.fullOLS && ~mpm_params.proc.PD.T2scorr
+    fprintf(1,['\nWARNING: both TE=0 fit (fullOLS option) and T2*-weighting ' ...
+        '\nbias correction (T2scorr option) are disabled. The T2* bias won''t ' ...
+        '\nbe corrected for and impact the resulting PD map. It is strongly ' ...
+        '\nrecommended to have either of these options enabled!\n']);
+end   
+% defines the type of PD or A map output:
+mpm_params.proc.PD.quantitative = mpm_params.proc.PD.calibr && ~isfield(mpm_params.proc.RFsenscorr,'RF_none');
     
 % whether OLS R2* is calculated
 mpm_params.proc.R2sOLS = hmri_get_defaults('R2sOLS');

@@ -158,7 +158,9 @@ hmri_def.fullOLS = true;
 % PD maps processing parameters
 % ADVANCED USER ONLY.
 %--------------------------------------------------------------------------
-hmri_def.PDproc.PDmap    = 1;    % Calculation of PD maps requires a B1 map. Set to 0 if a B1 map is not available
+hmri_def.PDproc.calibr    = 1;   % Calibration of the PD map (if PDw, T1w, 
+    % B1map available and RF sensitivity bias correction applied somehow)
+    % based on PD(WM) = 69% [Tofts 2003]. 
 hmri_def.PDproc.WBMaskTh = 0.1;  % Threshold for calculation of whole-brain mask from TPMs
 hmri_def.PDproc.WMMaskTh = 0.95; % Threshold for calculation of white-matter mask from TPMs
 hmri_def.PDproc.biasreg  = 10^(-5);

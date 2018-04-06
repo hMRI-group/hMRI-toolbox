@@ -158,7 +158,7 @@ if strcmp(job.dep,'grouped')
     dep(1).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
     cdep = 1;
 else
-    dep(numel(job.other)+1,1) = cfg_dep;
+    dep(1,numel(job.other)+1) = cfg_dep;
     % first thing first...
     fnam = spm_file(char(job.reference),'basename');
     dep(1)            = cfg_dep;

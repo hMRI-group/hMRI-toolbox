@@ -415,7 +415,7 @@ function dep = vout_create(job)
 % outputs are calculated.
 
 k=1;
-cdep(5*numel(job.subj),1) = cfg_dep;
+cdep(1,5*numel(job.subj)) = cfg_dep;
 for i=1:numel(job.subj)
     
     cdep(k)            = cfg_dep;

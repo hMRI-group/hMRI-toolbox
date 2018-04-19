@@ -133,6 +133,9 @@ avg_nr = mpm_params.nr_echoes4avg;
 fprintf(1,'\n    -------- R2* map calculation --------\n');
 
 % load PDw images
+% PDw images are the reference space for all results. Therefore, the matrix
+% dimension defined below (dm) is used across the whole script. It must not
+% been redefined.
 V_pdw = spm_vol(mpm_params.input(PDidx).fnam);
 dm = V_pdw(1).dim;
 spm_progress_bar('Init',dm(3),'R2* fit','planes completed');
@@ -180,7 +183,6 @@ Pavg = cell(1,mpm_params.ncon);
 for ccon=1:mpm_params.ncon % loop over available contrasts
     Pavg{ccon}  = fullfile(calcpath,[outbasename '_' mpm_params.input(ccon).tag 'w.nii']);
     V           = spm_vol(mpm_params.input(ccon).fnam);
-    dm          = V(1).dim;
     Ni          = nifti;
     Ni.mat      = V(1).mat;
     Ni.mat0     = V(1).mat;
@@ -215,7 +217,6 @@ end
 if (PDidx && T1idx)
     PT1w_forA = fullfile(calcpath,[outbasename '_T1w_forA.nii']);
     V           = spm_vol(mpm_params.input(T1idx).fnam);
-    dm          = V(1).dim;
     Ni          = nifti;
     Ni.mat      = V(1).mat;
     Ni.mat0     = V(1).mat;
@@ -526,7 +527,7 @@ noutput = coutput;
 % define NIFTI objects for output images
 Nmap    = nifti;
 for ii=1:noutput
-    dm         = V_pdw(1).dim;
+    %dm         = V_pdw(1).dim;
     Ni         = nifti;
     Ni.mat     = V_pdw(1).mat;
     Ni.mat0    = V_pdw(1).mat;
@@ -554,7 +555,6 @@ end
 fprintf(1,'\n    -------- Map calculation continued (R1, PD, MT) --------\n');
 
 M0 = Ni.mat;
-dm = size(Ni.dat);
 
 fa_pdw_rad = fa_pdw * pi / 180;
 if MTidx; fa_mtw_rad = fa_mtw * pi / 180; end
@@ -815,7 +815,6 @@ if ~isempty(f_T)
         R2scorr4A = R2scorr4A/mpm_params.proc.PD.nr_echoes_forA;
         
         % save correction for inspection
-        dm         = V_pdw(1).dim;
         NiR2scorr4A         = nifti;
         NiR2scorr4A.mat     = V_pdw(1).mat;
         NiR2scorr4A.mat0    = V_pdw(1).mat;
@@ -826,7 +825,6 @@ if ~isempty(f_T)
         NiR2scorr4A.dat(:,:,:) = R2scorr4A;
         
         % apply correction
-        dm         = V_pdw(1).dim;
         NiAcorr         = nifti;
         NiAcorr.mat     = V_pdw(1).mat;
         NiAcorr.mat0    = V_pdw(1).mat;

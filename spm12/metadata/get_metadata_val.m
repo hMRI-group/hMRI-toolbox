@@ -62,6 +62,7 @@ function [parValue, parLocation] = get_metadata_val(varargin)
 %    - 'AllBValues' list of b-value
 %    - 'DiffusionDirection' diffusion direction of individual DW image
 %    - 'BValue' b-value of individual DW image
+%    - 'MultiBandFactor' for CMRR multiband and Siemens SMS sequences
 %
 % - parValue is the value of the parameter. The type of the output can vary
 %   according to the request (single real/char/complex value, an array, a
@@ -484,6 +485,34 @@ else
                 parLocation{cRes} = nam{1};
                 parValue{cRes} = val{1};
             end
+            
+        case 'MultiBandFactor'
+            % Siemens-specific for either CMRR multiband EPI or Siemens
+            % product EPI sequence with SMS.
+            % determine sequence (CMRR versus Siemens product)
+            tSequenceFileName = get_metadata_val(mstruc,'tSequenceFileName');
+            ProtocolName = deblank(get_metadata_val(mstruc,'ProtocolName'));
+            if strfind(lower(tSequenceFileName),'cmrr')
+                [nFieldFound, fieldList] = find_field_name(mstruc, 'MiscSequenceParam','caseSens','sensitive','matchType','exact');
+                [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
+                % Keep only first value if many
+                if nFieldFound
+                    cRes = 1;
+                    parLocation{cRes} = nam{1};
+                    parValue{cRes} = val{1}(12);
+                end
+                fprintf(1,'\nINFO: CMRR multiband EPI (%s) - MultiBandFactor stored in MiscSequenceParam(12). Value = %d.\n', ProtocolName, parValue{cRes});
+            else
+                [nFieldFound, fieldList] = find_field_name(mstruc, 'lMultiBandFactor','caseSens','sensitive','matchType','exact');
+                [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
+                % Keep only first value if many
+                if nFieldFound
+                    cRes = 1;
+                    parLocation{cRes} = nam{1};
+                    parValue{cRes} = val{1};
+                end
+                fprintf(1,'\nINFO: Siemens SMS-EPI (%s) - MultiBandFactor stored in lMultiBandFactor. Value = %d.\n', ProtocolName, parValue{cRes});
+            end          
             
         case 'WipParameters'
             % Siemens-specific (NB: search made case insensitive since

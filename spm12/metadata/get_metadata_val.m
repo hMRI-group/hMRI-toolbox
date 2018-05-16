@@ -687,6 +687,8 @@ else
                             EchoSpacing = 330; 
                         case 'b1epi2b3d2' % 1mm protocol from WTCN
                             EchoSpacing = 540;
+                        case 'seste1d3d2' % 1mm protocol from WTCN
+                            EchoSpacing = 540;
                         case 'b1epi2d3d2' % 800um protocol from WTCN
                             EchoSpacing = 540;
                         otherwise
@@ -789,6 +791,14 @@ else
                         % adFree: [RefocCorr ScaleSGrad? MaxRefocAngle DecRefocAngle FAforReferScans]
                         parLocation{cRes} = [nam{1} '.adFree(3:4)'];
                         parValue{cRes} = val{1}.adFree(3):-val{1}.adFree(4):0;
+                    case 'seste1d3d2' % 1mm protocol from WTCN (MFC)
+                        % wip parameters are sorted as follows:
+                        % alFree: [24,10,1000,2000,140,260,6,0,0,0,0,0,2,33800,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12345],
+                        % adFree: [0,0,0,0,0,0,0,15,6,0,0,50]
+                        % ?: [EddyCurrentDelay Tmixing (?) DurationPer5Deg BWT_SE/STE_factor (?) CrusherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
+                        % ?: [RefocCorr ScaleSGrad? MaxRefocAngle DecRefocAngle FAforReferScans]
+                        parLocation{cRes} = [nam{1} '.alFree(6)';nam{1} '.adFree(8)'];
+                        parValue{cRes} = val{1}.alFree(6):-val{1}.adFree(8):0;
                     case 'b1epi2d3d2' % 800um protocol from WTCN
                         % wip parameters are sorted as follows:
                         % alFree: [Tmixing DurationPer5Deg BWT_SE/STE_factor (?) CrusherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
@@ -886,6 +896,11 @@ else
                         % alFree: [EddyCurrentDelay Tmixing (?) DurationPer5Deg BWT_SE/STE_factor (?) CrusherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
                         % adFree: [RefocCorr ScaleSGrad? MaxRefocAngle DecRefocAngle FAforReferScans]
                         index = 2;
+                    case 'seste1d3d2' % 1mm protocol from WTCN (MFC)
+                        % wip parameters are sorted as follows:
+                        % alFree: [24,10,1000,2000,140,MaxRefocAngle=260,6,0,0,0,0,0,2,Tmixing=33800,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12345],
+                        % adFree: [0,0,0,0,0,0,0,DecRefocAngle=15,6,0,0,50]
+                        index = 14;
                     case 'b1epi2d3d2' % 800um protocol from WTCN
                         % wip parameters are sorted as follows:
                         % alFree: [Tmixing DurationPer5Deg BWT_SE/STE_factor (?) CrusherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]

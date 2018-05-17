@@ -1,4 +1,4 @@
-function hmri_local_defaults_sample_dataset
+function hmri_local_defaults_example_1
 % These local settings have been defined for the hMRI toolbox for tutorial
 % purpose only. Please read carefully the comments in the code below before
 % reusing these parameters for your own processing.  
@@ -72,9 +72,9 @@ hmri_def.cleanup = false;
 hmri_def.qMRI_maps.QA = 0; 
 
 %% EXAMPLE 4
-% Use (uncomment selectively) one of the following examples to compare
-% results obtained with different strategies for R2* bias correction (cf.
-% Balteau et al., ISMRM 2018, p.2694).
+% Use (uncomment selectively) one of the following examples (a-c) to
+% compare results obtained with different strategies for R2* bias
+% correction (cf. Balteau et al., ISMRM 2018, p.2694).
 
 % % EXAMPLE 4a - generate maps using OLS fit at TE=0 for each contrast
 % % (default). 

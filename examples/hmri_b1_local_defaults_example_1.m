@@ -1,4 +1,4 @@
-function hmri_b1_local_defaults_sample_dataset
+function hmri_b1_local_defaults_example_1
 % Sets the defaults for B1 bias correction, part of the hMRI toolbox.
 % Local settings to process the hMRI dataset available on
 % https://github.molgen.mpg.de/hMRI-group/Toolbox.

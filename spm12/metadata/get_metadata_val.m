@@ -445,8 +445,21 @@ else
             % Keep only first value if many
             if nFieldFound
                 cRes = 1;
-                parLocation{cRes} = [nam{1} '.lSize'];
-                parValue{cRes} = val{1}.lSize;
+                % might be a 3D acquisition with 1 slab
+                if val{1}.lSize == 1 && strcmp(get_metadata_val(mstruc,'MRAcquisitionType'),'3D')
+                    fprintf(1,'\nINFO: This is a 3D sequence.\n');
+                    [nFieldFound, fieldList] = find_field_name(mstruc, 'lImagesPerSlab','caseSens','sensitive','matchType','exact');
+                    [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
+                    if nFieldFound
+                        cRes = 1;
+                        parLocation{cRes} = nam{1};
+                        parValue{cRes} = val{1};
+                    end                
+                else
+                    fprintf(1,'\nINFO: This is a 2D sequence.\n');
+                    parLocation{cRes} = [nam{1} '.lSize'];
+                    parValue{cRes} = val{1}.lSize;
+                end
             end
             
             

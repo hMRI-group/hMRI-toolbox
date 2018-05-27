@@ -53,7 +53,7 @@ hmri_def.b1map.i3D_EPI.procreq = true;
 % b0&b1-processing
 hmri_def.b1map.i3D_EPI.b1proc.b0maskbrain = 1;
 % b1-acquisition
-hmri_def.b1map.i3D_EPI.b1acq.beta = 130:-7.5:55;
+hmri_def.b1map.i3D_EPI.b1acq.beta = 115:-5:65;
 hmri_def.b1map.i3D_EPI.b1acq.TM = 33.8;
 hmri_def.b1map.i3D_EPI.b1acq.tert = 540e-3*24; % EchoSpacing * numberPElines
 hmri_def.b1map.i3D_EPI.b1acq.blipDIR = 1;

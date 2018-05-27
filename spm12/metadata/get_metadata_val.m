@@ -385,7 +385,7 @@ else
             [nFieldFound, fieldList] = find_field_name(mstruc, 'lPhaseEncodingLines','caseSens','sensitive','matchType','exact');
             [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
             [nFieldFoundPAT, fieldListPAT] = find_field_name(mstruc, 'lAccelFactPE','caseSens','sensitive','matchType','exact');
-            [valPAT,namPAT] = get_val_nam_list(mstruc, nFieldFoundPAT, fieldListPAT); %#ok<ASGLU>
+            [valPAT,namPAT] = get_val_nam_list(mstruc, nFieldFoundPAT, fieldListPAT); %#ok<NASGU>
             if nFieldFound
                 cRes = 1;
                 parLocation{cRes} = nam{1};
@@ -445,8 +445,21 @@ else
             % Keep only first value if many
             if nFieldFound
                 cRes = 1;
-                parLocation{cRes} = [nam{1} '.lSize'];
-                parValue{cRes} = val{1}.lSize;
+                % might be a 3D acquisition with 1 slab
+                if val{1}.lSize == 1 && strcmp(get_metadata_val(mstruc,'MRAcquisitionType'),'3D')
+                    fprintf(1,'\nINFO: This is a 3D sequence.\n');
+                    [nFieldFound, fieldList] = find_field_name(mstruc, 'lImagesPerSlab','caseSens','sensitive','matchType','exact');
+                    [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
+                    if nFieldFound
+                        cRes = 1;
+                        parLocation{cRes} = nam{1};
+                        parValue{cRes} = val{1};
+                    end                
+                else
+                    fprintf(1,'\nINFO: This is a 2D sequence.\n');
+                    parLocation{cRes} = [nam{1} '.lSize'];
+                    parValue{cRes} = val{1}.lSize;
+                end
             end
             
             
@@ -570,7 +583,7 @@ else
                             if isempty(parValueSagCorTra(cdir).dSag);parValueSagCorTra(cdir).dSag = 0;end
                             if isempty(parValueSagCorTra(cdir).dCor);parValueSagCorTra(cdir).dCor = 0;end
                             if isempty(parValueSagCorTra(cdir).dTra);parValueSagCorTra(cdir).dTra = 0;end
-                            parValue{cRes}(:,cdir) = [parValueSagCorTra(cdir).dSag; parValueSagCorTra(cdir).dCor; parValueSagCorTra(cdir).dTra];
+                            parValue{cRes}(:,cdir) = [parValueSagCorTra(cdir).dSag; parValueSagCorTra(cdir).dCor; parValueSagCorTra(cdir).dTra]; %#ok<AGROW>
                         end
                     end
                     
@@ -688,7 +701,10 @@ else
                         case 'b1epi2b3d2' % 1mm protocol from WTCN
                             EchoSpacing = 540;
                         case 'seste1d3d2' % 1mm protocol from WTCN
-                            EchoSpacing = 540;
+                            % alFree: [VoxDeph,SpoilAmp,EddCurr0,EddCurr1,TRamp,TFlat,BWT,0,0,0,0,0,2,MixingTime,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12345],
+                            % adFree: [0,0,0,0,0,0,0,SlabGradScale,RefocCorr,0,0,RFSpoilBasicIncr]
+                            Wip = get_metadata_val(mstruc, 'WipParameters');
+                            EchoSpacing = Wip.alFree(5)*2+Wip.alFree(6);
                         case 'b1epi2d3d2' % 800um protocol from WTCN
                             EchoSpacing = 540;
                         otherwise
@@ -793,12 +809,10 @@ else
                         parValue{cRes} = val{1}.adFree(3):-val{1}.adFree(4):0;
                     case 'seste1d3d2' % 1mm protocol from WTCN (MFC)
                         % wip parameters are sorted as follows:
-                        % alFree: [24,10,1000,2000,140,260,6,0,0,0,0,0,2,33800,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12345],
-                        % adFree: [0,0,0,0,0,0,0,15,6,0,0,50]
-                        % ?: [EddyCurrentDelay Tmixing (?) DurationPer5Deg BWT_SE/STE_factor (?) CrusherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
-                        % ?: [RefocCorr ScaleSGrad? MaxRefocAngle DecRefocAngle FAforReferScans]
-                        parLocation{cRes} = [nam{1} '.alFree(6)';nam{1} '.adFree(8)'];
-                        parValue{cRes} = val{1}.alFree(6):-val{1}.adFree(8):0;
+                        % alFree: [VoxDeph,SpoilAmp,EddCurr0,EddCurr1,TRamp,TFlat,BWT,0,0,0,0,0,2,MixingTime,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12345],
+                        % adFree: [0,0,0,0,0,0,0,SlabGradScale,RefocCorr,0,0,RFSpoilBasicIncr]
+                        parLocation{cRes} = 'HardCodedParameter';
+                        parValue{cRes} = 230:-10:0;
                     case 'b1epi2d3d2' % 800um protocol from WTCN
                         % wip parameters are sorted as follows:
                         % alFree: [Tmixing DurationPer5Deg BWT_SE/STE_factor (?) CrusherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
@@ -843,6 +857,11 @@ else
                         % alFree: [Tmixing DurationPer5Deg BWT_SE/STE_factor (?) CrusherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
                         % adFree: [RefocCorr ScaleSGrad? MaxRefocAngle DecRefocAngle FAforReferScans RFSpoilIncr]
                         index = 6;                        
+                    case 'seste1d3d2' % 1mm protocol from WTCN (MFC)
+                        % wip parameters are sorted as follows:
+                        % alFree: [VoxDeph,SpoilAmp,EddCurr0,EddCurr1,TRamp,TFlat,BWT,0,0,0,0,0,2,MixingTime,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12345],
+                        % adFree: [0,0,0,0,0,0,0,SlabGradScale,RefocCorr,0,0,RFSpoilBasicIncr]
+                        index = 12;
                     case 'fl3d_2d3d6' % VA35 Allegra
                         % wip parameters are sorted as follows:
                         % alFree: [MTSaturationMode (1/2 = Gaussian/Binomial)
@@ -864,7 +883,7 @@ else
                     parLocation{cRes} = [nam{1} '.adFree(' num2str(index) ')'];
                     try
                         parValue{cRes} = val{1}.adFree(index); % in deg
-                    catch
+                    catch %#ok<*CTCH>
                         % if index^th element = 0, it is not specified in the
                         % header and index exceeds matrix dimension:
                         parValue{cRes} = 0;
@@ -898,8 +917,8 @@ else
                         index = 2;
                     case 'seste1d3d2' % 1mm protocol from WTCN (MFC)
                         % wip parameters are sorted as follows:
-                        % alFree: [24,10,1000,2000,140,MaxRefocAngle=260,6,0,0,0,0,0,2,Tmixing=33800,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12345],
-                        % adFree: [0,0,0,0,0,0,0,DecRefocAngle=15,6,0,0,50]
+                        % alFree: [VoxDeph,SpoilAmp,EddCurr0,EddCurr1,TRamp,TFlat,BWT,0,0,0,0,0,2,MixingTime,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12345],
+                        % adFree: [0,0,0,0,0,0,0,SlabGradScale,RefocCorr,0,0,RFSpoilBasicIncr]
                         index = 14;
                     case 'b1epi2d3d2' % 800um protocol from WTCN
                         % wip parameters are sorted as follows:

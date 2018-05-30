@@ -562,6 +562,7 @@ if T1idx; fa_t1w_rad = fa_t1w * pi / 180; end
 
 spm_progress_bar('Init',dm(3),'Calculating maps','planes completed');
 
+% First calculate R1 and MT
 for p = 1:dm(3)
     M = M0*spm_matrix([0 0 p]);
 
@@ -592,15 +593,6 @@ for p = 1:dm(3)
 
         T1w = spm_slice_vol(Vavg(T1idx),Vavg(T1idx).mat\M,dm(1:2),mpm_params.interp);
         
-        % if "fullOLS" option enabled, use the OLS fit at TE=0 as
-        % "T1w_forA"; otherwise use the average calculated earlier (by
-        % default, corresponds to the first echo to reduce R2* bias)
-        if mpm_params.fullOLS
-            T1w_forA = T1w;
-        else
-            T1w_forA = spm_slice_vol(VT1w_forA,VT1w_forA.mat\M,dm(1:2),mpm_params.interp);
-        end
-    
         if isempty(f_T)
             % semi-quantitative T1
             T1 = ((PDw / fa_pdw_rad) - (T1w / fa_t1w_rad)) ./ ...
@@ -635,19 +627,7 @@ for p = 1:dm(3)
         R1(R1<0) = 0;
         tmp      = R1;
         Nmap(R1map_idx).dat(:,:,p) = min(max(tmp,-threshall.R1),threshall.R1)*0.001; % truncating images
-        
-        % A values proportional to PD
-        if(~isempty(f_T))
-            A = T1 .* (T1w_forA .*(fa_t1w_rad*f_T) / 2 / TR_t1w) + (T1w_forA ./ (fa_t1w_rad*f_T));
-        else
-            % semi-quantitative A
-            A = T1 .* (T1w_forA * fa_t1w_rad / 2 / TR_t1w) + (T1w_forA / fa_t1w_rad);
-        end
-        
-        tmp      = A;
-        Nmap(Amap_idx).dat(:,:,p) = max(min(tmp,threshall.A),-threshall.A);
-        % dynamic range increased to 10^5 to accommodate phased-array coils and symmetrical for noise distribution
-        
+                
         % for MT maps calculation, one needs MTw images on top of the T1w
         % and PDw ones...
         if MTidx
@@ -669,6 +649,74 @@ for p = 1:dm(3)
     spm_progress_bar('Set',p);
 end
 spm_progress_bar('Clear');
+
+
+% apply UNICORT if required:
+% NOTE: the (unicort) B1 map will then be used to calculate PD, but
+% not to correct R1 map from RF spoiling effects (unsuitable
+% interfering and higher order corrections!) nor to correct MT map
+% from higher order transmit bias effects.
+if (mpm_params.UNICORT)
+    out_unicort = hmri_create_unicort(Pavg{PDidx}, fR1, jobsubj);
+    fR1 = out_unicort.R1u;
+    P_trans_unicort = out_unicort.B1u;
+    V_trans_unicort = spm_vol(P_trans_unicort);
+    R1 = spm_read_vols(spm_vol(fR1));
+    T1 = 1./R1*10^-6;
+    T1(isnan(T1)) = 0;
+    T1(T1<0) = 0;
+    output_suffix{T1idx} = [output_suffix{T1idx} '_UNICORT'];
+end
+
+spm_progress_bar('Init',dm(3),'Calculating maps (continued)','planes completed');
+
+% Then calculate PD
+for p = 1:dm(3)
+    M = M0*spm_matrix([0 0 p]);
+
+    % PDw images are always available, so this bit is always loaded:
+    PDw = spm_slice_vol(Vavg(PDidx),Vavg(PDidx).mat\M,dm(1:2),mpm_params.interp);
+    
+    if ~isempty(V_trans)
+        f_T = spm_slice_vol(V_trans(2,:),V_trans(2,:).mat\M,dm(1:2),mpm_params.interp)/100; % divide by 100, since p.u. maps
+    elseif ~isempty(V_trans_unicort)
+        f_T = spm_slice_vol(V_trans_unicort(1,:),V_trans_unicort(1,:).mat\M,dm(1:2),mpm_params.interp)/100; % divide by 100, since p.u. maps        
+    else
+        f_T = [];
+    end
+    
+    % T1 map and A/PD maps can only be calculated if T1w images are
+    % available:
+    if T1idx
+
+        T1w = spm_slice_vol(Vavg(T1idx),Vavg(T1idx).mat\M,dm(1:2),mpm_params.interp);
+        
+        % if "fullOLS" option enabled, use the OLS fit at TE=0 as
+        % "T1w_forA"; otherwise use the average calculated earlier (by
+        % default, corresponds to the first echo to reduce R2* bias)
+        if mpm_params.fullOLS
+            T1w_forA = T1w;
+        else
+            T1w_forA = spm_slice_vol(VT1w_forA,VT1w_forA.mat\M,dm(1:2),mpm_params.interp);
+        end
+                
+        % A values proportional to PD
+        if(~isempty(f_T))
+            A = T1 .* (T1w_forA .*(fa_t1w_rad*f_T) / 2 / TR_t1w) + (T1w_forA ./ (fa_t1w_rad*f_T));
+        else
+            % semi-quantitative A
+            A = T1 .* (T1w_forA * fa_t1w_rad / 2 / TR_t1w) + (T1w_forA / fa_t1w_rad);
+        end
+        
+        tmp      = A;
+        Nmap(Amap_idx).dat(:,:,p) = max(min(tmp,threshall.A),-threshall.A);
+        % dynamic range increased to 10^5 to accommodate phased-array coils and symmetrical for noise distribution
+
+    end
+    spm_progress_bar('Set',p);
+end
+spm_progress_bar('Clear');
+
 
 % set metadata for all output images
 input_files = mpm_params.input(PDidx).fnam;
@@ -1062,6 +1110,7 @@ end
 mpm_params.ACPCrealign = hmri_get_defaults('qMRI_maps.ACPCrealign'); % realigns qMRI maps to MNI
 mpm_params.interp = hmri_get_defaults('interp');
 mpm_params.fullOLS = hmri_get_defaults('fullOLS'); % uses all echoes for OLS fit at TE=0
+mpm_params.UNICORT = isfield(jobsubj.b1_type,'UNICORT');
 
 % retrieve input file names for map creation.
 % the "mpm_params.input" field is an array, each element corresponds to a

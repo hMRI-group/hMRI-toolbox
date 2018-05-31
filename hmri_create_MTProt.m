@@ -492,7 +492,7 @@ end
 
 if T1idx
     coutput = coutput+1;
-    if PDproc.quantitative && ~isempty(V_trans)
+    if PDproc.quantitative && (~isempty(V_trans)|| mpm_params.UNICORT)
         output_suffix{coutput} = 'PD';
         descrip{coutput} = 'Water concentration [%]';
         units{coutput} = '%';
@@ -623,7 +623,6 @@ for p = 1:dm(3)
             R1 = 1./T1*10^6;
         end
         
-        T1       = max(T1,0);
         R1(R1<0) = 0;
         tmp      = R1;
         Nmap(R1map_idx).dat(:,:,p) = min(max(tmp,-threshall.R1),threshall.R1)*0.001; % truncating images
@@ -656,17 +655,15 @@ spm_progress_bar('Clear');
 % not to correct R1 map from RF spoiling effects (unsuitable
 % interfering and higher order corrections!) nor to correct MT map
 % from higher order transmit bias effects.
+V_trans_unicort = [];
 if (mpm_params.UNICORT)
     out_unicort = hmri_create_unicort(Pavg{PDidx}, fR1, jobsubj);
-    fR1 = out_unicort.R1u;
-    P_trans_unicort = out_unicort.B1u;
+    fR1 = out_unicort.R1u{1};
+    P_trans_unicort = out_unicort.B1u{1};
     V_trans_unicort = spm_vol(P_trans_unicort);
-    R1 = spm_read_vols(spm_vol(fR1));
-    T1 = 1./R1*10^-6;
-    T1(isnan(T1)) = 0;
-    T1(T1<0) = 0;
     output_suffix{T1idx} = [output_suffix{T1idx} '_UNICORT'];
 end
+V_R1 = spm_vol(fR1);
 
 spm_progress_bar('Init',dm(3),'Calculating maps (continued)','planes completed');
 
@@ -674,9 +671,6 @@ spm_progress_bar('Init',dm(3),'Calculating maps (continued)','planes completed')
 for p = 1:dm(3)
     M = M0*spm_matrix([0 0 p]);
 
-    % PDw images are always available, so this bit is always loaded:
-    PDw = spm_slice_vol(Vavg(PDidx),Vavg(PDidx).mat\M,dm(1:2),mpm_params.interp);
-    
     if ~isempty(V_trans)
         f_T = spm_slice_vol(V_trans(2,:),V_trans(2,:).mat\M,dm(1:2),mpm_params.interp)/100; % divide by 100, since p.u. maps
     elseif ~isempty(V_trans_unicort)
@@ -690,6 +684,7 @@ for p = 1:dm(3)
     if T1idx
 
         T1w = spm_slice_vol(Vavg(T1idx),Vavg(T1idx).mat\M,dm(1:2),mpm_params.interp);
+        T1 = 10^3./spm_slice_vol(V_R1,V_R1.mat\M,dm(1:2),mpm_params.interp);
         
         % if "fullOLS" option enabled, use the OLS fit at TE=0 as
         % "T1w_forA"; otherwise use the average calculated earlier (by
@@ -900,7 +895,7 @@ end
 % processing parameters, etc) are in Results/Supplementary.
 if ~isempty(fR1)
     fR1_final = fullfile(respath, spm_file(fR1,'filename'));
-    copyfile(fR1,fR1_final);
+    try copyfile(fR1,fR1_final); end
     try copyfile([spm_str_manip(fR1,'r') '.json'],[spm_str_manip(fR1_final,'r') '.json']); end %#ok<*TRYNC>
     fR1 = fR1_final;
 end
@@ -1245,7 +1240,7 @@ mpm_params.proc.PD = hmri_get_defaults('PDproc');
 % calibration:
 if isfield(mpm_params.proc.RFsenscorr,'RF_none') && mpm_params.proc.PD.calibr
     fprintf(1,['\nWARNING: if no RF sensitivity bias correction applied, no quantitative ' ...
-        '\nPD map will be output and not calibration will be performed. ' ...
+        '\nPD map will be output and no calibration will be performed. ' ...
         '\nAn amplitude "A" map will be output instead of a quantitative ' ...
         '\nPD map. PD map calibration has been disabled.\n']);
     mpm_params.proc.PD.calibr = 0;

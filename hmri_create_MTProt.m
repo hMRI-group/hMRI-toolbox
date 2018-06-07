@@ -492,7 +492,7 @@ end
 
 if T1idx
     coutput = coutput+1;
-    if PDproc.quantitative && (~isempty(V_trans)|| mpm_params.UNICORT)
+    if PDproc.quantitative && (~isempty(V_trans)|| mpm_params.UNICORT.PD)
         output_suffix{coutput} = 'PD';
         descrip{coutput} = 'Water concentration [%]';
         units{coutput} = '%';
@@ -562,7 +562,7 @@ if T1idx; fa_t1w_rad = fa_t1w * pi / 180; end
 
 spm_progress_bar('Init',dm(3),'Calculating maps','planes completed');
 
-% First calculate R1 and MT
+% First calculate R1 & MTR
 for p = 1:dm(3)
     M = M0*spm_matrix([0 0 p]);
 
@@ -627,23 +627,6 @@ for p = 1:dm(3)
         tmp      = R1;
         Nmap(R1map_idx).dat(:,:,p) = min(max(tmp,-threshall.R1),threshall.R1)*0.001; % truncating images
                 
-        % for MT maps calculation, one needs MTw images on top of the T1w
-        % and PDw ones...
-        if MTidx
-            MTw = spm_slice_vol(Vavg(MTidx),Vavg(MTidx).mat\M,dm(1:2),3);
-            T1_forMT = ((PDw / fa_pdw_rad) - (T1w / fa_t1w_rad)) ./ ...
-                max((T1w * (fa_t1w_rad / 2 / TR_t1w)) - (PDw * fa_pdw_rad / 2 / TR_pdw),eps);
-            A_forMT = T1_forMT .* (T1w * fa_t1w_rad / 2 / TR_t1w) + (T1w / fa_t1w_rad);
-            
-            % MT in [p.u.]; offset by - famt * famt / 2 * 100 where MT_w = 0 (outside mask)
-            MT       = ( (A_forMT * fa_mtw_rad - MTw) ./ (MTw+eps) ./ (T1_forMT + eps) * TR_mtw - fa_mtw_rad^2 / 2 ) * 100;
-            if (~isempty(f_T))
-                MT = MT .* (1 - 0.4) ./ (1 - 0.4 * f_T);
-            end
-            
-            tmp      = MT;
-            Nmap(MTmap_idx).dat(:,:,p) = max(min(tmp,threshall.MT),-threshall.MT);
-        end
     end
     spm_progress_bar('Set',p);
 end
@@ -656,7 +639,7 @@ spm_progress_bar('Clear');
 % interfering and higher order corrections!) nor to correct MT map
 % from higher order transmit bias effects.
 V_trans_unicort = [];
-if (mpm_params.UNICORT)
+if (mpm_params.UNICORT.R1)
     out_unicort = hmri_create_unicort(Pavg{PDidx}, fR1, jobsubj);
     fR1 = out_unicort.R1u{1};
     P_trans_unicort = out_unicort.B1u{1};
@@ -679,6 +662,9 @@ for p = 1:dm(3)
         f_T = [];
     end
     
+    % PDw images are always available, so this bit is always loaded:
+    PDw = spm_slice_vol(Vavg(PDidx),Vavg(PDidx).mat\M,dm(1:2),mpm_params.interp);
+    
     % T1 map and A/PD maps can only be calculated if T1w images are
     % available:
     if T1idx
@@ -696,7 +682,12 @@ for p = 1:dm(3)
         end
                 
         % A values proportional to PD
-        if(~isempty(f_T))
+        % f_T correction is applied either if:
+        % - f_T has been provided as separate B1 mapping measurement (not
+        % UNICORT!) or
+        % - f_T has been calculated using UNICORT *AND* the UNICORT.PD flag
+        % is enabled (advanced user only! method not validated yet!)
+        if(~isempty(f_T))&&(~mpm_params.UNICORT.R1 || mpm_params.UNICORT.PD)
             A = T1 .* (T1w_forA .*(fa_t1w_rad*f_T) / 2 / TR_t1w) + (T1w_forA ./ (fa_t1w_rad*f_T));
         else
             % semi-quantitative A
@@ -707,7 +698,31 @@ for p = 1:dm(3)
         Nmap(Amap_idx).dat(:,:,p) = max(min(tmp,threshall.A),-threshall.A);
         % dynamic range increased to 10^5 to accommodate phased-array coils and symmetrical for noise distribution
 
+        % for MT maps calculation, one needs MTw images on top of the T1w
+        % and PDw ones...
+        if MTidx
+            MTw = spm_slice_vol(Vavg(MTidx),Vavg(MTidx).mat\M,dm(1:2),3);
+            T1_forMT = ((PDw / fa_pdw_rad) - (T1w / fa_t1w_rad)) ./ ...
+                max((T1w * (fa_t1w_rad / 2 / TR_t1w)) - (PDw * fa_pdw_rad / 2 / TR_pdw),eps);
+            A_forMT = T1_forMT .* (T1w * fa_t1w_rad / 2 / TR_t1w) + (T1w / fa_t1w_rad);
+            
+            % MT in [p.u.]; offset by - famt * famt / 2 * 100 where MT_w = 0 (outside mask)
+            MT       = ( (A_forMT * fa_mtw_rad - MTw) ./ (MTw+eps) ./ (T1_forMT + eps) * TR_mtw - fa_mtw_rad^2 / 2 ) * 100;
+            % f_T correction is applied either if:
+            % - f_T has been provided as separate B1 mapping measurement (not
+            % UNICORT!) or
+            % - f_T has been calculated using UNICORT *AND* the UNICORT.MT flag
+            % is enabled (advanced user only! method not validated yet!)
+            if (~isempty(f_T))&&(~mpm_params.UNICORT.R1 || mpm_params.UNICORT.MT)
+                MT = MT .* (1 - 0.4) ./ (1 - 0.4 * f_T);
+            end
+            
+            tmp      = MT;
+            Nmap(MTmap_idx).dat(:,:,p) = max(min(tmp,threshall.MT),-threshall.MT);
+        end
+    
     end
+
     spm_progress_bar('Set',p);
 end
 spm_progress_bar('Clear');
@@ -1105,7 +1120,10 @@ end
 mpm_params.ACPCrealign = hmri_get_defaults('qMRI_maps.ACPCrealign'); % realigns qMRI maps to MNI
 mpm_params.interp = hmri_get_defaults('interp');
 mpm_params.fullOLS = hmri_get_defaults('fullOLS'); % uses all echoes for OLS fit at TE=0
-mpm_params.UNICORT = isfield(jobsubj.b1_type,'UNICORT');
+mpm_params.UNICORT.R1 = isfield(jobsubj.b1_type,'UNICORT'); % uses UNICORT to estimate B1 transmit bias
+tmp = hmri_get_defaults('UNICORT');
+mpm_params.UNICORT.PD = tmp.PD; % uses B1map estimated as biasfield for R1 to correct for B1 transmit bias in PD
+mpm_params.UNICORT.MT = tmp.MT; % uses B1map estimated as biasfield for R1 to correct for B1 transmit bias in MT
 
 % retrieve input file names for map creation.
 % the "mpm_params.input" field is an array, each element corresponds to a
@@ -1274,6 +1292,21 @@ if mpm_params.PDidx && mpm_params.T1idx
             '\nto the maximum number of echoes.\n'],mpm_params.proc.PD.nr_echoes_forA, ...
             size(mpm_params.input(mpm_params.T1idx).fnam,1));
         mpm_params.proc.PD.nr_echoes_forA = size(mpm_params.input(T1idx).fnam,1);
+    end
+end
+
+
+% check consistency in UNICORT settings:
+if ~mpm_params.UNICORT.R1
+    if mpm_params.UNICORT.PD
+        fprintf(1,['\nWARNING: not possible to use UNICORT B1 estimate for PD calculation.' ...
+            '\nUNICORT.PD is disabled!\n']);
+        mpm_params.UNICORT.PD = false;
+    end
+    if mpm_params.UNICORT.MT
+        fprintf(1,['\nWARNING: not possible to use UNICORT B1 estimate for MT calculation.' ...
+            '\nUNICORT.MT is disabled!\n']);
+        mpm_params.UNICORT.MT = false;
     end
 end
 

@@ -157,6 +157,14 @@ hmri_def.interp = 3;
 hmri_def.fullOLS = true;
 
 %--------------------------------------------------------------------------
+% Usage of UNICORT-derived B1 maps for PD and/or MT maps calculation
+% ADVANCED USER ONLY.
+% WARNING: this method has not been validated for PD and MT calculation!
+%--------------------------------------------------------------------------
+hmri_def.UNICORT.PD = false;
+hmri_def.UNICORT.MT = false;
+
+%--------------------------------------------------------------------------
 % PD maps processing parameters
 % ADVANCED USER ONLY.
 %--------------------------------------------------------------------------

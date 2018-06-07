@@ -595,8 +595,6 @@ for p = 1:dm(3)
         
         if isempty(f_T)
             % semi-quantitative T1
-            T1 = ((PDw / fa_pdw_rad) - (T1w / fa_t1w_rad)) ./ ...
-                max((T1w * (fa_t1w_rad / 2 / TR_t1w)) - (PDw * fa_pdw_rad / 2 / TR_pdw),eps);
             R1 = (((T1w * (fa_t1w_rad / 2 / TR_t1w)) - (PDw * fa_pdw_rad / 2 / TR_pdw)) ./ ...
                 max(((PDw / fa_pdw_rad) - (T1w / fa_t1w_rad)),eps))*10^6;
         else

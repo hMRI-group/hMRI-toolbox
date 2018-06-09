@@ -850,7 +850,7 @@ if mpm_params.QA.enable && exist('fTPM','var')
 end
 
 % PD map calculation
-if ~isempty(f_T)
+if ~isempty(f_T) && mpm_params.UNICORT.PD
     
     % for correction of the R2s bias in the A map if that option is enabled...
     if PDproc.T2scorr

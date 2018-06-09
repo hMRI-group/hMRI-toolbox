@@ -73,8 +73,10 @@ for ccon = 1:rfsens_params.ncon
     for i=1:nSTRUCT
         corrected_structurals{i} = fullfile(calcpath, spm_file(spm_file(structurals(i,:),'filename'),'suffix','_RFSC'));
         spm_imcalc({structurals(i,:), qsensmap}, corrected_structurals{i}, 'i1./i2');
-        % set metadata
-        input_files = char(structurals(i,:), qsensmap);
+        % set metadata (relates only to original inputs to keep it
+        % readable and trackable since intermediate calculation directories
+        % might be cleaned up)
+        input_files = char(structurals(i,:), sensmaps);
         Output_hdr = init_rfsens_output_metadata(input_files, rfsens_params);
         Output_hdr.history.output.imtype = sprintf('RF sensitivity corrected %s-weighted echo',rfsens_params.input(ccon).tag);
         Output_hdr.history.output.units = 'a.u.';
@@ -198,7 +200,7 @@ end
 %=========================================================================%
 function metastruc = init_rfsens_output_metadata(input_files, rfsens_params)
 
-proc.descrip = 'RF sensitivity correction';
+proc.descrip = [mfilename '.m - RF sensitivity correction'];
 proc.version = hmri_get_version;
 proc.params = rfsens_params;
 output.imtype = 'sensitivity map';

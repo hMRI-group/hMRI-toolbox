@@ -397,10 +397,10 @@ end
 % *_B1map (for B1+ bias map in p.u.):  
 B1map = fullfile(outpath,[outname '_B1map.nii']);
 copyfile(allub1_img{2}.fname, B1map);
-copyfile([spm_str_manip(allub1_img{2}.fname,'r') '.json'],[spm_str_manip(B1map,'r') '.json']); 
+try copyfile([spm_str_manip(allub1_img{2}.fname,'r') '.json'],[spm_str_manip(B1map,'r') '.json']); end
 B1ref = fullfile(outpath,[outname '_B1ref.nii']);
 copyfile(uanat_img{1}, B1ref);
-copyfile([spm_str_manip(uanat_img{1},'r') '.json'],[spm_str_manip(B1ref,'r') '.json']); 
+try copyfile([spm_str_manip(uanat_img{1},'r') '.json'],[spm_str_manip(B1ref,'r') '.json']); end
 P_trans  = char(B1ref, B1map);
 
 end

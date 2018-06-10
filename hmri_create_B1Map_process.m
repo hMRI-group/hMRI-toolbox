@@ -91,7 +91,7 @@ end
 % Pad the masked B1 map
 %--------------------------------------------------------------------------
 b1map = spm_read_vols(Vb1);
-[padb1map,padmask] = pm_pad(b1map.*fullmask,fullmask,kernel); %#ok<ASGLU>
+[padb1map,padmask] = pm_pad(b1map.*fullmask,fullmask,kernel); %#ok<NASGU>
 Vpadb1 = Vb1;
 Vpadb1.pinfo(1:2) = Inf;
 [pth,fname,ext] = fileparts(Vb1.fname);

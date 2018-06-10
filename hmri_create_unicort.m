@@ -145,7 +145,7 @@ P_R1_unicort = output_list.channel.biascorr{1};
 % set and save metadata
 input_files = char(P_PDw,P_R1);
 Output_hdr = init_unicort_output_metadata(input_files, unicort_params);
-Output_hdr.history.output.imtype = 'Bias corrected R1 UNICORT map';
+Output_hdr.history.output.imtype = 'R1 map + B1+ bias correction using UNICORT';
 Output_hdr.history.output.units = 'ms-1';
 set_metadata(P_R1_unicort,Output_hdr,json);
 
@@ -176,7 +176,7 @@ end
 %=========================================================================%
 function metastruc = init_unicort_output_metadata(input_files, unicort_params)
 
-proc.descrip = 'UNICORT';
+proc.descrip = ['hMRI toolbox - ' mfilename '.m - UNICORT for B1+ bias estimation'];
 proc.version = hmri_get_version;
 proc.params = unicort_params;
 

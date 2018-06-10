@@ -80,7 +80,7 @@ spm_write_vol(V_R1_mask,Y_R1);
 input_files = char(P_PDw,P_R1);
 Output_hdr = init_unicort_output_metadata(input_files, unicort_params);
 Output_hdr.history.output.imtype = 'Masked R1 map';
-Output_hdr.history.output.units = 'ms-1';
+Output_hdr.history.output.units = 's-1';
 set_metadata(P_R1_mask,Output_hdr,json);
 
 
@@ -146,7 +146,7 @@ P_R1_unicort = output_list.channel.biascorr{1};
 input_files = char(P_PDw,P_R1);
 Output_hdr = init_unicort_output_metadata(input_files, unicort_params);
 Output_hdr.history.output.imtype = 'R1 map + B1+ bias correction using UNICORT';
-Output_hdr.history.output.units = 'ms-1';
+Output_hdr.history.output.units = 's-1';
 set_metadata(P_R1_unicort,Output_hdr,json);
 
 % define output file names

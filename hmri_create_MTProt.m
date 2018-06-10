@@ -477,30 +477,76 @@ end
 % description fields and file names of output images
 
 coutput = 0;
+output_summary_descrip = {'Create hMRI maps module', 'Summary description of the outputs',''};
 
 if T1idx
     coutput = coutput+1;
     output_suffix{coutput} = 'R1';
     units{coutput} = 's-1';
+    output_summary_descrip = {output_summary_descrip ,'R1 map [s-1]'};
     if isempty(V_trans)
-        descrip{coutput} = 'R1 map (no B1+ bias correction applied)';
+        descrip{coutput} = 'R1 map (no B1+ bias correction applied) [s-1]';
+        if mpm_params.UNICORT.R1
+            output_summary_descrip = {output_summary_descrip ,'- B1+ bias correction using UNICORT'};
+        else
+            output_summary_descrip = {output_summary_descrip ,'- no B1+ bias correction applied'};
+        end
     else
-        descrip{coutput} = 'R1 map (with B1+ bias correction) [s-1]';
+        descrip{coutput} = 'R1 map (with (measured) B1+ bias correction) [s-1]';
+        output_summary_descrip = {output_summary_descrip ,'- B1+ bias correction using provided B1 map'};
     end
+    switch mpm_params.proc.RFsenscorr
+        case 'RF_none'
+            output_summary_descrip = {output_summary_descrip ,'- no RF sensitivity bias correction'};
+        case 'RF_us' % Unified Segmentation only applies to PD maps
+            output_summary_descrip = {output_summary_descrip ,'- no RF sensitivity bias correction'};
+        case 'RF_once'
+            output_summary_descrip = {output_summary_descrip ,'- RF sensitivity bias correction based on a single sensitivity measurement'};
+        case 'RF_per_contrast'
+            output_summary_descrip = {output_summary_descrip ,'- RF sensitivity bias correction based on a pre-contrast sensitivity measurement'};
+    end     
+    output_summary_descrip = {output_summary_descrip ,''};
     R1map_idx = coutput;
 end
 
 if T1idx
     coutput = coutput+1;
-    if PDproc.quantitative && (~isempty(V_trans)|| mpm_params.UNICORT.PD)
+    if mpm_params.proc.PD.calibr && ...
+            ~isfield(mpm_params.proc.RFsenscorr,'RF_none') && ...
+            (~isempty(V_trans)|| mpm_params.UNICORT.PD)
         output_suffix{coutput} = 'PD';
-        descrip{coutput} = 'Water concentration [%]';
-        units{coutput} = '%';
+        descrip{coutput} = 'Water concentration [p.u.]';
+        units{coutput} = 'p.u.';
+        output_summary_descrip = {output_summary_descrip ,'PD map (water concentration) [p.u.]'};
+        output_summary_descrip = {output_summary_descrip ,'- WM calibration (69%)'};
     else
         output_suffix{coutput} = 'A';
         descrip{coutput} = 'Signal amplitude [a.u.]';
         units{coutput} = 'a.u.';
+        output_summary_descrip = {output_summary_descrip ,'A map (signal amplitude) [a.u.]'};
+        output_summary_descrip = {output_summary_descrip ,'- no WM calibration (69%)'};
     end
+    
+    if isempty(V_trans)
+        if mpm_params.UNICORT.PD
+            output_summary_descrip = {output_summary_descrip ,'- B1+ bias correction using UNICORT estimated on R1 map'};
+        else
+            output_summary_descrip = {output_summary_descrip ,'- no B1+ bias correction applied'};
+        end
+    else
+        output_summary_descrip = {output_summary_descrip ,'- B1+ bias correction using provided B1 map'};
+    end
+    switch mpm_params.proc.RFsenscorr
+        case 'RF_none'
+            output_summary_descrip = {output_summary_descrip ,'- no RF sensitivity bias correction'};
+        case 'RF_us' % Unified Segmentation only applies to PD maps
+            output_summary_descrip = {output_summary_descrip ,'- RF sensitivity bias correction based on Unified Segmentation'};
+        case 'RF_once'
+            output_summary_descrip = {output_summary_descrip ,'- RF sensitivity bias correction based on a single sensitivity measurement'};
+        case 'RF_per_contrast'
+            output_summary_descrip = {output_summary_descrip ,'- RF sensitivity bias correction based on a pre-contrast sensitivity measurement'};
+    end     
+    output_summary_descrip = {output_summary_descrip ,''};
     Amap_idx = coutput;
 end
 
@@ -509,7 +555,47 @@ if (MTidx && T1idx)
     output_suffix{coutput} = 'MT';
     descrip{coutput} = 'Delta MT map';
     units{coutput} = 'a.u.';
+    output_summary_descrip = {output_summary_descrip ,'Delta MT map [a.u.]'};
+    if isempty(V_trans)
+        if mpm_params.UNICORT.MT
+            output_summary_descrip = {output_summary_descrip ,'- B1+ bias correction using UNICORT estimated on R1 map'};
+        else
+            output_summary_descrip = {output_summary_descrip ,'- no B1+ bias correction applied'};
+        end
+    else
+        output_summary_descrip = {output_summary_descrip ,'- B1+ bias correction using provided B1 map'};
+    end
+    switch mpm_params.proc.RFsenscorr
+        case 'RF_none'
+            output_summary_descrip = {output_summary_descrip ,'- no RF sensitivity bias correction'};
+        case 'RF_us' % Unified Segmentation only applies to PD maps
+            output_summary_descrip = {output_summary_descrip ,'- no RF sensitivity bias correction'};
+        case 'RF_once'
+            output_summary_descrip = {output_summary_descrip ,'- RF sensitivity bias correction based on a single sensitivity measurement'};
+        case 'RF_per_contrast'
+            output_summary_descrip = {output_summary_descrip ,'- RF sensitivity bias correction based on a pre-contrast sensitivity measurement'};
+    end     
+    output_summary_descrip = {output_summary_descrip ,''};
     MTmap_idx = coutput;
+end
+
+% need a minimum of 4 echoes with PDw contrast to calculate R2* map
+if numel(TE_pdw)>3 
+    output_summary_descrip = {output_summary_descrip ,'R2* map [s-1]'};
+    if mpm_params.proc.R2sOLS
+        output_summary_descrip = {output_summary_descrip ,'- ESTATICS model (OLS R2* map calculation)'};
+    end   
+    output_summary_descrip = {output_summary_descrip ,'- B1+ bias correction does not apply'};
+    switch mpm_params.proc.RFsenscorr
+        case 'RF_none'
+            output_summary_descrip = {output_summary_descrip ,'- no RF sensitivity bias correction'};
+        case 'RF_us' % Unified Segmentation only applies to PD maps
+            output_summary_descrip = {output_summary_descrip ,'- no RF sensitivity bias correction'};
+        case 'RF_once'
+            output_summary_descrip = {output_summary_descrip ,'- RF sensitivity bias correction based on a single sensitivity measurement'};
+        case 'RF_per_contrast'
+            output_summary_descrip = {output_summary_descrip ,'- RF sensitivity bias correction based on a pre-contrast sensitivity measurement'};
+    end     
 end
 
 if (MTidx && PDidx)
@@ -971,6 +1057,7 @@ else
 end
 
 % save processing params (mpm_params)
+mpm_params.summary = output_summary_descrip;
 spm_jsonwrite(fullfile(supplpath,'MPM_map_creation_mpm_params.json'),mpm_params,struct('indent','\t'));
 
 spm_progress_bar('Clear');
@@ -1276,8 +1363,6 @@ if ~mpm_params.fullOLS && ~mpm_params.proc.PD.T2scorr
         '\nbe corrected for and impact the resulting PD map. It is strongly ' ...
         '\nrecommended to have either of these options enabled!\n']);
 end   
-% defines the type of PD or A map output:
-mpm_params.proc.PD.quantitative = mpm_params.proc.PD.calibr && ~isfield(mpm_params.proc.RFsenscorr,'RF_none');
     
 % whether OLS R2* is calculated
 mpm_params.proc.R2sOLS = hmri_get_defaults('R2sOLS');
@@ -1319,7 +1404,7 @@ end
 %=========================================================================%
 function metastruc = init_mpm_output_metadata(input_files, mpm_params)
 
-proc.descrip = 'MPM calculation';
+proc.descrip = ['hMRI toolbox - ' mfilename '.m - map calculation'];
 proc.version = hmri_get_version;
 proc.params = mpm_params;
 

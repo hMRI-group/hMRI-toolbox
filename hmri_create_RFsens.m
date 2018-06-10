@@ -200,7 +200,7 @@ end
 %=========================================================================%
 function metastruc = init_rfsens_output_metadata(input_files, rfsens_params)
 
-proc.descrip = [mfilename '.m - RF sensitivity correction'];
+proc.descrip = ['hMRI toolbox - ' mfilename '.m - RF sensitivity correction'];
 proc.version = hmri_get_version;
 proc.params = rfsens_params;
 output.imtype = 'sensitivity map';

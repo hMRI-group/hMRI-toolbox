@@ -107,7 +107,8 @@ if isfield(job.subj.sensitivity,'RF_once') || isfield(job.subj.sensitivity,'RF_p
 end
 
 % run hmri_create_MTProt to evaluate the parameter maps
-[fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw]  = hmri_create_MTProt(job.subj, P_trans);
+job.subj.b1_trans_input = P_trans;
+[fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw]  = hmri_create_MTProt(job.subj);
 
 % collect outputs:
 out_loc.subj.R1  = {fR1};

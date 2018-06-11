@@ -271,7 +271,7 @@ Output_hdr = init_b1_output_metadata(input_files, b1map_params);
 Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (EPI SE/STE protocol)'];
  
 % save B1 map (still distorted and not smoothed)
-Output_hdr.history.output.imtype = 'Distorted B1+ map';
+Output_hdr.history.output.imtype = 'SE/STE B1 mapping - Distorted B1+ map';
 Output_hdr.history.output.units = 'p.u.';
 V_save = struct('fname',V(1).fname,'dim',V(1).dim,'mat',V(1).mat,'dt',V(1).dt,'descrip','B1 map [%]');
 [~,outname,e] = fileparts(V_save.fname);
@@ -280,7 +280,7 @@ V_save = spm_write_vol(V_save,Y_ab*100);
 set_metadata(V_save.fname,Output_hdr,json);
 
 % save SD map (still distorted and not smoothed)
-Output_hdr.history.output.imtype = 'Distorted SD (error) map';
+Output_hdr.history.output.imtype = 'SE/STE B1 mapping - Distorted SD (error) map';
 Output_hdr.history.output.units = 'p.u.';
 W_save = struct('fname',V(1).fname,'dim',V(1).dim,'mat',V(1).mat,'dt',V(1).dt,'descrip','SD [%]');
 W_save.fname = fullfile(outpath,['SDmap_' outname e]);
@@ -288,7 +288,7 @@ W_save = spm_write_vol(W_save,Y_cd*100);
 set_metadata(W_save.fname,Output_hdr,json);
 
 % save SD map (still distorted and not smoothed)
-Output_hdr.history.output.imtype = 'SSQ image';
+Output_hdr.history.output.imtype = 'SE/STE B1 mapping - SSQ image';
 Output_hdr.history.output.units = 'a.u.';
 X_save = struct('fname',V(1).fname,'dim',V(1).dim,'mat',V(1).mat,'dt',V(1).dt,'descrip','SE SSQ matrix');
 X_save.fname = fullfile(outpath,['SumOfSq' outname e]);
@@ -334,37 +334,37 @@ scphasefnam = fullfile(b1map_params.outpath, spm_file(spm_file(fmfnam(2,:),'pref
 % B1 and B0 mapping images (not to the intermediate images created
 % during B1 calculation):
 % input_files = cat(1,{anatfnam},{fmfnam(1,:)},{fmfnam(2,:)},otherfnam{1},otherfnam{2});
-input_files = cat(1,b1map_params.b1input,b1map_params.b0input);
+input_files = char(b1map_params.b1input,b1map_params.b0input);
 Output_hdr = init_b1_output_metadata(input_files, b1map_params);
 Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (EPI SE/STE protocol)'];
 
 % set metadata for unwarped B1 image 
-Output_hdr.history.output.imtype = 'Unwarped B1 map';
+Output_hdr.history.output.imtype = 'SE/STE B1 mapping - Unwarped B1 map';
 Output_hdr.history.output.units = 'p.u.';
 set_metadata(ub1_img{1},Output_hdr,json);
 
 % set metadata for unwarped SD map 
-Output_hdr.history.output.imtype = 'Unwarped SD (error) map';
+Output_hdr.history.output.imtype = 'SE/STE B1 mapping - Unwarped SD (error) map';
 Output_hdr.history.output.units = 'p.u.';
 set_metadata(ustd_img{1},Output_hdr,json);
 
 % set metadata for unwarped SSQ map 
-Output_hdr.history.output.imtype = 'Unwarped SSQ image for anatomical reference';
+Output_hdr.history.output.imtype = 'SE/STE B1 mapping - Unwarped SSQ image for anatomical reference';
 Output_hdr.history.output.units = 'a.u.';
 set_metadata(uanat_img{1},Output_hdr,json);
 
 % set metadata for phase-unwrapped regularised field map (Hz) (fpm_* file) 
-Output_hdr.history.output.imtype = 'Phase-unwrapped regularised field map';
+Output_hdr.history.output.imtype = 'SE/STE B1 mapping - Phase-unwrapped regularised field map';
 Output_hdr.history.output.units = 'Hz';
 set_metadata(fmap_img{1}.fname,Output_hdr,json);
 
 % set metadata for Voxel Displacement Map (vdm5_* file) 
-Output_hdr.history.output.imtype = 'Voxel displacement map';
+Output_hdr.history.output.imtype = 'SE/STE B1 mapping - Voxel displacement map';
 Output_hdr.history.output.units = 'Vx';
 set_metadata(fmap_img{2}.fname,Output_hdr,json);
 
 % set metadata for phase map scaled between +/-pi (sc* file)
-Output_hdr.history.output.imtype = 'Phase map rescaled between [-pi, pi]';
+Output_hdr.history.output.imtype = 'SE/STE B1 mapping - Phase map rescaled between [-pi, pi]';
 Output_hdr.history.output.units = 'Radians';
 set_metadata(scphasefnam,Output_hdr,json);
 
@@ -380,13 +380,13 @@ vdm_img{1} = fmap_img{2};
 % B1 and B0 mapping images (not to the intermediate images created
 % during B1 calculation):
 % input_files = cat(1,ub1_img,ustd_img,vdm_img{1}.fname,fpm_img{1}.fname);
-input_files = cat(1,b1map_params.b1input,b1map_params.b0input);
+input_files = char(b1map_params.b1input,b1map_params.b0input);
 Output_hdr = init_b1_output_metadata(input_files, b1map_params);
 Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (EPI SE/STE protocol)'];
 
 % set metadata for each output
 for i=1:length(allub1_img)
-    Output_hdr.history.output.imtype = allub1_img{i}.descrip;
+    Output_hdr.history.output.imtype = ['SE/STE B1 mapping - ' allub1_img{i}.descrip];
     Output_hdr.history.output.units = 'p.u.';
     set_metadata(allub1_img{i}.fname,Output_hdr,json);
 end

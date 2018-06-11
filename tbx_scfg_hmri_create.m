@@ -251,7 +251,9 @@ sraws3MT.name     = 'RF sensitivity maps for MTw images';
 sraws3MT.help     = {'Select low resolution RF sensitivity maps acquired with the head and body coils respectively, in that order.'};
 sraws3MT.filter   = 'image';
 sraws3MT.ufilter  = '.*';
-sraws3MT.num      = [2 2];
+% sraws3MT.num      = [2 2];
+sraws3MT.num       = [0 2];
+sraws3MT.val       = {''};
 % ---------------------------------------------------------------------
 % Input images for RF sensitivity - RF sensitivity maps for PDw images
 % ---------------------------------------------------------------------
@@ -261,7 +263,9 @@ sraws3PD.name     = 'RF sensitivity maps for PDw images';
 sraws3PD.help     = {'Select low resolution RF sensitivity maps acquired with the head and body coils respectively, in that order.'};
 sraws3PD.filter   = 'image';
 sraws3PD.ufilter  = '.*';
-sraws3PD.num      = [2 2];
+% sraws3PD.num      = [2 2];
+sraws3PD.num       = [0 2];
+sraws3PD.val       = {''};
 % ---------------------------------------------------------------------
 % Input images for RF sensitivity - RF sensitivity maps for T1w images
 % ---------------------------------------------------------------------
@@ -271,17 +275,32 @@ sraws3T1.name     = 'RF sensitivity maps for T1w images';
 sraws3T1.help     = {'Select low resolution RF sensitivity maps acquired with the head and body coils respectively, in that order.'};
 sraws3T1.filter   = 'image';
 sraws3T1.ufilter  = '.*';
-sraws3T1.num      = [2 2];
+% sraws3T1.num      = [2 2];
+sraws3T1.num       = [0 2];
+sraws3T1.val       = {''};
+% ---------------------------------------------------------------------
+% xNULL No RF sensitivity bias correction applied at all
+% ---------------------------------------------------------------------
+xNULL         = cfg_entry;
+xNULL.tag     = 'RF_none';
+xNULL.name    = 'None';
+xNULL.help    = {'No RF sensitivity bias correction will be applied.'};
+xNULL.strtype = 's';
+xNULL.num     = [1 Inf];
+xNULL.val     = {'-'};
 % ---------------------------------------------------------------------
 % x0 No RF sensitivity
 % ---------------------------------------------------------------------
 x0         = cfg_entry;
-x0.tag     = 'RF_none';
-x0.name    = 'None';
-x0.help    = {'No RF sensitivity map was acquired.'};
+x0.tag     = 'RF_us';
+x0.name    = 'Unified Segmentation';
+x0.help    = {['RF sensitivity bias correction based on the Unified Segmentation ' ...
+    '(US) approach. The resulting Bias Field estimate is used to correct for ' ...
+    'RF sensitivity bias (applies to the PD map calculation only). ' ...
+    'No RF sensitivity map is required.']};
 x0.strtype = 's';
 x0.num     = [1 Inf];
-x0.val     = {'noRF'};
+x0.val     = {'-'};
 % ---------------------------------------------------------------------
 % x1 Single RF sensitivity maps acquired for all contrasts
 % ---------------------------------------------------------------------
@@ -308,12 +327,13 @@ x3.val     = {sraws3MT sraws3PD sraws3T1};
 sensitivity         = cfg_choice;
 sensitivity.tag     = 'sensitivity';
 sensitivity.name    = 'RF sensitivity bias correction';
-sensitivity.help    = {['Specify whether RF sensitivity maps have been acquired. ' ...
-    'You can select either:']
-    '- None: no RF sensitivity map has been acquired,'
-    '- Single: single set of RF sensitivity maps acquired for all contrasts,'
-    '- Per contrast: one set of RF sensitivity maps acquired for each contrast.'};
-sensitivity.values  = {x0 x1 x3};
+sensitivity.help    = {'Specify the type of RF sensitivity bias correction to be applied. '
+    'You can select either:'
+    '- None: no correction will be applied,'
+    '- Unified Segmentation: based on US, no RF sensitivity map required,'
+    '- Single: based on a single set of RF sensitivity maps for all contrasts,'
+    '- Per contrast: based on one set of RF sensitivity maps acquired for each contrast.'};
+sensitivity.values  = {xNULL x0 x1 x3};
 sensitivity.val     = {x0};
 
 % ---------------------------------------------------------------------
@@ -369,32 +389,12 @@ sdata.val       = {subj };
 sdata.values    = {subj };
 
 % ---------------------------------------------------------------------
-% sdata_multi
-% ---------------------------------------------------------------------
-sdata_multi = cfg_branch;
-sdata_multi.name = 'Many Subjects';
-sdata_multi.tag = 'sdata_multi';
-sdata_multi.help = {'Specify data with many subjects.'};
-sdata_multi.val  = { output unlimit(sensitivity) unlimit(b1_type) unlimit(raws) };
-
-% ---------------------------------------------------------------------
-% data_spec
-% ---------------------------------------------------------------------
-data_spec        = cfg_choice;
-data_spec.name   = 'Data Specification Method';
-data_spec.tag    = 'data_spec';
-data_spec.help   = {'Specify data with either few or many subjects. The ',...
-    'latter can be used with SmartDep toolbox.'};
-data_spec.values = { sdata sdata_multi };
-data_spec.val    = { sdata };
-
-% ---------------------------------------------------------------------
 % create_mpr Create MPR maps (whether B0/B1 maps are available or not)
 % ---------------------------------------------------------------------
 create_mpm         = cfg_exbranch;
 create_mpm.tag     = 'create_mpm';
 create_mpm.name    = 'Create hMRI maps';
-create_mpm.val     = { data_spec };
+create_mpm.val     = { sdata };
 create_mpm.help    = {'hMRI map creation based on multi-echo FLASH sequences including optional receive/transmit bias correction.'};
 create_mpm.prog    = @hmri_run_create;
 create_mpm.vout    = @vout_create;
@@ -414,94 +414,61 @@ function dep = vout_create(job)
 % This depends on job contents, which may not be present when virtual
 % outputs are calculated.
 
-if ~isfield(job, 'subj') % Many subjects
-    dep(1) = cfg_dep;
-    dep(1).sname = 'R1 Maps';
-    dep(1).src_output = substruct('.','R1','()',{':'});
-    dep(1).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
+k=1;
+cdep(5*numel(job.subj),1) = cfg_dep;
+for i=1:numel(job.subj)
     
-    dep(2) = cfg_dep;
-    dep(2).sname = 'R2s Maps';
-    dep(2).src_output = substruct('.','R2s','()',{':'});
-    dep(2).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
+    cdep(k)            = cfg_dep;
+    cdep(k).sname      = sprintf('R1_subj%d',i);
+    cdep(k).src_output = substruct('.','subj','()',{i},'.','R1','()',{':'});
+    cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
     
-    dep(3) = cfg_dep;
-    dep(3).sname = 'MT Maps';
-    dep(3).src_output = substruct('.','MT','()',{':'});
-    dep(3).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
+    k=k+1;
     
-    dep(4) = cfg_dep;
-    dep(4).sname = 'A Maps';
-    dep(4).src_output = substruct('.','A','()',{':'});
-    dep(4).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
+    cdep(k)            = cfg_dep;
+    cdep(k).sname      = sprintf('R2s_subj%d',i);
+    cdep(k).src_output = substruct('.','subj','()',{i},'.','R2s','()',{':'});
+    cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
     
-    dep(5) = cfg_dep;
-    dep(5).sname = 'T1w Maps';
-    dep(5).src_output = substruct('.','T1w','()',{':'});
-    dep(5).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
+    k=k+1;
     
-else
-    k=1;
-    cdep(5*numel(job.subj),1) = cfg_dep;
-    for i=1:numel(job.subj)
-        
-        cdep(k)            = cfg_dep;
-        cdep(k).sname      = sprintf('R1_subj%d',i);
-        cdep(k).src_output = substruct('.','subj','()',{i},'.','R1','()',{':'});
-        cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
-        
-        k=k+1;
-        
-        cdep(k)            = cfg_dep;
-        cdep(k).sname      = sprintf('R2s_subj%d',i);
-        cdep(k).src_output = substruct('.','subj','()',{i},'.','R2s','()',{':'});
-        cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
-        
-        k=k+1;
-        
-        cdep(k)            = cfg_dep;
-        cdep(k).sname      = sprintf('MT_subj%d',i);
-        cdep(k).src_output = substruct('.','subj','()',{i},'.','MT','()',{':'});
-        cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
-        
-        k=k+1;
-        
-        cdep(k)            = cfg_dep;
-        cdep(k).sname      = sprintf('A_subj%d',i);
-        cdep(k).src_output = substruct('.','subj','()',{i},'.','A','()',{':'});
-        cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
-        
-        k=k+1;
-        
-        cdep(k)            = cfg_dep;
-        cdep(k).sname      = sprintf('T1w_subj%d',i);
-        cdep(k).src_output = substruct('.','subj','()',{i},'.','T1w','()',{':'});
-        cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
-        
-        k=k+1;
-    end
-    dep = cdep;
+    cdep(k)            = cfg_dep;
+    cdep(k).sname      = sprintf('MT_subj%d',i);
+    cdep(k).src_output = substruct('.','subj','()',{i},'.','MT','()',{':'});
+    cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
+    
+    k=k+1;
+    
+    cdep(k)            = cfg_dep;
+    cdep(k).sname      = sprintf('A_subj%d',i);
+    cdep(k).src_output = substruct('.','subj','()',{i},'.','A','()',{':'});
+    cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
+    
+    k=k+1;
+    
+    cdep(k)            = cfg_dep;
+    cdep(k).sname      = sprintf('T1w_subj%d',i);
+    cdep(k).src_output = substruct('.','subj','()',{i},'.','T1w','()',{':'});
+    cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
+    
+    k=k+1;
+    
+    cdep(k)            = cfg_dep;
+    cdep(k).sname      = sprintf('MTw_subj%d',i);
+    cdep(k).src_output = substruct('.','subj','()',{i},'.','MTw','()',{':'});
+    cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
+    
+    k=k+1;
+    
+    cdep(k)            = cfg_dep;
+    cdep(k).sname      = sprintf('PDw_subj%d',i);
+    cdep(k).src_output = substruct('.','subj','()',{i},'.','PDw','()',{':'});
+    cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
+    
+    k=k+1;
     
 end
-end
-%_______________________________________________________________________
-
-
-
-
-%%%%%%%%%%%%%%%%%%%%
-function c = unlimit(c)
-try
-    if isa(c, 'cfg_files')
-        c.num = [0 Inf];
-    end
-catch e %#ok<*NASGU>
-end
-try
-    for i=1:numel(c.val)
-        c.val{i} = unlimit(c.val{i});
-    end
-catch e
-end
+dep = cdep;
+    
 end
 %_______________________________________________________________________

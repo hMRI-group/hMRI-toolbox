@@ -145,7 +145,7 @@ P_R1_unicort = output_list.channel.biascorr{1};
 % set and save metadata
 input_files = char(P_PDw,P_R1);
 Output_hdr = init_unicort_output_metadata(input_files, unicort_params);
-Output_hdr.history.output.imtype = 'R1 map corrected for B1+ bias (UNICORT');
+Output_hdr.history.output.imtype = 'R1 map corrected for B1+ bias (UNICORT)';
 Output_hdr.history.output.units = 's-1';
 set_metadata(P_R1_unicort,Output_hdr,json);
 

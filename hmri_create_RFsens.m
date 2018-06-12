@@ -113,6 +113,10 @@ rfsens_params.calcpath = jobsubj.path.rfsenspath;
 rfsens_params.respath = jobsubj.path.respath;
 rfsens_params.supplpath = jobsubj.path.supplpath;
 rfsens_params.smooth_kernel = hmri_get_defaults('RFsens.smooth_kernel');
+% save SPM version (slight differences may appear in the results depending
+% on the SPM version!)
+[v,r] = spm('Ver');
+rfsens_params.SPMver = sprintf('%s (%s)', v, r);
 
 % Input structurals: determine which contrasts are available
 ccon = 0;

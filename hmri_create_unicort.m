@@ -54,6 +54,11 @@ reg = unicort_params.reg;
 FWHM = unicort_params.FWHM;
 thr_factor = unicort_params.thr;
 
+% save SPM version (slight differences may appear in the results depending
+% on the SPM version!)
+[v,r] = spm('Ver');
+unicort_params.SPMver = sprintf('%s (%s)', v, r);
+
 % output directories
 mpmpath = jobsubj.path.mpmpath;
 b1path = jobsubj.path.b1path;

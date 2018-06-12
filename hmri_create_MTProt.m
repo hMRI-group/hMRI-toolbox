@@ -505,6 +505,16 @@ if (PDwidx && T1widx)
     end        
 end
 
+% mpm_params.output(mpm_params.qR1).fnam = '';
+% mpm_params.output(mpm_params.qPD).fnam = '';
+% mpm_params.output(mpm_params.qMT).fnam = '';
+% if (PDwidx && T1widx)
+%     mpm_params.output(mpm_params.qR1).fnam = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qR1).suffix '.nii']);
+%     mpm_params.output(mpm_params.qPD).fnam = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qPD).suffix '.nii']);
+%     if MTwidx
+%         mpm_params.output(mpm_params.qMT).fnam = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qMT).suffix '.nii']);
+%     end
+% end
 
 %% =======================================================================%
 % Map calculation continued (R1, PD, MT) 
@@ -599,12 +609,15 @@ if (mpm_params.UNICORT.R1)
     fR1 = out_unicort.R1u{1};
     P_trans_unicort = out_unicort.B1u{1};
     V_trans_unicort = spm_vol(P_trans_unicort);
+    Output_hdr = get_metadata(fR1);
+    Output_hdr{1}.history.output.imtype = mpm_params.output(mpm_params.qR1).descrip;
+    set_metadata(fR1,Output_hdr{1},mpm_params.json);
 end
 V_R1 = spm_vol(fR1);
 
 spm_progress_bar('Init',dm(3),'Calculating maps (continued)','planes completed');
 
-% Then calculate PD
+% Then calculate MT & PD
 for p = 1:dm(3)
     M = M0*spm_matrix([0 0 p]);
 
@@ -1074,10 +1087,33 @@ end
 mpm_params.ACPCrealign = hmri_get_defaults('qMRI_maps.ACPCrealign'); % realigns qMRI maps to MNI
 mpm_params.interp = hmri_get_defaults('interp');
 mpm_params.fullOLS = hmri_get_defaults('fullOLS'); % uses all echoes for OLS fit at TE=0
+
+% save SPM version (slight differences may appear in the results depending
+% on the SPM version!)
+[v,r] = spm('Ver');
+mpm_params.SPMver = sprintf('%s (%s)', v, r);
+
+% UNICORT settings:
 mpm_params.UNICORT.R1 = isfield(jobsubj.b1_type,'UNICORT'); % uses UNICORT to estimate B1 transmit bias
 tmp = hmri_get_defaults('UNICORT');
 mpm_params.UNICORT.PD = tmp.PD; % uses B1map estimated as biasfield for R1 to correct for B1 transmit bias in PD
 mpm_params.UNICORT.MT = tmp.MT; % uses B1map estimated as biasfield for R1 to correct for B1 transmit bias in MT
+
+% check consistency in UNICORT settings:
+if ~mpm_params.UNICORT.R1
+    if mpm_params.UNICORT.PD
+        fprintf(1,['\nWARNING: no UNICORT B1 estimate available for PD calculation.' ...
+            '\nB1 bias correction must be defined as "UNICORT" (not the case).' ...
+            '\nUNICORT.PD is disabled!\n']);
+        mpm_params.UNICORT.PD = false;
+    end
+    if mpm_params.UNICORT.MT
+        fprintf(1,['\nWARNING: no UNICORT B1 estimate available for MT calculation.' ...
+            '\nB1 bias correction must be defined as "UNICORT" (not the case).' ...
+            '\nUNICORT.MT is disabled!\n']);
+        mpm_params.UNICORT.MT = false;
+    end
+end
 
 % retrieve input file names for map creation.
 % the "mpm_params.input" field is an array, each element corresponds to a
@@ -1210,7 +1246,7 @@ mpm_params.proc.threshall = hmri_get_defaults('qMRI_maps_thresh');
 mpm_params.proc.PD = hmri_get_defaults('PDproc');
 % if no RF sensitivity bias correction or no B1 transmit bias correction
 % applied, not worth trying any calibration:
-if (isfield(mpm_params.proc.RFsenscorr,'RF_none')||isempty(jobsubj.b1_trans_input)) && mpm_params.proc.PD.calibr
+if (isfield(mpm_params.proc.RFsenscorr,'RF_none')||(isempty(jobsubj.b1_trans_input)&&~mpm_params.UNICORT.PD)) && mpm_params.proc.PD.calibr
     fprintf(1,['\nWARNING: both RF sensitivity bias and B1 transmit bias corrections '...
         '\nare required to generate a quantitative (calibrated) PD map.' ...
         '\nAn amplitude "A" map will be output instead of a quantitative ' ...
@@ -1249,22 +1285,6 @@ end
 
 % coregistration of all images to the PDw average (or TE=0 fit):
 mpm_params.coreg = hmri_get_defaults('coreg2PDw');
-
-% check consistency in UNICORT settings:
-if ~mpm_params.UNICORT.R1
-    if mpm_params.UNICORT.PD
-        fprintf(1,['\nWARNING: no UNICORT B1 estimate available for PD calculation.' ...
-            '\nB1 bias correction must be defined as "UNICORT" (not the case).' ...
-            '\nUNICORT.PD is disabled!\n']);
-        mpm_params.UNICORT.PD = false;
-    end
-    if mpm_params.UNICORT.MT
-        fprintf(1,['\nWARNING: no UNICORT B1 estimate available for MT calculation.' ...
-            '\nB1 bias correction must be defined as "UNICORT" (not the case).' ...
-            '\nUNICORT.MT is disabled!\n']);
-        mpm_params.UNICORT.MT = false;
-    end
-end
 
 % Prepare output for R1, PD, MT and R2* maps
 RFsenscorr = fieldnames(mpm_params.proc.RFsenscorr);
@@ -1367,7 +1387,7 @@ if (mpm_params.T1widx && mpm_params.PDwidx && mpm_params.MTwidx)
             mpm_params.output(coutput).descrip{end+1} = '- no B1+ bias correction applied';
         case 'UNICORT'
             if mpm_params.UNICORT.MT
-                mpm_params.output(coutput).descrip{end+1} = '- B1+ bias correction using UNICORT estimated on R1 map';
+                mpm_params.output(coutput).descrip{end+1} = '- B1+ bias correction: UNICORT(R1)-estimated B1 map';
             else
                 mpm_params.output(coutput).descrip{end+1} = '- no B1+ bias correction applied';
             end

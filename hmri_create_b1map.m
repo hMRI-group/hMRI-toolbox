@@ -557,6 +557,11 @@ b1map_params = hmri_get_defaults(['b1map.' b1_protocol]);
 
 fprintf(1,'\n\n---------------- B1 MAP CALCULATION (%s) ----------------\n',b1_protocol);
 
+% save SPM version (slight differences may appear in the results depending
+% on the SPM version!)
+[v,r] = spm('Ver');
+b1map_params.SPMver = sprintf('%s (%s)', v, r);
+
 % load B1 input images if any
 % (NB: if a 'b1input' field is present, it should NOT be empty)
 if isfield(jobsubj.b1_type.(b1_protocol),'b1input')

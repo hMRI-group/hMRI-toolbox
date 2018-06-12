@@ -95,7 +95,7 @@ job.subj.path.respath = respath;
 job.subj.path.supplpath = supplpath;
 
 % save original job (before it gets modified by RFsens)
-spm_jsonwrite(fullfile(supplpath,'MPM_map_creation_job_create_maps.json'),job,struct('indent','\t'));
+spm_jsonwrite(fullfile(supplpath,'hMRI_map_creation_job_create_maps.json'),job,struct('indent','\t'));
 
 % run B1 map calculation for B1 bias correction
 P_trans = hmri_create_b1map(job.subj);

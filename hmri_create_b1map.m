@@ -23,7 +23,7 @@ function P_trans = hmri_create_b1map(jobsubj)
 b1map_params = get_b1map_params(jobsubj);
 
 % save b1map_params as json-file
-spm_jsonwrite(fullfile(jobsubj.path.supplpath,'MPM_map_creation_b1map_params.json'),b1map_params,struct('indent','\t'));
+spm_jsonwrite(fullfile(jobsubj.path.supplpath,'hMRI_map_creation_b1map_params.json'),b1map_params,struct('indent','\t'));
 
 % init output
 P_trans = [];

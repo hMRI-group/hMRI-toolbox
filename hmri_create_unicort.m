@@ -145,7 +145,7 @@ P_R1_unicort = output_list.channel.biascorr{1};
 % set and save metadata
 input_files = char(P_PDw,P_R1);
 Output_hdr = init_unicort_output_metadata(input_files, unicort_params);
-Output_hdr.history.output.imtype = 'R1 map + B1+ bias correction using UNICORT';
+Output_hdr.history.output.imtype = 'R1 map corrected for B1+ bias (UNICORT');
 Output_hdr.history.output.units = 's-1';
 set_metadata(P_R1_unicort,Output_hdr,json);
 
@@ -167,7 +167,7 @@ copyfile(P_B1,out.B1u{1});
 try copyfile([spm_str_manip(P_B1,'r') '.json'],[spm_str_manip(out.B1u{1},'r') '.json']); end %#ok<*TRYNC>
 
 % save unicort params as json-file
-spm_jsonwrite(fullfile(supplpath, 'MPM_map_creation_unicort_params.json'),unicort_params,struct('indent','\t'));
+spm_jsonwrite(fullfile(supplpath, 'hMRI_map_creation_unicort_params.json'),unicort_params,struct('indent','\t'));
 
 end
 

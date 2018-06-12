@@ -98,7 +98,7 @@ for ccon = 1:rfsens_params.ncon
 end
 
 % save RF sensitivity processing parameters
-spm_jsonwrite(fullfile(supplpath,'MPM_map_creation_rfsens_params.json'),rfsens_params,struct('indent','\t'));
+spm_jsonwrite(fullfile(supplpath,'hMRI_map_creation_rfsens_params.json'),rfsens_params,struct('indent','\t'));
 
 end
 

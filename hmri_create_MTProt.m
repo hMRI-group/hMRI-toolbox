@@ -133,14 +133,21 @@ supplpath = mpm_params.supplpath;
 % contrasts AND under TE_limit (+1) - see get_mpm_params)
 avg_nr = mpm_params.nr_echoes4avg; 
 
+% load PDw images
+% PDw images are the reference space for all results. Therefore, the matrix
+% dimension defined below (dm) is used across the whole script. It must not
+% been redefined.
+V_pdw = spm_vol(mpm_params.input(PDwidx).fnam);
+dm = V_pdw(1).dim;
+
 %% =======================================================================%
 % Calculate R2* map from PDw echoes
 %=========================================================================%
 fR2s = '';
+fprintf(1,'\n    -------- R2* map calculation --------\n');
+fprintf(1,['\nINFO: minimum number of echoes required for R2* maps calculation is %d.' ...
+    '\nNumber of PDw echoes available: %d\n'], mpm_params.neco4R2sfit, length(mpm_params.input(PDwidx).TE));
 if mpm_params.basicR2s
-    fprintf(1,'\n    -------- R2* map calculation --------\n');
-    fprintf(1,['\nINFO: minimum number of echoes required for R2* maps calculation is %d.' ...
-        '\nNumber of PDw echoes available: %d\n'], mpm_params.neco4R2scalc, length(mpm_params.input(PDwidx).TE));
     if length(mpm_params.input(PDwidx).TE)<6
         fprintf(1,['\nGENERAL WARNING: deriving R2* map from an echo train including ' ...
             '\nfewer than 6 echoes has not been validated nor investigated. ' ...
@@ -154,12 +161,6 @@ if mpm_params.basicR2s
             '\nand reliability in the R2* estimation.\n']);
     end
         
-    % load PDw images
-    % PDw images are the reference space for all results. Therefore, the matrix
-    % dimension defined below (dm) is used across the whole script. It must not
-    % been redefined.
-    V_pdw = spm_vol(mpm_params.input(PDwidx).fnam);
-    dm = V_pdw(1).dim;
     spm_progress_bar('Init',dm(3),'R2* fit','planes completed');
     
     % create nifti object for output R2* map
@@ -193,6 +194,8 @@ if mpm_params.basicR2s
     Output_hdr.history.output.imtype = 'Basic R2* map';
     Output_hdr.history.output.units = 's-1';
     set_metadata(fR2s,Output_hdr,mpm_params.json);
+else 
+    fprintf(1,'\nNo R2* map will be calculated.\n');
 end
 
 %% =======================================================================%
@@ -379,14 +382,14 @@ end
 % [Reference: ESTATICS, Weiskopf et al. 2014]
 %=========================================================================%
 fR2s_OLS = '';
+fprintf(1,'\n    -------- OLS R2* map calculation (ESTATICS) --------\n');
+fprintf(1,['\nINFO: minimum number of echoes required for R2* maps calculation is %d.' ...
+    '\nNumber of echoes available: '], mpm_params.neco4R2sfit);
+for ccon = 1:mpm_params.ncon
+    fprintf(1,'%sw = %d. ',mpm_params.input(ccon).tag,length(mpm_params.input(ccon).TE));
+end
+fprintf(1,'\n');
 if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
-    fprintf(1,'\n    -------- OLS R2* map calculation (ESTATICS) --------\n');
-    fprintf(1,['\nINFO: minimum number of echoes required for R2* maps calculation is %d.' ...
-        '\nNumber of echoes available: '], mpm_params.neco4R2scalc);
-    for ccon = 1:mpm_params.ncon
-        fprintf(1,'%sw = %d. ',mpm_params.input(ccon).tag,length(mpm_params.input(ccon).TE));
-    end
-    fprintf(1,'\n');
     if length(mpm_params.input(PDwidx).TE)<6
         fprintf(1,['\nGENERAL WARNING: deriving R2* map from echo trains including ' ...
             '\nfewer than 6 echoes has not been validated nor investigated. ' ...
@@ -524,6 +527,8 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
     Output_hdr.history.output.units = mpm_params.output(mpm_params.qR2s).units;
     set_metadata(fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qR2s).suffix '_OLS.nii']),Output_hdr,mpm_params.json);
    
+else
+    fprintf(1,'\nNo R2* map will be calculated using the ESTATICS model.\n');
 end % OLS code
 
 % if "fullOLS" option enabled AND could be applied to every contrast
@@ -544,7 +549,7 @@ end
 
 % define NIFTI objects for output images
 Nmap    = nifti;
-for ii=1:length(mpm_params.output)-1 % R2s output already done
+for ii=1:length(mpm_params.output)-1*(~isempty(fR2s)||~isempty(fR2s_OLS)) % R2s output already done
     %dm         = V_pdw(1).dim;
     Ni         = nifti;
     Ni.mat     = V_pdw(1).mat;
@@ -853,7 +858,7 @@ if (mpm_params.QA.enable||(PDproc.calibr)) && (PDwidx && T1widx)
 end
 
 % for quality assessment - the above segmentation must have run
-if mpm_params.QA.enable && exist('fTPM','var')
+if mpm_params.QA.enable && exist('fTPM','var') && any(mpm_params.estaticsR2s)
     
     % Load existing QA results
     if exist(mpm_params.QA.fnam,'file')
@@ -881,7 +886,7 @@ end
 
 % PD map calculation
 % for correction of the R2s bias in the A map if that option is enabled...
-if PDproc.T2scorr && (~isempty(fR2s)||~isempty(fR2sOLS))
+if PDproc.T2scorr && (~isempty(fR2s)||~isempty(fR2s_OLS))
     % uses OLS it if available - less noisy
     if ~isempty(fR2s_OLS)
         PR2s = fR2s_OLS;
@@ -953,7 +958,7 @@ end
 % NB: if OLS calculation of R2s map has been done, the output file for R2s
 % map is the OLS result. In that case, the basic R2s map is moved to
 % Results/Supplementary while the R2s_OLS is copied into results directory: 
-if mpm_params.proc.R2sOLS && ~isemtpy(fR2sOLS)
+if mpm_params.proc.R2sOLS && ~isempty(fR2s_OLS)
     % move basic R2s map to Results/Supplementary
     movefile(fR2s_final, fullfile(supplpath, spm_file(fR2s_final,'filename')));
     try movefile([spm_str_manip(fR2s_final,'r') '.json'],fullfile(supplpath, [spm_file(fR2s_final,'basename') '.json'])); end
@@ -1275,22 +1280,6 @@ end
 mpm_params.nr_echoes4avg = min(length(find(mpm_params.input(1).TE<maxTEval4avg))+1,ncommonTEvals);
 fprintf(1,'\nINFO: averaged PDw/T1w/MTw will be calculated based on the first %d echoes.\n',mpm_params.nr_echoes4avg);
         
-% check whether there are enough echoes (neco4R2sfit) to estimate R2*
-% (1) for basic R2* estimation, check only PDw images
-mpm_params.basicR2s = false;
-if mpm_params.PDwidx
-    if length(mpm_params.input(mpm_params.PDwidx).TE) > (mpm_params.neco4R2sfit-1)
-        mpm_params.basicR2s = true;
-    end
-end
-% (2) for ESTATICS R2* estimation, check which (if any) contrast is usable
-mpm_params.estaticsR2s = false*ones(1,mpm_params.ncon);
-if mpm_params.proc.R2sOLS
-    for ccon = 1:mpm_params.ncon
-        mpm_params.estaticsR2s(ccon) = length(mpm_params.input(ccon).TE)>(mpm_params.neco4R2sfit-1);
-    end
-end
-    
 % if T1w and PDw data available, identify the protocol to define RF
 % spoiling correction parameters (for T1 map calculation)
 if mpm_params.PDwidx && mpm_params.T1widx
@@ -1341,14 +1330,6 @@ if (isfield(mpm_params.proc.RFsenscorr,'RF_none')||(isempty(jobsubj.b1_trans_inp
     mpm_params.proc.PD.calibr = 0;
 end    
 
-% if T2scorr enabled, must check there will be a R2s map generated!
-if mpm_params.proc.PD.T2scorr && ~(any(mpm_params.estaticsR2s)||mpm_params.basicR2s)
-    fprintf(1,['\nWARNING: not enough echoes available (minimum is %d) to ' ...
-        '\ncalculate R2s map. No T2*-weighting bias correction can be ' ...
-        '\napplied (T2scorr option). T2scorr disabled.\n',]);
-    mpm_params.proc.PD.T2scorr = 0;
-end
-
 % if fullOLS, T2*-weighting bias correction must not be applied
 if mpm_params.fullOLS && mpm_params.proc.PD.T2scorr
     fprintf(1,['\nWARNING: if TE=0 fit is enabled (fullOLS option), ' ...
@@ -1370,6 +1351,30 @@ end
 % whether OLS R2* is calculated
 mpm_params.proc.R2sOLS = hmri_get_defaults('R2sOLS');
 
+% check whether there are enough echoes (neco4R2sfit) to estimate R2*
+% (1) for basic R2* estimation, check only PDw images
+mpm_params.basicR2s = false;
+if mpm_params.PDwidx
+    if length(mpm_params.input(mpm_params.PDwidx).TE) > (mpm_params.neco4R2sfit-1)
+        mpm_params.basicR2s = true;
+    end
+end
+% (2) for ESTATICS R2* estimation, check which (if any) contrast is usable
+mpm_params.estaticsR2s = false*ones(1,mpm_params.ncon);
+if mpm_params.proc.R2sOLS
+    for ccon = 1:mpm_params.ncon
+        mpm_params.estaticsR2s(ccon) = length(mpm_params.input(ccon).TE)>(mpm_params.neco4R2sfit-1);
+    end
+end
+    
+% if T2scorr enabled, must check there will be a R2s map generated!
+if mpm_params.proc.PD.T2scorr && ~(any(mpm_params.estaticsR2s)||mpm_params.basicR2s)
+    fprintf(1,['\nWARNING: not enough echoes available (minimum is %d) to ' ...
+        '\ncalculate R2s map. No T2*-weighting bias correction can be ' ...
+        '\napplied (T2scorr option). T2scorr disabled.\n',]);
+    mpm_params.proc.PD.T2scorr = 0;
+end
+
 % consistency check for number of echoes averaged for A calculation:
 if mpm_params.PDwidx && mpm_params.T1widx 
     if mpm_params.proc.PD.nr_echoes_forA > size(mpm_params.input(mpm_params.T1widx).fnam,1)
@@ -1377,7 +1382,7 @@ if mpm_params.PDwidx && mpm_params.T1widx
             '\nis bigger than the available number of echoes (%d). Setting nr_echoes_forA' ...
             '\nto the maximum number of echoes.\n'],mpm_params.proc.PD.nr_echoes_forA, ...
             size(mpm_params.input(mpm_params.T1widx).fnam,1));
-        mpm_params.proc.PD.nr_echoes_forA = size(mpm_params.input(T1widx).fnam,1);
+        mpm_params.proc.PD.nr_echoes_forA = size(mpm_params.input(mpm_params.T1widx).fnam,1);
     end
 end
 

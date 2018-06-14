@@ -1120,7 +1120,7 @@ Vsave.descrip = [Vsave.descrip '. Error Estimate: ', num2str(errorEstimate)];
 if errorEstimate > 0.06 %#ok<BDSCI>
     % MFC: Testing on 15 subjects showed 6% is a good cut-off:
     fprintf(1,['\nWARNING: Error estimate is high (%.1f%%) for calculated PD map:\n%s' ...
-        '\nError higher than 6%% may indicate motion.\n'], errorEstimate*100, Vsave.fname);
+        '\nError higher than 6%% may indicate motion.\n\n'], errorEstimate*100, Vsave.fname);
 end
 if mpm_params.QA.enable
     if exist(mpm_params.QA.fnam,'file')

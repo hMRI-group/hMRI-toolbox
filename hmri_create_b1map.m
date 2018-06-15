@@ -18,6 +18,10 @@ function P_trans = hmri_create_b1map(jobsubj)
 % TurboFLASH Readout", MRM 64:439-446 (2010).
 %_______________________________________________________________________
 
+flags = jobsubj.log.flags;
+flags.PopUp = false;
+hmri_log(sprintf('\t============ CREATE B1 MAP (%s) ============', datestr(now)),flags);
+
 % retrieve effective acquisition & processing parameters, alternatively
 % use defaults 
 b1map_params = get_b1map_params(jobsubj);
@@ -55,7 +59,7 @@ switch(b1map_params.b1type)
         P_trans  = b1map_params.b1input(1:2,:);
         
     otherwise 
-        fprintf('\nWARNING: unknown B1 type, no B1 map calculation performed.\n');
+        hmri_log(sprintf('WARNING: unknown B1 type, no B1 map calculation performed.'),jobsubj.log.flags);
        
 end
 
@@ -81,6 +85,8 @@ if ~isempty(P_trans)
     try copyfile([spm_str_manip(P_trans(2,:),'r') '.json'],[spm_str_manip(P_trans_copy{2},'r') '.json']); end
     P_trans = char(P_trans_copy{1},P_trans_copy{2});
 end
+
+hmri_log(sprintf('\t============ CREATE B1 MAP: completed (%s) ============', datestr(now)),flags);
 
 end
 
@@ -555,7 +561,12 @@ end
 % load all B1 bias correction defaults parameters
 b1map_params = hmri_get_defaults(['b1map.' b1_protocol]); 
 
-fprintf(1,'\n\n---------------- B1 MAP CALCULATION (%s) ----------------\n',b1_protocol);
+% flags for logging information and warnings
+b1map_params.defflags = jobsubj.log.flags; % default flags
+b1map_params.nopuflags = jobsubj.log.flags; % force no Pop-Up
+b1map_params.nopuflags.PopUp = false; 
+
+hmri_log(sprintf('\t------------ B1 MAP CALCULATION (%s) %s ------------',b1_protocol, datestr(now)),b1map_params.nopuflags);
 
 % save SPM version (slight differences may appear in the results depending
 % on the SPM version!)
@@ -567,9 +578,9 @@ b1map_params.SPMver = sprintf('%s (%s)', v, r);
 if isfield(jobsubj.b1_type.(b1_protocol),'b1input')
     b1map_params.b1input = char(spm_file(jobsubj.b1_type.(b1_protocol).b1input,'number',''));
     if isempty(b1map_params.b1input)
-        fprintf(1,['\nWARNING: expected B1 input images missing. Switching to "no \n' ...
+        hmri_log(sprintf(['WARNING: expected B1 input images missing. Switching to "no \n' ...
             '\tB1 correction" mode. If you meant to apply B1 bias correction, \n' ...
-            '\tcheck your data and re-run the batch.\n']);
+            '\tcheck your data and re-run the batch.']),b1map_params.defflags);
         b1_protocol = 'no_B1_correction';
         b1map_params = hmri_get_defaults('b1map.no_B1_correction'); 
     end
@@ -583,10 +594,10 @@ if isfield(jobsubj.b1_type.(b1_protocol),'b0input')
         % fprintf(1,['\nWARNING: expected B0 fieldmap not available for EPI undistortion.\n' ...
         %     '\tNo fieldmap correction will be applied.\n']);
         % b1map_params.b0avail = false; 
-        fprintf(1,['\nWARNING: expected B0 fieldmap not available for EPI undistortion.\n' ...
+        hmri_log(sprintf(['WARNING: expected B0 fieldmap not available for EPI undistortion.\n' ...
             '\tThe current implementation does not allow you to apply EPI-based B1 bias \n' ...
             '\tcorrection without phase unwrapping. Switching to "no B1 correction" mode.\n' ...
-            '\tIf you meant to apply B1 bias correction, check your data and re-run the batch.\n']);
+            '\tIf you meant to apply B1 bias correction, check your data and re-run the batch.']),b1map_params.defflags);
         b1_protocol = 'no_B1_correction';
         b1map_params = hmri_get_defaults('b1map.no_B1_correction');        
     end

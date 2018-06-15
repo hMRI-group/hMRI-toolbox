@@ -94,6 +94,14 @@ job.subj.path.mpmpath = mpmpath;
 job.subj.path.respath = respath;
 job.subj.path.supplpath = supplpath;
 
+% save log file location
+job.subj.log.logfile = fullfile(supplpath, 'hMRI_map_creation_logfile.log');
+job.subj.log.flags = struct('LogFile',struct('Enabled',true,'FileName','hMRI_map_creation_logfile.log','LogDir',supplpath), ...
+    'PopUp',false,'ComWin',true);
+flags = job.subj.log.flags;
+flags.PopUp = false;
+hmri_log(sprintf('\t============ CREATE hMRI MAPS MODULE (%s) ============', datestr(now)),flags);
+
 % save SPM version (slight differences may appear in the results depending
 % on the SPM version!)
 [v,r] = spm('Ver');
@@ -133,5 +141,7 @@ end
 
 f = fopen(fullfile(respath, '_finished_'), 'wb');
 fclose(f);
+
+hmri_log(sprintf('\t============ CREATE hMRI MAPS MODULE: completed (%s) ============', datestr(now)),flags);
 
 end

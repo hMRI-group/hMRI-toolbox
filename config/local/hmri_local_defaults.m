@@ -144,6 +144,20 @@ hmri_def.coreg2PDw = 1;
 % ADVANCED USER ONLY.
 hmri_def.R2sOLS = 1; 
 
+% Minimum number of echoes to calculate R2s map. Strictly speaking, the
+% minimum is 2. For a robust estimation, the minimum number of echoes
+% required depends on many factors, amongst which: 
+% - SNR/resolution
+% - distribution/spacing between TEs: note that early echoes are more
+%   affected by the specific contrast, violating the assumption of a common
+%   decay between contrasts. 
+% - number of contrasts available (fewer echoes per contrast required for 3
+%   (PDw, T1w, MTw) contrasts as compared to 2 or even 1)
+% To be on the safe side, a minimum of 6 echoes is recommended (ESTATICS
+% paper). Further studies are required to come up with more detailed and
+% informed guidelines. Use fewer echoes at your own risk...! 
+hmri_def.neco4R2sfit = 4;
+
 % Define a coherent interpolation factor used all through the map creation
 % process. Default is 3, but if you want to keep SNR and resolution as far
 % as possible the same, it is recommended to use sinc interpolation (at
@@ -155,6 +169,14 @@ hmri_def.interp = 3;
 % instead of averaged contrast images for the map calculation.
 % ADVANCED USER ONLY. 
 hmri_def.fullOLS = true;
+
+%--------------------------------------------------------------------------
+% Usage of UNICORT-derived B1 maps for PD and/or MT maps calculation
+% ADVANCED USER ONLY.
+% WARNING: this method has not been validated for PD and MT calculation!
+%--------------------------------------------------------------------------
+hmri_def.UNICORT.PD = false;
+hmri_def.UNICORT.MT = false;
 
 %--------------------------------------------------------------------------
 % PD maps processing parameters

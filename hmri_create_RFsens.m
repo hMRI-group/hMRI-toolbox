@@ -73,8 +73,10 @@ for ccon = 1:rfsens_params.ncon
     for i=1:nSTRUCT
         corrected_structurals{i} = fullfile(calcpath, spm_file(spm_file(structurals(i,:),'filename'),'suffix','_RFSC'));
         spm_imcalc({structurals(i,:), qsensmap}, corrected_structurals{i}, 'i1./i2');
-        % set metadata
-        input_files = char(structurals(i,:), qsensmap);
+        % set metadata (relates only to original inputs to keep it
+        % readable and trackable since intermediate calculation directories
+        % might be cleaned up)
+        input_files = char(structurals(i,:), sensmaps);
         Output_hdr = init_rfsens_output_metadata(input_files, rfsens_params);
         Output_hdr.history.output.imtype = sprintf('RF sensitivity corrected %s-weighted echo',rfsens_params.input(ccon).tag);
         Output_hdr.history.output.units = 'a.u.';
@@ -96,7 +98,7 @@ for ccon = 1:rfsens_params.ncon
 end
 
 % save RF sensitivity processing parameters
-spm_jsonwrite(fullfile(supplpath,'MPM_map_creation_rfsens_params.json'),rfsens_params,struct('indent','\t'));
+spm_jsonwrite(fullfile(supplpath,'hMRI_map_creation_rfsens_params.json'),rfsens_params,struct('indent','\t'));
 
 end
 
@@ -111,6 +113,10 @@ rfsens_params.calcpath = jobsubj.path.rfsenspath;
 rfsens_params.respath = jobsubj.path.respath;
 rfsens_params.supplpath = jobsubj.path.supplpath;
 rfsens_params.smooth_kernel = hmri_get_defaults('RFsens.smooth_kernel');
+% save SPM version (slight differences may appear in the results depending
+% on the SPM version!)
+[v,r] = spm('Ver');
+rfsens_params.SPMver = sprintf('%s (%s)', v, r);
 
 % Input structurals: determine which contrasts are available
 ccon = 0;
@@ -198,7 +204,7 @@ end
 %=========================================================================%
 function metastruc = init_rfsens_output_metadata(input_files, rfsens_params)
 
-proc.descrip = 'RF sensitivity correction';
+proc.descrip = ['hMRI toolbox - ' mfilename '.m - RF sensitivity correction'];
 proc.version = hmri_get_version;
 proc.params = rfsens_params;
 output.imtype = 'sensitivity map';

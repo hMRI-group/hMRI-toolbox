@@ -54,6 +54,11 @@ reg = unicort_params.reg;
 FWHM = unicort_params.FWHM;
 thr_factor = unicort_params.thr;
 
+% save SPM version (slight differences may appear in the results depending
+% on the SPM version!)
+[v,r] = spm('Ver');
+unicort_params.SPMver = sprintf('%s (%s)', v, r);
+
 % output directories
 mpmpath = jobsubj.path.mpmpath;
 b1path = jobsubj.path.b1path;
@@ -80,7 +85,7 @@ spm_write_vol(V_R1_mask,Y_R1);
 input_files = char(P_PDw,P_R1);
 Output_hdr = init_unicort_output_metadata(input_files, unicort_params);
 Output_hdr.history.output.imtype = 'Masked R1 map';
-Output_hdr.history.output.units = 'ms-1';
+Output_hdr.history.output.units = 's-1';
 set_metadata(P_R1_mask,Output_hdr,json);
 
 
@@ -145,8 +150,8 @@ P_R1_unicort = output_list.channel.biascorr{1};
 % set and save metadata
 input_files = char(P_PDw,P_R1);
 Output_hdr = init_unicort_output_metadata(input_files, unicort_params);
-Output_hdr.history.output.imtype = 'Bias corrected R1 UNICORT map';
-Output_hdr.history.output.units = 'ms-1';
+Output_hdr.history.output.imtype = 'R1 map corrected for B1+ bias (UNICORT)';
+Output_hdr.history.output.units = 's-1';
 set_metadata(P_R1_unicort,Output_hdr,json);
 
 % define output file names
@@ -167,7 +172,7 @@ copyfile(P_B1,out.B1u{1});
 try copyfile([spm_str_manip(P_B1,'r') '.json'],[spm_str_manip(out.B1u{1},'r') '.json']); end %#ok<*TRYNC>
 
 % save unicort params as json-file
-spm_jsonwrite(fullfile(supplpath, 'MPM_map_creation_unicort_params.json'),unicort_params,struct('indent','\t'));
+spm_jsonwrite(fullfile(supplpath, 'hMRI_map_creation_unicort_params.json'),unicort_params,struct('indent','\t'));
 
 end
 
@@ -176,7 +181,7 @@ end
 %=========================================================================%
 function metastruc = init_unicort_output_metadata(input_files, unicort_params)
 
-proc.descrip = 'UNICORT';
+proc.descrip = ['hMRI toolbox - ' mfilename '.m - UNICORT for B1+ bias estimation'];
 proc.version = hmri_get_version;
 proc.params = unicort_params;
 

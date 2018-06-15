@@ -1,4 +1,4 @@
-function [fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw]  = hmri_create_MTProt(jobsubj, P_trans) %#ok<*STOUT>
+function [fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw]  = hmri_create_MTProt(jobsubj) %#ok<*STOUT>
 %==========================================================================
 % This is hmri_create_MTProt, part of the hMRI-Toolbox.
 %
@@ -7,14 +7,15 @@ function [fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw]  = hmri_create_MTProt(jobsubj, P
 % multi-contrast multi-echo FLASH protocol 
 % 
 % FORMAT
-% [fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw]  = hmri_create_MTProt(jobsubj, P_trans, P_receiv)
+% [fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw]  = hmri_create_MTProt(jobsubj)
 %
 % INPUTS
 %   jobsubj     parameters for one subject out of the job list.
 %               NB: ONE SINGLE DATA SET FROM ONE SINGLE SUBJECT IS
 %               PROCESSED HERE, LOOP OVER SUBJECTS DONE AT HIGHER LEVEL.
 %   P_trans     filenames of a pair of magnitude image + transmit bias map
-%               [p.u.] of B1+ field (not mandatory) 
+%               [p.u.] of B1+ field (not mandatory), saved as
+%               "b1_trans_input" field in jobsubj.
 %
 % OUTPUTS
 %   fR1     R1 map output filename (only quantitative if B1+ map provided)
@@ -91,34 +92,39 @@ mpm_params = get_mpm_params(jobsubj);
 % for convenience, define a few parameters to make formulae more readable
 % and avoid number of repetitions:
 
+% B1 transmit input:
+% P_trans(1,:) = magnitude image (anatomical reference for coregistration)
+% P_trans(2,:) = B1 map (p.u.)
+P_trans = jobsubj.b1_trans_input;
+
 % index number for each contrast - zero index means no images available
-PDidx = mpm_params.PDidx;
-T1idx = mpm_params.T1idx;
-MTidx = mpm_params.MTidx;
+PDwidx = mpm_params.PDwidx;
+T1widx = mpm_params.T1widx;
+MTwidx = mpm_params.MTwidx;
 % TE/TR/FA for each contrast 
 % T1w and MTw contrasts are optional.
 % PDw must be present or nothing can be calculated. The script will abort
 % at the next line if no PDw echoes available. In that case, a warning has
 % been thrown earlier (in get_mpm_params).
-TE_pdw = mpm_params.input(PDidx).TE;
-TR_pdw = mpm_params.input(PDidx).TR;
-fa_pdw = mpm_params.input(PDidx).fa;
-if T1idx
-    TE_t1w = mpm_params.input(T1idx).TE; %#ok<NASGU>
-    TR_t1w = mpm_params.input(T1idx).TR;
-    fa_t1w = mpm_params.input(T1idx).fa;
+TE_pdw = mpm_params.input(PDwidx).TE;
+TR_pdw = mpm_params.input(PDwidx).TR;
+fa_pdw = mpm_params.input(PDwidx).fa;
+if T1widx
+    TE_t1w = mpm_params.input(T1widx).TE; %#ok<NASGU>
+    TR_t1w = mpm_params.input(T1widx).TR;
+    fa_t1w = mpm_params.input(T1widx).fa;
 end
-if MTidx
-    TE_mtw = mpm_params.input(MTidx).TE; %#ok<NASGU>
-    TR_mtw = mpm_params.input(MTidx).TR;
-    fa_mtw = mpm_params.input(MTidx).fa;
+if MTwidx
+    TE_mtw = mpm_params.input(MTwidx).TE; %#ok<NASGU>
+    TR_mtw = mpm_params.input(MTwidx).TR;
+    fa_mtw = mpm_params.input(MTwidx).fa;
 end
 % other parameters
 threshall = mpm_params.proc.threshall;
 PDproc = mpm_params.proc.PD;
 RFC = mpm_params.proc.RFC;
 dt = [spm_type('float32'),spm_platform('bigend')]; % for nifti output
-outbasename = spm_file(mpm_params.input(PDidx).fnam(1,:),'basename'); % for all output files
+outbasename = spm_file(mpm_params.input(PDwidx).fnam(1,:),'basename'); % for all output files
 calcpath = mpm_params.calcpath;
 mpm_params.outbasename = outbasename;
 respath = mpm_params.respath;
@@ -127,51 +133,70 @@ supplpath = mpm_params.supplpath;
 % contrasts AND under TE_limit (+1) - see get_mpm_params)
 avg_nr = mpm_params.nr_echoes4avg; 
 
-%% =======================================================================%
-% Calculate R2* map from PDw echoes
-%=========================================================================%
-fprintf(1,'\n    -------- R2* map calculation --------\n');
-
 % load PDw images
 % PDw images are the reference space for all results. Therefore, the matrix
 % dimension defined below (dm) is used across the whole script. It must not
 % been redefined.
-V_pdw = spm_vol(mpm_params.input(PDidx).fnam);
+V_pdw = spm_vol(mpm_params.input(PDwidx).fnam);
 dm = V_pdw(1).dim;
-spm_progress_bar('Init',dm(3),'R2* fit','planes completed');
 
-% create nifti object for output R2* map
-Ni          = nifti;
-Ni.mat      = V_pdw(1).mat;
-Ni.mat0     = V_pdw(1).mat;
-Ni.descrip  = 'R2* map [s-1]';
-Ni.dat      = file_array(fullfile(calcpath,[outbasename '_R2s' '.nii']),dm,dt, 0,1,0);
-create(Ni);
-fR2s = fullfile(calcpath,[outbasename '_R2s' '.nii']);
-
-% Fit R2* decay
-reg = [ones(numel(TE_pdw),1) TE_pdw(:)];
-W   = (reg'*reg)\reg';
-W   = -W(2,:)';
-for p = 1:dm(3)
-    M = spm_matrix([0 0 p 0 0 0 1 1 1]);
-    Y = zeros(dm(1:2));
-    for i = 1:numel(V_pdw)
-        M1 = V_pdw(i).mat\V_pdw(1).mat*M;
-        Y  = Y + W(i)*log(max(spm_slice_vol(V_pdw(i),M1,dm(1:2),mpm_params.interp),1));
+%% =======================================================================%
+% Calculate R2* map from PDw echoes
+%=========================================================================%
+fR2s = '';
+fprintf(1,'\n    -------- R2* map calculation --------\n');
+fprintf(1,['\nINFO: minimum number of echoes required for R2* maps calculation is %d.' ...
+    '\nNumber of PDw echoes available: %d\n'], mpm_params.neco4R2sfit, length(mpm_params.input(PDwidx).TE));
+if mpm_params.basicR2s
+    if length(mpm_params.input(PDwidx).TE)<6
+        fprintf(1,['\nGENERAL WARNING: deriving R2* map from an echo train including ' ...
+            '\nfewer than 6 echoes has not been validated nor investigated. ' ...
+            '\nFor a robust estimation, the minimum number of echoes required ' ...
+            '\ndepends on many factors, amongst which: ' ...
+            '\n\t- SNR/resolution' ...
+            '\n\t- distribution/spacing between TEs: note that early echoes are more' ...
+            '\n\t\taffected by the specific contrast, violating the assumption of a ' ...
+            '\n\t\tcommon decay between contrasts.' ...
+            '\nInterpret results carefully, with in mind a possible lack of robustness ' ...
+            '\nand reliability in the R2* estimation.\n']);
     end
-    Ni.dat(:,:,p) = max(min(Y,threshall.R2s),-threshall.R2s)*1000; % threshold T2* at +/- 0.1ms or R2* at +/- 10000 *(1/sec), negative values are allowed to preserve Gaussian distribution
-    spm_progress_bar('Set',p);
+        
+    spm_progress_bar('Init',dm(3),'R2* fit','planes completed');
+    
+    % create nifti object for output R2* map
+    fR2s = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qR2s).suffix '.nii']);
+    Ni          = nifti;
+    Ni.mat      = V_pdw(1).mat;
+    Ni.mat0     = V_pdw(1).mat;
+    Ni.descrip  = mpm_params.output(mpm_params.qR2s).descrip{1};
+    Ni.dat      = file_array(fR2s,dm,dt, 0,1,0);
+    create(Ni);
+    
+    % Fit R2* decay
+    reg = [ones(numel(TE_pdw),1) TE_pdw(:)];
+    W   = (reg'*reg)\reg';
+    W   = -W(2,:)';
+    for p = 1:dm(3)
+        M = spm_matrix([0 0 p 0 0 0 1 1 1]);
+        Y = zeros(dm(1:2));
+        for i = 1:numel(V_pdw)
+            M1 = V_pdw(i).mat\V_pdw(1).mat*M;
+            Y  = Y + W(i)*log(max(spm_slice_vol(V_pdw(i),M1,dm(1:2),mpm_params.interp),1));
+        end
+        Ni.dat(:,:,p) = max(min(Y,threshall.R2s),-threshall.R2s)*1000; % threshold T2* at +/- 0.1ms or R2* at +/- 10000 *(1/sec), negative values are allowed to preserve Gaussian distribution
+        spm_progress_bar('Set',p);
+    end
+    spm_progress_bar('Clear');
+    
+    % Set and write metadata
+    input_files = mpm_params.input(PDwidx).fnam;
+    Output_hdr = init_mpm_output_metadata(input_files, mpm_params);
+    Output_hdr.history.output.imtype = 'Basic R2* map';
+    Output_hdr.history.output.units = 's-1';
+    set_metadata(fR2s,Output_hdr,mpm_params.json);
+else 
+    fprintf(1,'\nNo R2* map will be calculated.\n');
 end
-spm_progress_bar('Clear');
-
-% Set and write metadata
-input_files = mpm_params.input(PDidx).fnam;
-Output_hdr = init_mpm_output_metadata(input_files, mpm_params);
-Output_hdr.history.output.imtype = 'R2* map';
-Output_hdr.history.output.units = 's-1';
-set_metadata(fR2s,Output_hdr,mpm_params.json);
-
 
 %% =======================================================================%
 % Reading and averaging the images 
@@ -186,7 +211,7 @@ for ccon=1:mpm_params.ncon % loop over available contrasts
     Ni          = nifti;
     Ni.mat      = V(1).mat;
     Ni.mat0     = V(1).mat;
-    Ni.descrip  = sprintf('Averaged %sw images', mpm_params.input(ccon).tag);
+    Ni.descrip  = sprintf('Averaged %sw images - %d echoes', mpm_params.input(ccon).tag, avg_nr);
     Ni.dat      = file_array(Pavg{ccon},dm,dt,0,1,0);
     create(Ni);
     spm_progress_bar('Init',dm(3),Ni.descrip,'planes completed');
@@ -214,13 +239,13 @@ end
 
 % Average T1w image for PD calculation 
 % (average over PDproc.nr_echoes_forA echoes, see hmri_defaults):
-if (PDidx && T1idx)
+if (PDwidx && T1widx)
     PT1w_forA = fullfile(calcpath,[outbasename '_T1w_forA.nii']);
-    V           = spm_vol(mpm_params.input(T1idx).fnam);
+    V           = spm_vol(mpm_params.input(T1widx).fnam);
     Ni          = nifti;
     Ni.mat      = V(1).mat;
     Ni.mat0     = V(1).mat;
-    Ni.descrip  = 'Averaged T1w images for PD calculation';
+    Ni.descrip  = sprintf('Averaged T1w images for PD calculation - %d echoes',PDproc.nr_echoes_forA);
     Ni.dat      = file_array(PT1w_forA,dm,dt, 0,1,0);
     create(Ni);
     spm_progress_bar('Init',dm(3),Ni.descrip,'planes completed');
@@ -244,16 +269,16 @@ fprintf(1,'\n    -------- Coregistering the images  --------\n');
 % NOTE: coregistration can be disabled using the hmri_def.coreg2PDw flag
 
 x_MT2PD = [0 0 0 0 0 0];
-if MTidx; 
+if MTwidx; 
     if mpm_params.coreg
-        x_MT2PD = coreg_mt(Pavg{PDidx}, Pavg{MTidx});
+        x_MT2PD = coreg_mt(Pavg{PDwidx}, Pavg{MTwidx});
     end
 end
 x_T12PD = [0 0 0 0 0 0];   
-if T1idx; 
+if T1widx; 
     if mpm_params.coreg
-        x_T12PD = coreg_mt(Pavg{PDidx}, Pavg{T1idx});
-        coreg_mt(Pavg{PDidx}, PT1w_forA);
+        x_T12PD = coreg_mt(Pavg{PDwidx}, Pavg{T1widx});
+        coreg_mt(Pavg{PDwidx}, PT1w_forA);
     end
 end
 
@@ -263,7 +288,7 @@ if ~isempty(P_trans)
     % P_trans(1,:) = magnitude image (anatomical reference for coregistration) 
     % P_trans(2,:) = B1 map (p.u.)
     if mpm_params.coreg
-        coreg_bias_map(Pavg{PDidx}, P_trans);
+        coreg_bias_map(Pavg{PDwidx}, P_trans);
     end
     V_trans = spm_vol(P_trans);
 end
@@ -279,10 +304,10 @@ if mpm_params.QA.enable
 end
 
 % load averaged images
-Vavg(PDidx) = spm_vol(Pavg{PDidx});
-if MTidx; Vavg(MTidx) = spm_vol(Pavg{MTidx}); end
-if T1idx
-    Vavg(T1idx) = spm_vol(Pavg{T1idx}); 
+Vavg(PDwidx) = spm_vol(Pavg{PDwidx});
+if MTwidx; Vavg(MTwidx) = spm_vol(Pavg{MTwidx}); end
+if T1widx
+    Vavg(T1widx) = spm_vol(Pavg{T1widx}); 
     VT1w_forA = spm_vol(PT1w_forA);
 end
 
@@ -298,53 +323,57 @@ if mpm_params.QA.enable
     
     fR2sQA = cell(1,mpm_params.ncon);
     for ccon = 1:mpm_params.ncon
-        fR2sQA{ccon} = fullfile(calcpath,[outbasename '_R2s_' mpm_params.input(ccon).tag 'w.nii']);
-        dt        = [spm_type('float32'),spm_platform('bigend')];
-        Ni        = nifti;
-        Ni.mat    = V_pdw(1).mat;
-        Ni.mat0   = V_pdw(1).mat;
-        Ni.descrip='OLS R2* map [s-1]';
-        Ni.dat    = file_array(fR2sQA{ccon},dm,dt, 0,1,0);
-        create(Ni);
-        
-        TE = mpm_params.input(ccon).TE;
-        Vcon = spm_vol(mpm_params.input(ccon).fnam);
-        % The assumption is that the result of co-registering the average
-        % weighted volumes is applicable for each of the echoes of that
-        % contrast => Replicate the mat field across contrasts for all echoes.
-        % % matField = cat(3, repmat(VPDw.mat, [1, 1, nPD]), ...
-        % % repmat(VMTw.mat, [1, 1, nMT]), repmat(VT1w.mat, [1, 1, nT1]));
-
-        reg = [ones(size(TE)) TE(:)];
-        W   = (reg'*reg)\reg';
-        
-        spm_progress_bar('Init',dm(3),'multi-contrast R2* fit','planes completed');
-        for p = 1:dm(3),
-            M = spm_matrix([0 0 p 0 0 0 1 1 1]);
-            data = zeros([size(TE,1) dm(1:2)]);
+        % only if enough echoes
+        if mpm_params.estaticsR2s(ccon)
             
-            for cecho = 1:size(TE,1)
-                % Take slice p (defined in M) and map to a location in the
-                % appropriate contrast using the matField entry for that
-                % contrast, which has been co-registered to the PD-weighted
-                % data:
-                M1 = Vavg(ccon).mat\V_pdw(1).mat*M;
+            fR2sQA{ccon} = fullfile(calcpath,[outbasename '_R2s_' mpm_params.input(ccon).tag 'w.nii']);
+            dt        = [spm_type('float32'),spm_platform('bigend')];
+            Ni        = nifti;
+            Ni.mat    = V_pdw(1).mat;
+            Ni.mat0   = V_pdw(1).mat;
+            Ni.descrip='OLS R2* map [s-1]';
+            Ni.dat    = file_array(fR2sQA{ccon},dm,dt, 0,1,0);
+            create(Ni);
+            
+            TE = mpm_params.input(ccon).TE;
+            Vcon = spm_vol(mpm_params.input(ccon).fnam);
+            % The assumption is that the result of co-registering the average
+            % weighted volumes is applicable for each of the echoes of that
+            % contrast => Replicate the mat field across contrasts for all echoes.
+            % % matField = cat(3, repmat(VPDw.mat, [1, 1, nPD]), ...
+            % % repmat(VMTw.mat, [1, 1, nMT]), repmat(VT1w.mat, [1, 1, nT1]));
+            
+            reg = [ones(size(TE)) TE(:)];
+            W   = (reg'*reg)\reg';
+            
+            spm_progress_bar('Init',dm(3),'multi-contrast R2* fit','planes completed');
+            for p = 1:dm(3),
+                M = spm_matrix([0 0 p 0 0 0 1 1 1]);
+                data = zeros([size(TE,1) dm(1:2)]);
                 
-                % Third order B-spline interpolation for OLS R2* estimation
-                % since we no longer assume that the echoes are perfectly
-                % aligned as we do for the standard PDw derived R2* estimate.
-                data(cecho,:,:) = log(max(spm_slice_vol(Vcon(cecho),M1,dm(1:2),mpm_params.interp),1));
+                for cecho = 1:size(TE,1)
+                    % Take slice p (defined in M) and map to a location in the
+                    % appropriate contrast using the matField entry for that
+                    % contrast, which has been co-registered to the PD-weighted
+                    % data:
+                    M1 = Vavg(ccon).mat\V_pdw(1).mat*M;
+                    
+                    % Third order B-spline interpolation for OLS R2* estimation
+                    % since we no longer assume that the echoes are perfectly
+                    % aligned as we do for the standard PDw derived R2* estimate.
+                    data(cecho,:,:) = log(max(spm_slice_vol(Vcon(cecho),M1,dm(1:2),mpm_params.interp),1));
+                end
+                Y = W*reshape(data, [size(TE,1) prod(dm(1:2))]);
+                Y = -reshape(Y(end,:), dm(1:2));
+                
+                % NB: mat field defined by V_pdw => first PDw echo
+                % threshold T2* at +/- 0.1ms or R2* at +/- 10000 *(1/sec),
+                % negative values are allowed to preserve Gaussian distribution
+                Ni.dat(:,:,p) = max(min(Y,threshall.R2s),-threshall.R2s)*1000;
+                spm_progress_bar('Set',p);
             end
-            Y = W*reshape(data, [size(TE,1) prod(dm(1:2))]);
-            Y = -reshape(Y(end,:), dm(1:2));
-            
-            % NB: mat field defined by V_pdw => first PDw echo
-            % threshold T2* at +/- 0.1ms or R2* at +/- 10000 *(1/sec),
-            % negative values are allowed to preserve Gaussian distribution
-            Ni.dat(:,:,p) = max(min(Y,threshall.R2s),-threshall.R2s)*1000; 
-            spm_progress_bar('Set',p);
+            spm_progress_bar('Clear');
         end
-        spm_progress_bar('Clear');
     end
 end
 
@@ -352,8 +381,29 @@ end
 % OLS R2* map calculation by MFC
 % [Reference: ESTATICS, Weiskopf et al. 2014]
 %=========================================================================%
-if mpm_params.proc.R2sOLS
-    fprintf(1,'\n    -------- OLS R2* map calculation --------\n');
+fR2s_OLS = '';
+fprintf(1,'\n    -------- OLS R2* map calculation (ESTATICS) --------\n');
+fprintf(1,['\nINFO: minimum number of echoes required for R2* maps calculation is %d.' ...
+    '\nNumber of echoes available: '], mpm_params.neco4R2sfit);
+for ccon = 1:mpm_params.ncon
+    fprintf(1,'%sw = %d. ',mpm_params.input(ccon).tag,length(mpm_params.input(ccon).TE));
+end
+fprintf(1,'\n');
+if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
+    if length(mpm_params.input(PDwidx).TE)<6
+        fprintf(1,['\nGENERAL WARNING: deriving R2* map from echo trains including ' ...
+            '\nfewer than 6 echoes has not been validated nor investigated. ' ...
+            '\nFor a robust estimation, the minimum number of echoes required ' ...
+            '\ndepends on many factors, amongst which: ' ...
+            '\n\t- SNR/resolution' ...
+            '\n\t- distribution/spacing between TEs: note that early echoes are more' ...
+            '\n\t\taffected by the specific contrast, violating the assumption of a ' ...
+            '\n\t\tcommon decay between contrasts.' ...
+            '\n\t- number of contrasts available (fewer echoes per contrast required ' ...
+            '\n\t\tfor 3 (PDw, T1w, MTw) contrasts as compared to 2 or even 1) ' ...
+            '\nInterpret results carefully, with in mind a possible lack of robustness ' ...
+            '\nand reliability in the R2* estimation.\n']);
+    end
         
     % OLS fit at TE=0: to be used instead of averaged echoes of each
     % contrast if "fullOLS" option is enabled
@@ -363,25 +413,30 @@ if mpm_params.proc.R2sOLS
         Nmap = nifti;
         Pte0 = cell(1,mpm_params.ncon);
         for ccon = 1:mpm_params.ncon
-            Pte0{ccon}  = fullfile(calcpath,[outbasename '_' mpm_params.input(ccon).tag 'w_OLSfit_TEzero.nii']);
-            Ni          = nifti;
-            Ni.mat      = V_pdw(1).mat;
-            Ni.mat0     = V_pdw(1).mat;
-            Ni.descrip  = sprintf('OLS fit to TE=0 for %sw images', mpm_params.input(ccon).tag);
-            Ni.dat      = file_array(Pte0{ccon},dm,dt,0,1,0);
-            create(Ni);
-            
-            % set metadata
-            input_files = mpm_params.input(ccon).fnam;
-            Output_hdr = init_mpm_output_metadata(input_files, mpm_params);
-            Output_hdr.history.output.imtype = Ni.descrip;
-            Output_hdr.history.output.units = 'a.u.';
-            set_metadata(Pte0{ccon},Output_hdr,mpm_params.json);            
-            
-            % re-load the updated NIFTI file (in case extended header has
-            % been added, the offset has changed and must be updated before
-            % writing the data to the file!)
-            Nmap(ccon) = nifti(Pte0{ccon});
+            % requires a minimum of neco4R2sfit echoes for a robust fit
+            if mpm_params.estaticsR2s(ccon)
+                Pte0{ccon}  = fullfile(calcpath,[outbasename '_' mpm_params.input(ccon).tag 'w_OLSfit_TEzero.nii']);
+                Ni          = nifti;
+                Ni.mat      = V_pdw(1).mat;
+                Ni.mat0     = V_pdw(1).mat;
+                Ni.descrip  = sprintf('OLS fit to TE=0 for %sw images - %d echoes', mpm_params.input(ccon).tag, length(mpm_params.input(ccon).TE));
+                Ni.dat      = file_array(Pte0{ccon},dm,dt,0,1,0);
+                create(Ni);
+                
+                % set metadata
+                input_files = mpm_params.input(ccon).fnam;
+                Output_hdr = init_mpm_output_metadata(input_files, mpm_params);
+                Output_hdr.history.output.imtype = Ni.descrip;
+                Output_hdr.history.output.units = 'a.u.';
+                set_metadata(Pte0{ccon},Output_hdr,mpm_params.json);
+                
+                % re-load the updated NIFTI file (in case extended header has
+                % been added, the offset has changed and must be updated before
+                % writing the data to the file!)
+                Nmap(ccon) = nifti(Pte0{ccon});
+            else
+                Pte0{ccon} = '';
+            end
         end
     end % init nifti objects for fullOLS case
     
@@ -396,15 +451,21 @@ if mpm_params.proc.R2sOLS
     % Combine the data and echo times:
     nechoes = zeros(1,mpm_params.ncon);
     for ccon = 1:mpm_params.ncon
-        nechoes(ccon) = size(mpm_params.input(ccon).fnam,1);
+        % only if enough echoes
+        if mpm_params.estaticsR2s(ccon)
+            nechoes(ccon) = size(mpm_params.input(ccon).fnam,1);
+        end
     end
     
     % Same formalism as for PDw fit but now extra colums for the "S(0)" 
     % amplitudes of the different contrasts:
     reg = zeros(sum(nechoes),mpm_params.ncon+1);
     for ccon = 1:mpm_params.ncon
-        reg(sum(nechoes(1:ccon-1))+(1:nechoes(ccon)),ccon) = 1;
-        reg(sum(nechoes(1:ccon-1))+(1:nechoes(ccon)),end) = mpm_params.input(ccon).TE;
+        % only if enough echoes
+        if mpm_params.estaticsR2s(ccon)
+            reg(sum(nechoes(1:ccon-1))+(1:nechoes(ccon)),ccon) = 1;
+            reg(sum(nechoes(1:ccon-1))+(1:nechoes(ccon)),end) = mpm_params.input(ccon).TE;
+        end
     end
     W = (reg'*reg)\reg';
     
@@ -415,20 +476,23 @@ if mpm_params.proc.R2sOLS
         
         for ccon = 1:mpm_params.ncon
             
-            Vcon = spm_vol(mpm_params.input(ccon).fnam);
-            
-            % Take slice p (defined in M) and map to a location in the
-            % appropriate contrast using the V.mat field entry for that
-            % contrast, which has been co-registered to the PD-weighted
-            % data:
-            M1 = Vavg(ccon).mat\V_pdw(1).mat*M;
-            
-            for cecho = 1:nechoes(ccon)               
-                % Third order B-spline interpolation for OLS R2* estimation
-                % since we no longer assume that the echoes are perfectly
-                % aligned as we do for the standard PDw derived R2*
-                % estimate. 
-                data(sum(nechoes(1:ccon-1))+cecho,:,:) = log(max(spm_slice_vol(Vcon(cecho),M1,dm(1:2),mpm_params.interp),1));
+            % only if enough echoes
+            if mpm_params.estaticsR2s(ccon)
+                Vcon = spm_vol(mpm_params.input(ccon).fnam);
+                
+                % Take slice p (defined in M) and map to a location in the
+                % appropriate contrast using the V.mat field entry for that
+                % contrast, which has been co-registered to the PD-weighted
+                % data:
+                M1 = Vavg(ccon).mat\V_pdw(1).mat*M;
+                
+                for cecho = 1:nechoes(ccon)
+                    % Third order B-spline interpolation for OLS R2* estimation
+                    % since we no longer assume that the echoes are perfectly
+                    % aligned as we do for the standard PDw derived R2*
+                    % estimate.
+                    data(sum(nechoes(1:ccon-1))+cecho,:,:) = log(max(spm_slice_vol(Vcon(cecho),M1,dm(1:2),mpm_params.interp),1));
+                end
             end
         end
         Y = W*reshape(data, [sum(nechoes) prod(dm(1:2))]);
@@ -436,7 +500,10 @@ if mpm_params.proc.R2sOLS
         % Writes "fullOLS" images (OLS fit to TE=0 for each contrast)
         if mpm_params.fullOLS
             for ccon = 1:mpm_params.ncon
-                Nmap(ccon).dat(:,:,p) = reshape(exp(Y(ccon,:)), dm(1:2));
+                % only if enough echoes
+                if mpm_params.estaticsR2s(ccon)
+                    Nmap(ccon).dat(:,:,p) = reshape(exp(Y(ccon,:)), dm(1:2));
+                end
             end
         end
         
@@ -447,23 +514,28 @@ if mpm_params.proc.R2sOLS
         % negative values are allowed to preserve Gaussian distribution.
         Ni.dat(:,:,p) = max(min(Y,threshall.R2s),-threshall.R2s)*1000; 
         spm_progress_bar('Set',p);
+        
     end
     spm_progress_bar('Clear');
 
     % Set metadata (R2S_OLS)
-    input_files = mpm_params.input(PDidx).fnam;
-    if (T1idx); input_files = char(input_files, mpm_params.input(T1idx).fnam); end
-    if (MTidx); input_files = char(input_files, mpm_params.input(MTidx).fnam); end
+    input_files = mpm_params.input(PDwidx).fnam;
+    if (T1widx); input_files = char(input_files, mpm_params.input(T1widx).fnam); end
+    if (MTwidx); input_files = char(input_files, mpm_params.input(MTwidx).fnam); end
     Output_hdr = init_mpm_output_metadata(input_files, mpm_params);
-    Output_hdr.history.output.imtype = 'R2*-OLS map';
-    Output_hdr.history.output.units = 's-1';
-    set_metadata(fullfile(calcpath,[outbasename '_R2s_OLS' '.nii']),Output_hdr,mpm_params.json);
+    Output_hdr.history.output.imtype = mpm_params.output(mpm_params.qR2s).descrip;
+    Output_hdr.history.output.units = mpm_params.output(mpm_params.qR2s).units;
+    set_metadata(fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qR2s).suffix '_OLS.nii']),Output_hdr,mpm_params.json);
    
+else
+    fprintf(1,'\nNo R2* map will be calculated using the ESTATICS model.\n');
 end % OLS code
 
-% if "fullOLS" option enabled, Pte0 images replace Pavg images in the rest
-% of the code. We need to apply the substitution and reload the images...
-if mpm_params.fullOLS
+% if "fullOLS" option enabled AND could be applied to every contrast
+% (enough echoes for every contrast), Pte0 images replace Pavg images in
+% the rest of the code. We need to apply the substitution and reload the
+% images... 
+if mpm_params.fullOLS && all(mpm_params.estaticsR2s)
     for ccon = 1:mpm_params.ncon
         Pavg{ccon} = Pte0{ccon};
         Vavg(ccon) = spm_vol(Pavg{ccon});
@@ -474,65 +546,16 @@ end
 %% =======================================================================%
 % Prepare output for R1, PD and MT maps
 %=========================================================================%
-% description fields and file names of output images
-
-coutput = 0;
-
-if T1idx
-    coutput = coutput+1;
-    output_suffix{coutput} = 'R1';
-    units{coutput} = 's-1';
-    if isempty(V_trans)
-        descrip{coutput} = 'R1 map (no B1+ bias correction applied)';
-    else
-        descrip{coutput} = 'R1 map (with B1+ bias correction) [s-1]';
-    end
-    R1map_idx = coutput;
-end
-
-if T1idx
-    coutput = coutput+1;
-    if PDproc.quantitative && ~isempty(V_trans)
-        output_suffix{coutput} = 'PD';
-        descrip{coutput} = 'Water concentration [%]';
-        units{coutput} = '%';
-    else
-        output_suffix{coutput} = 'A';
-        descrip{coutput} = 'Signal amplitude [a.u.]';
-        units{coutput} = 'a.u.';
-    end
-    Amap_idx = coutput;
-end
-
-if (MTidx && T1idx)
-    coutput = coutput+1;
-    output_suffix{coutput} = 'MT';
-    descrip{coutput} = 'Delta MT map';
-    units{coutput} = 'a.u.';
-    MTmap_idx = coutput;
-end
-
-if (MTidx && PDidx)
-    if (TR_mtw == TR_pdw) && (fa_mtw == fa_pdw) % additional MTR image...
-        coutput = coutput+1;
-        output_suffix{coutput} = 'MTR';
-        descrip{coutput} = 'Classic MTR image';
-        units{coutput} = 'a.u.';
-        MTRmap_idx = coutput;    
-    end
-end
-
-noutput = coutput;
 
 % define NIFTI objects for output images
 Nmap    = nifti;
-for ii=1:noutput
+for ii=1:length(mpm_params.output)-1*(~isempty(fR2s)||~isempty(fR2s_OLS)) % R2s output already done
     %dm         = V_pdw(1).dim;
     Ni         = nifti;
     Ni.mat     = V_pdw(1).mat;
     Ni.mat0    = V_pdw(1).mat;
-    Ni.descrip = descrip{ii};
-    Ni.dat     = file_array(fullfile(calcpath,[outbasename '_' output_suffix{ii} '.nii']),dm,dt, 0,1,0);
+    Ni.descrip = mpm_params.output(ii).descrip{1};
+    Ni.dat     = file_array(fullfile(calcpath,[outbasename '_' mpm_params.output(ii).suffix '.nii']),dm,dt, 0,1,0);
     create(Ni);
     Nmap(ii) = Ni;
 end
@@ -540,14 +563,24 @@ end
 fR1 = '';
 fA = '';
 fMT = '';
-if (PDidx && T1idx)
-    fR1 = fullfile(calcpath,[outbasename '_' output_suffix{R1map_idx} '.nii']);
-    fA  = fullfile(calcpath,[outbasename '_' output_suffix{Amap_idx} '.nii']);
-    if MTidx
-        fMT = fullfile(calcpath,[outbasename '_' output_suffix{MTmap_idx} '.nii']);
+if (PDwidx && T1widx)
+    fR1 = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qR1).suffix '.nii']);
+    fA  = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qPD).suffix '.nii']);
+    if MTwidx
+        fMT = fullfile(calcpath,[outbasename '_'  mpm_params.output(mpm_params.qMT).suffix '.nii']);
     end        
 end
 
+% mpm_params.output(mpm_params.qR1).fnam = '';
+% mpm_params.output(mpm_params.qPD).fnam = '';
+% mpm_params.output(mpm_params.qMT).fnam = '';
+% if (PDwidx && T1widx)
+%     mpm_params.output(mpm_params.qR1).fnam = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qR1).suffix '.nii']);
+%     mpm_params.output(mpm_params.qPD).fnam = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qPD).suffix '.nii']);
+%     if MTwidx
+%         mpm_params.output(mpm_params.qMT).fnam = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qMT).suffix '.nii']);
+%     end
+% end
 
 %% =======================================================================%
 % Map calculation continued (R1, PD, MT) 
@@ -557,16 +590,17 @@ fprintf(1,'\n    -------- Map calculation continued (R1, PD, MT) --------\n');
 M0 = Ni.mat;
 
 fa_pdw_rad = fa_pdw * pi / 180;
-if MTidx; fa_mtw_rad = fa_mtw * pi / 180; end
-if T1idx; fa_t1w_rad = fa_t1w * pi / 180; end
+if MTwidx; fa_mtw_rad = fa_mtw * pi / 180; end
+if T1widx; fa_t1w_rad = fa_t1w * pi / 180; end
 
 spm_progress_bar('Init',dm(3),'Calculating maps','planes completed');
 
+% First calculate R1 & MTR
 for p = 1:dm(3)
     M = M0*spm_matrix([0 0 p]);
 
     % PDw images are always available, so this bit is always loaded:
-    PDw = spm_slice_vol(Vavg(PDidx),Vavg(PDidx).mat\M,dm(1:2),mpm_params.interp);
+    PDw = spm_slice_vol(Vavg(PDwidx),Vavg(PDwidx).mat\M,dm(1:2),mpm_params.interp);
     
     if ~isempty(V_trans)
         f_T = spm_slice_vol(V_trans(2,:),V_trans(2,:).mat\M,dm(1:2),mpm_params.interp)/100; % divide by 100, since p.u. maps
@@ -577,34 +611,23 @@ for p = 1:dm(3)
     % Standard magnetization transfer ratio (MTR) in percent units [p.u.]
     % only if trpd = trmt and fapd = famt and if PDw and MTw images are
     % available
-    if (MTidx && PDidx)
-        MTw = spm_slice_vol(Vavg(MTidx),Vavg(MTidx).mat\M,dm(1:2),mpm_params.interp);
+    if (MTwidx && PDwidx)
+        MTw = spm_slice_vol(Vavg(MTwidx),Vavg(MTwidx).mat\M,dm(1:2),mpm_params.interp);
         if (TR_mtw == TR_pdw) && (fa_mtw == fa_pdw) % additional MTR image...
             MTR = (PDw-MTw)./(PDw+eps) * 100;
             % write MTR image
-            Nmap(MTRmap_idx).dat(:,:,p) = max(min(MTR,threshall.MTR),-threshall.MTR);
+            Nmap(mpm_params.qMTR).dat(:,:,p) = max(min(MTR,threshall.MTR),-threshall.MTR);
         end          
     end
     
     % T1 map and A/PD maps can only be calculated if T1w images are
     % available:
-    if T1idx
+    if T1widx
 
-        T1w = spm_slice_vol(Vavg(T1idx),Vavg(T1idx).mat\M,dm(1:2),mpm_params.interp);
+        T1w = spm_slice_vol(Vavg(T1widx),Vavg(T1widx).mat\M,dm(1:2),mpm_params.interp);
         
-        % if "fullOLS" option enabled, use the OLS fit at TE=0 as
-        % "T1w_forA"; otherwise use the average calculated earlier (by
-        % default, corresponds to the first echo to reduce R2* bias)
-        if mpm_params.fullOLS
-            T1w_forA = T1w;
-        else
-            T1w_forA = spm_slice_vol(VT1w_forA,VT1w_forA.mat\M,dm(1:2),mpm_params.interp);
-        end
-    
         if isempty(f_T)
             % semi-quantitative T1
-            T1 = ((PDw / fa_pdw_rad) - (T1w / fa_t1w_rad)) ./ ...
-                max((T1w * (fa_t1w_rad / 2 / TR_t1w)) - (PDw * fa_pdw_rad / 2 / TR_pdw),eps);
             R1 = (((T1w * (fa_t1w_rad / 2 / TR_t1w)) - (PDw * fa_pdw_rad / 2 / TR_pdw)) ./ ...
                 max(((PDw / fa_pdw_rad) - (T1w / fa_t1w_rad)),eps))*10^6;
         else
@@ -631,13 +654,73 @@ for p = 1:dm(3)
             R1 = 1./T1*10^6;
         end
         
-        T1       = max(T1,0);
         R1(R1<0) = 0;
         tmp      = R1;
-        Nmap(R1map_idx).dat(:,:,p) = min(max(tmp,-threshall.R1),threshall.R1)*0.001; % truncating images
+        Nmap(mpm_params.qR1).dat(:,:,p) = min(max(tmp,-threshall.R1),threshall.R1)*0.001; % truncating images
+                
+    end
+    spm_progress_bar('Set',p);
+end
+spm_progress_bar('Clear');
+
+
+% apply UNICORT if required:
+% NOTE: the (unicort) B1 map will then be used to calculate PD, but
+% not to correct R1 map from RF spoiling effects (unsuitable
+% interfering and higher order corrections!) nor to correct MT map
+% from higher order transmit bias effects.
+V_trans_unicort = [];
+if (mpm_params.UNICORT.R1)
+    out_unicort = hmri_create_unicort(Pavg{PDwidx}, fR1, jobsubj);
+    fR1 = out_unicort.R1u{1};
+    P_trans_unicort = out_unicort.B1u{1};
+    V_trans_unicort = spm_vol(P_trans_unicort);
+    Output_hdr = get_metadata(fR1);
+    Output_hdr{1}.history.output.imtype = mpm_params.output(mpm_params.qR1).descrip;
+    set_metadata(fR1,Output_hdr{1},mpm_params.json);
+end
+V_R1 = spm_vol(fR1);
+
+spm_progress_bar('Init',dm(3),'Calculating maps (continued)','planes completed');
+
+% Then calculate MT & PD
+for p = 1:dm(3)
+    M = M0*spm_matrix([0 0 p]);
+
+    if ~isempty(V_trans)
+        f_T = spm_slice_vol(V_trans(2,:),V_trans(2,:).mat\M,dm(1:2),mpm_params.interp)/100; % divide by 100, since p.u. maps
+    elseif ~isempty(V_trans_unicort)
+        f_T = spm_slice_vol(V_trans_unicort(1,:),V_trans_unicort(1,:).mat\M,dm(1:2),mpm_params.interp)/100; % divide by 100, since p.u. maps        
+    else
+        f_T = [];
+    end
+    
+    % PDw images are always available, so this bit is always loaded:
+    PDw = spm_slice_vol(Vavg(PDwidx),Vavg(PDwidx).mat\M,dm(1:2),mpm_params.interp);
+    
+    % T1 map and A/PD maps can only be calculated if T1w images are
+    % available:
+    if T1widx
+
+        T1w = spm_slice_vol(Vavg(T1widx),Vavg(T1widx).mat\M,dm(1:2),mpm_params.interp);
+        T1 = 10^3./spm_slice_vol(V_R1,V_R1.mat\M,dm(1:2),mpm_params.interp);
         
+        % if "fullOLS" option enabled, use the OLS fit at TE=0 as
+        % "T1w_forA"; otherwise use the average calculated earlier (by
+        % default, corresponds to the first echo to reduce R2* bias)
+        if mpm_params.fullOLS
+            T1w_forA = T1w;
+        else
+            T1w_forA = spm_slice_vol(VT1w_forA,VT1w_forA.mat\M,dm(1:2),mpm_params.interp);
+        end
+                
         % A values proportional to PD
-        if(~isempty(f_T))
+        % f_T correction is applied either if:
+        % - f_T has been provided as separate B1 mapping measurement (not
+        % UNICORT!) or
+        % - f_T has been calculated using UNICORT *AND* the UNICORT.PD flag
+        % is enabled (advanced user only! method not validated yet!)
+        if(~isempty(f_T))&&(~mpm_params.UNICORT.R1 || mpm_params.UNICORT.PD)
             A = T1 .* (T1w_forA .*(fa_t1w_rad*f_T) / 2 / TR_t1w) + (T1w_forA ./ (fa_t1w_rad*f_T));
         else
             % semi-quantitative A
@@ -645,47 +728,55 @@ for p = 1:dm(3)
         end
         
         tmp      = A;
-        Nmap(Amap_idx).dat(:,:,p) = max(min(tmp,threshall.A),-threshall.A);
+        Nmap(mpm_params.qPD).dat(:,:,p) = max(min(tmp,threshall.A),-threshall.A);
         % dynamic range increased to 10^5 to accommodate phased-array coils and symmetrical for noise distribution
-        
+
         % for MT maps calculation, one needs MTw images on top of the T1w
         % and PDw ones...
-        if MTidx
-            MTw = spm_slice_vol(Vavg(MTidx),Vavg(MTidx).mat\M,dm(1:2),3);
+        if MTwidx
+            MTw = spm_slice_vol(Vavg(MTwidx),Vavg(MTwidx).mat\M,dm(1:2),3);
             T1_forMT = ((PDw / fa_pdw_rad) - (T1w / fa_t1w_rad)) ./ ...
                 max((T1w * (fa_t1w_rad / 2 / TR_t1w)) - (PDw * fa_pdw_rad / 2 / TR_pdw),eps);
             A_forMT = T1_forMT .* (T1w * fa_t1w_rad / 2 / TR_t1w) + (T1w / fa_t1w_rad);
             
             % MT in [p.u.]; offset by - famt * famt / 2 * 100 where MT_w = 0 (outside mask)
             MT       = ( (A_forMT * fa_mtw_rad - MTw) ./ (MTw+eps) ./ (T1_forMT + eps) * TR_mtw - fa_mtw_rad^2 / 2 ) * 100;
-            if (~isempty(f_T))
+            % f_T correction is applied either if:
+            % - f_T has been provided as separate B1 mapping measurement (not
+            % UNICORT!) or
+            % - f_T has been calculated using UNICORT *AND* the UNICORT.MT flag
+            % is enabled (advanced user only! method not validated yet!)
+            if (~isempty(f_T))&&(~mpm_params.UNICORT.R1 || mpm_params.UNICORT.MT)
                 MT = MT .* (1 - 0.4) ./ (1 - 0.4 * f_T);
             end
             
             tmp      = MT;
-            Nmap(MTmap_idx).dat(:,:,p) = max(min(tmp,threshall.MT),-threshall.MT);
+            Nmap(mpm_params.qMT).dat(:,:,p) = max(min(tmp,threshall.MT),-threshall.MT);
         end
+    
     end
+
     spm_progress_bar('Set',p);
 end
 spm_progress_bar('Clear');
 
+
 % set metadata for all output images
-input_files = mpm_params.input(PDidx).fnam;
-if (T1idx); input_files = char(input_files, mpm_params.input(T1idx).fnam); end
-if (MTidx); input_files = char(input_files, mpm_params.input(MTidx).fnam); end
+input_files = mpm_params.input(PDwidx).fnam;
+if (T1widx); input_files = char(input_files, mpm_params.input(T1widx).fnam); end
+if (MTwidx); input_files = char(input_files, mpm_params.input(MTwidx).fnam); end
 Output_hdr = init_mpm_output_metadata(input_files, mpm_params);
-for ctr = 1:noutput
-    Output_hdr.history.output.imtype = descrip(ctr);
-    Output_hdr.history.output.units = units(ctr);
-    set_metadata(fullfile(calcpath,[outbasename '_' output_suffix{ctr} '.nii']),Output_hdr,mpm_params.json);
+for ctr = 1:length(mpm_params.output)-1
+    Output_hdr.history.output.imtype = mpm_params.output(ctr).descrip;
+    Output_hdr.history.output.units = mpm_params.output(ctr).units;
+    set_metadata(fullfile(calcpath,[outbasename '_' mpm_params.output(ctr).suffix '.nii']),Output_hdr,mpm_params.json);
 end
 
 %% =======================================================================%
 % ACPC Realign all images - only if MT map created
 %=========================================================================%
 if mpm_params.ACPCrealign 
-    if (MTidx && PDidx && T1idx)
+    if (MTwidx && PDwidx && T1widx)
     fprintf(1,'\n    -------- ACPC Realign all images --------\n');
     
     % Define and calculate masked MT image
@@ -695,7 +786,7 @@ if mpm_params.ACPCrealign
     % Define new file name for masked MT image
     V_MT.fname = fullfile(calcpath,['masked_' spm_str_manip(fMT,'t')]);
     % Load average PDw image (mask based on averaged PDw image)
-    PDWimage = spm_read_vols(Vavg(PDidx));
+    PDWimage = spm_read_vols(Vavg(PDwidx));
     % Mask MT image and save the masked MT image ('masked_..._MT.nii')
     MTimage(PDWimage<0.6*mean(PDWimage(:)))=0;
     spm_write_vol(V_MT,MTimage);
@@ -729,7 +820,7 @@ if mpm_params.ACPCrealign
     end;
     
     % Save transformation matrix
-    spm_jsonwrite(fullfile(supplpath,'MPM_map_creation_ACPCrealign_transformation_matrix.json'),R,struct('indent','\t'));
+    spm_jsonwrite(fullfile(supplpath,'hMRI_map_creation_ACPCrealign_transformation_matrix.json'),R,struct('indent','\t'));
 
     else
         fprintf(1,['\nWARNING: ACPC Realign was enabled, but no MT map was available \n' ...
@@ -743,7 +834,7 @@ end
 % segmentation preferentially performed on MT map but can be done on R1 map
 % if no MT map available. Therefore, we must at least have R1 available,
 % i.e. both PDw and T1w inputs...
-if (mpm_params.QA.enable||(PDproc.calibr)) && (PDidx && T1idx)
+if (mpm_params.QA.enable||(PDproc.calibr)) && (PDwidx && T1widx)
     if ~isempty(fMT); 
         Vsave = spm_vol(fMT);
     else % ~isempty(fR1); 
@@ -767,7 +858,7 @@ if (mpm_params.QA.enable||(PDproc.calibr)) && (PDidx && T1idx)
 end
 
 % for quality assessment - the above segmentation must have run
-if mpm_params.QA.enable && exist('fTPM','var')
+if mpm_params.QA.enable && exist('fTPM','var') && any(mpm_params.estaticsR2s)
     
     % Load existing QA results
     if exist(mpm_params.QA.fnam,'file')
@@ -794,51 +885,51 @@ if mpm_params.QA.enable && exist('fTPM','var')
 end
 
 % PD map calculation
-if ~isempty(f_T)
-    
-    % for correction of the R2s bias in the A map if that option is enabled...
-    if PDproc.T2scorr
-        % uses OLS it if available - less noisy
-        if exist('fR2s_OLS','var')
-            PR2s = fR2s_OLS;
-        else
-            PR2s = fR2s;
-        end
-        
-        % calculate correction (expected to be between 1 and 1.5 approx)
-        R2s = spm_read_vols(spm_vol(PR2s));
-        R2scorr4A = zeros(size(R2s));
-        for cecho=1:mpm_params.proc.PD.nr_echoes_forA
-            TE = mpm_params.input(PDidx).TE(cecho)*0.001; % in seconds
-            R2scorr4A = R2scorr4A + exp(-TE.*R2s);
-        end
-        R2scorr4A = R2scorr4A/mpm_params.proc.PD.nr_echoes_forA;
-        
-        % save correction for inspection
-        NiR2scorr4A         = nifti;
-        NiR2scorr4A.mat     = V_pdw(1).mat;
-        NiR2scorr4A.mat0    = V_pdw(1).mat;
-        NiR2scorr4A.descrip = descrip{ii};
-        fR2scorr4A = spm_file(PR2s,'suffix','_corr4A');
-        NiR2scorr4A.dat     = file_array(fR2scorr4A,dm,dt, 0,1,0);
-        create(NiR2scorr4A);
-        NiR2scorr4A.dat(:,:,:) = R2scorr4A;
-        
-        % apply correction
-        NiAcorr         = nifti;
-        NiAcorr.mat     = V_pdw(1).mat;
-        NiAcorr.mat0    = V_pdw(1).mat;
-        NiAcorr.descrip = descrip{ii};
-        fAcorr = spm_file(fA,'suffix','_R2scorr');
-        NiAcorr.dat     = file_array(fAcorr,dm,dt, 0,1,0);
-        create(NiAcorr);
-        tmp = spm_read_vols(spm_vol(fA))./(R2scorr4A+eps);
-        tmp(isnan(tmp)|isinf(tmp)) = 0;
-        tmp = max(min(tmp,threshall.A),-threshall.A);
-        NiAcorr.dat(:,:,:) = tmp;
-        fA = fAcorr;
+% for correction of the R2s bias in the A map if that option is enabled...
+if PDproc.T2scorr && (~isempty(fR2s)||~isempty(fR2s_OLS))
+    % uses OLS it if available - less noisy
+    if ~isempty(fR2s_OLS)
+        PR2s = fR2s_OLS;
+    else
+        PR2s = fR2s;
     end
     
+    % calculate correction (expected to be between 1 and 1.5 approx)
+    R2s = spm_read_vols(spm_vol(PR2s));
+    R2scorr4A = zeros(size(R2s));
+    for cecho=1:mpm_params.proc.PD.nr_echoes_forA
+        TE = mpm_params.input(PDwidx).TE(cecho)*0.001; % in seconds
+        R2scorr4A = R2scorr4A + exp(-TE.*R2s);
+    end
+    R2scorr4A = R2scorr4A/mpm_params.proc.PD.nr_echoes_forA;
+    
+    % save correction for inspection
+    NiR2scorr4A         = nifti;
+    NiR2scorr4A.mat     = V_pdw(1).mat;
+    NiR2scorr4A.mat0    = V_pdw(1).mat;
+    NiR2scorr4A.descrip = 'R2* bias correction factor for A map (T2scorr option)';
+    fR2scorr4A = spm_file(PR2s,'suffix','_corr4A');
+    NiR2scorr4A.dat     = file_array(fR2scorr4A,dm,dt, 0,1,0);
+    create(NiR2scorr4A);
+    NiR2scorr4A.dat(:,:,:) = R2scorr4A;
+    
+    % apply correction
+    NiAcorr         = nifti;
+    NiAcorr.mat     = V_pdw(1).mat;
+    NiAcorr.mat0    = V_pdw(1).mat;
+    NiAcorr.descrip = 'R2* bias corrected A map (T2scorr option)';
+    fAcorr = spm_file(fA,'suffix','_R2scorr');
+    NiAcorr.dat     = file_array(fAcorr,dm,dt, 0,1,0);
+    create(NiAcorr);
+    tmp = spm_read_vols(spm_vol(fA))./(R2scorr4A+eps);
+    tmp(isnan(tmp)|isinf(tmp)) = 0;
+    tmp = max(min(tmp,threshall.A),-threshall.A);
+    NiAcorr.dat(:,:,:) = tmp;
+    fA = fAcorr;
+end
+
+% PD map calculation continued
+if ~isempty(f_T) && (mpm_params.UNICORT.PD || ~mpm_params.UNICORT.R1)
     % if calibration enabled, do the Unified Segmentation bias correction
     % if required and calibrate the PD map
     if PDproc.calibr
@@ -852,21 +943,23 @@ end
 % processing parameters, etc) are in Results/Supplementary.
 if ~isempty(fR1)
     fR1_final = fullfile(respath, spm_file(fR1,'filename'));
-    copyfile(fR1,fR1_final);
+    try copyfile(fR1,fR1_final); end
     try copyfile([spm_str_manip(fR1,'r') '.json'],[spm_str_manip(fR1_final,'r') '.json']); end %#ok<*TRYNC>
     fR1 = fR1_final;
 end
 
-fR2s_final = fullfile(respath, spm_file(fR2s,'filename'));
-copyfile(fR2s,fR2s_final);
-try copyfile([spm_str_manip(fR2s,'r') '.json'],[spm_str_manip(fR2s_final,'r') '.json']); end
-fR2s = fR2s_final;
+if ~isempty(fR2s)
+    fR2s_final = fullfile(respath, spm_file(fR2s,'filename'));
+    copyfile(fR2s,fR2s_final);
+    try copyfile([spm_str_manip(fR2s,'r') '.json'],[spm_str_manip(fR2s_final,'r') '.json']); end
+    fR2s = fR2s_final;
+end
 
 % NB: if OLS calculation of R2s map has been done, the output file for R2s
 % map is the OLS result. In that case, the basic R2s map is moved to
 % Results/Supplementary while the R2s_OLS is copied into results directory: 
-if mpm_params.proc.R2sOLS
-    % move basin R2s map to Results/Supplementary
+if mpm_params.proc.R2sOLS && ~isempty(fR2s_OLS)
+    % move basic R2s map to Results/Supplementary
     movefile(fR2s_final, fullfile(supplpath, spm_file(fR2s_final,'filename')));
     try movefile([spm_str_manip(fR2s_final,'r') '.json'],fullfile(supplpath, [spm_file(fR2s_final,'basename') '.json'])); end
     % copy OLS_R2s map to Results
@@ -891,31 +984,31 @@ if ~isempty(fA)
     fA = fA_final;
 end
 
-PPDw_final = fullfile(supplpath, spm_file(Pavg{PDidx},'filename'));
-copyfile(Pavg{PDidx},PPDw_final);
-try copyfile([spm_str_manip(Pavg{PDidx},'r') '.json'],[spm_str_manip(PPDw_final,'r') '.json']); end
+PPDw_final = fullfile(supplpath, spm_file(Pavg{PDwidx},'filename'));
+copyfile(Pavg{PDwidx},PPDw_final);
+try copyfile([spm_str_manip(Pavg{PDwidx},'r') '.json'],[spm_str_manip(PPDw_final,'r') '.json']); end
 PPDw = PPDw_final;
 
-if T1idx
-    PT1w_final = fullfile(supplpath, spm_file(Pavg{T1idx},'filename'));
-    copyfile(Pavg{T1idx},PT1w_final);
-    try copyfile([spm_str_manip(Pavg{T1idx},'r') '.json'],[spm_str_manip(PT1w_final,'r') '.json']); end
+if T1widx
+    PT1w_final = fullfile(supplpath, spm_file(Pavg{T1widx},'filename'));
+    copyfile(Pavg{T1widx},PT1w_final);
+    try copyfile([spm_str_manip(Pavg{T1widx},'r') '.json'],[spm_str_manip(PT1w_final,'r') '.json']); end
     PT1w = PT1w_final;
 else
     PT1w = '';
 end
 
-if MTidx
-    PMTw_final = fullfile(supplpath, spm_file(Pavg{MTidx},'filename'));
-    copyfile(Pavg{MTidx},PMTw_final);
-    try copyfile([spm_str_manip(Pavg{MTidx},'r') '.json'],[spm_str_manip(PMTw_final,'r') '.json']); end
+if MTwidx
+    PMTw_final = fullfile(supplpath, spm_file(Pavg{MTwidx},'filename'));
+    copyfile(Pavg{MTwidx},PMTw_final);
+    try copyfile([spm_str_manip(Pavg{MTwidx},'r') '.json'],[spm_str_manip(PMTw_final,'r') '.json']); end
     PMTw = PMTw_final;
 else
     PMTw = '';
 end
 
 % save processing params (mpm_params)
-spm_jsonwrite(fullfile(supplpath,'MPM_map_creation_mpm_params.json'),mpm_params,struct('indent','\t'));
+spm_jsonwrite(fullfile(supplpath,'hMRI_map_creation_mpm_params.json'),mpm_params,struct('indent','\t'));
 
 spm_progress_bar('Clear');
 
@@ -1027,7 +1120,7 @@ Vsave.descrip = [Vsave.descrip '. Error Estimate: ', num2str(errorEstimate)];
 if errorEstimate > 0.06 %#ok<BDSCI>
     % MFC: Testing on 15 subjects showed 6% is a good cut-off:
     fprintf(1,['\nWARNING: Error estimate is high (%.1f%%) for calculated PD map:\n%s' ...
-        '\nError higher than 6%% may indicate motion.\n'], errorEstimate*100, Vsave.fname);
+        '\nError higher than 6%% may indicate motion.\n\n'], errorEstimate*100, Vsave.fname);
 end
 if mpm_params.QA.enable
     if exist(mpm_params.QA.fnam,'file')
@@ -1048,6 +1141,11 @@ end
 %=========================================================================%
 function mpm_params = get_mpm_params(jobsubj)
 
+% save SPM version (slight differences may appear in the results depending
+% on the SPM version!)
+[v,r] = spm('Ver');
+mpm_params.SPMver = sprintf('%s (%s)', v, r);
+
 % global parameters
 mpm_params.json = hmri_get_defaults('json');
 mpm_params.centre = hmri_get_defaults('centre');
@@ -1056,12 +1154,42 @@ mpm_params.respath = jobsubj.path.respath;
 mpm_params.supplpath = jobsubj.path.supplpath;
 mpm_params.QA.enable = hmri_get_defaults('qMRI_maps.QA'); % quality assurance
 if mpm_params.QA.enable
-    mpm_params.QA.fnam = fullfile(mpm_params.supplpath,'MPM_map_creation_quality_assessment.json');
+    mpm_params.QA.fnam = fullfile(mpm_params.supplpath,'hMRI_map_creation_quality_assessment.json');
     spm_jsonwrite(mpm_params.QA.fnam,mpm_params.QA,struct('indent','\t'));
 end
 mpm_params.ACPCrealign = hmri_get_defaults('qMRI_maps.ACPCrealign'); % realigns qMRI maps to MNI
 mpm_params.interp = hmri_get_defaults('interp');
 mpm_params.fullOLS = hmri_get_defaults('fullOLS'); % uses all echoes for OLS fit at TE=0
+
+mpm_params.neco4R2sfit = hmri_get_defaults('neco4R2sfit'); % minimum number of echoes for R2* calculation 
+if mpm_params.neco4R2sfit<2
+    fprintf(1,['\nWARNING: the (strict) minimum number of echoes required to ' ...
+        '\ncalculate R2* map is 2. The default value (%d) has been modified ' ...
+        '\nand is now neco4R2sfit=2.\n']);
+    mpm_params.neco4R2sfit = 2;
+end
+
+% UNICORT settings:
+mpm_params.UNICORT.R1 = isfield(jobsubj.b1_type,'UNICORT'); % uses UNICORT to estimate B1 transmit bias
+tmp = hmri_get_defaults('UNICORT');
+mpm_params.UNICORT.PD = tmp.PD; % uses B1map estimated as biasfield for R1 to correct for B1 transmit bias in PD
+mpm_params.UNICORT.MT = tmp.MT; % uses B1map estimated as biasfield for R1 to correct for B1 transmit bias in MT
+
+% check consistency in UNICORT settings:
+if ~mpm_params.UNICORT.R1
+    if mpm_params.UNICORT.PD
+        fprintf(1,['\nWARNING: no UNICORT B1 estimate available for PD calculation.' ...
+            '\nB1 bias correction must be defined as "UNICORT" (not the case).' ...
+            '\nUNICORT.PD is disabled!\n']);
+        mpm_params.UNICORT.PD = false;
+    end
+    if mpm_params.UNICORT.MT
+        fprintf(1,['\nWARNING: no UNICORT B1 estimate available for MT calculation.' ...
+            '\nB1 bias correction must be defined as "UNICORT" (not the case).' ...
+            '\nUNICORT.MT is disabled!\n']);
+        mpm_params.UNICORT.MT = false;
+    end
+end
 
 % retrieve input file names for map creation.
 % the "mpm_params.input" field is an array, each element corresponds to a
@@ -1074,37 +1202,37 @@ fprintf(1,'\nINFO: FLASH echoes loaded for each contrast are: ');
 tmpfnam   = char(jobsubj.raw_mpm.MT); % P_mtw
 if isempty(tmpfnam)
     fprintf(1,'\n\t- WARNING: no MT-weighted FLASH echoes available!');
-    mpm_params.MTidx = 0; % zero index means no contrast available
+    mpm_params.MTwidx = 0; % zero index means no contrast available
 else
     ccon = ccon+1;
     fprintf(1,'\n\t- MT-weighted: %d echoes', size(tmpfnam,1));
     mpm_params.input(ccon).fnam = tmpfnam;
     mpm_params.input(ccon).tag = 'MT';  
-    mpm_params.MTidx = ccon;
+    mpm_params.MTwidx = ccon;
 end  
 % 2) try PDw contrast:
 tmpfnam   = char(jobsubj.raw_mpm.PD); % P_pdw
 if isempty(tmpfnam)
     fprintf(1,'\n\n\t- WARNING: no PD-weighted FLASH echoes available! \n\t\tThe map creation won''t be able to proceed!\n');
-    mpm_params.PDidx = 0; % zero index means no contrast available
+    mpm_params.PDwidx = 0; % zero index means no contrast available
 else
     ccon = ccon+1;
     fprintf(1,'\n\t- PD-weighted: %d echoes', size(tmpfnam,1));
     mpm_params.input(ccon).fnam = tmpfnam;
     mpm_params.input(ccon).tag = 'PD';  
-    mpm_params.PDidx = ccon;
+    mpm_params.PDwidx = ccon;
 end  
 % 3) try T1w contrast:
 tmpfnam   = char(jobsubj.raw_mpm.T1); % P_t1w
 if isempty(tmpfnam)
     fprintf(1,'\n\t- WARNING: no T1-weighted FLASH echoes available!');
-    mpm_params.T1idx = 0; % zero index means no contrast available
+    mpm_params.T1widx = 0; % zero index means no contrast available
 else
     ccon = ccon+1;
     fprintf(1,'\n\t- T1-weighted: %d echoes', size(tmpfnam,1));
     mpm_params.input(ccon).fnam = tmpfnam;
     mpm_params.input(ccon).tag = 'T1';  
-    mpm_params.T1idx = ccon; % zero index means no contrast available    
+    mpm_params.T1widx = ccon; % zero index means no contrast available    
 end 
 mpm_params.ncon = ccon; % number of contrasts available
 fprintf(1,'\n');
@@ -1154,14 +1282,14 @@ fprintf(1,'\nINFO: averaged PDw/T1w/MTw will be calculated based on the first %d
         
 % if T1w and PDw data available, identify the protocol to define RF
 % spoiling correction parameters (for T1 map calculation)
-if mpm_params.PDidx && mpm_params.T1idx
+if mpm_params.PDwidx && mpm_params.T1widx
     % retrieve all available protocols:
     MPMacq_sets = hmri_get_defaults('MPMacq_set');
     % current protocol is defined by [TR_pdw TR_t1w fa_pdw fa_t1w]:
-    MPMacq_prot = [mpm_params.input(mpm_params.PDidx).TR;
-                   mpm_params.input(mpm_params.T1idx).TR;
-                   mpm_params.input(mpm_params.PDidx).fa;
-                   mpm_params.input(mpm_params.T1idx).fa]';
+    MPMacq_prot = [mpm_params.input(mpm_params.PDwidx).TR;
+                   mpm_params.input(mpm_params.T1widx).TR;
+                   mpm_params.input(mpm_params.PDwidx).fa;
+                   mpm_params.input(mpm_params.T1widx).fa]';
     % then match the values and find protocol tag
     nsets = numel(MPMacq_sets.vals);
     ii = 0; mtch = false;
@@ -1192,18 +1320,20 @@ mpm_params.proc.threshall = hmri_get_defaults('qMRI_maps_thresh');
 % load PD maps processing parameters (including calibr (calibration
 % parameter) and T2scorr (T2s correction) fields)
 mpm_params.proc.PD = hmri_get_defaults('PDproc');
-% if no RF sensitivity bias correction applied, not worth trying any
-% calibration:
-if isfield(mpm_params.proc.RFsenscorr,'RF_none') && mpm_params.proc.PD.calibr
-    fprintf(1,['\nWARNING: if no RF sensitivity bias correction applied, no quantitative ' ...
-        '\nPD map will be output and not calibration will be performed. ' ...
+% if no RF sensitivity bias correction or no B1 transmit bias correction
+% applied, not worth trying any calibration:
+if (isfield(mpm_params.proc.RFsenscorr,'RF_none')||(isempty(jobsubj.b1_trans_input)&&~mpm_params.UNICORT.PD)) && mpm_params.proc.PD.calibr
+    fprintf(1,['\nWARNING: both RF sensitivity bias and B1 transmit bias corrections '...
+        '\nare required to generate a quantitative (calibrated) PD map.' ...
         '\nAn amplitude "A" map will be output instead of a quantitative ' ...
         '\nPD map. PD map calibration has been disabled.\n']);
     mpm_params.proc.PD.calibr = 0;
 end    
+
 % if fullOLS, T2*-weighting bias correction must not be applied
 if mpm_params.fullOLS && mpm_params.proc.PD.T2scorr
-    fprintf(1,'\nWARNING: if TE=0 fit is enabled (fullOLS option), no T2*-weighting \nbias correction is required. T2scorr disabled.\n');
+    fprintf(1,['\nWARNING: if TE=0 fit is enabled (fullOLS option), ' ...
+        '\nno T2*-weighting bias correction is required. T2scorr disabled.\n']);
     mpm_params.proc.PD.T2scorr = 0;
 end   
 % T2*-weighting bias correction must always be applied somehow. If neither
@@ -1214,27 +1344,212 @@ if ~mpm_params.fullOLS && ~mpm_params.proc.PD.T2scorr
     fprintf(1,['\nWARNING: both TE=0 fit (fullOLS option) and T2*-weighting ' ...
         '\nbias correction (T2scorr option) are disabled. The T2* bias won''t ' ...
         '\nbe corrected for and impact the resulting PD map. It is strongly ' ...
-        '\nrecommended to have either of these options enabled!\n']);
+        '\nrecommended to have either of these options enabled!' ...
+        '\nNOTE: this recommendation does not apply to single-echo datasets\n']);
 end   
-% defines the type of PD or A map output:
-mpm_params.proc.PD.quantitative = mpm_params.proc.PD.calibr && ~isfield(mpm_params.proc.RFsenscorr,'RF_none');
     
 % whether OLS R2* is calculated
 mpm_params.proc.R2sOLS = hmri_get_defaults('R2sOLS');
 
+% check whether there are enough echoes (neco4R2sfit) to estimate R2*
+% (1) for basic R2* estimation, check only PDw images
+mpm_params.basicR2s = false;
+if mpm_params.PDwidx
+    if length(mpm_params.input(mpm_params.PDwidx).TE) > (mpm_params.neco4R2sfit-1)
+        mpm_params.basicR2s = true;
+    end
+end
+% (2) for ESTATICS R2* estimation, check which (if any) contrast is usable
+mpm_params.estaticsR2s = false*ones(1,mpm_params.ncon);
+if mpm_params.proc.R2sOLS
+    for ccon = 1:mpm_params.ncon
+        mpm_params.estaticsR2s(ccon) = length(mpm_params.input(ccon).TE)>(mpm_params.neco4R2sfit-1);
+    end
+end
+    
+% if T2scorr enabled, must check there will be a R2s map generated!
+if mpm_params.proc.PD.T2scorr && ~(any(mpm_params.estaticsR2s)||mpm_params.basicR2s)
+    fprintf(1,['\nWARNING: not enough echoes available (minimum is %d) to ' ...
+        '\ncalculate R2s map. No T2*-weighting bias correction can be ' ...
+        '\napplied (T2scorr option). T2scorr disabled.\n',]);
+    mpm_params.proc.PD.T2scorr = 0;
+end
+
 % consistency check for number of echoes averaged for A calculation:
-if mpm_params.PDidx && mpm_params.T1idx 
-    if mpm_params.proc.PD.nr_echoes_forA > size(mpm_params.input(mpm_params.T1idx).fnam,1)
+if mpm_params.PDwidx && mpm_params.T1widx 
+    if mpm_params.proc.PD.nr_echoes_forA > size(mpm_params.input(mpm_params.T1widx).fnam,1)
         fprintf(1,['\nWARNING: number of T1w echoes to be averaged for PD calculation (%d)' ...
             '\nis bigger than the available number of echoes (%d). Setting nr_echoes_forA' ...
             '\nto the maximum number of echoes.\n'],mpm_params.proc.PD.nr_echoes_forA, ...
-            size(mpm_params.input(mpm_params.T1idx).fnam,1));
-        mpm_params.proc.PD.nr_echoes_forA = size(mpm_params.input(T1idx).fnam,1);
+            size(mpm_params.input(mpm_params.T1widx).fnam,1));
+        mpm_params.proc.PD.nr_echoes_forA = size(mpm_params.input(mpm_params.T1widx).fnam,1);
     end
 end
 
 % coregistration of all images to the PDw average (or TE=0 fit):
 mpm_params.coreg = hmri_get_defaults('coreg2PDw');
+
+% Prepare output for R1, PD, MT and R2* maps
+RFsenscorr = fieldnames(mpm_params.proc.RFsenscorr);
+B1transcorr = fieldnames(jobsubj.b1_type);
+coutput = 0;
+
+% R1 output: requires PDw and T1w input and optional B1 transmit (or
+% UNICORT) and RF sensitivity maps for bias correction:
+if (mpm_params.T1widx && mpm_params.PDwidx)
+    coutput = coutput+1;
+    mpm_params.qR1 = coutput;
+    mpm_params.output(coutput).suffix = 'R1';
+    mpm_params.output(coutput).units = 's-1';  
+    mpm_params.output(coutput).descrip{1} = 'R1 map [s-1]';
+    switch B1transcorr{1}
+        case 'no_B1_correction'
+            mpm_params.output(coutput).descrip{end+1} = '- no B1+ bias correction applied';
+        case 'UNICORT'
+            mpm_params.output(coutput).descrip{end+1} = '- B1+ bias correction using UNICORT';
+        otherwise
+            mpm_params.output(coutput).descrip{end+1} = sprintf('- B1+ bias correction using provided B1 map (%s)',B1transcorr{1});
+    end
+    switch RFsenscorr{1}
+        case 'RF_none'
+            mpm_params.output(coutput).descrip{end+1} = '- no RF sensitivity bias correction';
+        case 'RF_us' % Unified Segmentation only applies to PD maps
+            mpm_params.output(coutput).descrip{end+1} = '- no RF sensitivity bias correction';
+        case 'RF_once'
+            mpm_params.output(coutput).descrip{end+1} = '- RF sensitivity bias correction based on a single sensitivity measurement';
+        case 'RF_per_contrast'
+            mpm_params.output(coutput).descrip{end+1} = '- RF sensitivity bias correction based on a per-contrast sensitivity measurement';
+    end
+else
+    mpm_params.qR1 = 0;
+end
+
+% PD output: requires PDw and T1w input:
+if (mpm_params.T1widx && mpm_params.PDwidx)
+    coutput = coutput+1;
+    mpm_params.qPD = coutput;
+    if mpm_params.proc.PD.calibr && ...
+            ~isfield(mpm_params.proc.RFsenscorr,'RF_none') && ...
+            (~isempty(jobsubj.b1_trans_input)|| mpm_params.UNICORT.PD)
+        mpm_params.output(coutput).suffix = 'PD';
+        mpm_params.output(coutput).descrip{1} = 'PD map (water concentration) [p.u.]';
+        mpm_params.output(coutput).descrip{end+1} = '- WM calibration (69%)';
+        mpm_params.output(coutput).units = 'p.u.';
+    else
+        mpm_params.output(coutput).suffix = 'A';
+        mpm_params.output(coutput).descrip{1} = 'A map (signal amplitude) [a.u.]';
+        mpm_params.output(coutput).descrip{end+1} = '- no WM calibration (69%)';
+        mpm_params.output(coutput).units = 'a.u.';
+    end
+    switch B1transcorr{1}
+        case 'no_B1_correction'
+            mpm_params.output(coutput).descrip{end+1} = '- no B1+ bias correction applied';
+        case 'UNICORT'
+            if mpm_params.UNICORT.PD
+                mpm_params.output(coutput).descrip{end+1} = '- B1+ bias correction: UNICORT-estimated R1 map + UNICORT(R1)-estimated B1 map';
+            else
+                mpm_params.output(coutput).descrip{end+1} = '- B1+ bias correction: UNICORT-estimated R1 map used for A map calculation';
+            end
+        otherwise
+            mpm_params.output(coutput).descrip{end+1} = sprintf('- B1+ bias correction using provided B1 map (%s)',B1transcorr{1});
+    end
+    switch RFsenscorr{1}
+        case 'RF_none'
+            mpm_params.output(coutput).descrip{end+1} = '- no RF sensitivity bias correction';
+        case 'RF_us' % Unified Segmentation only applies to PD maps
+            if mpm_params.proc.PD.calibr
+                mpm_params.output(coutput).descrip{end+1} = '- RF sensitivity bias correction based on Unified Segmentation';
+            else
+                mpm_params.output(coutput).descrip{end+1} = '- no RF sensitivity bias correction';
+            end
+        case 'RF_once'
+            mpm_params.output(coutput).descrip{end+1} = '- RF sensitivity bias correction based on a single sensitivity measurement';
+        case 'RF_per_contrast'
+            mpm_params.output(coutput).descrip{end+1} = '- RF sensitivity bias correction based on a per-contrast sensitivity measurement';
+    end 
+    if mpm_params.fullOLS 
+        mpm_params.output(coutput).descrip{end+1} = '- R2* bias accounted for by TE=0 extrapolation (fullOLS option)';
+    elseif mpm_params.proc.PD.T2scorr
+        mpm_params.output(coutput).descrip{end+1} = '- R2* bias corrected for (T2scorr option)';            
+    else
+        mpm_params.output(coutput).descrip{end+1} = '- R2* bias not corrected for';            
+    end
+else
+    mpm_params.qPD = 0;
+end
+
+% MT output: requires all three contrasts
+if (mpm_params.T1widx && mpm_params.PDwidx && mpm_params.MTwidx)
+    coutput = coutput+1;
+    mpm_params.qMT = coutput;
+    mpm_params.output(coutput).suffix = 'MT';
+    mpm_params.output(coutput).descrip{1} = 'Delta MT map [a.u.]';
+    mpm_params.output(coutput).units = 'a.u.';
+    switch B1transcorr{1}
+        case 'no_B1_correction'
+            mpm_params.output(coutput).descrip{end+1} = '- no B1+ bias correction applied';
+        case 'UNICORT'
+            if mpm_params.UNICORT.MT
+                mpm_params.output(coutput).descrip{end+1} = '- B1+ bias correction: UNICORT(R1)-estimated B1 map';
+            else
+                mpm_params.output(coutput).descrip{end+1} = '- no B1+ bias correction applied';
+            end
+        otherwise
+           mpm_params.output(coutput).descrip{end+1} = sprintf('- B1+ bias correction using provided B1 map (%s)',B1transcorr{1});
+    end
+    switch RFsenscorr{1}
+        case 'RF_none'
+            mpm_params.output(coutput).descrip{end+1} = '- no RF sensitivity bias correction';
+        case 'RF_us' % Unified Segmentation only applies to PD maps
+            mpm_params.output(coutput).descrip{end+1} = '- no RF sensitivity bias correction';
+        case 'RF_once'
+            mpm_params.output(coutput).descrip{end+1} = '- RF sensitivity bias correction based on a single sensitivity measurement';
+        case 'RF_per_contrast'
+            mpm_params.output(coutput).descrip{end+1} = '- RF sensitivity bias correction based on a per-contrast sensitivity measurement';
+    end     
+else
+    mpm_params.qMT = 0;
+end
+
+if (mpm_params.PDwidx && mpm_params.MTwidx)
+    if (mpm_params.input(mpm_params.MTwidx).TR == mpm_params.input(mpm_params.PDwidx).TR) ...
+        && (mpm_params.input(mpm_params.MTwidx).fa == mpm_params.input(mpm_params.PDwidx).fa) % additional MTR image...
+        coutput = coutput+1;
+        mpm_params.qMTR = coutput;
+        mpm_params.output(coutput).suffix = 'MTR';
+        mpm_params.output(coutput).descrip{1} = 'Classic MTR image [a.u.]';
+        mpm_params.output(coutput).units = 'a.u.';
+    else
+        mpm_params.qMTR = 0;
+    end
+else
+    mpm_params.qMTR = 0;
+end
+
+% R2* map: requires a minimum of 4 echoes with PDw contrast
+if size(mpm_params.input(mpm_params.PDwidx).fnam,1) > 3 
+    coutput = coutput+1;
+    mpm_params.qR2s = coutput;
+    mpm_params.output(coutput).suffix = 'R2s';
+    mpm_params.output(coutput).descrip{1} = 'R2* map [s-1]';
+    mpm_params.output(coutput).units = '[s-1]';
+    if mpm_params.proc.R2sOLS
+        mpm_params.output(coutput).descrip{end+1} = '- ESTATICS model (OLS R2* map calculation)';
+    end   
+    mpm_params.output(coutput).descrip{end+1} = '- B1+ bias correction does not apply';
+    switch RFsenscorr{1}
+        case 'RF_none'
+            mpm_params.output(coutput).descrip{end+1} = '- no RF sensitivity bias correction';
+        case 'RF_us' % Unified Segmentation only applies to PD maps
+            mpm_params.output(coutput).descrip{end+1} = '- no RF sensitivity bias correction';
+        case 'RF_once'
+            mpm_params.output(coutput).descrip{end+1} = '- RF sensitivity bias correction based on a single sensitivity measurement';
+        case 'RF_per_contrast'
+            mpm_params.output(coutput).descrip{end+1} = '- RF sensitivity bias correction based on a per-contrast sensitivity measurement';
+    end     
+else
+    mpm_params.qR2s = 0;
+end
 
 end
 
@@ -1244,7 +1559,7 @@ end
 %=========================================================================%
 function metastruc = init_mpm_output_metadata(input_files, mpm_params)
 
-proc.descrip = 'MPM calculation';
+proc.descrip = ['hMRI toolbox - ' mfilename '.m - map calculation'];
 proc.version = hmri_get_version;
 proc.params = mpm_params;
 

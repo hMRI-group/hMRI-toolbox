@@ -23,7 +23,7 @@ function P_trans = hmri_create_b1map(jobsubj)
 b1map_params = get_b1map_params(jobsubj);
 
 % save b1map_params as json-file
-spm_jsonwrite(fullfile(jobsubj.path.supplpath,'MPM_map_creation_b1map_params.json'),b1map_params,struct('indent','\t'));
+spm_jsonwrite(fullfile(jobsubj.path.supplpath,'hMRI_map_creation_b1map_params.json'),b1map_params,struct('indent','\t'));
 
 % init output
 P_trans = [];
@@ -149,6 +149,7 @@ spm_write_vol(VB1,smB1map_norm);
 % set and write metadata
 input_files = b1map_params.b1input;
 Output_hdr = init_b1_output_metadata(input_files, b1map_params);
+Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (AFI protocol)'];
 Output_hdr.history.output.imtype = 'B1+ map (AFI protocol)';
 set_metadata(VB1.fname,Output_hdr,json);
 
@@ -267,10 +268,10 @@ end
 % define generic output header
 input_files = b1map_params.b1input;
 Output_hdr = init_b1_output_metadata(input_files, b1map_params);
-Output_hdr.history.procstep.descrip = 'B1+ map calculation (EPI SE/STE protocol)';
+Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (EPI SE/STE protocol)'];
  
 % save B1 map (still distorted and not smoothed)
-Output_hdr.history.output.imtype = 'Distorted B1+ map';
+Output_hdr.history.output.imtype = 'SE/STE B1 mapping - Distorted B1+ map';
 Output_hdr.history.output.units = 'p.u.';
 V_save = struct('fname',V(1).fname,'dim',V(1).dim,'mat',V(1).mat,'dt',V(1).dt,'descrip','B1 map [%]');
 [~,outname,e] = fileparts(V_save.fname);
@@ -279,7 +280,7 @@ V_save = spm_write_vol(V_save,Y_ab*100);
 set_metadata(V_save.fname,Output_hdr,json);
 
 % save SD map (still distorted and not smoothed)
-Output_hdr.history.output.imtype = 'Distorted SD (error) map';
+Output_hdr.history.output.imtype = 'SE/STE B1 mapping - Distorted SD (error) map';
 Output_hdr.history.output.units = 'p.u.';
 W_save = struct('fname',V(1).fname,'dim',V(1).dim,'mat',V(1).mat,'dt',V(1).dt,'descrip','SD [%]');
 W_save.fname = fullfile(outpath,['SDmap_' outname e]);
@@ -287,7 +288,7 @@ W_save = spm_write_vol(W_save,Y_cd*100);
 set_metadata(W_save.fname,Output_hdr,json);
 
 % save SD map (still distorted and not smoothed)
-Output_hdr.history.output.imtype = 'SSQ image';
+Output_hdr.history.output.imtype = 'SE/STE B1 mapping - SSQ image';
 Output_hdr.history.output.units = 'a.u.';
 X_save = struct('fname',V(1).fname,'dim',V(1).dim,'mat',V(1).mat,'dt',V(1).dt,'descrip','SE SSQ matrix');
 X_save.fname = fullfile(outpath,['SumOfSq' outname e]);
@@ -329,37 +330,41 @@ ustd_img{1} = unwarp_img{3}.fname;
 % set metadata for unwrapped output images
 % define generic header for B0-unwarp process
 scphasefnam = fullfile(b1map_params.outpath, spm_file(spm_file(fmfnam(2,:),'prefix','sc'),'filename'));
-input_files = cat(1,{anatfnam},{fmfnam(1,:)},{fmfnam(2,:)},otherfnam{1},otherfnam{2});
+% relate outputs to inputs remaining visible after cleanup! i.e. original
+% B1 and B0 mapping images (not to the intermediate images created
+% during B1 calculation):
+% input_files = cat(1,{anatfnam},{fmfnam(1,:)},{fmfnam(2,:)},otherfnam{1},otherfnam{2});
+input_files = char(b1map_params.b1input,b1map_params.b0input);
 Output_hdr = init_b1_output_metadata(input_files, b1map_params);
-Output_hdr.history.procstep.descrip = 'Unwarp B1 map (EPI SE/STE protocol)';
+Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (EPI SE/STE protocol)'];
 
 % set metadata for unwarped B1 image 
-Output_hdr.history.output.imtype = 'Unwarped B1 map';
+Output_hdr.history.output.imtype = 'SE/STE B1 mapping - Unwarped B1 map';
 Output_hdr.history.output.units = 'p.u.';
 set_metadata(ub1_img{1},Output_hdr,json);
 
 % set metadata for unwarped SD map 
-Output_hdr.history.output.imtype = 'Unwarped SD (error) map';
+Output_hdr.history.output.imtype = 'SE/STE B1 mapping - Unwarped SD (error) map';
 Output_hdr.history.output.units = 'p.u.';
 set_metadata(ustd_img{1},Output_hdr,json);
 
 % set metadata for unwarped SSQ map 
-Output_hdr.history.output.imtype = 'Unwarped SSQ image for anatomical reference';
+Output_hdr.history.output.imtype = 'SE/STE B1 mapping - Unwarped SSQ image for anatomical reference';
 Output_hdr.history.output.units = 'a.u.';
 set_metadata(uanat_img{1},Output_hdr,json);
 
 % set metadata for phase-unwrapped regularised field map (Hz) (fpm_* file) 
-Output_hdr.history.output.imtype = 'Phase-unwrapped regularised field map';
+Output_hdr.history.output.imtype = 'SE/STE B1 mapping - Phase-unwrapped regularised field map';
 Output_hdr.history.output.units = 'Hz';
 set_metadata(fmap_img{1}.fname,Output_hdr,json);
 
 % set metadata for Voxel Displacement Map (vdm5_* file) 
-Output_hdr.history.output.imtype = 'Voxel displacement map';
+Output_hdr.history.output.imtype = 'SE/STE B1 mapping - Voxel displacement map';
 Output_hdr.history.output.units = 'Vx';
 set_metadata(fmap_img{2}.fname,Output_hdr,json);
 
 % set metadata for phase map scaled between +/-pi (sc* file)
-Output_hdr.history.output.imtype = 'Phase map rescaled between [-pi, pi]';
+Output_hdr.history.output.imtype = 'SE/STE B1 mapping - Phase map rescaled between [-pi, pi]';
 Output_hdr.history.output.units = 'Radians';
 set_metadata(scphasefnam,Output_hdr,json);
 
@@ -371,13 +376,17 @@ vdm_img{1} = fmap_img{2};
 
 % set metadata for processing B1 images
 % define generic header for B1 process
-input_files = cat(1,ub1_img,ustd_img,vdm_img{1}.fname,fpm_img{1}.fname);
+% relate outputs to inputs remaining visible after cleanup! i.e. original
+% B1 and B0 mapping images (not to the intermediate images created
+% during B1 calculation):
+% input_files = cat(1,ub1_img,ustd_img,vdm_img{1}.fname,fpm_img{1}.fname);
+input_files = char(b1map_params.b1input,b1map_params.b0input);
 Output_hdr = init_b1_output_metadata(input_files, b1map_params);
-Output_hdr.history.procstep.descrip = 'Process B1 map (EPI SE/STE protocol)';
+Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (EPI SE/STE protocol)'];
 
 % set metadata for each output
 for i=1:length(allub1_img)
-    Output_hdr.history.output.imtype = allub1_img{i}.descrip;
+    Output_hdr.history.output.imtype = ['SE/STE B1 mapping - ' allub1_img{i}.descrip];
     Output_hdr.history.output.units = 'p.u.';
     set_metadata(allub1_img{i}.fname,Output_hdr,json);
 end
@@ -388,10 +397,10 @@ end
 % *_B1map (for B1+ bias map in p.u.):  
 B1map = fullfile(outpath,[outname '_B1map.nii']);
 copyfile(allub1_img{2}.fname, B1map);
-copyfile([spm_str_manip(allub1_img{2}.fname,'r') '.json'],[spm_str_manip(B1map,'r') '.json']); 
+try copyfile([spm_str_manip(allub1_img{2}.fname,'r') '.json'],[spm_str_manip(B1map,'r') '.json']); end
 B1ref = fullfile(outpath,[outname '_B1ref.nii']);
 copyfile(uanat_img{1}, B1ref);
-copyfile([spm_str_manip(uanat_img{1},'r') '.json'],[spm_str_manip(B1ref,'r') '.json']); 
+try copyfile([spm_str_manip(uanat_img{1},'r') '.json'],[spm_str_manip(B1ref,'r') '.json']); end
 P_trans  = char(B1ref, B1map);
 
 end
@@ -441,7 +450,8 @@ spm_write_vol(VB1,smB1map_norm);
 % set and write metadata
 input_files = cat(1,{V2.fname},{V1.fname});
 Output_hdr = init_b1_output_metadata(input_files, b1map_params);
-Output_hdr.history.procstep.descrip = 'B1+ map calculation (SIEMENS tfl_b1map protocol)';
+Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (SIEMENS tfl_b1map protocol)'];
+
 set_metadata(VB1.fname,Output_hdr,json);
 
 % copy also anatomical image to outpath to prevent modification of original data
@@ -498,7 +508,7 @@ spm_write_vol(VB1,smB1map_norm);
 % set and write metadata
 input_files = cat(1,{V2.fname},{V1.fname});
 Output_hdr = init_b1_output_metadata(input_files, b1map_params);
-Output_hdr.history.procstep.descrip = 'B1+ map calculation (SIEMENS rf_map protocol)';
+Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (SIEMENS rf_map protocol)'];
 set_metadata(VB1.fname,Output_hdr,json);
 
 % copy also anatomical image to outpath to prevent modification of original data
@@ -546,6 +556,11 @@ end
 b1map_params = hmri_get_defaults(['b1map.' b1_protocol]); 
 
 fprintf(1,'\n\n---------------- B1 MAP CALCULATION (%s) ----------------\n',b1_protocol);
+
+% save SPM version (slight differences may appear in the results depending
+% on the SPM version!)
+[v,r] = spm('Ver');
+b1map_params.SPMver = sprintf('%s (%s)', v, r);
 
 % load B1 input images if any
 % (NB: if a 'b1input' field is present, it should NOT be empty)
@@ -690,7 +705,7 @@ end
 %=========================================================================%
 function metastruc = init_b1_output_metadata(input_files, b1map_params)
 
-proc.descrip = 'B1+ map calculation';
+proc.descrip = ['hMRI toolbox - ' mfilename '.m - B1+ map calculation'];
 proc.version = hmri_get_version;
 proc.params = b1map_params;
 

@@ -94,8 +94,13 @@ job.subj.path.mpmpath = mpmpath;
 job.subj.path.respath = respath;
 job.subj.path.supplpath = supplpath;
 
+% save SPM version (slight differences may appear in the results depending
+% on the SPM version!)
+[v,r] = spm('Ver');
+job.SPMver = sprintf('%s (%s)', v, r);
+
 % save original job (before it gets modified by RFsens)
-spm_jsonwrite(fullfile(supplpath,'MPM_map_creation_job_create_maps.json'),job,struct('indent','\t'));
+spm_jsonwrite(fullfile(supplpath,'hMRI_map_creation_job_create_maps.json'),job,struct('indent','\t'));
 
 % run B1 map calculation for B1 bias correction
 P_trans = hmri_create_b1map(job.subj);
@@ -107,15 +112,11 @@ if isfield(job.subj.sensitivity,'RF_once') || isfield(job.subj.sensitivity,'RF_p
 end
 
 % run hmri_create_MTProt to evaluate the parameter maps
-[fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw]  = hmri_create_MTProt(job.subj, P_trans);
+job.subj.b1_trans_input = P_trans;
+[fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw]  = hmri_create_MTProt(job.subj);
 
-% apply UNICORT if required, and collect outputs:
-if (isfield(job.subj.b1_type,'UNICORT') && ~isempty(fR1) && ~isempty(PPDw))
-    out_unicort = hmri_create_unicort(PPDw, fR1, job.subj);
-    out_loc.subj.R1  = {out_unicort.R1u};
-else
-    out_loc.subj.R1  = {fR1};
-end
+% collect outputs:
+out_loc.subj.R1  = {fR1};
 out_loc.subj.R2s = {fR2s};
 out_loc.subj.MT  = {fMT};
 out_loc.subj.A   = {fA};

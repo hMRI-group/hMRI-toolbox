@@ -96,10 +96,10 @@ job.subj.path.supplpath = supplpath;
 % save log file location
 job.subj.log.logfile = fullfile(supplpath, 'hMRI_map_creation_logfile.log');
 job.subj.log.flags = struct('LogFile',struct('Enabled',true,'FileName','hMRI_map_creation_logfile.log','LogDir',supplpath), ...
-    'PopUp',false,'ComWin',true);
+    'PopUp',job.subj.popup,'ComWin',true);
 flags = job.subj.log.flags;
 flags.PopUp = false;
-hmri_log(sprintf('\t============ CREATE hMRI MAPS MODULE (%s) ============', datestr(now)),flags);
+hmri_log(sprintf('\t============ CREATE hMRI MAPS MODULE - %s.m (%s) ============', mfilename, datestr(now)),flags);
 
 if newrespath
     hmri_log(sprintf(['WARNING: existing results from previous run(s) were found, \n' ...

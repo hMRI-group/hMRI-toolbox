@@ -411,7 +411,7 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
     % OLS fit at TE=0: to be used instead of averaged echoes of each
     % contrast if "fullOLS" option is enabled
     if mpm_params.fullOLS
-        hmri_log(sprintf('\t-------- and fit to TE=0 for all contrasts --------'),mpm_params.nopuflags);
+        hmri_log(sprintf('\t-------- and fit to TE=0 for each contrast --------'),mpm_params.nopuflags);
  
         Nmap = nifti;
         Pte0 = cell(1,mpm_params.ncon);
@@ -1368,9 +1368,10 @@ mpm_params.proc.PD = hmri_get_defaults('PDproc');
 % if no RF sensitivity bias correction or no B1 transmit bias correction
 % applied, not worth trying any calibration:
 if (isfield(mpm_params.proc.RFsenscorr,'RF_none')||(isempty(jobsubj.b1_trans_input)&&~mpm_params.UNICORT.PD)) && mpm_params.proc.PD.calibr
-    hmri_log(sprintf(['WARNING: both RF sensitivity bias and B1 transmit bias corrections '...
+    hmri_log(sprintf(['WARNING: both RF sensitivity and B1 transmit bias corrections '...
         '\nare required to generate a quantitative (calibrated) PD map.' ...
-        '\nAn amplitude "A" map will be output instead of a quantitative ' ...
+        '\nEither or both of these is missing. Therefore an amplitude ' ...
+        '\n"A" map will be output instead of a quantitative ' ...
         '\nPD map. PD map calibration has been disabled.']),mpm_params.defflags);
     mpm_params.proc.PD.calibr = 0;
 end    
@@ -1425,7 +1426,7 @@ if mpm_params.PDwidx && mpm_params.T1widx
     if mpm_params.proc.PD.nr_echoes_forA > size(mpm_params.input(mpm_params.T1widx).fnam,1)
         hmri_log(sprintf(['WARNING: number of T1w echoes to be averaged for PD calculation (%d)' ...
             '\nis bigger than the available number of echoes (%d). Setting nr_echoes_forA' ...
-            '\nto the maximum number of echoes.'], mpm_params.proc.PD.nr_echoes_forA, ...
+            '\nto the maximum number of echoes available.'], mpm_params.proc.PD.nr_echoes_forA, ...
             size(mpm_params.input(mpm_params.T1widx).fnam,1)),mpm_params.defflags);
         mpm_params.proc.PD.nr_echoes_forA = size(mpm_params.input(mpm_params.T1widx).fnam,1);
     end
@@ -1562,7 +1563,7 @@ if (mpm_params.PDwidx && mpm_params.MTwidx)
         coutput = coutput+1;
         mpm_params.qMTR = coutput;
         mpm_params.output(coutput).suffix = 'MTR';
-        mpm_params.output(coutput).descrip{1} = 'Classic MTR image [a.u.]';
+        mpm_params.output(coutput).descrip{1} = 'Classic MTR image [a.u.] - not currently saved in Results';
         mpm_params.output(coutput).units = 'a.u.';
     else
         mpm_params.qMTR = 0;

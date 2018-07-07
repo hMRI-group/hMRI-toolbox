@@ -25,7 +25,7 @@ function [fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw]  = hmri_create_MTProt(jobsubj) %
 %   fA      Proton density map output filename (free water concentration
 %           (PD) [%] or signal amplitude (A) [a.u.] depending on job and
 %           defaults settings (PDproc & RF sensitivity bias correction)). 
-%   PPDw    averate PD-weighted image filename (or OLS fit at TE=0 if fullOLS = true) 
+%   PPDw    average PD-weighted image filename (or OLS fit at TE=0 if fullOLS = true) 
 %   PT1w    average T1-weighted image filename (or OLS fit at TE=0 if fullOLS = true)  
 %   PMTw    average MT-weighted image filename (or OLS fit at TE=0 if fullOLS = true)  
 %
@@ -83,9 +83,11 @@ function [fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw]  = hmri_create_MTProt(jobsubj) %
 %% =======================================================================%
 % Initiate processing
 %=========================================================================%
-fprintf(1, ['---------------------- MPM PROCESSING ----------------------\n' ...
-    'Create maps from multi-contrast multi-echo FLASH protocol.\n']); 
-                    
+
+flags = jobsubj.log.flags;
+flags.PopUp = false;
+hmri_log(sprintf('\t============ MPM PROCESSING - %s.m (%s) ============', mfilename, datestr(now)),flags);
+
 % retrieves all required parameters for MPM processing
 mpm_params = get_mpm_params(jobsubj);
 
@@ -144,12 +146,12 @@ dm = V_pdw(1).dim;
 % Calculate R2* map from PDw echoes
 %=========================================================================%
 fR2s = '';
-fprintf(1,'\n    -------- R2* map calculation --------\n');
-fprintf(1,['\nINFO: minimum number of echoes required for R2* maps calculation is %d.' ...
-    '\nNumber of PDw echoes available: %d\n'], mpm_params.neco4R2sfit, length(mpm_params.input(PDwidx).TE));
+hmri_log(sprintf('\t-------- R2* map calculation (basic exponential decay) --------'),mpm_params.nopuflags);
+hmri_log(sprintf(['INFO: minimum number of echoes required for R2* map calculation is %d.' ...
+    '\nNumber of PDw echoes available: %d'], mpm_params.neco4R2sfit, length(mpm_params.input(PDwidx).TE)), mpm_params.nopuflags);
 if mpm_params.basicR2s
     if length(mpm_params.input(PDwidx).TE)<6
-        fprintf(1,['\nGENERAL WARNING: deriving R2* map from an echo train including ' ...
+        hmri_log(sprintf(['GENERAL WARNING: deriving R2* map from an echo train including ' ...
             '\nfewer than 6 echoes has not been validated nor investigated. ' ...
             '\nFor a robust estimation, the minimum number of echoes required ' ...
             '\ndepends on many factors, amongst which: ' ...
@@ -158,7 +160,7 @@ if mpm_params.basicR2s
             '\n\t\taffected by the specific contrast, violating the assumption of a ' ...
             '\n\t\tcommon decay between contrasts.' ...
             '\nInterpret results carefully, with in mind a possible lack of robustness ' ...
-            '\nand reliability in the R2* estimation.\n']);
+            '\nand reliability in the R2* estimation.']),mpm_params.defflags);
     end
         
     spm_progress_bar('Init',dm(3),'R2* fit','planes completed');
@@ -195,13 +197,13 @@ if mpm_params.basicR2s
     Output_hdr.history.output.units = 's-1';
     set_metadata(fR2s,Output_hdr,mpm_params.json);
 else 
-    fprintf(1,'\nNo R2* map will be calculated.\n');
+    hmri_log(sprintf('No (basic) R2* map will be calculated.'), mpm_params.defflags);
 end
 
 %% =======================================================================%
 % Reading and averaging the images 
 %=========================================================================%
-fprintf(1,'\n    -------- Reading and averaging the images --------\n');
+hmri_log(sprintf('\t-------- Reading and averaging the images --------'),mpm_params.nopuflags);
 
 % Average only first few echoes for increased SNR and fit T2* 
 Pavg = cell(1,mpm_params.ncon);
@@ -265,7 +267,7 @@ end
 %% =======================================================================%
 % Coregistering the images
 %=========================================================================%
-fprintf(1,'\n    -------- Coregistering the images  --------\n');
+hmri_log(sprintf('\t-------- Coregistering the images --------'),mpm_params.nopuflags);
 % NOTE: coregistration can be disabled using the hmri_def.coreg2PDw flag
 
 x_MT2PD = [0 0 0 0 0 0];
@@ -319,7 +321,7 @@ end
 % measurement).
 %=========================================================================%
 if mpm_params.QA.enable
-    fprintf(1,'\n    -------- multi-contrast R2* map calculation for QA --------\n');
+    hmri_log(sprintf('\t-------- Multi-contrast R2* map calculation for QA --------'),mpm_params.nopuflags);
     
     fR2sQA = cell(1,mpm_params.ncon);
     for ccon = 1:mpm_params.ncon
@@ -382,16 +384,17 @@ end
 % [Reference: ESTATICS, Weiskopf et al. 2014]
 %=========================================================================%
 fR2s_OLS = '';
-fprintf(1,'\n    -------- OLS R2* map calculation (ESTATICS) --------\n');
-fprintf(1,['\nINFO: minimum number of echoes required for R2* maps calculation is %d.' ...
+hmri_log(sprintf('\t-------- OLS R2* map calculation (ESTATICS) --------'),mpm_params.nopuflags);
+LogMsg = sprintf(['INFO: minimum number of echoes required for R2* map calculation is %d.' ...
     '\nNumber of echoes available: '], mpm_params.neco4R2sfit);
 for ccon = 1:mpm_params.ncon
-    fprintf(1,'%sw = %d. ',mpm_params.input(ccon).tag,length(mpm_params.input(ccon).TE));
+    LogMsg = sprintf('%s %sw = %d.',LogMsg, mpm_params.input(ccon).tag, length(mpm_params.input(ccon).TE));
 end
-fprintf(1,'\n');
+hmri_log(LogMsg, mpm_params.nopuflags);
+
 if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
-    if length(mpm_params.input(PDwidx).TE)<6
-        fprintf(1,['\nGENERAL WARNING: deriving R2* map from echo trains including ' ...
+    if length(mpm_params.input(PDwidx).TE)<6 
+        hmri_log(sprintf(['GENERAL WARNING: deriving R2* map from echo trains including ' ...
             '\nfewer than 6 echoes has not been validated nor investigated. ' ...
             '\nFor a robust estimation, the minimum number of echoes required ' ...
             '\ndepends on many factors, amongst which: ' ...
@@ -402,14 +405,14 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
             '\n\t- number of contrasts available (fewer echoes per contrast required ' ...
             '\n\t\tfor 3 (PDw, T1w, MTw) contrasts as compared to 2 or even 1) ' ...
             '\nInterpret results carefully, with in mind a possible lack of robustness ' ...
-            '\nand reliability in the R2* estimation.\n']);
+            '\nand reliability in the R2* estimation.']),mpm_params.defflags);
     end
         
     % OLS fit at TE=0: to be used instead of averaged echoes of each
     % contrast if "fullOLS" option is enabled
     if mpm_params.fullOLS
-        fprintf(1,'\n    -------- and fit to TE=0 for all contrasts --------\n');
-
+        hmri_log(sprintf('\t-------- and fit to TE=0 for all contrasts --------'),mpm_params.nopuflags);
+ 
         Nmap = nifti;
         Pte0 = cell(1,mpm_params.ncon);
         for ccon = 1:mpm_params.ncon
@@ -528,7 +531,7 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
     set_metadata(fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qR2s).suffix '_OLS.nii']),Output_hdr,mpm_params.json);
    
 else
-    fprintf(1,'\nNo R2* map will be calculated using the ESTATICS model.\n');
+    hmri_log('No R2* map will be calculated using the ESTATICS model.', mpm_params.defflags);
 end % OLS code
 
 % if "fullOLS" option enabled AND could be applied to every contrast
@@ -585,7 +588,7 @@ end
 %% =======================================================================%
 % Map calculation continued (R1, PD, MT) 
 %=========================================================================%
-fprintf(1,'\n    -------- Map calculation continued (R1, PD, MT) --------\n');
+hmri_log(sprintf('\t-------- Map calculation continued (R1, MTR) --------'), mpm_params.nopuflags);
 
 M0 = Ni.mat;
 
@@ -680,6 +683,8 @@ if (mpm_params.UNICORT.R1)
     set_metadata(fR1,Output_hdr{1},mpm_params.json);
 end
 V_R1 = spm_vol(fR1);
+
+hmri_log(sprintf('\t-------- Map calculation continued (MT, A/PD) --------'), mpm_params.nopuflags);
 
 spm_progress_bar('Init',dm(3),'Calculating maps (continued)','planes completed');
 
@@ -777,7 +782,7 @@ end
 %=========================================================================%
 if mpm_params.ACPCrealign 
     if (MTwidx && PDwidx && T1widx)
-    fprintf(1,'\n    -------- ACPC Realign all images --------\n');
+    hmri_log(sprintf('\t-------- ACPC Realign all images --------'), mpm_params.nopuflags);
     
     % Define and calculate masked MT image
     % Load MT image
@@ -823,10 +828,10 @@ if mpm_params.ACPCrealign
     spm_jsonwrite(fullfile(supplpath,'hMRI_map_creation_ACPCrealign_transformation_matrix.json'),R,struct('indent','\t'));
 
     else
-        fprintf(1,['\nWARNING: ACPC Realign was enabled, but no MT map was available \n' ...
+        hmri_log(sprintf(['WARNING: ACPC Realign was enabled, but no MT map was available \n' ...
                    'to proceed. ACPC realignment must be done separately, e.g. you can \n'...
                    'run [hMRI tools > Auto-reorient] before calculating the maps.\n' ...
-                   'NOTE: segmentation might crash if no initial reorientation.\n']);
+                   'NOTE: segmentation might crash if no initial reorientation.']), mpm_params.defflags);
     end
 end
 
@@ -1012,6 +1017,9 @@ spm_jsonwrite(fullfile(supplpath,'hMRI_map_creation_mpm_params.json'),mpm_params
 
 spm_progress_bar('Clear');
 
+hmri_log(sprintf('\t============ MPM PROCESSING: completed (%s) ============', datestr(now)),mpm_params.nopuflags);
+
+
 end
 
 %% =======================================================================%
@@ -1061,7 +1069,7 @@ function PDcalculation(fA, fTPM, mpm_params)
 % fA is the filename of the output A image 
 % (not yet properly quantitative PD map when it enters PDcalculation)
 % fTMP is the list of TPMs generated from MT map
-fprintf(1,'\n    -------- Proton density map calculation --------\n');
+hmri_log(sprintf('\t-------- Proton density map calculation --------'), mpm_params.nopuflags);
 
 PDproc = mpm_params.proc.PD;
 threshA = mpm_params.proc.threshall.A;
@@ -1110,8 +1118,8 @@ end
 % matter value from the litterature (69%)
 A_WM = WMmask.*Y;
 Y = Y/mean(A_WM(A_WM~=0))*69;
-fprintf(1,'\nINFO (PD calculation):\n\tmean White Matter intensity: %.1f\n',mean(A_WM(A_WM~=0)));
-fprintf(1,'\tSD White Matter intensity %.1f\n\n',std(A_WM(A_WM~=0),[],1));
+hmri_log(sprintf(['INFO (PD calculation):\n\tmean White Matter intensity: %.1f\n' ...
+    '\tSD White Matter intensity %.1f\n'],mean(A_WM(A_WM~=0)),std(A_WM(A_WM~=0))), mpm_params.defflags);
 Y(Y>200) = 0;
 % MFC: Estimating Error for data set to catch bias field issues:
 errorEstimate = std(A_WM(A_WM > 0))./mean(A_WM(A_WM > 0));
@@ -1119,8 +1127,8 @@ Vsave = spm_vol(fA);
 Vsave.descrip = [Vsave.descrip '. Error Estimate: ', num2str(errorEstimate)];
 if errorEstimate > 0.06 %#ok<BDSCI>
     % MFC: Testing on 15 subjects showed 6% is a good cut-off:
-    fprintf(1,['\nWARNING: Error estimate is high (%.1f%%) for calculated PD map:\n%s' ...
-        '\nError higher than 6%% may indicate motion.\n\n'], errorEstimate*100, Vsave.fname);
+    hmri_log(sprintf(['WARNING: Error estimate is high (%.1f%%) for calculated PD map:\n%s' ...
+        '\nError higher than 6%% may indicate motion.\n'], errorEstimate*100, Vsave.fname), mpm_params.defflags);
 end
 if mpm_params.QA.enable
     if exist(mpm_params.QA.fnam,'file')
@@ -1146,6 +1154,13 @@ function mpm_params = get_mpm_params(jobsubj)
 [v,r] = spm('Ver');
 mpm_params.SPMver = sprintf('%s (%s)', v, r);
 
+% flags for logging information and warnings
+mpm_params.defflags = jobsubj.log.flags; % default flags
+mpm_params.nopuflags = jobsubj.log.flags; % force no Pop-Up
+mpm_params.nopuflags.PopUp = false; 
+
+hmri_log(sprintf('\t------------ PROCESSING PARAMETERS: SETTING UP AND CONSISTENCY CHECK ------------'),mpm_params.nopuflags);
+
 % global parameters
 mpm_params.json = hmri_get_defaults('json');
 mpm_params.centre = hmri_get_defaults('centre');
@@ -1163,9 +1178,9 @@ mpm_params.fullOLS = hmri_get_defaults('fullOLS'); % uses all echoes for OLS fit
 
 mpm_params.neco4R2sfit = hmri_get_defaults('neco4R2sfit'); % minimum number of echoes for R2* calculation 
 if mpm_params.neco4R2sfit<2
-    fprintf(1,['\nWARNING: the (strict) minimum number of echoes required to ' ...
+    hmri_log(sprintf(['WARNING: the (strict) minimum number of echoes required to ' ...
         '\ncalculate R2* map is 2. The default value (%d) has been modified ' ...
-        '\nand is now neco4R2sfit=2.\n']);
+        '\nand is now neco4R2sfit=2.']),mpm_params.defflags);
     mpm_params.neco4R2sfit = 2;
 end
 
@@ -1175,18 +1190,40 @@ tmp = hmri_get_defaults('UNICORT');
 mpm_params.UNICORT.PD = tmp.PD; % uses B1map estimated as biasfield for R1 to correct for B1 transmit bias in PD
 mpm_params.UNICORT.MT = tmp.MT; % uses B1map estimated as biasfield for R1 to correct for B1 transmit bias in MT
 
+LogMsg = '';
+if mpm_params.UNICORT.R1
+    LogMsg = sprintf(['%s\nINFO: B1 transmit field estimated using UNICORT ' ...
+        '\nand applied to correct R1 maps for B1 transmit bias.'], LogMsg);
+    flags = mpm_params.nopuflags;
+end
+if mpm_params.UNICORT.PD
+    LogMsg = sprintf(['%s\nWARNING: UNICORT B1+ estimate (if available) will be ' ...
+        '\nused to correct the PD map for B1 transmit bias. This method has ' ...
+        '\nnot been validated. Use with care!'], LogMsg);
+    flags = mpm_params.defflags;
+end
+if mpm_params.UNICORT.MT
+    LogMsg = sprintf(['%s\nWARNING: UNICORT B1+ estimate (if available) will be ' ...
+        '\nused to correct the MT map for high-order B1 transmit bias. This ' ...
+        '\nmethod has not been validated. Use with care!'], LogMsg);
+    flags = mpm_params.defflags;
+end
+if ~isempty(LogMsg)
+    hmri_log(LogMsg,flags);
+end
+
 % check consistency in UNICORT settings:
 if ~mpm_params.UNICORT.R1
     if mpm_params.UNICORT.PD
-        fprintf(1,['\nWARNING: no UNICORT B1 estimate available for PD calculation.' ...
+        hmri_log(sprintf(['WARNING: no UNICORT B1 estimate available for PD calculation.' ...
             '\nB1 bias correction must be defined as "UNICORT" (not the case).' ...
-            '\nUNICORT.PD is disabled!\n']);
+            '\nUNICORT.PD is disabled!']),mpm_params.defflags);
         mpm_params.UNICORT.PD = false;
     end
     if mpm_params.UNICORT.MT
-        fprintf(1,['\nWARNING: no UNICORT B1 estimate available for MT calculation.' ...
+        hmri_log(sprintf(['WARNING: no UNICORT B1 estimate available for MT calculation.' ...
             '\nB1 bias correction must be defined as "UNICORT" (not the case).' ...
-            '\nUNICORT.MT is disabled!\n']);
+            '\nUNICORT.MT is disabled!']),mpm_params.defflags);
         mpm_params.UNICORT.MT = false;
     end
 end
@@ -1197,15 +1234,15 @@ end
 % if no input files for a given contrast, no input entry created and
 % warning is thrown.
 ccon = 0;
-fprintf(1,'\nINFO: FLASH echoes loaded for each contrast are: ');
+LogMsg = 'INFO: FLASH echoes loaded for each contrast are: ';
 % 1) try MTw contrast:
 tmpfnam   = char(jobsubj.raw_mpm.MT); % P_mtw
 if isempty(tmpfnam)
-    fprintf(1,'\n\t- WARNING: no MT-weighted FLASH echoes available!');
+    LogMsg = sprintf('%s\n\t- WARNING: no MT-weighted FLASH echoes available!',LogMsg);
     mpm_params.MTwidx = 0; % zero index means no contrast available
 else
     ccon = ccon+1;
-    fprintf(1,'\n\t- MT-weighted: %d echoes', size(tmpfnam,1));
+    LogMsg = sprintf('%s\n\t- MT-weighted: %d echoes',LogMsg,size(tmpfnam,1));
     mpm_params.input(ccon).fnam = tmpfnam;
     mpm_params.input(ccon).tag = 'MT';  
     mpm_params.MTwidx = ccon;
@@ -1213,11 +1250,11 @@ end
 % 2) try PDw contrast:
 tmpfnam   = char(jobsubj.raw_mpm.PD); % P_pdw
 if isempty(tmpfnam)
-    fprintf(1,'\n\n\t- WARNING: no PD-weighted FLASH echoes available! \n\t\tThe map creation won''t be able to proceed!\n');
+    LogMsg = sprintf('%s\n\t- WARNING: no PD-weighted FLASH echoes available! \n\t\tThe map creation won''t proceed!',LogMsg);
     mpm_params.PDwidx = 0; % zero index means no contrast available
 else
     ccon = ccon+1;
-    fprintf(1,'\n\t- PD-weighted: %d echoes', size(tmpfnam,1));
+    LogMsg = sprintf('%s\n\t- PD-weighted: %d echoes',LogMsg,size(tmpfnam,1));
     mpm_params.input(ccon).fnam = tmpfnam;
     mpm_params.input(ccon).tag = 'PD';  
     mpm_params.PDwidx = ccon;
@@ -1225,18 +1262,20 @@ end
 % 3) try T1w contrast:
 tmpfnam   = char(jobsubj.raw_mpm.T1); % P_t1w
 if isempty(tmpfnam)
-    fprintf(1,'\n\t- WARNING: no T1-weighted FLASH echoes available!');
+    LogMsg = sprintf('%s\n\t- WARNING: no T1-weighted FLASH echoes available!',LogMsg);
     mpm_params.T1widx = 0; % zero index means no contrast available
 else
     ccon = ccon+1;
-    fprintf(1,'\n\t- T1-weighted: %d echoes', size(tmpfnam,1));
+    LogMsg = sprintf('%s\n\t- T1-weighted: %d echoes',LogMsg,size(tmpfnam,1));
     mpm_params.input(ccon).fnam = tmpfnam;
     mpm_params.input(ccon).tag = 'T1';  
     mpm_params.T1widx = ccon; % zero index means no contrast available    
 end 
 mpm_params.ncon = ccon; % number of contrasts available
-fprintf(1,'\n');
 
+% Message displayed as pop-up if enabled since it is an important
+% information 
+hmri_log(LogMsg, mpm_params.defflags);
 
 % collect TE, TR and FA for each available contrast
 for ccon = 1:mpm_params.ncon
@@ -1246,7 +1285,7 @@ for ccon = 1:mpm_params.ncon
         mpm_params.input(ccon).TR = p(1).tr;
         mpm_params.input(ccon).fa = p(1).fa;
     else
-        fprintf(1,'\nWARNING: No TE/TR/FA values found for %sw images. Fallback to defaults.\n',mpm_params.input(ccon).tag);
+        hmri_log(sprintf('WARNING: No TE/TR/FA values found for %sw images. Fallback to defaults.',mpm_params.input(ccon).tag),mpm_params.defflags);
         MPMacq = hmri_get_defaults('MPMacq');
         mpm_params.input(ccon).TE = MPMacq.(['TE_' lower(mpm_params.input(ccon).tag) 'w']);
         mpm_params.input(ccon).TR = MPMacq.(['TR_' lower(mpm_params.input(ccon).tag) 'w']);
@@ -1262,6 +1301,7 @@ if ~mpm_params.fullOLS
         TEcon2 = mpm_params.input(ccon+1).TE;
         for necho = 1:min(length(TEcon1),length(TEcon2))
             if ~(TEcon1(necho)==TEcon2(necho))
+                hmri_log('ERROR: Echo times do not match between contrasts! Aborting.',mpm_params.defflags);
                 error('Echo times do not match between contrasts! Aborting.');
             end
         end
@@ -1278,7 +1318,7 @@ end
 % find maximum number of echoes that are common to all available contrasts
 % AND one more than the maxTEval4avg:
 mpm_params.nr_echoes4avg = min(length(find(mpm_params.input(1).TE<maxTEval4avg))+1,ncommonTEvals);
-fprintf(1,'\nINFO: averaged PDw/T1w/MTw will be calculated based on the first %d echoes.\n',mpm_params.nr_echoes4avg);
+hmri_log(sprintf('INFO: averaged PDw/T1w/MTw will be calculated based on the first %d echoes.',mpm_params.nr_echoes4avg),mpm_params.nopuflags);
         
 % if T1w and PDw data available, identify the protocol to define RF
 % spoiling correction parameters (for T1 map calculation)
@@ -1298,12 +1338,17 @@ if mpm_params.PDwidx && mpm_params.T1widx
         if all(MPMacq_prot == MPMacq_sets.vals{ii})
             mtch  = true;
             prot_tag = MPMacq_sets.tags{ii};
-            fprintf(1,'\nINFO: MPM acquisition protocol = %s.\n', prot_tag);
+            hmri_log(sprintf(['INFO: MPM acquisition protocol = %s.' ...
+                '\n\tThe coefficients corresponding to this protocol will be applied' ...
+                '\n\tto correct for imperfect spoiling. Please check carefully that' ...
+                '\n\tthe protocol used is definitely the one for which the ' ...
+                '\n\tcoefficients have been calculated.'],prot_tag),mpm_params.defflags);
         end
     end
     if ~mtch
         prot_tag = 'Unknown';
-        fprintf(1,'\nWARNING: MPM protocol unknown. No RF spoiling correction will be applied.\n');
+        hmri_log(sprintf(['WARNING: MPM protocol unknown. ' ...
+            '\n\tCorrection for imperfect spoiling will not be applied.']),mpm_params.defflags);
     end
 else
     prot_tag = 'Unknown';
@@ -1323,17 +1368,17 @@ mpm_params.proc.PD = hmri_get_defaults('PDproc');
 % if no RF sensitivity bias correction or no B1 transmit bias correction
 % applied, not worth trying any calibration:
 if (isfield(mpm_params.proc.RFsenscorr,'RF_none')||(isempty(jobsubj.b1_trans_input)&&~mpm_params.UNICORT.PD)) && mpm_params.proc.PD.calibr
-    fprintf(1,['\nWARNING: both RF sensitivity bias and B1 transmit bias corrections '...
+    hmri_log(sprintf(['WARNING: both RF sensitivity bias and B1 transmit bias corrections '...
         '\nare required to generate a quantitative (calibrated) PD map.' ...
         '\nAn amplitude "A" map will be output instead of a quantitative ' ...
-        '\nPD map. PD map calibration has been disabled.\n']);
+        '\nPD map. PD map calibration has been disabled.']),mpm_params.defflags);
     mpm_params.proc.PD.calibr = 0;
 end    
 
 % if fullOLS, T2*-weighting bias correction must not be applied
 if mpm_params.fullOLS && mpm_params.proc.PD.T2scorr
-    fprintf(1,['\nWARNING: if TE=0 fit is enabled (fullOLS option), ' ...
-        '\nno T2*-weighting bias correction is required. T2scorr disabled.\n']);
+    hmri_log(sprintf(['WARNING: if TE=0 fit is enabled (fullOLS option), ' ...
+        '\nno T2*-weighting bias correction is required. \nT2scorr option disabled.']),mpm_params.defflags);
     mpm_params.proc.PD.T2scorr = 0;
 end   
 % T2*-weighting bias correction must always be applied somehow. If neither
@@ -1341,11 +1386,11 @@ end
 % applied (could still be usefull for comparison purposes) but throw a
 % warning:
 if ~mpm_params.fullOLS && ~mpm_params.proc.PD.T2scorr
-    fprintf(1,['\nWARNING: both TE=0 fit (fullOLS option) and T2*-weighting ' ...
+    hmri_log(sprintf(['WARNING: both TE=0 fit (fullOLS option) and T2*-weighting ' ...
         '\nbias correction (T2scorr option) are disabled. The T2* bias won''t ' ...
         '\nbe corrected for and impact the resulting PD map. It is strongly ' ...
         '\nrecommended to have either of these options enabled!' ...
-        '\nNOTE: this recommendation does not apply to single-echo datasets\n']);
+        '\nNOTE: this recommendation does not apply to single-echo datasets.']),mpm_params.defflags);
 end   
     
 % whether OLS R2* is calculated
@@ -1369,19 +1414,19 @@ end
     
 % if T2scorr enabled, must check there will be a R2s map generated!
 if mpm_params.proc.PD.T2scorr && ~(any(mpm_params.estaticsR2s)||mpm_params.basicR2s)
-    fprintf(1,['\nWARNING: not enough echoes available (minimum is %d) to ' ...
+    hmri_log(sprintf(['WARNING: not enough echoes available (minimum is %d) to ' ...
         '\ncalculate R2s map. No T2*-weighting bias correction can be ' ...
-        '\napplied (T2scorr option). T2scorr disabled.\n',]);
+        '\napplied (T2scorr option). T2scorr disabled.']),mpm_params.defflags);
     mpm_params.proc.PD.T2scorr = 0;
 end
 
 % consistency check for number of echoes averaged for A calculation:
 if mpm_params.PDwidx && mpm_params.T1widx 
     if mpm_params.proc.PD.nr_echoes_forA > size(mpm_params.input(mpm_params.T1widx).fnam,1)
-        fprintf(1,['\nWARNING: number of T1w echoes to be averaged for PD calculation (%d)' ...
+        hmri_log(sprintf(['WARNING: number of T1w echoes to be averaged for PD calculation (%d)' ...
             '\nis bigger than the available number of echoes (%d). Setting nr_echoes_forA' ...
-            '\nto the maximum number of echoes.\n'],mpm_params.proc.PD.nr_echoes_forA, ...
-            size(mpm_params.input(mpm_params.T1widx).fnam,1));
+            '\nto the maximum number of echoes.'], mpm_params.proc.PD.nr_echoes_forA, ...
+            size(mpm_params.input(mpm_params.T1widx).fnam,1)),mpm_params.defflags);
         mpm_params.proc.PD.nr_echoes_forA = size(mpm_params.input(mpm_params.T1widx).fnam,1);
     end
 end
@@ -1527,7 +1572,7 @@ else
 end
 
 % R2* map: requires a minimum of 4 echoes with PDw contrast
-if size(mpm_params.input(mpm_params.PDwidx).fnam,1) > 3 
+if size(mpm_params.input(mpm_params.PDwidx).fnam,1) > (mpm_params.neco4R2sfit-1) 
     coutput = coutput+1;
     mpm_params.qR2s = coutput;
     mpm_params.output(coutput).suffix = 'R2s';
@@ -1550,6 +1595,16 @@ if size(mpm_params.input(mpm_params.PDwidx).fnam,1) > 3
 else
     mpm_params.qR2s = 0;
 end
+
+% Summary of the output generated:
+LogMsg = 'SUMMARY OF THE MAPS CALCULATED';
+for coutput = 1:length(mpm_params.output)
+    LogMsg = sprintf('%s\n\n(%d) %s (%s)',LogMsg, coutput, mpm_params.output(coutput).descrip{1} , mpm_params.output(coutput).suffix);
+    for cdescrip = 2:length(mpm_params.output(coutput).descrip)
+        LogMsg = sprintf('%s\n %s',LogMsg, mpm_params.output(coutput).descrip{cdescrip});
+    end
+end
+hmri_log(LogMsg, mpm_params.nopuflags);
 
 end
 

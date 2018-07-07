@@ -18,6 +18,10 @@ function P_trans = hmri_create_b1map(jobsubj)
 % TurboFLASH Readout", MRM 64:439-446 (2010).
 %_______________________________________________________________________
 
+flags = jobsubj.log.flags;
+flags.PopUp = false;
+hmri_log(sprintf('\t============ CREATE B1 MAP - %s.m (%s) ============', mfilename, datestr(now)),flags);
+
 % retrieve effective acquisition & processing parameters, alternatively
 % use defaults 
 b1map_params = get_b1map_params(jobsubj);
@@ -55,7 +59,7 @@ switch(b1map_params.b1type)
         P_trans  = b1map_params.b1input(1:2,:);
         
     otherwise 
-        fprintf('\nWARNING: unknown B1 type, no B1 map calculation performed.\n');
+        hmri_log(sprintf('WARNING: unknown B1 type, no B1 map calculation performed.'),b1map_params.defflags);
        
 end
 
@@ -81,6 +85,8 @@ if ~isempty(P_trans)
     try copyfile([spm_str_manip(P_trans(2,:),'r') '.json'],[spm_str_manip(P_trans_copy{2},'r') '.json']); end
     P_trans = char(P_trans_copy{1},P_trans_copy{2});
 end
+
+hmri_log(sprintf('\t============ CREATE B1 MAP: completed (%s) ============', datestr(now)),b1map_params.nopuflags);
 
 end
 
@@ -555,7 +561,12 @@ end
 % load all B1 bias correction defaults parameters
 b1map_params = hmri_get_defaults(['b1map.' b1_protocol]); 
 
-fprintf(1,'\n\n---------------- B1 MAP CALCULATION (%s) ----------------\n',b1_protocol);
+% flags for logging information and warnings
+b1map_params.defflags = jobsubj.log.flags; % default flags
+b1map_params.nopuflags = jobsubj.log.flags; % force no Pop-Up
+b1map_params.nopuflags.PopUp = false; 
+
+hmri_log(sprintf('\t------------ B1 MAP CALCULATION (%s) %s ------------',b1_protocol, datestr(now)),b1map_params.nopuflags);
 
 % save SPM version (slight differences may appear in the results depending
 % on the SPM version!)
@@ -567,9 +578,9 @@ b1map_params.SPMver = sprintf('%s (%s)', v, r);
 if isfield(jobsubj.b1_type.(b1_protocol),'b1input')
     b1map_params.b1input = char(spm_file(jobsubj.b1_type.(b1_protocol).b1input,'number',''));
     if isempty(b1map_params.b1input)
-        fprintf(1,['\nWARNING: expected B1 input images missing. Switching to "no \n' ...
+        hmri_log(sprintf(['WARNING: expected B1 input images missing. Switching to "no \n' ...
             '\tB1 correction" mode. If you meant to apply B1 bias correction, \n' ...
-            '\tcheck your data and re-run the batch.\n']);
+            '\tcheck your data and re-run the batch.']),b1map_params.defflags);
         b1_protocol = 'no_B1_correction';
         b1map_params = hmri_get_defaults('b1map.no_B1_correction'); 
     end
@@ -580,13 +591,13 @@ end
 if isfield(jobsubj.b1_type.(b1_protocol),'b0input')
     b1map_params.b0input = char(spm_file(jobsubj.b1_type.(b1_protocol).b0input,'number',''));
     if isempty(b1map_params.b0input)
-        % fprintf(1,['\nWARNING: expected B0 fieldmap not available for EPI undistortion.\n' ...
-        %     '\tNo fieldmap correction will be applied.\n']);
+        % hmri_log(sprintf(['WARNING: expected B0 fieldmap not available for EPI undistortion.\n' ...
+        %     '\tNo fieldmap correction will be applied.']),b1map_params.defflags);
         % b1map_params.b0avail = false; 
-        fprintf(1,['\nWARNING: expected B0 fieldmap not available for EPI undistortion.\n' ...
+        hmri_log(sprintf(['WARNING: expected B0 fieldmap not available for EPI undistortion.\n' ...
             '\tThe current implementation does not allow you to apply EPI-based B1 bias \n' ...
             '\tcorrection without phase unwrapping. Switching to "no B1 correction" mode.\n' ...
-            '\tIf you meant to apply B1 bias correction, check your data and re-run the batch.\n']);
+            '\tIf you meant to apply B1 bias correction, check your data and re-run the batch.']),b1map_params.defflags);
         b1_protocol = 'no_B1_correction';
         b1map_params = hmri_get_defaults('b1map.no_B1_correction');        
     end
@@ -595,108 +606,129 @@ end
 % process job inputs according to B1 type
 switch b1_protocol
     case 'UNICORT'
-        fprintf(1,'\nNo B1 map available. UNICORT will be applied.\n');
-        
+        hmri_log(sprintf('No B1 map available. UNICORT will be applied.'),b1map_params.nopuflags);
+
     case 'no_B1_correction'
-        fprintf(1,'\nNo B1 map available. No B1 correction applied (semi-quantitative maps only)\n');
+        hmri_log(sprintf('No B1 map available. No B1 correction applied (semi-quantitative maps only)'),b1map_params.nopuflags);
         
     case 'pre_processed_B1'
         if ~isempty(b1map_params.b1input)
-            fprintf(1,'\nPreprocessed B1 map available. Assuming it is in percent units. No calculation required.\n');
+            hmri_log(sprintf('Preprocessed B1 map available. Assuming it is in percent units. No calculation required.'),b1map_params.nopuflags);
         end
 
     case 'i3D_EPI'
         if ~isempty(b1map_params.b1input)
-            fprintf(1, '\nSE/STE EPI protocol selected ...\n');
+            hmri_log(sprintf('SE/STE EPI protocol selected ...'),b1map_params.nopuflags);
             b1hdr = get_metadata(b1map_params.b1input(1,:));
             
             try
                 tmp = get_metadata_val(b1hdr{1},'B1mapNominalFAValues');
-                if isempty(tmp); fprintf(1,'\nWARNING: using defaults value instead of metadata');
-                else b1map_params.b1acq.beta = tmp; end
+                if isempty(tmp)
+                    hmri_log(sprintf('WARNING: using defaults value for nominal SE/STE flip angle values \n(%s) instead of metadata', ...
+                        sprintf('%d ',b1map_params.b1acq.beta)),b1map_params.defflags);
+                else b1map_params.b1acq.beta = tmp; 
+                end
                 
                 tmp = get_metadata_val(b1hdr{1},'B1mapMixingTime');
-                if isempty(tmp); fprintf(1,'\nWARNING: using defaults value instead of metadata');
-                else b1map_params.b1acq.TM = tmp; end
+                if isempty(tmp)
+                    hmri_log(sprintf('WARNING: using defaults value for mixing time \n(%d ms) instead of metadata', ...
+                    b1map_params.b1acq.TM),b1map_params.defflags);
+                else b1map_params.b1acq.TM = tmp; 
+                end
                 
                 tmp = get_metadata_val(b1hdr{1},'epiReadoutDuration'); % must take into account PAT but not PF acceleration
-                if isempty(tmp); fprintf(1,'\nWARNING: using defaults value instead of metadata');
-                else b1map_params.b1acq.tert = tmp; end
+                if isempty(tmp)
+                    hmri_log(sprintf('WARNING: using defaults value for EPI readout duration\n(%d ms) instead of metadata', ...
+                        b1map_params.b1acq.tert),b1map_params.defflags);
+                else b1map_params.b1acq.tert = tmp; 
+                end
                 
                 tmp = get_metadata_val(b1hdr{1},'PhaseEncodingDirectionSign');
-                if isempty(tmp); fprintf(1,'\nWARNING: using defaults value instead of metadata');
-                else b1map_params.b1acq.blipDIR = tmp; end
+                if isempty(tmp)
+                    hmri_log(sprintf('WARNING: using defaults value for PE direction\n(%d) instead of metadata', ...
+                        b1map_params.b1acq.blipDIR),b1map_params.defflags);
+                else b1map_params.b1acq.blipDIR = tmp; 
+                end
                 
                 if ~isempty(b1map_params.b0input)
                     % note that the current implementation assumes that
                     % b0 input images = 2 magnitude images (1st and 2nd
                     % echoes) and 1 presubtracted phase image.
                     tmp = get_metadata_val(b1map_params.b0input(1,:),'EchoTime');
-                    if isempty(tmp); fprintf(1,'\nWARNING: using defaults value instead of metadata');
-                    else b1map_params.b0acq.shortTE = tmp; end
+                    if isempty(tmp)
+                        hmri_log(sprintf('WARNING: using defaults value for B0 mapping TEs\n(short TE=%.2fms) instead of metadata', ...
+                            b1map_params.b0acq.shortTE),b1map_params.defflags);
+                    else b1map_params.b0acq.shortTE = tmp; 
+                    end
                     
                     tmp = get_metadata_val(b1map_params.b0input(2,:),'EchoTime');
-                    if isempty(tmp); fprintf(1,'\nWARNING: using defaults value instead of metadata');
-                    else b1map_params.b0acq.longTE = tmp; end
-                    
+                    if isempty(tmp)
+                        hmri_log(sprintf('WARNING: using defaults value for B0 mapping TEs\n(long TE=%.2fms) instead of metadata', ...
+                            b1map_params.b0acq.longTE),b1map_params.defflags);
+                    else b1map_params.b0acq.longTE = tmp; 
+                    end
                     b1map_params.b0acq.iformat = 'PM';
                 end
             catch %#ok<*CTCH>
-                fprintf(1, ['\nWARNING: possibly no metadata associated to the input images. \n' ...
-                    'Default acquisition and processing parameters will be used.\n']);
+                hmri_log(sprintf(['WARNING: possibly no metadata associated to the input images. \n' ...
+                    'Default acquisition and processing parameters will be used.']),b1map_params.defflags);
             end
         end
     case 'i3D_AFI'
         if ~isempty(b1map_params.b1input)
-            fprintf(1, '\nAFI protocol selected ...\n');
+            hmri_log(sprintf('AFI protocol selected ...'),b1map_params.nopuflags);
             b1hdr = get_metadata(b1map_params.b1input(1,:));
             
             try
                 tr = get_metadata_val(b1hdr{1},'RepetitionTimes');
-                if isempty(tr); fprintf(1,'\nWARNING: using defaults value instead of metadata');
-                else b1map_params.b1acq.TR2TR1ratio = tr(2)/tr(1); end
+                if isempty(tr)
+                    hmri_log(sprintf('WARNING: using defaults values for TRs\n(TR ratio = %.1f) instead of metadata', ...
+                        b1map_params.b1acq.TR2TR1ratio),b1map_params.defflags);
+                else b1map_params.b1acq.TR2TR1ratio = tr(2)/tr(1); 
+                end
                 
                 tmp = get_metadata_val(b1hdr{1},'FlipAngle');
-                if isempty(tmp); fprintf(1,'\nWARNING: using defaults value instead of metadata');
-                else b1map_params.b1acq.alphanom = tmp; end
+                if isempty(tmp)
+                    hmri_log(sprintf('WARNING: using defaults value for flip ange \n(%d deg) instead of metadata', ...
+                        b1map_params.b1acq.alphanom), b1map_params.defflags);
+                else b1map_params.b1acq.alphanom = tmp; 
+                end
             catch
-                fprintf(1, ['\nWARNING: possibly no metadata associated to the input images. \n' ...
-                    'Default acquisition and processing parameters will be used.\n']);
+                hmri_log(sprintf(['WARNING: possibly no metadata associated to the input images. \n' ...
+                    'Default acquisition and processing parameters will be used.']),b1map_params.defflags);
             end
         end
         
     case 'tfl_b1_map'
         if ~isempty(b1map_params.b1input)
-            fprintf(1, '\nSIEMENS tfl_b1map protocol selected ...\n');
+            hmri_log(sprintf('SIEMENS tfl_b1map protocol selected ...'),b1map_params.nopuflags);
         end
                         
     case 'rf_map'
         if ~isempty(b1map_params.b1input)
-            fprintf(1, '\nSIEMENS rf_map protocol selected ...\n');
+            hmri_log(sprintf('SIEMENS rf_map protocol selected ...'),b1map_params.nopuflags);
         end
         
     otherwise
-        fprintf(1, ['\nWARNING: something must have gone wrong in the JOB configuration.\n' ...
-            '\tUnknown B1 processing methods, assuming "no B1 correction" mode.\n']);
+        hmri_log(sprintf(['WARNING: something must have gone wrong in the JOB configuration.\n' ...
+            '\tUnknown B1 processing methods, assuming "no B1 correction" mode.']),b1map_params.defflags);
         b1_protocol = 'no_B1_correction';
         b1map_params = hmri_get_defaults('b1map.no_B1_correction');
 end
 
 % print acquisition and processing parameters
-fprintf(1,'\n');
 if isfield(b1map_params, 'b1acq')
-    fprintf(1,'B1 acquisition parameters:\n');
-    disp(b1map_params.b1acq);
+    hmri_log(sprintf('B1 acquisition parameters (check carefully!):\n\n%s', ...
+        printstruct(b1map_params.b1acq)),b1map_params.defflags);
 end
 if isfield(b1map_params, 'b0acq')
-    fprintf(1,'B0 acquisition parameters:\n');
-    disp(b1map_params.b0acq);
+    hmri_log(sprintf('B0 acquisition parameters (check carefully!):\n\n%s', ...
+        printstruct(b1map_params.b0acq)),b1map_params.defflags);
 end
 if isfield(b1map_params, 'b1proc')
-    fprintf(1,'B1 processing parameters:\n');
-    disp(b1map_params.b1proc);
+    hmri_log(sprintf('B1 processing parameters (check carefully!):\n\n%s', ...
+        printstruct(b1map_params.b1proc)),b1map_params.defflags);
 end
-fprintf(1, '\n');
 
 end
 
@@ -714,4 +746,17 @@ output.units = 'p.u.';
 
 metastruc = init_output_metadata_structure(input_files, proc, output);
 
+end
+
+%=========================================================================%
+% To rpint a structure into text - assumes simple structure (no
+% sub-structure in it at this point) 
+%=========================================================================%
+function s = printstruct(struc)
+
+s = '';
+fntmp = fieldnames(struc);
+for cf = 1:length(fntmp)
+    s = sprintf('%s %16s: %s\n', s, fntmp{cf}, num2str(struc.(fntmp{cf})));
+end
 end

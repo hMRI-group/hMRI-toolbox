@@ -20,7 +20,7 @@ function P_trans = hmri_create_b1map(jobsubj)
 
 flags = jobsubj.log.flags;
 flags.PopUp = false;
-hmri_log(sprintf('\t============ CREATE B1 MAP (%s) ============', datestr(now)),flags);
+hmri_log(sprintf('\t============ CREATE B1 MAP - %s.m (%s) ============', mfilename, datestr(now)),flags);
 
 % retrieve effective acquisition & processing parameters, alternatively
 % use defaults 
@@ -59,7 +59,7 @@ switch(b1map_params.b1type)
         P_trans  = b1map_params.b1input(1:2,:);
         
     otherwise 
-        hmri_log(sprintf('WARNING: unknown B1 type, no B1 map calculation performed.'),jobsubj.log.flags);
+        hmri_log(sprintf('WARNING: unknown B1 type, no B1 map calculation performed.'),b1map_params.defflags);
        
 end
 
@@ -86,7 +86,7 @@ if ~isempty(P_trans)
     P_trans = char(P_trans_copy{1},P_trans_copy{2});
 end
 
-hmri_log(sprintf('\t============ CREATE B1 MAP: completed (%s) ============', datestr(now)),flags);
+hmri_log(sprintf('\t============ CREATE B1 MAP: completed (%s) ============', datestr(now)),b1map_params.nopuflags);
 
 end
 
@@ -718,15 +718,15 @@ end
 
 % print acquisition and processing parameters
 if isfield(b1map_params, 'b1acq')
-    hmri_log(sprintf('B1 acquisition parameters (check carefully!):\n%s', ...
+    hmri_log(sprintf('B1 acquisition parameters (check carefully!):\n\n%s', ...
         printstruct(b1map_params.b1acq)),b1map_params.defflags);
 end
 if isfield(b1map_params, 'b0acq')
-    hmri_log(sprintf('B0 acquisition parameters (check carefully!):\n%s', ...
+    hmri_log(sprintf('B0 acquisition parameters (check carefully!):\n\n%s', ...
         printstruct(b1map_params.b0acq)),b1map_params.defflags);
 end
 if isfield(b1map_params, 'b1proc')
-    hmri_log(sprintf('B1 processing parameters (check carefully!):\n%s', ...
+    hmri_log(sprintf('B1 processing parameters (check carefully!):\n\n%s', ...
         printstruct(b1map_params.b1proc)),b1map_params.defflags);
 end
 
@@ -757,6 +757,6 @@ function s = printstruct(struc)
 s = '';
 fntmp = fieldnames(struc);
 for cf = 1:length(fntmp)
-    s = sprintf('%s %12s: %s\n', s, fntmp{cf}, num2str(struc.(fntmp{cf})));
+    s = sprintf('%s %16s: %s\n', s, fntmp{cf}, num2str(struc.(fntmp{cf})));
 end
 end

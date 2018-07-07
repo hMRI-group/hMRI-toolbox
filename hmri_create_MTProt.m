@@ -49,16 +49,16 @@ function [fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw]  = hmri_create_MTProt(jobsubj) %
 %       Weiskopf et al., Front. Neurosci. 2013, doi:
 %       10.3389/fnins.2013.00095 
 %
-%   Imperfect RF spoiling correction
+%   Imperfect spoiling correction
 %       Preibisch and Deichmann, MRM 61:125-135 (2009)
 %       Corrects for residual transverse magnetization coherences that
-%       remain despite RF spoiling and result in deviations from the Ernst
-%       equation (ideal expected signal in a FLASH acquisition). 
+%       remain despite RF & gradient spoiling and result in deviations from
+%       the Ernst equation (ideal expected signal in a FLASH acquisition). 
 %       Modelling data and P2_a, P2_b correction factors calculation based
 %       on code supplied by Ralf Deichmann. Only a small subset of
-%       experimental parameters have been used and RF spoiling correction
-%       can only be applied if these correction factors are defined
-%       specifically for the acquisition protocol used.
+%       experimental parameters have been used and imperfect spoiling
+%       correction can only be applied if these correction factors are
+%       defined specifically for the acquisition protocol used.
 %
 %   OLS R2* map calculation 
 %       Ordinary least square fit of R2* estimated from all echoes from all
@@ -124,7 +124,7 @@ end
 % other parameters
 threshall = mpm_params.proc.threshall;
 PDproc = mpm_params.proc.PD;
-RFC = mpm_params.proc.RFC;
+ISC = mpm_params.proc.ISC;
 dt = [spm_type('float32'),spm_platform('bigend')]; % for nifti output
 outbasename = spm_file(mpm_params.input(PDwidx).fnam(1,:),'basename'); % for all output files
 calcpath = mpm_params.calcpath;
@@ -637,13 +637,13 @@ for p = 1:dm(3)
             % correct T1 for transmit bias f_T with fa_true = f_T * fa_nom
             % T1corr = T1 / f_T / f_T
             
-            if RFC.RFCorr
+            if ISC.enabled
                 % MFC: We do have P2_a and P2_b parameters for this sequence
                 % => T1 = A(B1) + B(B1)*T1app (see Preibisch 2009)
-                T1 = RFC.P2_a(1)*f_T.^2 + ...
-                    RFC.P2_a(2)*f_T + ...
-                    RFC.P2_a(3) + ...
-                    (RFC.P2_b(1)*f_T.^2+RFC.P2_b(2)*f_T+RFC.P2_b(3)) .* ...
+                T1 = ISC.P2_a(1)*f_T.^2 + ...
+                    ISC.P2_a(2)*f_T + ...
+                    ISC.P2_a(3) + ...
+                    (ISC.P2_b(1)*f_T.^2+ISC.P2_b(2)*f_T+ISC.P2_b(3)) .* ...
                     ((((PDw / fa_pdw_rad) - (T1w / fa_t1w_rad)+eps) ./ ...
                     max((T1w * fa_t1w_rad / 2 / TR_t1w) - (PDw * fa_pdw_rad / 2 / TR_pdw),eps))./f_T.^2);
             else
@@ -1352,8 +1352,8 @@ if mpm_params.PDwidx && mpm_params.T1widx
 else
     prot_tag = 'Unknown';
 end
-% now retrieve RF spoiling correction parameters
-mpm_params.proc.RFC = hmri_get_defaults(['rfcorr.',prot_tag]);
+% now retrieve imperfect spoiling correction coefficients
+mpm_params.proc.ISC = hmri_get_defaults(['imperfectSpoilCorr.',prot_tag]);
 
 % RF sensitivity bias correction
 mpm_params.proc.RFsenscorr = jobsubj.sensitivity;
@@ -1448,6 +1448,11 @@ if (mpm_params.T1widx && mpm_params.PDwidx)
     mpm_params.output(coutput).suffix = 'R1';
     mpm_params.output(coutput).units = 's-1';  
     mpm_params.output(coutput).descrip{1} = 'R1 map [s-1]';
+    if mpm_params.proc.ISC.enabled
+        mpm_params.output(coutput).descrip{end+1} = '- Imperfect Spoiling Correction applied';
+    else
+        mpm_params.output(coutput).descrip{end+1} = '- no Imperfect Spoiling Correction applied';
+    end        
     switch B1transcorr{1}
         case 'no_B1_correction'
             mpm_params.output(coutput).descrip{end+1} = '- no B1+ bias correction applied';

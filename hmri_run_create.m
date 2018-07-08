@@ -70,8 +70,7 @@ if exist(respath,'dir')
     outpath = tmpoutpath;
     mkdir(outpath);
     respath = fullfile(outpath, 'Results');
-    fprintf(1,['\nWARNING: existing results from previous run(s) were found, \n' ...
-        'the output directory has been modified. It is now:\n%s\n\n'],outpath); 
+    newrespath = true;
 end
 if ~exist(respath,'dir'); mkdir(respath); end
 % SUPPLEMENTARY (within the Results directory) contains useful
@@ -93,6 +92,21 @@ job.subj.path.rfsenspath = rfsenspath;
 job.subj.path.mpmpath = mpmpath;
 job.subj.path.respath = respath;
 job.subj.path.supplpath = supplpath;
+
+% save log file location
+job.subj.log.logfile = fullfile(supplpath, 'hMRI_map_creation_logfile.log');
+job.subj.log.flags = struct('LogFile',struct('Enabled',true,'FileName','hMRI_map_creation_logfile.log','LogDir',supplpath), ...
+    'PopUp',job.subj.popup,'ComWin',true);
+flags = job.subj.log.flags;
+flags.PopUp = false;
+hmri_log(sprintf('\t============ CREATE hMRI MAPS MODULE - %s.m (%s) ============', mfilename, datestr(now)),flags);
+
+if newrespath
+    hmri_log(sprintf(['WARNING: existing results from previous run(s) were found, \n' ...
+        'the output directory has been modified. It is now:\n%s\n'],outpath),job.subj.log.flags);
+else
+    hmri_log(sprintf('INFO: the output directory is:\n%s\n',outpath),flags);
+end
 
 % save SPM version (slight differences may appear in the results depending
 % on the SPM version!)
@@ -133,5 +147,7 @@ end
 
 f = fopen(fullfile(respath, '_finished_'), 'wb');
 fclose(f);
+
+hmri_log(sprintf('\t============ CREATE hMRI MAPS MODULE: completed (%s) ============', datestr(now)),flags);
 
 end

@@ -196,7 +196,7 @@ if mpm_params.basicR2s
     Output_hdr.history.output.units = 's-1';
     set_metadata(fR2s,Output_hdr,mpm_params.json);
 else 
-    hmri_log(sprintf('No (basic) R2* map will be calculated.'), mpm_params.defflags);
+    hmri_log(sprintf('INFO: No (basic) R2* map will be calculated.\nInsufficient number of PDw echoes.'), mpm_params.defflags);
 end
 
 %% =======================================================================%
@@ -530,7 +530,7 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
     set_metadata(fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qR2s).suffix '_OLS.nii']),Output_hdr,mpm_params.json);
    
 else
-    hmri_log('No R2* map will be calculated using the ESTATICS model.', mpm_params.defflags);
+    hmri_log(sprintf('INFO: No R2* map will be calculated using the ESTATICS model. \nInsufficient number of echoes.'), mpm_params.defflags);
 end % OLS code
 
 % if "fullOLS" option enabled AND could be applied to every contrast
@@ -1319,9 +1319,16 @@ end
 mpm_params.nr_echoes4avg = min(length(find(mpm_params.input(1).TE<maxTEval4avg))+1,ncommonTEvals);
 hmri_log(sprintf('INFO: averaged PDw/T1w/MTw will be calculated based on the first %d echoes.',mpm_params.nr_echoes4avg),mpm_params.nopuflags);
         
-% if T1w and PDw data available, identify the protocol to define RF
+% if T1w and PDw data available, identify the protocol to define imperfect 
 % spoiling correction parameters (for T1 map calculation)
-if mpm_params.PDwidx && mpm_params.T1widx
+ISC = hmri_get_defaults('imperfectSpoilCorr.enabled');
+if ~ISC
+    hmri_log(sprintf(['INFO: Imperfect spoiling correction is disabled.' ...
+        '\nIf your data were acquired with one of the standard MPM ' ...
+        '\nprotocols (customized MT-FLASH sequence) for which the correction ' ...
+        '\ncoefficients are available, it is recommended to enable that option.']),mpm_params.defflags);
+end
+if mpm_params.PDwidx && mpm_params.T1widx && ISC
     % retrieve all available protocols:
     MPMacq_sets = hmri_get_defaults('MPMacq_set');
     % current protocol is defined by [TR_pdw TR_t1w fa_pdw fa_t1w]:

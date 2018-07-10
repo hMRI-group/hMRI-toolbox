@@ -56,18 +56,19 @@ switch(b1map_params.b1type)
         P_trans  = calc_rf_map(jobsubj, b1map_params);
         
     case 'pre_processed_B1'
-        % rescale if scaling factor other than 1 is provided
         if b1map_params.scafac ~= 1
-            rescaled_fnam = fullfile(jobsubj.path.b1path, spm_file(spm_file(b1map_params.b1input(2,:),'suffix','rescaled'),'filename'));
-            V = spm_vol(b1map_params.b1input(2,:));
-            Y = spm_read_vols(V);
-            NiRescaledB1 = nifti;
-            NiRescaledB1.mat = V.mat;
-            NiRescaledB1.mat0 = V.mat;
-            NiRescaledB1.descrip = sprintf('Pre-processed B1 map rescaled with factor %f', b1map_params.scafac);
-            NiRescaledB1.dat = file_array(rescaled_fnam, V.dim, V.dt, 0, 1, 0);
-            create(NiRescaledB1);
-            NiRescaledB1.dat(:,:,:) = b1map_params.scafac .* Y;
+            % rescale if scaling factor other than 1 is provided
+            rescaled_fnam = fullfile(jobsubj.path.b1path, spm_file(spm_file(b1map_params.b1input(2,:),'suffix','_rescaled'),'filename'));
+            calcflags.descrip = sprintf('Pre-processed B1 map rescaled with factor %f', b1map_params.scafac);
+            outcalc = spm_imcalc(b1map_params.b1input(2,:),rescaled_fnam,sprintf('%f*i1',b1map_params.scafac),calcflags);
+            % set and write metadata
+            json = hmri_get_defaults('json');
+            input_files = b1map_params.b1input(2,:);
+            Output_hdr = init_b1_output_metadata(input_files, b1map_params);
+            Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (Rescaling)'];
+            Output_hdr.history.output.imtype = sprintf('Pre-processed B1 map rescaled with factor %f', b1map_params.scafac);
+            set_metadata(rescaled_fnam,Output_hdr,json);
+            % replace original B1 map by the rescaled one
             b1map_params.b1input = char(b1map_params.b1input(1,:), rescaled_fnam);
         end
         P_trans  = b1map_params.b1input(1:2,:);
@@ -630,9 +631,9 @@ switch b1_protocol
         b1map_params.scafac = jobsubj.b1_type.(b1_protocol).scafac;
         if ~isempty(b1map_params.b1input)
             if b1map_params.scafac == 1
-                hmri_log(sprintf('Preprocessed B1 map available. \nAssuming it is in percent units of the nominal flip angle. \nNo calculation required.'),b1map_params.nopuflags);
+                hmri_log(sprintf('Preprocessed B1 map available. \nAssuming it is in percent units of the nominal flip angle. \nNo calculation required.'),b1map_params.defflags);
             else
-                hmri_log(sprintf('Preprocessed B1 map available. \nScaling factor provided: %f. Assuming B1 map will be expressed \nin p.u. of the nominal flip angle after rescaling.', b1map_params.scafac),b1map_params.nopuflags);
+                hmri_log(sprintf('Preprocessed B1 map available. \nScaling factor provided: %f. Assuming B1 map will be expressed \nin p.u. of the nominal flip angle after rescaling.', b1map_params.scafac),b1map_params.defflags);
             end
         end
 

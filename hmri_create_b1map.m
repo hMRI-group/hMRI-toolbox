@@ -56,6 +56,20 @@ switch(b1map_params.b1type)
         P_trans  = calc_rf_map(jobsubj, b1map_params);
         
     case 'pre_processed_B1'
+        % rescale if scaling factor other than 1 is provided
+        if b1map_params.scafac ~= 1
+            rescaled_fnam = fullfile(jobsubj.path.b1path, spm_file(spm_file(b1map_params.b1input(2,:),'suffix','rescaled'),'filename'));
+            V = spm_vol(b1map_params.b1input(2,:));
+            Y = spm_read_vols(V);
+            NiRescaledB1 = nifti;
+            NiRescaledB1.mat = V.mat;
+            NiRescaledB1.mat0 = V.mat;
+            NiRescaledB1.descrip = sprintf('Pre-processed B1 map rescaled with factor %f', b1map_params.scafac);
+            NiRescaledB1.dat = file_array(rescaled_fnam, V.dim, V.dt, 0, 1, 0);
+            create(NiRescaledB1);
+            NiRescaledB1.dat(:,:,:) = b1map_params.scafac .* Y;
+            b1map_params.b1input = char(b1map_params.b1input(1,:), rescaled_fnam);
+        end
         P_trans  = b1map_params.b1input(1:2,:);
         
     otherwise 
@@ -612,8 +626,13 @@ switch b1_protocol
         hmri_log(sprintf('No B1 map available. No B1 correction applied (semi-quantitative maps only)'),b1map_params.nopuflags);
         
     case 'pre_processed_B1'
+        b1map_params.scafac = jobsubj.b1_type.(b1_protocol).scafac;
         if ~isempty(b1map_params.b1input)
-            hmri_log(sprintf('Preprocessed B1 map available. Assuming it is in percent units. No calculation required.'),b1map_params.nopuflags);
+            if b1map_params.scafac == 1
+                hmri_log(sprintf('Preprocessed B1 map available. \nAssuming it is in percent units of the nominal flip angle. \nNo calculation required.'),b1map_params.nopuflags);
+            else
+                hmri_log(sprintf('Preprocessed B1 map available. \nScaling factor provided: %f. Assuming B1 map will be expressed \nin p.u. of the nominal flip angle after rescaling.', b1map_params.scafac),b1map_params.nopuflags);
+            end
         end
 
     case 'i3D_EPI'

@@ -172,16 +172,32 @@ b1_input_noB1.num     = [1 Inf];
 b1_input_noB1.val     = {'noB1'};
 
 % ---------------------------------------------------------------------
-% pre-calculated B1 map
+% pre-calculated B1 map - including potential rescaling factor
 % ---------------------------------------------------------------------
+scafac         = cfg_entry;
+scafac.tag     = 'scafac';
+scafac.name    = 'Scaling factor';
+scafac.help    = {'The values in the input B1 map will be multiplied by the provided factor.', ...
+    ['If the input B1 map is already in percent units (p.u.) of the nominal flip angle ' ...
+    'no need to apply any extra scaling factor (ScaFac = 1). If the input B1 map is a multiplication factor ' ...
+    'of the nominal flip angle (i.e. value of 1 corresponds to the nominal flip angle), a ' ...
+    'scaling factor ScaFac = 100 is required to produce a B1 map in p.u. of the ' ...
+    'nominal flip angle.']};
+scafac.strtype = 'r';
+scafac.num     = [1 1];
+scafac.val     = {1};
+
 b1_input_preproc           = cfg_branch;
 b1_input_preproc.tag       = 'pre_processed_B1';
 b1_input_preproc.name      = 'pre-processed B1';
 b1_input_preproc.help      = {'Input pre-calculated B1 bias map.'
     ['Please select one unprocessed magnitude image ' ...
     'from the B1map data set (for coregistration with the multiparameter maps) ' ...
-    'and the preprocessed B1map (in percent units), in that order.']};
-b1_input_preproc.val       = {b1raw};
+    'and the preprocessed B1map, in that order.']
+    ['The B1 map is expected to be in ' ...
+    'percent units (p.u.) of the nominal flip angle. If this is not the case, ' ...
+    'a scaling factor can be introduced (see Scaling factor description for more details).']};
+b1_input_preproc.val       = {b1raw scafac};
 
 
 % ---------------------------------------------------------------------

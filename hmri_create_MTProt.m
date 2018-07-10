@@ -1279,7 +1279,7 @@ hmri_log(LogMsg, mpm_params.defflags);
 % collect TE, TR and FA for each available contrast
 for ccon = 1:mpm_params.ncon
     p = get_trtefa(mpm_params.input(ccon).fnam);
-    if ~isempty(p)
+    if ~all(cellfun('isempty',{p.tr p.te p.fa}))
         mpm_params.input(ccon).TE = cat(1,p.te);
         mpm_params.input(ccon).TR = p(1).tr;
         mpm_params.input(ccon).fa = p(1).fa;
@@ -1634,7 +1634,6 @@ proc.params = mpm_params;
 % must be defined on the spot, default values here
 output.imtype = 'MPM';
 output.units = 'a.u.';
-
 metastruc = init_output_metadata_structure(input_files, proc, output);
 
 end

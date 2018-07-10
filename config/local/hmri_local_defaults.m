@@ -249,9 +249,9 @@ hmri_def.qMRI_maps_thresh.MT       = 5;    % [p.u.]
 % the toolbox from your data, the following values should be adapted in the
 % local defaults file. 
 % ADVANCED USER ONLY
-hmri_def.MPMacq.TE_mtw = 2.34; % [ms]
-hmri_def.MPMacq.TE_t1w = 2.34; % [ms]
-hmri_def.MPMacq.TE_pdw = 2.34; % [ms]
+hmri_def.MPMacq.TE_mtw = 2.34:2.34:14.04; % [ms]
+hmri_def.MPMacq.TE_t1w = 2.34:2.34:18.72; % [ms]
+hmri_def.MPMacq.TE_pdw = 2.34:2.34:18.72; % [ms]
 hmri_def.MPMacq.TR_mtw = 24.5; % [ms]
 hmri_def.MPMacq.TR_t1w = 24.5; % [ms]
 hmri_def.MPMacq.TR_pdw = 24.5; % [ms]

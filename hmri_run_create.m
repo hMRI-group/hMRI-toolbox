@@ -60,6 +60,7 @@ hmri_get_defaults('outdir',outpath);
 % define a directory for final results
 % RESULTS contains the 4 final maps which are the essentials for the users
 respath = fullfile(outpath, 'Results');
+newrespath = false;
 if exist(respath,'dir')
     index = 1;
     tmpoutpath = outpath;

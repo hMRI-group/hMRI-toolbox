@@ -500,9 +500,10 @@ V1 = spm_vol(P); % image volume information
 V2 = spm_vol(Q);
 Vol1 = spm_read_vols(V1);
 Vol2 = spm_read_vols(V2);
+alphanom = get_metadata_val(P,'FlipAngle'); % nominal flip angle of rf_map
 
 % generating the map
-B1map_norm = (abs(Vol1)-2048)*180*100/(90*2048); % *100/90 to get p.u.
+B1map_norm = (abs(Vol1)-2048)*180*100/(alphanom*2048); % *100/alpha to get p.u.
 % the formula (abs(Vol1)-2048)*180/2048 would result in an absolute FA map
 
 % smoothed map

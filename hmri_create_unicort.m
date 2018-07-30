@@ -30,7 +30,11 @@ function out = hmri_create_unicort(P_PDw, P_R1, jobsubj)
 % 29 November 2010
 
 %%
-fprintf(1,'\n    -------- Apply UNICORT correction to R1 map --------\n');
+flags.def = jobsubj.log.flags; % default flags
+flags.nopu = jobsubj.log.flags; % force no Pop-Up
+flags.nopu.PopUp = false; 
+
+hmri_log(sprintf('\t============ UNICORT: CORRECT R1 MAPS FOR B1+ BIAS - %s.m (%s) ============', mfilename, datestr(now)),flags.nopu);
 
 % json metadata default options
 json = hmri_get_defaults('json');
@@ -134,13 +138,13 @@ Y_B1 = sqrt(Y_biasmap)*100.*(Y_PDw > thresh);
 V_B1 = V_R1;
 P_B1 = fullfile(b1path,spm_file(outfnam,'suffix','_B1map'));
 V_B1.fname = P_B1;
-V_B1.descrip = 'UNICORT estimated B1+ map (p.u.)';
+V_B1.descrip = 'UNICORT-estimated B1+ map (p.u.)';
 spm_write_vol(V_B1,Y_B1);
 
 % set and save metadata
 input_files = P_biasmap;
 Output_hdr = init_unicort_output_metadata(input_files, unicort_params);
-Output_hdr.history.output.imtype = 'UNICORT estimated B1+ map';
+Output_hdr.history.output.imtype = 'UNICORT-estimated B1+ map';
 Output_hdr.history.output.units = 'p.u.';
 set_metadata(P_B1,Output_hdr,json);
 
@@ -173,6 +177,8 @@ try copyfile([spm_str_manip(P_B1,'r') '.json'],[spm_str_manip(out.B1u{1},'r') '.
 
 % save unicort params as json-file
 spm_jsonwrite(fullfile(supplpath, 'hMRI_map_creation_unicort_params.json'),unicort_params,struct('indent','\t'));
+
+hmri_log(sprintf('\t============ UNICORT: completed (%s) ============', datestr(now)),flags.nopu);
 
 end
 

@@ -513,8 +513,8 @@ else
                     cRes = 1;
                     parLocation{cRes} = nam{1};
                     parValue{cRes} = val{1}(12);
+                    fprintf(1,'\nINFO: CMRR multiband EPI (%s) - MultiBandFactor stored in MiscSequenceParam(12). Value = %d.\n', ProtocolName, parValue{cRes});
                 end
-                fprintf(1,'\nINFO: CMRR multiband EPI (%s) - MultiBandFactor stored in MiscSequenceParam(12). Value = %d.\n', ProtocolName, parValue{cRes});
             else
                 [nFieldFound, fieldList] = find_field_name(mstruc, 'lMultiBandFactor','caseSens','sensitive','matchType','exact');
                 [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
@@ -523,8 +523,8 @@ else
                     cRes = 1;
                     parLocation{cRes} = nam{1};
                     parValue{cRes} = val{1};
+                    fprintf(1,'\nINFO: Siemens SMS-EPI (%s) - MultiBandFactor stored in lMultiBandFactor. Value = %d.\n', ProtocolName, parValue{cRes});
                 end
-                fprintf(1,'\nINFO: Siemens SMS-EPI (%s) - MultiBandFactor stored in lMultiBandFactor. Value = %d.\n', ProtocolName, parValue{cRes});
             end          
             
         case 'WipParameters'

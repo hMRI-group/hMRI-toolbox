@@ -178,8 +178,13 @@ switch(job.check_type)
                 notok = true;
             end
             try
-                disp_list(cim).title = tmphdr{1}.history.output.imtype{1};
-            catch
+                tmp = tmphdr{1}.history.output.imtype;
+                if iscell(tmp)
+                    disp_list(cim).title = tmphdr{1}.history.output.imtype{1};
+                else
+                    disp_list(cim).title = tmphdr{1}.history.output.imtype;
+                end                    
+            catch %#ok<CTCH>
                 hmri_log(sprintf(['WARNING (hmri_quality): No imtype defined for metadata associated with qMRI map.' ...
                     '\n%s \nImage displayed with automatic (non-standard) intensity scaling.'], ...
                     disp_list(cim).fnam), log_flags);
@@ -203,7 +208,7 @@ switch(job.check_type)
                 elseif strfind(disp_list(cim).title,'B1')
                     disp_list(cim).range = [75 125];
                 elseif strfind(disp_list(cim).title,'RF sensitivity map')
-                    disp_list(cim).range = [0 1];
+                    disp_list(cim).range = [0 2];
                 else % includes case of A maps
                     hmri_log(sprintf(['WARNING (hmri_quality): Non standard scaling for qMRI map.' ...
                         '\n%s \nImage displayed with automatic (non-standard) intensity scaling.'], ...

@@ -58,12 +58,17 @@ st.centre = st.centre + [10 0 0];
 
 % to give a title to each orthviews and adjust intesity range:
 for cim=1:length(disp_list)
+    htit = get(st.vols{cim}.ax{3}.ax,'Title');
+    hxlab = get(st.vols{cim}.ax{3}.ax,'Xlabel');
     if any( disp_list(cim).range - round( disp_list(cim).range))
-        set(st.vols{cim}.ax{3}.ax, 'Xlabel',text('String',sprintf('Intensity range\n[%.1f %.1f]', disp_list(cim).range)));
+        set(hxlab, 'String',sprintf('Intensity range\n[%.1f %.1f]', disp_list(cim).range));
+        % set(st.vols{cim}.ax{3}.ax, 'Xlabel',text('String',sprintf('Intensity range\n[%.1f %.1f]', disp_list(cim).range)));
     else
-        set(st.vols{cim}.ax{3}.ax, 'Xlabel',text('String',sprintf('Intensity range\n[%d %d]', disp_list(cim).range)));
+        set(hxlab, 'String',sprintf('Intensity range\n[%d %d]', disp_list(cim).range));
+        % set(st.vols{cim}.ax{3}.ax, 'Xlabel',text('String',sprintf('Intensity range\n[%d %d]', disp_list(cim).range)));
     end
-    set(st.vols{cim}.ax{3}.ax, 'Title',text('String',sprintf('%s',disp_list(cim).title)));
+    set(htit, 'String',sprintf('%s',disp_list(cim).title));
+    % set(st.vols{cim}.ax{3}.ax, 'Title',text('String',sprintf('%s',disp_list(cim).title)));
     st.vols{cim}.window = disp_list(cim).range;
 end
 

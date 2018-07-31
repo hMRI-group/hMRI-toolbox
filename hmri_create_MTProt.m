@@ -782,7 +782,7 @@ if mpm_params.QA.enable && exist('fTPM','var')
     % calculate SD within the WM mask (measure of the intra-run motion for
     % each contrast)
     for ccon = 1:mpm_params.ncon
-        R2s = spm_read_vols(spm_vol(spm_select('FPList',calcpath,sprintf('^s.*_R2s_%sw.nii$',mpm_params.input(ccon).tag))));
+        R2s = spm_read_vols(spm_vol(spm_select('FPList',calcpath,sprintf('.*_R2s_%sw.nii$',mpm_params.input(ccon).tag))));
         MaskedR2s = squeeze(R2s.*WMmask);
         SDR2s = std(MaskedR2s(MaskedR2s~=0),[],1);
         mpm_params.QA.SDR2s.([mpm_params.input(ccon).tag 'w']) = SDR2s;

@@ -60,6 +60,7 @@ hmri_get_defaults('outdir',outpath);
 % define a directory for final results
 % RESULTS contains the 4 final maps which are the essentials for the users
 respath = fullfile(outpath, 'Results');
+newrespath = false;
 if exist(respath,'dir')
     index = 1;
     tmpoutpath = outpath;
@@ -70,8 +71,7 @@ if exist(respath,'dir')
     outpath = tmpoutpath;
     mkdir(outpath);
     respath = fullfile(outpath, 'Results');
-    fprintf(1,['\nWARNING: existing results from previous run(s) were found, \n' ...
-        'the output directory has been modified. It is now:\n%s\n\n'],outpath); 
+    newrespath = true;
 end
 if ~exist(respath,'dir'); mkdir(respath); end
 % SUPPLEMENTARY (within the Results directory) contains useful
@@ -94,8 +94,28 @@ job.subj.path.mpmpath = mpmpath;
 job.subj.path.respath = respath;
 job.subj.path.supplpath = supplpath;
 
+% save log file location
+job.subj.log.logfile = fullfile(supplpath, 'hMRI_map_creation_logfile.log');
+job.subj.log.flags = struct('LogFile',struct('Enabled',true,'FileName','hMRI_map_creation_logfile.log','LogDir',supplpath), ...
+    'PopUp',job.subj.popup,'ComWin',true);
+flags = job.subj.log.flags;
+flags.PopUp = false;
+hmri_log(sprintf('\t============ CREATE hMRI MAPS MODULE - %s.m (%s) ============', mfilename, datestr(now)),flags);
+
+if newrespath
+    hmri_log(sprintf(['WARNING: existing results from previous run(s) were found, \n' ...
+        'the output directory has been modified. It is now:\n%s\n'],outpath),job.subj.log.flags);
+else
+    hmri_log(sprintf('INFO: the output directory is:\n%s\n',outpath),flags);
+end
+
+% save SPM version (slight differences may appear in the results depending
+% on the SPM version!)
+[v,r] = spm('Ver');
+job.SPMver = sprintf('%s (%s)', v, r);
+
 % save original job (before it gets modified by RFsens)
-spm_jsonwrite(fullfile(supplpath,'MPM_map_creation_job_create_maps.json'),job,struct('indent','\t'));
+spm_jsonwrite(fullfile(supplpath,'hMRI_map_creation_job_create_maps.json'),job,struct('indent','\t'));
 
 % run B1 map calculation for B1 bias correction
 P_trans = hmri_create_b1map(job.subj);
@@ -107,15 +127,11 @@ if isfield(job.subj.sensitivity,'RF_once') || isfield(job.subj.sensitivity,'RF_p
 end
 
 % run hmri_create_MTProt to evaluate the parameter maps
-[fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw]  = hmri_create_MTProt(job.subj, P_trans);
+job.subj.b1_trans_input = P_trans;
+[fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw]  = hmri_create_MTProt(job.subj);
 
-% apply UNICORT if required, and collect outputs:
-if (isfield(job.subj.b1_type,'UNICORT') && ~isempty(fR1) && ~isempty(PPDw))
-    out_unicort = hmri_create_unicort(PPDw, fR1, job.subj);
-    out_loc.subj.R1  = {out_unicort.R1u};
-else
-    out_loc.subj.R1  = {fR1};
-end
+% collect outputs:
+out_loc.subj.R1  = {fR1};
 out_loc.subj.R2s = {fR2s};
 out_loc.subj.MT  = {fMT};
 out_loc.subj.A   = {fA};
@@ -132,5 +148,7 @@ end
 
 f = fopen(fullfile(respath, '_finished_'), 'wb');
 fclose(f);
+
+hmri_log(sprintf('\t============ CREATE hMRI MAPS MODULE: completed (%s) ============', datestr(now)),flags);
 
 end

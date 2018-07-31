@@ -125,7 +125,7 @@ for ii=1:nMPM
         q{jj} = spm_file(p{jj},'prefix','wa');
         if ~isempty(pth_out)
             % update output path if provided
-            q{jj} = spm_file(p{jj},'path',pth_out);
+            q{jj} = spm_file(q{jj},'path',pth_out);
         end
         spm_imcalc(char(n{jj},m{jj}), ... % i1, i2
             q{jj}, ...

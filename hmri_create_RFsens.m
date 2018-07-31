@@ -20,7 +20,9 @@ function jobsubj = hmri_create_RFsens(jobsubj)
 % Quantitative R1 Mapping by Accounting for Receive Coil Sensitivity
 % Effects", MRM 2015 DOI 10.1002/mrm.26058
 
-fprintf(1,'\n---------------- RF SENSITIVITY CORRECTION ----------------\n');
+flags = jobsubj.log.flags;
+flags.PopUp = false;
+hmri_log(sprintf('\t============ RF SENSITIVITY CORRECTION - %s.m (%s) ============', mfilename, datestr(now)),flags);
 
 %==========================================================================
 % Define processing parameters, defaults, input files...
@@ -73,8 +75,10 @@ for ccon = 1:rfsens_params.ncon
     for i=1:nSTRUCT
         corrected_structurals{i} = fullfile(calcpath, spm_file(spm_file(structurals(i,:),'filename'),'suffix','_RFSC'));
         spm_imcalc({structurals(i,:), qsensmap}, corrected_structurals{i}, 'i1./i2');
-        % set metadata
-        input_files = char(structurals(i,:), qsensmap);
+        % set metadata (relates only to original inputs to keep it
+        % readable and trackable since intermediate calculation directories
+        % might be cleaned up)
+        input_files = char(structurals(i,:), sensmaps);
         Output_hdr = init_rfsens_output_metadata(input_files, rfsens_params);
         Output_hdr.history.output.imtype = sprintf('RF sensitivity corrected %s-weighted echo',rfsens_params.input(ccon).tag);
         Output_hdr.history.output.units = 'a.u.';
@@ -96,7 +100,9 @@ for ccon = 1:rfsens_params.ncon
 end
 
 % save RF sensitivity processing parameters
-spm_jsonwrite(fullfile(supplpath,'MPM_map_creation_rfsens_params.json'),rfsens_params,struct('indent','\t'));
+spm_jsonwrite(fullfile(supplpath,'hMRI_map_creation_rfsens_params.json'),rfsens_params,struct('indent','\t'));
+
+hmri_log(sprintf('\t============ RF SENSITIVITY CORRECTION: completed (%s) ============', datestr(now)),rfsens_params.nopuflags);
 
 end
 
@@ -106,11 +112,20 @@ end
 %=========================================================================%
 function rfsens_params = get_rfsens_params(jobsubj)
 
+% flags for logging information and warnings
+rfsens_params.defflags = jobsubj.log.flags; % default flags
+rfsens_params.nopuflags = jobsubj.log.flags; % force no Pop-Up
+rfsens_params.nopuflags.PopUp = false; 
+
 rfsens_params.json = hmri_get_defaults('json');
 rfsens_params.calcpath = jobsubj.path.rfsenspath;
 rfsens_params.respath = jobsubj.path.respath;
 rfsens_params.supplpath = jobsubj.path.supplpath;
 rfsens_params.smooth_kernel = hmri_get_defaults('RFsens.smooth_kernel');
+% save SPM version (slight differences may appear in the results depending
+% on the SPM version!)
+[v,r] = spm('Ver');
+rfsens_params.SPMver = sprintf('%s (%s)', v, r);
 
 % Input structurals: determine which contrasts are available
 ccon = 0;
@@ -167,13 +182,13 @@ elseif isfield(jobsubj.sensitivity,'RF_per_contrast')
         raw_sens_field = sprintf('raw_sens_%s',rfsens_params.input(ccon).tag);
         raw_sens_input = jobsubj.sensitivity.RF_per_contrast.(raw_sens_field);
         if isempty(raw_sens_input)
-            fprintf(1,['\nERROR: when using per-contrast RF sensitivity correction, ' ...
+            hmri_log(sprintf(['ERROR: when using per-contrast RF sensitivity correction, ' ...
                 '\nRF sensitivity maps must be provided for each contrast available. '...
                 '\nNo RF sensitivity map was found for %sw-contrast. Check you properly ' ...
                 '\nset the RF sensitivity inputs in your batch, or use "Single" mode ' ...
                 '\nwith a single set of RF sensitivity maps if you don''t have RF' ...
                 '\nsensitivity data for each contrast.\n'], ...
-                rfsens_params.input(ccon).tag);
+                rfsens_params.input(ccon).tag), rfsens_params.defflags);
             error('Missing RF sensitivity input(s). Aborting.');
         end
         for csens=1:length(raw_sens_input)
@@ -198,7 +213,7 @@ end
 %=========================================================================%
 function metastruc = init_rfsens_output_metadata(input_files, rfsens_params)
 
-proc.descrip = 'RF sensitivity correction';
+proc.descrip = ['hMRI toolbox - ' mfilename '.m - RF sensitivity correction'];
 proc.version = hmri_get_version;
 proc.params = rfsens_params;
 output.imtype = 'sensitivity map';

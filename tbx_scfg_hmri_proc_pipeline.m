@@ -118,7 +118,7 @@ pipe_c.labels = {
                  'US+smooth'
                  'US+Dartel+smooth'}';
 pipe_c.values = {1 2};
-pipe_c.val    = {1};
+pipe_c.val    = {2};
 
 % ---------------------------------------------------------------------
 % Gaussian FWHM

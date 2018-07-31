@@ -62,6 +62,7 @@ function [parValue, parLocation] = get_metadata_val(varargin)
 %    - 'AllBValues' list of b-value
 %    - 'DiffusionDirection' diffusion direction of individual DW image
 %    - 'BValue' b-value of individual DW image
+%    - 'MultiBandFactor' for CMRR multiband and Siemens SMS sequences
 %
 % - parValue is the value of the parameter. The type of the output can vary
 %   according to the request (single real/char/complex value, an array, a
@@ -384,7 +385,7 @@ else
             [nFieldFound, fieldList] = find_field_name(mstruc, 'lPhaseEncodingLines','caseSens','sensitive','matchType','exact');
             [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
             [nFieldFoundPAT, fieldListPAT] = find_field_name(mstruc, 'lAccelFactPE','caseSens','sensitive','matchType','exact');
-            [valPAT,namPAT] = get_val_nam_list(mstruc, nFieldFoundPAT, fieldListPAT); %#ok<ASGLU>
+            [valPAT,namPAT] = get_val_nam_list(mstruc, nFieldFoundPAT, fieldListPAT); %#ok<NASGU>
             if nFieldFound
                 cRes = 1;
                 parLocation{cRes} = nam{1};
@@ -444,8 +445,21 @@ else
             % Keep only first value if many
             if nFieldFound
                 cRes = 1;
-                parLocation{cRes} = [nam{1} '.lSize'];
-                parValue{cRes} = val{1}.lSize;
+                % might be a 3D acquisition with 1 slab
+                if val{1}.lSize == 1 && strcmp(get_metadata_val(mstruc,'MRAcquisitionType'),'3D')
+                    fprintf(1,'\nINFO: This is a 3D sequence.\n');
+                    [nFieldFound, fieldList] = find_field_name(mstruc, 'lImagesPerSlab','caseSens','sensitive','matchType','exact');
+                    [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
+                    if nFieldFound
+                        cRes = 1;
+                        parLocation{cRes} = nam{1};
+                        parValue{cRes} = val{1};
+                    end                
+                else
+                    fprintf(1,'\nINFO: This is a 2D sequence.\n');
+                    parLocation{cRes} = [nam{1} '.lSize'];
+                    parValue{cRes} = val{1}.lSize;
+                end
             end
             
             
@@ -484,6 +498,34 @@ else
                 parLocation{cRes} = nam{1};
                 parValue{cRes} = val{1};
             end
+            
+        case 'MultiBandFactor'
+            % Siemens-specific for either CMRR multiband EPI or Siemens
+            % product EPI sequence with SMS.
+            % determine sequence (CMRR versus Siemens product)
+            tSequenceFileName = get_metadata_val(mstruc,'tSequenceFileName');
+            ProtocolName = deblank(get_metadata_val(mstruc,'ProtocolName'));
+            if strfind(lower(tSequenceFileName),'cmrr')
+                [nFieldFound, fieldList] = find_field_name(mstruc, 'MiscSequenceParam','caseSens','sensitive','matchType','exact');
+                [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
+                % Keep only first value if many
+                if nFieldFound
+                    cRes = 1;
+                    parLocation{cRes} = nam{1};
+                    parValue{cRes} = val{1}(12);
+                    fprintf(1,'\nINFO: CMRR multiband EPI (%s) - MultiBandFactor stored in MiscSequenceParam(12). Value = %d.\n', ProtocolName, parValue{cRes});
+                end
+            else
+                [nFieldFound, fieldList] = find_field_name(mstruc, 'lMultiBandFactor','caseSens','sensitive','matchType','exact');
+                [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
+                % Keep only first value if many
+                if nFieldFound
+                    cRes = 1;
+                    parLocation{cRes} = nam{1};
+                    parValue{cRes} = val{1};
+                    fprintf(1,'\nINFO: Siemens SMS-EPI (%s) - MultiBandFactor stored in lMultiBandFactor. Value = %d.\n', ProtocolName, parValue{cRes});
+                end
+            end          
             
         case 'WipParameters'
             % Siemens-specific (NB: search made case insensitive since
@@ -541,7 +583,7 @@ else
                             if isempty(parValueSagCorTra(cdir).dSag);parValueSagCorTra(cdir).dSag = 0;end
                             if isempty(parValueSagCorTra(cdir).dCor);parValueSagCorTra(cdir).dCor = 0;end
                             if isempty(parValueSagCorTra(cdir).dTra);parValueSagCorTra(cdir).dTra = 0;end
-                            parValue{cRes}(:,cdir) = [parValueSagCorTra(cdir).dSag; parValueSagCorTra(cdir).dCor; parValueSagCorTra(cdir).dTra];
+                            parValue{cRes}(:,cdir) = [parValueSagCorTra(cdir).dSag; parValueSagCorTra(cdir).dCor; parValueSagCorTra(cdir).dTra]; %#ok<AGROW>
                         end
                     end
                     
@@ -658,6 +700,11 @@ else
                             EchoSpacing = 330; 
                         case 'b1epi2b3d2' % 1mm protocol from WTCN
                             EchoSpacing = 540;
+                        case 'seste1d3d2' % 1mm protocol from WTCN
+                            % alFree: [VoxDeph,SpoilAmp,EddCurr0,EddCurr1,TRamp,TFlat,BWT,0,0,0,0,0,2,MixingTime,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12345],
+                            % adFree: [0,0,0,0,0,0,0,SlabGradScale,RefocCorr,0,0,RFSpoilBasicIncr]
+                            Wip = get_metadata_val(mstruc, 'WipParameters');
+                            EchoSpacing = Wip.alFree(5)*2+Wip.alFree(6);
                         case 'b1epi2d3d2' % 800um protocol from WTCN
                             EchoSpacing = 540;
                         otherwise
@@ -760,6 +807,12 @@ else
                         % adFree: [RefocCorr ScaleSGrad? MaxRefocAngle DecRefocAngle FAforReferScans]
                         parLocation{cRes} = [nam{1} '.adFree(3:4)'];
                         parValue{cRes} = val{1}.adFree(3):-val{1}.adFree(4):0;
+                    case 'seste1d3d2' % 1mm protocol from WTCN (MFC)
+                        % wip parameters are sorted as follows:
+                        % alFree: [VoxDeph,SpoilAmp,EddCurr0,EddCurr1,TRamp,TFlat,BWT,0,0,0,0,0,2,MixingTime,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12345],
+                        % adFree: [0,0,0,0,0,0,0,SlabGradScale,RefocCorr,0,0,RFSpoilBasicIncr]
+                        parLocation{cRes} = 'HardCodedParameter';
+                        parValue{cRes} = 230:-10:0;
                     case 'b1epi2d3d2' % 800um protocol from WTCN
                         % wip parameters are sorted as follows:
                         % alFree: [Tmixing DurationPer5Deg BWT_SE/STE_factor (?) CrusherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
@@ -804,6 +857,11 @@ else
                         % alFree: [Tmixing DurationPer5Deg BWT_SE/STE_factor (?) CrusherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
                         % adFree: [RefocCorr ScaleSGrad? MaxRefocAngle DecRefocAngle FAforReferScans RFSpoilIncr]
                         index = 6;                        
+                    case 'seste1d3d2' % 1mm protocol from WTCN (MFC)
+                        % wip parameters are sorted as follows:
+                        % alFree: [VoxDeph,SpoilAmp,EddCurr0,EddCurr1,TRamp,TFlat,BWT,0,0,0,0,0,2,MixingTime,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12345],
+                        % adFree: [0,0,0,0,0,0,0,SlabGradScale,RefocCorr,0,0,RFSpoilBasicIncr]
+                        index = 12;
                     case 'fl3d_2d3d6' % VA35 Allegra
                         % wip parameters are sorted as follows:
                         % alFree: [MTSaturationMode (1/2 = Gaussian/Binomial)
@@ -825,7 +883,7 @@ else
                     parLocation{cRes} = [nam{1} '.adFree(' num2str(index) ')'];
                     try
                         parValue{cRes} = val{1}.adFree(index); % in deg
-                    catch
+                    catch %#ok<*CTCH>
                         % if index^th element = 0, it is not specified in the
                         % header and index exceeds matrix dimension:
                         parValue{cRes} = 0;
@@ -857,6 +915,11 @@ else
                         % alFree: [EddyCurrentDelay Tmixing (?) DurationPer5Deg BWT_SE/STE_factor (?) CrusherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
                         % adFree: [RefocCorr ScaleSGrad? MaxRefocAngle DecRefocAngle FAforReferScans]
                         index = 2;
+                    case 'seste1d3d2' % 1mm protocol from WTCN (MFC)
+                        % wip parameters are sorted as follows:
+                        % alFree: [VoxDeph,SpoilAmp,EddCurr0,EddCurr1,TRamp,TFlat,BWT,0,0,0,0,0,2,MixingTime,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12345],
+                        % adFree: [0,0,0,0,0,0,0,SlabGradScale,RefocCorr,0,0,RFSpoilBasicIncr]
+                        index = 14;
                     case 'b1epi2d3d2' % 800um protocol from WTCN
                         % wip parameters are sorted as follows:
                         % alFree: [Tmixing DurationPer5Deg BWT_SE/STE_factor (?) CrusherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]

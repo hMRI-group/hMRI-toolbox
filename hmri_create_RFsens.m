@@ -244,8 +244,8 @@ end
 function coregsensfnam = coreg_sens_to_struct_images(strucfnam, sensfnam, calcpath, tag)
 clear matlabbatch
 for i = 1:size(sensfnam,1)
-    matlabbatch{1}.spm.spatial.coreg.estwrite.ref = {strucfnam(1,:)};
-    matlabbatch{1}.spm.spatial.coreg.estwrite.source = {sensfnam(i,:)};
+    matlabbatch{1}.spm.spatial.coreg.estwrite.ref = {deblank(strucfnam(1,:))};
+    matlabbatch{1}.spm.spatial.coreg.estwrite.source = {deblank(sensfnam(i,:))};
     matlabbatch{1}.spm.spatial.coreg.estwrite.eoptions.cost_fun = 'nmi';
     matlabbatch{1}.spm.spatial.coreg.estwrite.roptions.prefix = sprintf('r%s_',tag);
     matlabbatch{1}.spm.spatial.coreg.estwrite.other = {''};

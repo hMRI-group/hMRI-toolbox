@@ -1542,7 +1542,7 @@ if (mpm_params.T1widx && mpm_params.PDwidx && mpm_params.MTwidx)
     mpm_params.qMT = coutput;
     mpm_params.output(coutput).suffix = 'MT';
     mpm_params.output(coutput).descrip{1} = 'MT saturation map [p.u.]';
-    mpm_params.output(coutput).units = 'a.u.';
+    mpm_params.output(coutput).units = 'p.u.';
     switch B1transcorr{1}
         case 'no_B1_correction'
             mpm_params.output(coutput).descrip{end+1} = '- no B1+ bias correction applied';

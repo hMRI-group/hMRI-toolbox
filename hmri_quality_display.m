@@ -56,18 +56,52 @@ st.centre = st.centre + [10 0 0];
 % to zoom in
 %st.Space = [0.25 0 0 0;0 0.25 0 0;0 0 0.25 0;0 0 0 1];
 
-% to give a title to each orthviews and adjust intesity range:
+% to give a title to each orthviews and adjust intensity range:
 for cim=1:length(disp_list)
-    htit = get(st.vols{cim}.ax{3}.ax,'Title');
+    txt = disp_list(cim).title;
+    % rearrange title if too long 
+    % (split over several lines of maximum maxchar characters length)  
+    maxchar = 20;
+    if length(txt)>maxchar
+        txtsplit = strsplit(txt);
+        clear linsplit;
+        if length(txtsplit)> 1 % text naturally splittable
+            linsplit{1} = txtsplit{1};
+            cw = 2;
+            cl = 1;
+            while cw<length(txtsplit)+1
+                tmp = [linsplit{cl} ' ' txtsplit{cw}];
+                if length(tmp)<maxchar
+                    linsplit{cl} = tmp; %#ok<*AGROW>
+                else
+                    cl = cl+1;
+                    linsplit{cl} = txtsplit{cw};
+                end
+                cw = cw+1;
+            end
+        else % force split
+            cl = 1;
+            while length(txt)>maxchar
+                linsplit{cl} = txt(1:maxchar);
+                txt = txt(maxchar+1:end);
+                cl = cl+1;
+            end
+            linsplit{cl} = txt;
+        end
+            
+        txt = strjoin(linsplit,'\n');
+    end
+    
+    %htit = get(st.vols{cim}.ax{3}.ax,'Title');
     hxlab = get(st.vols{cim}.ax{3}.ax,'Xlabel');
     if any( disp_list(cim).range - round( disp_list(cim).range))
-        set(hxlab, 'String',sprintf('Intensity range\n[%.1f %.1f]', disp_list(cim).range));
+        set(hxlab, 'String',sprintf('%s\n\nIntensity range\n[%.1f %.1f]', txt, disp_list(cim).range),'FontSize',10);
         % set(st.vols{cim}.ax{3}.ax, 'Xlabel',text('String',sprintf('Intensity range\n[%.1f %.1f]', disp_list(cim).range)));
     else
-        set(hxlab, 'String',sprintf('Intensity range\n[%d %d]', disp_list(cim).range));
+        set(hxlab, 'String',sprintf('%s\n\nIntensity range\n[%d %d]', txt, disp_list(cim).range),'FontSize',10);
         % set(st.vols{cim}.ax{3}.ax, 'Xlabel',text('String',sprintf('Intensity range\n[%d %d]', disp_list(cim).range)));
     end
-    set(htit, 'String',sprintf('%s',disp_list(cim).title));
+    %set(htit, 'String',sprintf('%s',disp_list(cim).title));
     % set(st.vols{cim}.ax{3}.ax, 'Title',text('String',sprintf('%s',disp_list(cim).title)));
     st.vols{cim}.window = disp_list(cim).range;
 end

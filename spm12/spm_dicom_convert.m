@@ -650,7 +650,7 @@ for i=1:length(Headers)
     %     Chenevert, Thomas L., et al. "Errors in quantitative image analysis due to
     %     platform-dependent image scaling." Translational oncology 7.1 (2014): 65-71.
     if isfield(Headers{i},'Private_2005_100e'), pinfos(i,1) = 1/Headers{i}.Private_2005_100e; end
-    if isfield(Headers{i},'Private_2005_100d'), pinfos(i,2) =  -Headers{i}.Private_2005_100d/pinfos(i,1); end
+    if isfield(Headers{i},'Private_2005_100d'), pinfos(i,2) =  -Headers{i}.Private_2005_100d*pinfos(i,1); end
 
 end
 
@@ -1763,8 +1763,8 @@ for n=1:size(ord,2)
         % Philips do things differently. The following is for using their scales instead.
         %     Chenevert, Thomas L., et al. "Errors in quantitative image analysis due to
         %     platform-dependent image scaling." Translational oncology 7.1 (2014): 65-71.
-        if isfield(Headers{i},'Private_2005_100e'), pinfos(i,1) = 1/Headers{i}.Private_2005_100e; end
-        if isfield(Headers{i},'Private_2005_100d'), pinfos(i,2) =  -Headers{i}.Private_2005_100d*pinfos(i,1); end
+        if isfield(this(i),'Private_2005_100e'), pinfos(i,1) = 1/this(i).Private_2005_100e; end
+        if isfield(this(i),'Private_2005_100d'), pinfos(i,2) =  -this(i).Private_2005_100d*pinfos(i,1); end
 
     end
     if ~any(any(diff(pinfos,1)))

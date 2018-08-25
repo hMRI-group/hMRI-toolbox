@@ -51,7 +51,12 @@ fnamlist = char(disp_list.fnam);
 spm_check_registration(fnamlist);
 % to get the section shifted in x-direction 
 % (to avoid displaying the plane between left and right hemispheres)
-st.centre = st.centre + [10 0 0];
+% NB: depending on the history of manipulating st.centre, the latter can
+% either be a column or a line vector. So...
+st.centre(1) = st.centre(1) + 10;
+st.centre(2) = st.centre(2) + 0;
+st.centre(3) = st.centre(3) + 0;
+% st.centre = st.centre + [10 0 0];
 
 % to zoom in
 %st.Space = [0.25 0 0 0;0 0.25 0 0;0 0 0.25 0;0 0 0 1];
@@ -63,7 +68,11 @@ for cim=1:length(disp_list)
     % (split over several lines of maximum maxchar characters length)  
     maxchar = 20;
     if length(txt)>maxchar
-        txtsplit = strsplit(txt);
+        try
+            txtsplit = strsplit(txt); % problem when using Matlab < R2013a (when strsplit and strjoin were added)
+        catch %#ok<*CTCH>
+            txtsplit = regexp(txt,regexptranslate('escape',' '),'split');
+        end
         clear linsplit;
         if length(txtsplit)> 1 % text naturally splittable
             linsplit{1} = txtsplit{1};
@@ -89,7 +98,14 @@ for cim=1:length(disp_list)
             linsplit{cl} = txt;
         end
             
-        txt = strjoin(linsplit,'\n');
+        try 
+            txt = strjoin(linsplit,'\n'); % problem when using Matlab < R2013a (when strsplit and strjoin were added)
+        catch
+            txt = linsplit{1};
+            for cc = 2:length(linsplit)
+                txt = sprintf('%s\n%s', txt, linsplit{cc});
+            end
+        end
     end
     
     %htit = get(st.vols{cim}.ax{3}.ax,'Title');

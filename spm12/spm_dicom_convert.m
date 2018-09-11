@@ -45,7 +45,7 @@ function out = spm_dicom_convert(Headers,opts,RootDirectory,format,OutputDirecto
 % Copyright (C) 2002-2018 Wellcome Trust Centre for Neuroimaging
 
 % John Ashburner
-% $Id: spm_dicom_convert.m 7375 2018-07-11 14:51:50Z guillaume $
+% $Id: spm_dicom_convert.m 7407 2018-08-24 10:17:21Z john $
 
 
 %-Input parameters

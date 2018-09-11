@@ -12,6 +12,8 @@ function out = spm_run_dicom(job)
 % $Id: spm_run_dicom.m 7201 2017-11-08 11:13:25Z guillaume $
 % modified by Evelyne Balteau for hMRI-toolbox compatibility
 
+% to make sure only hMRI implementation is used
+addpath(genpath(fileparts(fileparts(mfilename('fullpath')))));
 
 if ~isempty(job.outdir{1})
     out_dir = job.outdir{1};

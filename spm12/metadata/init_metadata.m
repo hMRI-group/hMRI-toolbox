@@ -30,8 +30,8 @@ function N = init_metadata(N, hdr, json)
 %==========================================================================
 
 % INITIALIZE AND ORGANIZE STRUCTURE WITH acqpar AND history FIELDS
-version = sprintf('spm_dicom_convert.m - version %s - %s', spm('Ver','spm_dicom_convert.m',true), spm('Version'));
-metadata.history.procstep = struct('descrip','dicom to nifti import', 'version', version, 'procpar', []);
+dicom_convert_version = sprintf('Matlab %s\nspm_dicom_convert.m - version %s - %s', version, spm('Ver','spm_dicom_convert.m',true), spm('Version'));
+metadata.history.procstep = struct('descrip','dicom to nifti import', 'version', dicom_convert_version, 'procpar', []);
 metadata.history.input(1) = struct('filename','AnonymousFileName', 'history',[]);
 if isfield(hdr,'ImageType')
     metadata.history.output = struct('imtype',hdr.ImageType, 'units','a.u.');

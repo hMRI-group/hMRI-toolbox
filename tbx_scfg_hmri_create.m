@@ -7,6 +7,32 @@ function create_mpm = tbx_scfg_hmri_create
 
 % Christophe Phillips
 
+%--------------------------------------------------------------------------
+% To enable/disable pop-up messages for all warnings - recommended when
+% piloting the data processing.
+%--------------------------------------------------------------------------
+popup        = cfg_menu;
+popup.tag    = 'popup';
+popup.name   = 'Pop-up warnings';
+popup.help   = {['The user can review and keep track of all the information ' ...
+    'collected, including warnings and other messages coming up during ' ...
+    'the creation of the maps. By default, the information is logged in ' ...
+    'the Matlab Command Window, in a log file saved in the "Results/Supplementary" ' ...
+    'directory, and when more critical, displayed as a pop-up message.'], ...
+    ['The latter must be disabled for processing series of datasets (since it ' ...
+    'blocks the execution of the code) but it is strongly recommended to ' ...
+    'leave it enabled when piloting the data processing (single subject) ' ...
+    'to read through and acknowledge every message and make sure ' ...
+    'everything is set up properly before running the processing on a ' ...
+    'whole group.'], ...
+    ['More information about the various messages and action to be taken ' ...
+    '(or not) accordingly can be found on the hMRI-Toolbox WIKI (http://hmri.info). ' ...
+    'In particular, see the "Debug tips & tricks" section.']};
+popup.labels = {'Disable' 'Enable'};
+popup.values = {false true};
+popup.val = {true};
+
+
 % ---------------------------------------------------------------------
 % Input FLASH images - T1-weighted 
 % ---------------------------------------------------------------------
@@ -146,16 +172,32 @@ b1_input_noB1.num     = [1 Inf];
 b1_input_noB1.val     = {'noB1'};
 
 % ---------------------------------------------------------------------
-% pre-calculated B1 map
+% pre-calculated B1 map - including potential rescaling factor
 % ---------------------------------------------------------------------
+scafac         = cfg_entry;
+scafac.tag     = 'scafac';
+scafac.name    = 'Scaling factor';
+scafac.help    = {'The values in the input B1 map will be multiplied by the provided factor.', ...
+    ['If the input B1 map is already in percent units (p.u.) of the nominal flip angle ' ...
+    'no need to apply any extra scaling factor (ScaFac = 1). If the input B1 map is a multiplication factor ' ...
+    'of the nominal flip angle (i.e. value of 1 corresponds to the nominal flip angle), a ' ...
+    'scaling factor ScaFac = 100 is required to produce a B1 map in p.u. of the ' ...
+    'nominal flip angle.']};
+scafac.strtype = 'r';
+scafac.num     = [1 1];
+scafac.val     = {1};
+
 b1_input_preproc           = cfg_branch;
 b1_input_preproc.tag       = 'pre_processed_B1';
 b1_input_preproc.name      = 'pre-processed B1';
 b1_input_preproc.help      = {'Input pre-calculated B1 bias map.'
     ['Please select one unprocessed magnitude image ' ...
     'from the B1map data set (for coregistration with the multiparameter maps) ' ...
-    'and the preprocessed B1map (in percent units), in that order.']};
-b1_input_preproc.val       = {b1raw};
+    'and the preprocessed B1map, in that order.']
+    ['The B1 map is expected to be in ' ...
+    'percent units (p.u.) of the nominal flip angle. If this is not the case, ' ...
+    'a scaling factor can be introduced (see Scaling factor description for more details).']};
+b1_input_preproc.val       = {b1raw scafac};
 
 
 % ---------------------------------------------------------------------
@@ -375,7 +417,7 @@ subj            = cfg_branch;
 subj.tag        = 'subj';
 subj.name       = 'Subject';
 subj.help       = {'Specify a subject for maps calculation.'};
-subj.val        = {output sensitivity b1_type raws};
+subj.val        = {output sensitivity b1_type raws popup};
 
 % ---------------------------------------------------------------------
 % data Data

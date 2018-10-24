@@ -75,7 +75,7 @@ if job.pipe_c == 2
     end
     job_Dwarp.output = job.output;
     % Run the Dartel-warp job
-    fprintf('\nhMRI-pipeline: running the Darte-warp module.\n')
+    fprintf('\nhMRI-pipeline: running the Dartel-warp module.\n')
     out_Dwarp = hmri_run_proc_dartel_template(job_Dwarp);
     %     out_Dwarp = spm_dartel_template(job_Dwarp);
     

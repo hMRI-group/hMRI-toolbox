@@ -1905,7 +1905,9 @@ if isfield(Header,'PerFrameFunctionalGroupsSequence')
               'PlaneOrientationSequence',{'ImageOrientationPatient'}
               'ReferencedImageSequence',{'ReferencedSOPClassUID','ReferencedSOPInstanceUID',...
                                          'ReferencedFrameNumber','PurposeOfReferenceCode'}
-              'PixelValueTransformationSequence',{'RescaleIntercept','RescaleSlope','RescaleType'}};
+              'PixelValueTransformationSequence',{'RescaleIntercept','RescaleSlope','RescaleType'}
+              % for specific PHILIPS rescaling
+              'PhilipsSequence_2005_140f',{'MRScaleSlope','MRScaleIntercept'}};
 
     if isfield(Header,'SharedFunctionalGroupsSequence')
         for d=1:numel(DimOrg)

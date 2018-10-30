@@ -344,15 +344,15 @@ if mpm_params.QA.enable
             % % matField = cat(3, repmat(VPDw.mat, [1, 1, nPD]), ...
             % % repmat(VMTw.mat, [1, 1, nMT]), repmat(VT1w.mat, [1, 1, nT1]));
             
-            reg = [ones(size(TE(:))) TE(:)];
+            reg = [ones(numel(TE),1) TE(:)];
             W   = (reg'*reg)\reg';
             
             spm_progress_bar('Init',dm(3),'multi-contrast R2* fit','planes completed');
             for p = 1:dm(3),
                 M = spm_matrix([0 0 p 0 0 0 1 1 1]);
-                data = zeros([size(TE,1) dm(1:2)]);
+                data = zeros([numel(TE) dm(1:2)]);
                 
-                for cecho = 1:size(TE,1)
+                for cecho = 1:numel(TE)
                     % Take slice p (defined in M) and map to a location in the
                     % appropriate contrast using the matField entry for that
                     % contrast, which has been co-registered to the PD-weighted
@@ -364,7 +364,7 @@ if mpm_params.QA.enable
                     % aligned as we do for the standard PDw derived R2* estimate.
                     data(cecho,:,:) = log(max(spm_slice_vol(Vcon(cecho),M1,dm(1:2),mpm_params.interp),1));
                 end
-                Y = W*reshape(data, [size(TE,1) prod(dm(1:2))]);
+                Y = W*reshape(data, [numel(TE) prod(dm(1:2))]);
                 Y = -reshape(Y(end,:), dm(1:2));
                 
                 % NB: mat field defined by V_pdw => first PDw echo

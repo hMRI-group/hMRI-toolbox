@@ -732,6 +732,7 @@ for p = 1:dm(3)
         end
         
         tmp      = A;
+        tmp(isinf(tmp)) = 0;
         Nmap(mpm_params.qPD).dat(:,:,p) = max(min(tmp,threshall.A),-threshall.A);
         % dynamic range increased to 10^5 to accommodate phased-array coils and symmetrical for noise distribution
 

@@ -592,7 +592,7 @@ b1map_params.SPMver = sprintf('%s (%s)', v, r);
 % load B1 input images if any
 % (NB: if a 'b1input' field is present, it should NOT be empty)
 if isfield(jobsubj.b1_type.(b1_protocol),'b1input')
-    b1map_params.b1input = char(spm_file(jobsubj.b1_type.(b1_protocol).b1input,'number',''));
+    b1map_params.b1input = char(spm_file(jobsubj.b1_type.(b1_protocol).b1input,'number',''));        
     if isempty(b1map_params.b1input)
         hmri_log(sprintf(['WARNING: expected B1 input images missing. Switching to "no \n' ...
             '\tB1 correction" mode. If you meant to apply B1 bias correction, \n' ...
@@ -670,6 +670,35 @@ switch b1_protocol
                         b1map_params.b1acq.blipDIR),b1map_params.defflags);
                 else b1map_params.b1acq.blipDIR = tmp; 
                 end
+                
+                % automatically choose T1 for field strengths 3 and 7 T:
+                tmp = get_metadata_val(b1hdr{1},'MagneticFieldStrength');
+                if ~isempty(tmp)
+                    switch round(tmp)
+                        case 3
+                            if b1map_params.b1proc.T1 ~= 1192
+                                fieldstrengthmatch = false;
+                                b1map_params.b1proc.T1 = 1192;
+                            else
+                                fieldstrengthmatch = true;
+                            end
+                        case 7
+                            if b1map_params.b1proc.T1 ~= 1633
+                                fieldstrengthmatch = false;
+                                b1map_params.b1proc.T1 = 1633;
+                            else
+                                fieldstrengthmatch = true;
+                            end
+                        otherwise
+                            hmri_log(sprintf('WARNING: no supported field strenght (3 or 7 T) detected, thus B1 map might be wrong with assumed T1\n(%d ms)', ...
+                                b1map_params.b1proc.T1),b1map_params.defflags);
+                    end
+                    if ~fieldstrengthmatch
+                        hmri_log(sprintf('WARNING: using field strength specific value for T1\n(%d ms) instead of default value', ...
+                            b1map_params.b1proc.T1),b1map_params.defflags);
+                    end
+                end
+                    
                 
                 if ~isempty(b1map_params.b0input)
                     % note that the current implementation assumes that

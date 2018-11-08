@@ -565,17 +565,22 @@ b1_protocol = f{1};
 if isfield(jobsubj.b1_type.(b1_protocol),'b1parameters')
     % first reinitialise processing parameters to standard defaults:
     hmri_b1_standard_defaults;
+    deffnam = fullfile(fileparts(mfilename('fullpath')),'config','hmri_b1_standard_defaults.m');
+    custom_def = false;
 
     % then, if customized defaults file available, run it to overwrite
     % standard defaults parameters.
     if isfield(jobsubj.b1_type.(b1_protocol).b1parameters,'b1defaults')
         deffnam = jobsubj.b1_type.(b1_protocol).b1parameters.b1defaults;
         spm('Run',deffnam);
+        custom_def = true;
     end
 end
 
-% load all B1 bias correction defaults parameters
+% load all B1 bias correction defaults parameters & add default file
 b1map_params = hmri_get_defaults(['b1map.' b1_protocol]); 
+b1map_params.defaults_file = deffnam;
+b1map_params.custom_defaults = custom_def;
 
 % flags for logging information and warnings
 b1map_params.defflags = jobsubj.log.flags; % default flags
@@ -671,32 +676,62 @@ switch b1_protocol
                 else b1map_params.b1acq.blipDIR = tmp; 
                 end
                 
-                % automatically choose T1 for field strengths 3 and 7 T:
+                % consistency check for T1 value and field strength:
                 tmp = get_metadata_val(b1hdr{1},'MagneticFieldStrength');
+                supportedB0 = false;
+                matchT1fieldstrength = false;
                 if ~isempty(tmp)
                     switch round(tmp)
                         case 3
-                            if b1map_params.b1proc.T1 ~= 1192
-                                fieldstrengthmatch = false;
-                                b1map_params.b1proc.T1 = 1192;
-                            else
-                                fieldstrengthmatch = true;
-                            end
+                            supportedB0 = true;
+                            expectedT1 = 1192;
                         case 7
-                            if b1map_params.b1proc.T1 ~= 1633
-                                fieldstrengthmatch = false;
-                                b1map_params.b1proc.T1 = 1633;
-                            else
-                                fieldstrengthmatch = true;
-                            end
+                            supportedB0 = true;
+                            expectedT1 = 1633;
                         otherwise
-                            hmri_log(sprintf('WARNING: no supported field strenght (3 or 7 T) detected, thus B1 map might be wrong with assumed T1\n(%d ms)', ...
-                                b1map_params.b1proc.T1),b1map_params.defflags);
+                            supportedB0 = false;
+                            expectedT1 = NaN;
                     end
-                    if ~fieldstrengthmatch
-                        hmri_log(sprintf('WARNING: using field strength specific value for T1\n(%d ms) instead of default value', ...
-                            b1map_params.b1proc.T1),b1map_params.defflags);
+                    if b1map_params.b1proc.T1 == expectedT1
+                        matchT1fieldstrength = true;
                     end
+                    if ~supportedB0
+                        hmri_log(sprintf(['WARNING: field strength (B0 = %.0fT) not supported. The reference T1' ...
+                            '\nvalue for B1 map calculation for that field strength is not currently ' ...
+                            '\nimplemented in the hMRI-toolbox. Please make sure the assumed ' ...
+                            '\nvalue (T1 = %.0f ms) is correct, otherwise set it via a customised ' ...
+                            '\nB1 default file (config/local/hmri_b1_local_defaults.m).' ...
+                            '\nIf the value is already properly set, just ignore this message.'], ...
+                            tmp, b1map_params.b1proc.T1),b1map_params.defflags);
+                    else
+                        if ~matchT1fieldstrength && custom_def
+                            hmri_log(sprintf(['WARNING: the assumed T1 value for B1 map calculation does not ' ...
+                                '\nmatch the expected value for the used field strength: ' ...
+                                '\n    B0 = %.0fT, T1 = %d/%d (expected/actual) ms.' ...
+                                '\nPlease check T1 value is properly set in your local settings ' ...
+                                '\n(see hmri_def.b1map.i3D_EPI.b1proc.T1 in your customised ' ...
+                                '\n%s config file).' ...
+                                '\nRecommended values are: ' ...
+                                '\n    - @3T: T1 = 1192 ms' ...
+                                '\n    - @7T: T1 = 1633 ms' ...
+                                '\nIf the value was set differently on purpose, just ignore this message.'], ...
+                                tmp, expectedT1, b1map_params.b1proc.T1,char(spm_file(deffnam,'filename'))),b1map_params.defflags);
+                        elseif ~matchT1fieldstrength && ~custom_def
+                             hmri_log(sprintf(['WARNING: the assumed T1 value for B1 map calculation was ' ...
+                                '\nautomatically matched to the used field strength: ' ...
+                                '\n    B0 = %.0fT, T1 = %d ms.' ...
+                                '\nPlease consider to properly set the T1 value in your local settings ' ...
+                                '\n(see hmri_def.b1map.i3D_EPI.b1proc.T1 in your customised ' ...
+                                '\nhmri_b1_local_defaults.m file).' ...
+                                '\nRecommended values are: ' ...
+                                '\n    - @3T: T1 = 1192 ms' ...
+                                '\n    - @7T: T1 = 1633 ms'], ...
+                                tmp, expectedT1),b1map_params.defflags);
+                            b1map_params.b1proc.T1 = expectedT1;
+                        end
+                    end
+                    b1map_params.b1proc.matchT1fieldstrength = matchT1fieldstrength;
+                    b1map_params.b1proc.expectedT1 = expectedT1;
                 end
                     
                 

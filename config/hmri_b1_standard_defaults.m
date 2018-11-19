@@ -46,7 +46,6 @@ hmri_def.b1map.i3D_AFI.b1avail = true;
 hmri_def.b1map.i3D_AFI.procreq = true; 
 hmri_def.b1map.i3D_AFI.b1acq.TR2TR1ratio = 5;
 hmri_def.b1map.i3D_AFI.b1acq.alphanom = 60;
-hmri_def.b1map.i3D_AFI.deffnam  = {fullfile(fileparts(mfilename('fullpath')),'config','hmri_b1_standard_defaults.m')};
 
 % 'pre_processed_B1'
 hmri_def.b1map.pre_processed_B1.b1type = 'pre_processed_B1'; 
@@ -65,13 +64,11 @@ hmri_def.b1map.UNICORT.b1avail   = false;
 hmri_def.b1map.UNICORT.procpar.reg = 10^-3;
 hmri_def.b1map.UNICORT.procpar.FWHM = 60;
 hmri_def.b1map.UNICORT.procpar.thr = 5;
-hmri_def.b1map.UNICORT.deffnam  = {fullfile(fileparts(mfilename('fullpath')),'config','hmri_b1_standard_defaults.m')};
 
 % 'i3D_EPI'
 hmri_def.b1map.i3D_EPI.b1type = 'i3D_EPI'; 
 hmri_def.b1map.i3D_EPI.b1avail   = true; 
 hmri_def.b1map.i3D_EPI.procreq = true; 
-hmri_def.b1map.i3D_EPI.deffnam  = {fullfile(fileparts(mfilename('fullpath')),'config','hmri_b1_standard_defaults.m')};
 % b0&b1-processing
 hmri_def.b1map.i3D_EPI.b1proc.T1 = 1192; % ms, strictly valid only at 3T
 hmri_def.b1map.i3D_EPI.b1proc.eps = 0.0001;

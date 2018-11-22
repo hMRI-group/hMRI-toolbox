@@ -1541,7 +1541,7 @@ end
 if (mpm_params.T1widx && mpm_params.PDwidx && mpm_params.MTwidx)
     coutput = coutput+1;
     mpm_params.qMT = coutput;
-    mpm_params.output(coutput).suffix = 'MT';
+    mpm_params.output(coutput).suffix = 'MTsat';
     mpm_params.output(coutput).descrip{1} = 'MT saturation map [p.u.]';
     mpm_params.output(coutput).units = 'p.u.';
     switch B1transcorr{1}

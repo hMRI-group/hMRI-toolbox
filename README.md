@@ -13,7 +13,7 @@ The hMRI toolbox is free but copyright software, distributed under the terms of 
 
 ## Download
 
-The hMRI Toolbox Matlab code (beta release v0.1.1-beta) can be downloaded from: https://github.molgen.mpg.de/hMRI-group/Toolbox/archive/v0.1.1-beta.zip
+The pre-releases and releases of the hMRI Toolbox can be downloaded as a zip archive from [here](https://github.molgen.mpg.de/hMRI-group/Toolbox/releases). Also refer to the http://hmri.info home page for the current release.
 
 ## E-Mail List
 

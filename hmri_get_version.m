@@ -68,7 +68,8 @@ else
         % read file content
         clin = fgets(fid);
         while (clin~=-1)
-            hmri_version = [hmri_version clin]; %#ok<AGROW>
+            clin = deblank(regexprep(clin,{'\n','\r'},{' ',' '}));
+            hmri_version = deblank(sprintf('%s%s',hmri_version,clin));
             clin = fgets(fid);
         end
         fclose(fid);
@@ -87,7 +88,8 @@ if lastcommit
         % read file content
         clin = fgets(fid);
         while (clin~=-1)
-            hmri_version = [hmri_version clin]; %#ok<AGROW>
+            clin = deblank(regexprep(clin,{'\n','\r'},{' ',' '}));
+            hmri_version = deblank(sprintf('%s\n%s',hmri_version,clin));
             clin = fgets(fid);
         end
         fclose(fid);
@@ -97,7 +99,7 @@ if lastcommit
 end
 
 % add Matlab version for full version tracking
-hmri_version = sprintf('Matlab %s \n%s', version, hmri_version);
+hmri_version = {{sprintf('%s %s', spm_check_version, version),hmri_version}};
 
 % back to the current working directory
 cd(current_dir);

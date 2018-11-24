@@ -12,15 +12,15 @@ Many small bugs - refer to commits for details...
 
 ### Added
 
-- **DICOM import for Philips data**:
+- **DICOM import for Philips data**:           
     Properly accounts for the rescaling factor for quantitative analysis 
-    (see [Chenevert *et al.* 2014](wiki/References)).
+    (see Chenevert *et al.* 2014).
     
 - **Tracking Matlab version number** in the JSON metadata.
 
 ### Changed
 
-- **MT saturation map file name**: from `*_MT to `*_MTsat
+- **MT saturation map file name** from `*_MT` to `*_MTsat`.
 
 
 

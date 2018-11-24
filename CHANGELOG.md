@@ -4,6 +4,25 @@ This changelog documents all notable changes to the hMRI-toolbox.
 
 Most recent version numbers *should* follow the [Semantic Versioning](https://semver.org/spec/v2.0.0.html) principles (e.g. bug fixes: x.x.1 > x.x.2, new feature with backward compatibility: x.2.x > x.3.0, major release affecting the way data are handled and processed: 1.x.x > 2.0.0).
 
+## [v0.1.3-dev] (unreleased)
+
+### Fixed
+
+Many small bugs - refer to commits for details...
+
+### Added
+
+- **DICOM import for Philips data**:
+    Properly accounts for the rescaling factor for quantitative analysis 
+    (see [Chenevert *et al.* 2014](wiki/References)).
+    
+- **Tracking Matlab version number** in the JSON metadata.
+
+### Changed
+
+- **MT saturation map file name**: from `*_MT to `*_MTsat
+
+
 
 ## [v0.1.2-beta2] (released 2018-07-30)
 

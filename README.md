@@ -4,8 +4,6 @@ A toolbox for quantitative MRI and in-vivo histology using MRI (hMRI)
 
 ## Background
 
-Background
-
 Neuroscience and clinical researchers are increasingly interested in quantitative magnetic resonance imaging (qMRI) 
 due to its sensitivity to micro-structural properties of brain tissue such as axon, myelin, iron and water concentration (Weiskopf et al., 2015).
 

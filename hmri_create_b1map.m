@@ -579,8 +579,10 @@ end
 
 % load all B1 bias correction defaults parameters & add default file
 b1map_params = hmri_get_defaults(['b1map.' b1_protocol]); 
-b1map_params.defaults_file = deffnam;
-b1map_params.custom_defaults = custom_def;
+if exist('deffnam','var')
+    b1map_params.defaults_file = deffnam;
+    b1map_params.custom_defaults = custom_def;
+end
 
 % flags for logging information and warnings
 b1map_params.defflags = jobsubj.log.flags; % default flags

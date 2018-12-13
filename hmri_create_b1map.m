@@ -559,6 +559,10 @@ function b1map_params = get_b1map_params(jobsubj)
 f = fieldnames(jobsubj.b1_type);
 b1_protocol = f{1};
 
+% pre-set filename of defaults file
+deffnam = '';
+custom_def = false;
+
 % load customized defaults parameters from customized defaults file if any
 % (the customized defaults file must be run to overwrite the standard
 % defaults parameters)
@@ -579,10 +583,8 @@ end
 
 % load all B1 bias correction defaults parameters & add default file
 b1map_params = hmri_get_defaults(['b1map.' b1_protocol]); 
-if exist('deffnam','var')
-    b1map_params.defaults_file = deffnam;
-    b1map_params.custom_defaults = custom_def;
-end
+b1map_params.defaults_file = deffnam;
+b1map_params.custom_defaults = custom_def;
 
 % flags for logging information and warnings
 b1map_params.defflags = jobsubj.log.flags; % default flags

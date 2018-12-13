@@ -12,7 +12,7 @@ function hmri = tbx_cfg_hmri
 
 if ~isdeployed, 
     hMRIpath = fileparts(mfilename('fullpath'));
-    % addpath(hMRIpath);
+    addpath(hMRIpath);
     addpath(fullfile(hMRIpath, 'config'));
     addpath(fullfile(hMRIpath, 'etpm'));
     addpath(fullfile(hMRIpath, 'spm12'));

@@ -13,30 +13,33 @@ function varargout = spm_jsonwrite(varargin)
 %              indent: string to use for indentation [Default: '']
 %              replacementStyle: string to control how non-alphanumeric
 %                characters are replaced [Default: 'underscore']
+%              convertinfandnan: encode NaN, Inf and -Inf as "null"
+%                [Default: true]
 % 
 % References:
 %   JSON Standard: http://www.json.org/
 %__________________________________________________________________________
-% Copyright (C) 2015-2017 Wellcome Trust Centre for Neuroimaging
+% Copyright (C) 2015-2018 Wellcome Trust Centre for Neuroimaging
 
 % Guillaume Flandin
-% $Id: spm_jsonwrite.m 7014 2017-02-13 12:31:33Z guillaume $
+% $Id: spm_jsonwrite.m 7373 2018-07-09 16:57:21Z guillaume $
 
 
 %-Input parameters
 %--------------------------------------------------------------------------
-opts         = struct('indent','','replacementstyle','underscore');
+opts         = struct(...
+    'indent','',...
+    'replacementstyle','underscore',...
+    'convertinfandnan',true);
 opt          = struct([]);
 if nargin > 1
     if ischar(varargin{1})
         filename = varargin{1};
         json     = varargin{2};
-        root     = inputname(2);
     else
         filename = '';
         json = varargin{1};
         opt  = varargin{2};
-        root = inputname(1);
     end
     if nargin > 2
         opt  = varargin{3};
@@ -44,24 +47,16 @@ if nargin > 1
 else
     filename = '';
     json     = varargin{1};
-    root     = inputname(1);
 end
-fn = lower(fieldnames(opt));
+fn = fieldnames(opt);
 for i=1:numel(fn)
-    if ~isfield(opts,fn{i}), warning('Unknown option "%s".',fn{i}); end
-    opts.(fn{i}) = opt.(fn{i});
+    if ~isfield(opts,lower(fn{i})), warning('Unknown option "%s".',fn{i}); end
+    opts.(lower(fn{i})) = opt.(fn{i});
 end
 optregistry(opts);
 
 %-JSON serialization
 %--------------------------------------------------------------------------
-if ~isstruct(json) && ~iscell(json) && ~isa(json,'containers.Map')
-    if ~isempty(root)
-        json = struct(root,json);
-    else
-        error('Invalid JSON structure.');
-    end
-end
 fmt('init',sprintf(opts.indent));
 S = jsonwrite_var(json,~isempty(opts.indent));
 
@@ -94,8 +89,53 @@ elseif ischar(json)
     end
 elseif isnumeric(json) || islogical(json)
     S = jsonwrite_numeric(json);
+elseif isa(json,'string')
+    if numel(json) == 1
+        if ismissing(json)
+            S = 'null';
+        else
+            S = jsonwrite_char(char(json));
+        end
+    else
+        json = arrayfun(@(x)x,json,'UniformOutput',false);
+        json(cellfun(@(x) ismissing(x),json)) = {'null'};
+        idx = find(size(json)~=1);
+        if numel(idx) == 1 % vector
+            S = jsonwrite_cell(json,tab);
+        else % array
+            S = jsonwrite_cell(num2cell(json,setdiff(1:ndims(json),idx(1))),tab);
+        end
+    end
+elseif isa(json,'datetime') || isa(json,'categorical')
+    S = jsonwrite_var(string(json));
+elseif isa(json,'table')
+    S = struct;
+    s = size(json);
+    vn = json.Properties.VariableNames;
+    for i=1:s(1)
+        for j=1:s(2)
+            if iscell(json{i,j})
+                S(i).(vn{j}) = json{i,j}{1};
+            else
+                S(i).(vn{j}) = json{i,j};
+            end
+        end
+    end
+    S = jsonwrite_struct(S,tab);
 else
-    error('Class "%s" is not supported.',class(json));
+    if numel(json) ~= 1
+        json = arrayfun(@(x)x,json,'UniformOutput',false);
+        S = jsonwrite_cell(json,tab);
+    else
+        p = properties(json);
+        if isempty(p), p = fieldnames(json); end % for pre-classdef
+        s = struct;
+        for i=1:numel(p)
+            s.(p{i}) = json.(p{i});
+        end
+        S = jsonwrite_struct(s,tab);
+        %error('Class "%s" is not supported.',class(json));
+    end
 end
 
 %==========================================================================
@@ -107,7 +147,9 @@ if numel(json) == 1
         key = fn{i};
         if strcmp(optregistry('replacementStyle'),'hex')
             key = regexprep(key,...
-                'x0x([0-9a-fA-F]+)_', '${native2unicode(hex2dec($1))}');
+                '^x0x([0-9a-fA-F]{2})', '${native2unicode(hex2dec($1))}');
+            key = regexprep(key,...
+                '0x([0-9a-fA-F]{2})', '${native2unicode(hex2dec($1))}');
         end
         if isstruct(json), val = json.(fn{i}); else val = json(fn{i}); end
         S = [S fmt(tab) jsonwrite_char(key) ':' fmt(' ',tab) ...
@@ -124,8 +166,8 @@ end
 function S = jsonwrite_cell(json,tab)
 if numel(json) == 0 ...
         || (numel(json) == 1 && iscellstr(json)) ...
-        || all(cellfun(@isnumeric,json)) ...
-        || all(cellfun(@islogical,json))
+        || all(all(cellfun(@isnumeric,json))) ...
+        || all(all(cellfun(@islogical,json)))
     tab = '';
 end
 S = ['[' fmt('\n',tab)];
@@ -142,7 +184,7 @@ function S = jsonwrite_char(json)
 % \" \\ \/ \b \f \n \r \t \u four-hex-digits
 json = strrep(json,'\','\\');
 json = strrep(json,'"','\"');
-json = strrep(json,'/','\/');
+%json = strrep(json,'/','\/');
 json = strrep(json,sprintf('\b'),'\b');
 json = strrep(json,sprintf('\f'),'\f');
 json = strrep(json,sprintf('\n'),'\n');
@@ -152,13 +194,21 @@ S = ['"' json '"'];
 
 %==========================================================================
 function S = jsonwrite_numeric(json)
+if any(imag(json(:)))
+    error('Complex numbers not supported.');
+end
 if numel(json) == 0
     S = jsonwrite_cell({});
     return;
 elseif numel(json) > 1
     idx = find(size(json)~=1);
     if numel(idx) == 1 % vector
-        S = jsonwrite_cell(num2cell(json),'');
+        if any(islogical(json)) || any(~isfinite(json))
+            S = jsonwrite_cell(num2cell(json),'');
+        else
+            S = ['[' sprintf('%23.16g,',json) ']']; % eq to num2str(json,16)
+            S(S==' ') = [];
+        end
     else % array
         S = jsonwrite_cell(num2cell(json,setdiff(1:ndims(json),idx(1))),'');
     end
@@ -166,6 +216,18 @@ elseif numel(json) > 1
 end
 if islogical(json)
     if json, S = 'true'; else S = 'false'; end
+elseif ~isfinite(json)
+    if optregistry('convertinfandnan')
+        S = 'null';
+    else
+        if isnan(json)
+            S = 'NaN';
+        elseif json > 0
+            S = 'Infinity';
+        else
+            S = '-Infinity';
+        end
+    end
 else
     S = num2str(json,16);
 end

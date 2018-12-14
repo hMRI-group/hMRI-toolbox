@@ -10,11 +10,22 @@ function hmri = tbx_cfg_hmri
 % Bogdan Draganski & Ferath Kherif, 2011
 % ======================================================================
 
-if ~isdeployed, addpath(genpath(fileparts(mfilename('fullpath')))); end
+if ~isdeployed, 
+    hMRIpath = fileparts(mfilename('fullpath'));
+    addpath(hMRIpath);
+    addpath(fullfile(hMRIpath, 'config'));
+    addpath(fullfile(hMRIpath, 'etpm'));
+    addpath(fullfile(hMRIpath, 'spm12'));
+    addpath(fullfile(hMRIpath, 'spm12','config'));
+    addpath(fullfile(hMRIpath, 'spm12','metadata'));
+end
 
-% Work is split into 2 main branches:
-% - creating the MPM's from the raw images -> tbx_cfg_hmri_crm
-% - spatially processing the MPM's -> tbx_cfg_hmri_proc
+% The toolbox is split into 5 main modules:
+% - Configure toolbox -> tbx_scfg_hmri_config
+% - DICOM import -> tbx_scfg_hmri_dicom_import
+% - Auto-reorient -> tbx_scfg_hmri_autoreorient
+% - Create hMRI maps -> tbx_scfg_hmri_create
+% - Process (spatially) hMRI maps -> tbx_scfg_hmri_proc
 
 % ---------------------------------------------------------------------
 % hmri hMRI Tools

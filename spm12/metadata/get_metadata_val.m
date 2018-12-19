@@ -56,7 +56,7 @@ function [parValue, parLocation] = get_metadata_val(varargin)
 %    - 'epiReadoutDuration' [ms]
 %    - 'WipParameters' structure containing fields alFree & adFree
 %    - 'B1mapNominalFAValues' [deg]
-%    - 'RFSpoilingPhaseIncrement' [Hz]
+%    - 'RFSpoilingPhaseIncrement' [deg]
 %    - 'B1mapMixingTime' [ms]
 %    - 'AllDiffusionDirections' list of diffusion directions
 %    - 'AllBValues' list of b-value
@@ -385,7 +385,7 @@ else
             [nFieldFound, fieldList] = find_field_name(mstruc, 'lPhaseEncodingLines','caseSens','sensitive','matchType','exact');
             [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
             [nFieldFoundPAT, fieldListPAT] = find_field_name(mstruc, 'lAccelFactPE','caseSens','sensitive','matchType','exact');
-            [valPAT,namPAT] = get_val_nam_list(mstruc, nFieldFoundPAT, fieldListPAT); %#ok<NASGU>
+            [valPAT,namPAT] = get_val_nam_list(mstruc, nFieldFoundPAT, fieldListPAT);  %#ok<ASGLU>
             if nFieldFound
                 cRes = 1;
                 parLocation{cRes} = nam{1};
@@ -583,7 +583,7 @@ else
                             if isempty(parValueSagCorTra(cdir).dSag);parValueSagCorTra(cdir).dSag = 0;end
                             if isempty(parValueSagCorTra(cdir).dCor);parValueSagCorTra(cdir).dCor = 0;end
                             if isempty(parValueSagCorTra(cdir).dTra);parValueSagCorTra(cdir).dTra = 0;end
-                            parValue{cRes}(:,cdir) = [parValueSagCorTra(cdir).dSag; parValueSagCorTra(cdir).dCor; parValueSagCorTra(cdir).dTra]; %#ok<AGROW>
+                            parValue{cRes}(:,cdir) = [parValueSagCorTra(cdir).dSag; parValueSagCorTra(cdir).dCor; parValueSagCorTra(cdir).dTra]; 
                         end
                     end
                     
@@ -705,6 +705,11 @@ else
                             % adFree: [0,0,0,0,0,0,0,SlabGradScale,RefocCorr,0,0,RFSpoilBasicIncr]
                             Wip = get_metadata_val(mstruc, 'WipParameters');
                             EchoSpacing = Wip.alFree(5)*2+Wip.alFree(6);
+                        case {'b1sev1a3d2' 'b1sev1b3d2'} % Prisma versions by Kerrin Pine
+                            Wip = get_metadata_val(mstruc, 'WipParameters');
+                            EchoSpacing = Wip.alFree(5)*2+Wip.alFree(6);
+                        case {'b1epi2f3d2' 'b1epi2g3d2' 'b1sev1a'} % 7T versions by Kerrin Pine
+                            EchoSpacing = 540;
                         case 'b1epi2d3d2' % 800um protocol from WTCN
                             EchoSpacing = 540;
                         otherwise
@@ -819,6 +824,12 @@ else
                         % adFree: [RefocCorr ScaleSGrad? MaxRefocAngle DecRefocAngle FAforReferScans RFSpoilIncr]
                         parLocation{cRes} = [nam{1} '.adFree(3:4)'];
                         parValue{cRes} = val{1}.adFree(3):-val{1}.adFree(4):0;
+                    case {'b1sev1a3d2' 'b1sev1b3d2'} % Prisma versions by Kerrin Pine
+                        parLocation{cRes} = 'HardCodedParameter';
+                        parValue{cRes} = 230:-10:0;
+                    case {'b1epi2f3d2' 'b1epi2g3d2' 'b1sev1a'} % 7T versions by Kerrin Pine
+                        parLocation{cRes} = [nam{1} '.adFree(3:4)'];
+                        parValue{cRes} = val{1}.adFree(3):-val{1}.adFree(4):0;
                     otherwise
                         fprintf(1,'\nWARNING: B1mapping version unknown (%s/%s). Give up guessing FA values.\n', valSEQ, valPROT);
                 end
@@ -828,7 +839,7 @@ else
                 end
             end
             
-        case 'RFSpoilingPhaseIncrement' % [Hz] defined in al_B1mapping and mtflash3d sequences - version dependent!!
+        case 'RFSpoilingPhaseIncrement' % [deg] defined in al_B1mapping and mtflash3d sequences - version dependent!!
             valSEQ = get_metadata_val(mstruc, 'SequenceName');
             valPROT = get_metadata_val(mstruc, 'ProtocolName');
             [nFieldFound, fieldList] = find_field_name(mstruc, 'sWipMemBlock','caseSens','insensitive','matchType','exact');
@@ -875,6 +886,10 @@ else
                         %          DurRORamp
                         %          FlatTopSpoiler]
                         % adFree: [MTGaussianFA OffResonanceMTGaussianPulse RFSpoilIncr SpoilerAmpl]
+                        index = 3;
+                    case {'b1sev1a3d2' 'b1sev1b3d2'} % Prisma versions by Kerrin Pine
+                        index = 12;
+                    case {'b1epi2f3d2' 'b1epi2g3d2' 'b1sev1a'} % 7T versions by Kerrin Pine
                         index = 3;
                     otherwise
                         fprintf(1,'Sequence version unknown (%s/%s). Give up guessing RF spoiling increment.\n', valSEQ, valPROT);
@@ -925,6 +940,10 @@ else
                         % alFree: [Tmixing DurationPer5Deg BWT_SE/STE_factor (?) CrusherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
                         % adFree: [RefocCorr ScaleSGrad? MaxRefocAngle DecRefocAngle FAforReferScans RFSpoilIncr]
                         index = 1;
+                    case {'b1sev1a3d2' 'b1sev1b3d2'} % Prisma versions by Kerrin Pine
+                        index = 14;
+                    case {'b1epi2f3d2' 'b1epi2g3d2' 'b1sev1a'} % 7T versions by Kerrin Pine
+                        index = 1;
                     otherwise
                         fprintf(1,'B1mapping version unknown (%s/%s). Give up guessing TM value.\n', valSEQ, valPROT);
                 end
@@ -960,13 +979,26 @@ if nFieldFound
     val = cell(1,nFieldFound);
     nam = cell(1,nFieldFound);
     for cRes = 1:nFieldFound
-        cF = 1;
-        nam{cRes} = fieldList{cRes,cF};
-        while cF<size(fieldList,2)
-            cF = cF+1;
+        nF = 0;
+        for cF = 1:size(fieldList,2)
             if ~isempty(fieldList{cRes,cF})
-                nam{cRes} = [nam{cRes}  '.' fieldList{cRes,cF}];
+                nF = nF+1;
             end
+        end
+        nam{cRes} = fieldList{cRes,1};
+        for cF = 2:nF
+            if iscell(eval(['mstruc.' nam{cRes}]))
+                nam{cRes} = [nam{cRes} '{1}'];
+                % fprintf(1,['\nWARNING - get_metadata_val/get_val_nam_list:' ...
+                %    '\n\tThe value(s) retrieved are one sample out of a bigger cell array.' ...
+                %    '\n\tMight be worth checking no other value(s) is(are) available that should be accounted for.\n']);
+            elseif length(eval(['mstruc.' nam{cRes}]))>1
+                nam{cRes} = [nam{cRes} '(1)'];
+                % fprintf(1,['\nWARNING - get_metadata_val/get_val_nam_list:' ...
+                %    '\n\tThe value(s) retrieved is(are) one sample out of a bigger array.' ...
+                %    '\n\tMight be worth checking no other value(s) is(are) available that should be accounted for.\n']);
+            end
+            nam{cRes} = [nam{cRes}  '.' fieldList{cRes,cF}];
         end
         val{cRes} = eval(['mstruc.' nam{cRes}]);
     end

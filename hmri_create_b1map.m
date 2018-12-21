@@ -559,6 +559,10 @@ function b1map_params = get_b1map_params(jobsubj)
 f = fieldnames(jobsubj.b1_type);
 b1_protocol = f{1};
 
+% pre-set filename of defaults file
+deffnam = '';
+custom_def = false;
+
 % load customized defaults parameters from customized defaults file if any
 % (the customized defaults file must be run to overwrite the standard
 % defaults parameters)

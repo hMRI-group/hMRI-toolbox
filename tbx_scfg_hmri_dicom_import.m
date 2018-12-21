@@ -16,6 +16,6 @@ function dicom = tbx_scfg_hmri_dicom_import
 % Evelyne Balteau - April 2017
 % ======================================================================
 
-addpath(genpath(fullfile(fileparts(mfilename('fullpath')),'spm12')));
+addpath(fullfile(fileparts(mfilename('fullpath')),'spm12','config'));
 
 dicom = spm_cfg_dicom;

@@ -250,10 +250,10 @@ if (PDwidx && T1widx)
     Ni.dat      = file_array(PT1w_forA,dm,dt, 0,1,0);
     create(Ni);
     spm_progress_bar('Init',dm(3),Ni.descrip,'planes completed');
-    for p = 1:dm(3),
+    for p = 1:dm(3)
         M = spm_matrix([0 0 p]);
         Y = zeros(dm(1:2));
-        for nr = 1:PDproc.nr_echoes_forA,
+        for nr = 1:PDproc.nr_echoes_forA
             M1 = V(nr).mat\V(1).mat*M;
             Y  = Y + spm_slice_vol(V(nr),M1,dm(1:2),mpm_params.interp);
         end
@@ -270,13 +270,13 @@ hmri_log(sprintf('\t-------- Coregistering the images --------'),mpm_params.nopu
 % NOTE: coregistration can be disabled using the hmri_def.coreg2PDw flag
 
 x_MT2PD = [0 0 0 0 0 0];
-if MTwidx; 
+if MTwidx
     if mpm_params.coreg
         x_MT2PD = coreg_mt(Pavg{PDwidx}, Pavg{MTwidx});
     end
 end
 x_T12PD = [0 0 0 0 0 0];   
-if T1widx; 
+if T1widx 
     if mpm_params.coreg
         x_T12PD = coreg_mt(Pavg{PDwidx}, Pavg{T1widx});
         coreg_mt(Pavg{PDwidx}, PT1w_forA);
@@ -348,7 +348,7 @@ if mpm_params.QA.enable
             W   = (reg'*reg)\reg';
             
             spm_progress_bar('Init',dm(3),'multi-contrast R2* fit','planes completed');
-            for p = 1:dm(3),
+            for p = 1:dm(3)
                 M = spm_matrix([0 0 p 0 0 0 1 1 1]);
                 data = zeros([numel(TE) dm(1:2)]);
                 
@@ -472,7 +472,7 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
     W = (reg'*reg)\reg';
     
     spm_progress_bar('Init',dm(3),'OLS R2* fit','planes completed');
-    for p = 1:dm(3),
+    for p = 1:dm(3)
         M = spm_matrix([0 0 p 0 0 0 1 1 1]);
         data = zeros([sum(nechoes) dm(1:2)]);
         
@@ -595,6 +595,43 @@ fa_pdw_rad = fa_pdw * pi / 180;
 if MTwidx; fa_mtw_rad = fa_mtw * pi / 180; end
 if T1widx; fa_t1w_rad = fa_t1w * pi / 180; end
 
+% create output files of FA correction factors for debugging
+if isfield(ISC,'iscphase')
+    for ccon=1:mpm_params.ncon
+        ctag = mpm_params.input(ccon).tag;
+        Ni         = nifti;
+        Ni.mat     = V_pdw(1).mat;
+        Ni.mat0    = V_pdw(1).mat;
+        Ni.descrip = sprintf('Flip Angle map for %s-weighted contrast corrected for imperfect spoiling',ctag);
+        Ni.dat     = file_array(fullfile(calcpath,[outbasename '_' ctag '_FAcorr.nii']),dm,dt, 0,1,0);
+        create(Ni);
+        FAcmap.(ctag) = Ni;
+    end
+    spm_progress_bar('Init',dm(3),'Calculating FA maps (ISC)','planes completed');
+    for p = 1:dm(3)
+        M = M0*spm_matrix([0 0 p]);
+        f_T = spm_slice_vol(V_trans(2,:),V_trans(2,:).mat\M,dm(1:2),mpm_params.interp)/100; % divide by 100, since p.u. maps
+        for ccon=1:mpm_params.ncon
+            ctag = mpm_params.input(ccon).tag;
+            eval(sprintf('f_FA_%s = f_T * fa_%sw;',ctag,lower(ctag)))
+            eval(sprintf('ISC_corr = zeros(size(f_FA_%s));',ctag))
+            for k = 0:5
+                for l = 0:5
+                    ISC_corr = ISC_corr + ISC.P(k+1,l+1) * eval(sprintf('f_FA_%s.^k * TR_%sw^l',ctag,lower(ctag)));
+                end
+            end
+            eval(sprintf('f_FA_%s = f_FA_%s .* ISC_corr * pi / 180;',ctag,ctag))
+            FAcmap.(ctag).dat(:,:,p) = eval(sprintf('f_FA_%s',ctag));
+        end
+        spm_progress_bar('Set',p);
+    end
+    for ccon=1:mpm_params.ncon
+        ctag = mpm_params.input(ccon).tag;
+        eval(strcat('V_FAcmap_',ctag,' = spm_vol(fullfile(calcpath,[''',outbasename,'_',ctag,'_FAcorr.nii'']));'))
+    end
+    spm_progress_bar('Clear');
+end
+
 spm_progress_bar('Init',dm(3),'Calculating maps','planes completed');
 
 % First calculate R1 & MTR
@@ -637,7 +674,7 @@ for p = 1:dm(3)
             % correct T1 for transmit bias f_T with fa_true = f_T * fa_nom
             % T1corr = T1 / f_T / f_T
             
-            if ISC.enabled
+            if isfield(ISC,'iscfile')
                 % MFC: We do have P2_a and P2_b parameters for this sequence
                 % => T1 = A(B1) + B(B1)*T1app (see Preibisch 2009)
                 T1 = ISC.P2_a(1)*f_T.^2 + ...
@@ -646,6 +683,11 @@ for p = 1:dm(3)
                     (ISC.P2_b(1)*f_T.^2+ISC.P2_b(2)*f_T+ISC.P2_b(3)) .* ...
                     ((((PDw / fa_pdw_rad) - (T1w / fa_t1w_rad)+eps) ./ ...
                     max((T1w * fa_t1w_rad / 2 / TR_t1w) - (PDw * fa_pdw_rad / 2 / TR_pdw),eps))./f_T.^2);
+            elseif isfield(ISC,'iscphase')
+                f_FA_T1 = spm_slice_vol(V_FAcmap_T1,V_FAcmap_T1.mat\M,dm(1:2),mpm_params.interp);
+                f_FA_PD = spm_slice_vol(V_FAcmap_PD,V_FAcmap_PD.mat\M,dm(1:2),mpm_params.interp);
+                T1 = ((((PDw ./ f_FA_PD) - (T1w ./ f_FA_T1)+eps) ./ ...
+                    max((T1w .* f_FA_T1 / 2 / TR_t1w) - (PDw .* f_FA_PD/ 2 / TR_pdw),eps)));
             else
                 % MFC: We do not have P2_a or P2_b parameters for this sequence
                 % => T1 = T1app
@@ -725,7 +767,12 @@ for p = 1:dm(3)
         % - f_T has been calculated using UNICORT *AND* the UNICORT.PD flag
         % is enabled (advanced user only! method not validated yet!)
         if(~isempty(f_T))&&(~mpm_params.UNICORT.R1 || mpm_params.UNICORT.PD)
-            A = T1 .* (T1w_forA .*(fa_t1w_rad*f_T) / 2 / TR_t1w) + (T1w_forA ./ (fa_t1w_rad*f_T));
+            if isfield(ISC,'iscphase')
+                f_FA_T1 = spm_slice_vol(V_FAcmap_T1,V_FAcmap_T1.mat\M,dm(1:2),mpm_params.interp);
+                A = T1 .* (T1w_forA .* f_FA_T1 / 2 / TR_t1w) + (T1w_forA ./ f_FA_T1);
+            else
+                A = T1 .* (T1w_forA .*(fa_t1w_rad*f_T) / 2 / TR_t1w) + (T1w_forA ./ (fa_t1w_rad*f_T));
+            end
         else
             % semi-quantitative A
             A = T1 .* (T1w_forA * fa_t1w_rad / 2 / TR_t1w) + (T1w_forA / fa_t1w_rad);
@@ -740,18 +787,29 @@ for p = 1:dm(3)
         % and PDw ones...
         if MTwidx
             MTw = spm_slice_vol(Vavg(MTwidx),Vavg(MTwidx).mat\M,dm(1:2),3);
-            T1_forMT = ((PDw / fa_pdw_rad) - (T1w / fa_t1w_rad)) ./ ...
-                max((T1w * (fa_t1w_rad / 2 / TR_t1w)) - (PDw * fa_pdw_rad / 2 / TR_pdw),eps);
-            A_forMT = T1_forMT .* (T1w * fa_t1w_rad / 2 / TR_t1w) + (T1w / fa_t1w_rad);
-            
-            % MT in [p.u.]; offset by - famt * famt / 2 * 100 where MT_w = 0 (outside mask)
-            MT       = ( (A_forMT * fa_mtw_rad - MTw) ./ (MTw+eps) ./ (T1_forMT + eps) * TR_mtw - fa_mtw_rad^2 / 2 ) * 100;
+            if isfield(ISC,'iscphase')
+                f_FA_T1 = spm_slice_vol(V_FAcmap_T1,V_FAcmap_T1.mat\M,dm(1:2),mpm_params.interp);
+                f_FA_PD = spm_slice_vol(V_FAcmap_PD,V_FAcmap_PD.mat\M,dm(1:2),mpm_params.interp);
+                f_FA_MT = spm_slice_vol(V_FAcmap_MT,V_FAcmap_MT.mat\M,dm(1:2),mpm_params.interp);
+                
+                T1_forMT = ((PDw ./ f_FA_PD) - (T1w ./ f_FA_T1)) ./ ...
+                    max((T1w .* (f_FA_T1 / 2 / TR_t1w)) - (PDw .* f_FA_PD / 2 / TR_pdw),eps);
+                A_forMT = T1_forMT .* (T1w .* f_FA_T1 / 2 / TR_t1w) + (T1w ./ f_FA_T1);
+                MT       = ( (A_forMT .* f_FA_MT - MTw) ./ (MTw+eps) ./ (T1_forMT + eps) * TR_mtw - f_FA_MT.^2 / 2 ) * 100;
+            else
+                T1_forMT = ((PDw / fa_pdw_rad) - (T1w / fa_t1w_rad)) ./ ...
+                    max((T1w * (fa_t1w_rad / 2 / TR_t1w)) - (PDw * fa_pdw_rad / 2 / TR_pdw),eps);
+                A_forMT = T1_forMT .* (T1w * fa_t1w_rad / 2 / TR_t1w) + (T1w / fa_t1w_rad);
+                
+                % MT in [p.u.]; offset by - famt * famt / 2 * 100 where MT_w = 0 (outside mask)
+                MT       = ( (A_forMT * fa_mtw_rad - MTw) ./ (MTw+eps) ./ (T1_forMT + eps) * TR_mtw - fa_mtw_rad^2 / 2 ) * 100;
+            end
             % f_T correction is applied either if:
             % - f_T has been provided as separate B1 mapping measurement (not
             % UNICORT!) or
             % - f_T has been calculated using UNICORT *AND* the UNICORT.MT flag
             % is enabled (advanced user only! method not validated yet!)
-            if (~isempty(f_T))&&(~mpm_params.UNICORT.R1 || mpm_params.UNICORT.MT)
+            if (~isempty(f_T)&&~isfield(ISC,'iscphase'))&&(~mpm_params.UNICORT.R1 || mpm_params.UNICORT.MT)
                 MT = MT .* (1 - 0.4) ./ (1 - 0.4 * f_T);
             end
             
@@ -822,7 +880,7 @@ if mpm_params.ACPCrealign
         Vsave = spm_vol(ACPC_images(i,:));
         Vsave.descrip = [Vsave.descrip ' - AC-PC realigned'];
         spm_write_vol(Vsave,spm_read_vols(spm_vol(ACPC_images(i,:))));
-    end;
+    end
     
     % Save transformation matrix
     spm_jsonwrite(fullfile(supplpath,'hMRI_map_creation_ACPCrealign_transformation_matrix.json'),R,struct('indent','\t'));
@@ -840,7 +898,7 @@ end
 % if no MT map available. Therefore, we must at least have R1 available,
 % i.e. both PDw and T1w inputs...
 if (mpm_params.QA.enable||(PDproc.calibr)) && (PDwidx && T1widx)
-    if ~isempty(fMT); 
+    if ~isempty(fMT)
         Vsave = spm_vol(fMT);
     else % ~isempty(fR1); 
         Vsave = spm_vol(fR1); 
@@ -1322,46 +1380,80 @@ hmri_log(sprintf('INFO: averaged PDw/T1w/MTw will be calculated based on the fir
         
 % if T1w and PDw data available, identify the protocol to define imperfect 
 % spoiling correction parameters (for T1 map calculation)
-ISC = hmri_get_defaults('imperfectSpoilCorr.enabled');
-if ~ISC
+if isfield(jobsubj.isc,'iscnone')
     hmri_log(sprintf(['INFO: Imperfect spoiling correction is disabled.' ...
         '\nIf your data were acquired with one of the standard MPM ' ...
         '\nprotocols (customized MT-FLASH sequence) for which the correction ' ...
         '\ncoefficients are available, it is recommended to enable that option.']),mpm_params.defflags);
-end
-if mpm_params.PDwidx && mpm_params.T1widx && ISC
-    % retrieve all available protocols:
-    MPMacq_sets = hmri_get_defaults('MPMacq_set');
-    % current protocol is defined by [TR_pdw TR_t1w fa_pdw fa_t1w]:
-    MPMacq_prot = [mpm_params.input(mpm_params.PDwidx).TR;
-                   mpm_params.input(mpm_params.T1widx).TR;
-                   mpm_params.input(mpm_params.PDwidx).fa;
-                   mpm_params.input(mpm_params.T1widx).fa]';
-    % then match the values and find protocol tag
-    nsets = numel(MPMacq_sets.vals);
-    ii = 0; mtch = false;
-    while ~mtch && ii < nsets
-        ii = ii+1;
-        if all(MPMacq_prot == MPMacq_sets.vals{ii})
-            mtch  = true;
-            prot_tag = MPMacq_sets.tags{ii};
-            hmri_log(sprintf(['INFO: MPM acquisition protocol = %s.' ...
-                '\n\tThe coefficients corresponding to this protocol will be applied' ...
-                '\n\tto correct for imperfect spoiling. Please check carefully that' ...
-                '\n\tthe protocol used is definitely the one for which the ' ...
-                '\n\tcoefficients have been calculated.'],prot_tag),mpm_params.defflags);
+elseif mpm_params.PDwidx && mpm_params.T1widx 
+    if isfield(jobsubj.isc,'iscfile')
+        % old method here - has to be changed! (TODO)
+        % retrieve all available protocols:
+        MPMacq_sets = hmri_get_defaults('MPMacq_set');
+        % current protocol is defined by [TR_pdw TR_t1w fa_pdw fa_t1w]:
+        MPMacq_prot = [mpm_params.input(mpm_params.PDwidx).TR;
+            mpm_params.input(mpm_params.T1widx).TR;
+            mpm_params.input(mpm_params.PDwidx).fa;
+            mpm_params.input(mpm_params.T1widx).fa]';
+        % then match the values and find protocol tag
+        nsets = numel(MPMacq_sets.vals);
+        ii = 0; mtch = false;
+        while ~mtch && ii < nsets
+            ii = ii+1;
+            if all(MPMacq_prot == MPMacq_sets.vals{ii})
+                mtch  = true;
+                prot_tag = MPMacq_sets.tags{ii};
+                hmri_log(sprintf(['INFO: MPM acquisition protocol = %s.' ...
+                    '\n\tThe coefficients corresponding to this protocol will be applied' ...
+                    '\n\tto correct for imperfect spoiling. Please check carefully that' ...
+                    '\n\tthe protocol used is definitely the one for which the ' ...
+                    '\n\tcoefficients have been calculated.'],prot_tag),mpm_params.defflags);
+            end
+        end
+        if ~mtch
+            prot_tag = 'Unknown';
+            hmri_log(sprintf(['WARNING: MPM protocol unknown. ' ...
+                '\n\tCorrection for imperfect spoiling will not be applied.']),mpm_params.defflags);
+        end
+        % now retrieve imperfect spoiling correction coefficients
+        mpm_params.proc.ISC = hmri_get_defaults(['imperfectSpoilCorr.',prot_tag]);
+    elseif isfield(jobsubj.isc,'iscphase')
+        P = [];
+        % set parameters for spoiling correction due to Baudrexel et al. MRM 2018 (DOI 10.1002/mrm.26979)
+        if jobsubj.isc.iscphase == 50
+            P = [9.639e-1, 4.989e-3, -1.254e-4, -3.180e-6, 1.527e-7, -1.462e-9; ...
+                5.880e-3, -1.056e-3, 4.801e-5, -8.549e-7, 5.382e-9, 0; ...
+                4.143e-4, -4.920e-6, -1.560e-7, 2.282e-9, 0, 0; ...
+                -1.5059e-5, 2.334e-7, -1.189e-9, 0, 0, 0; ...
+                9.449e-8, -1.025e-9, 0, 0, 0, 0; ...
+                -4.255e-10, 0, 0, 0, 0, 0];
+        elseif jobsubj.isc.iscphase == 117
+            P = [9.381e-1, 4.266e-3, 2.535e-4, -2.289e-5, 5.402e-7, -4.146e-9; ...
+                1.653e-2, -2.172e-3, 7.491e-5, -1.051e-6, 5.331e-9, 0; ...
+                3.145e-4, 3.704e-5, -1.123e-6, 8.369e-9, 0, 0; ...
+                -3.848e-5, 2.773e-7, 1.662e-9, 0, 0, 0; ...
+                6.230e-7, -4.019e-9, 0, 0, 0, 0; ...
+                -2.988e-9, 0, 0, 0, 0, 0];
+        elseif jobsubj.isc.iscphase == 150
+            P = [6.678e-1, 9.131e-2, -7.728e-3, 2.863e-4, -4.869e-6, 3.112e-8; ...
+                -3.710e-2, 2.845e-3, -7.786e-5, 8.546e-7, 2.837e-9, 0; ...
+                1.448e-3, -7.537e-5, 1.403e-6, -8.865e-9, 0, 0; ...
+                -2.181e-5, 6.141e-7, -5.141e-9, 0, 0, 0; ...
+                1.990e-7, -1.978e-9, 0, 0, 0, 0; ...
+                -8.617e-10, 0, 0, 0, 0, 0];
+        end
+        if isempty(P)
+            hmri_log(sprintf(['WARNING: Imperfect Spoiling Correction can not be applied \n' ...
+                ' with the given Phase Increment of %i°, which is only available for 50°, 117°, and 150°.' ...
+                ' \nPlease check inputs!'],jobsubj.isc.iscphase), mpm_params.defflags);
+            mpm_params.proc.ISC.enabled = false;
+        else
+            mpm_params.proc.ISC = struct('iscphase',jobsubj.isc,'P',P);
+            hmri_log(sprintf(['INFO: Imperfect Spoiling Correction applied \n' ...
+                ' according to the given Phase Increment of %i°.'],jobsubj.isc.iscphase), mpm_params.nopuflags);
         end
     end
-    if ~mtch
-        prot_tag = 'Unknown';
-        hmri_log(sprintf(['WARNING: MPM protocol unknown. ' ...
-            '\n\tCorrection for imperfect spoiling will not be applied.']),mpm_params.defflags);
-    end
-else
-    prot_tag = 'Unknown';
 end
-% now retrieve imperfect spoiling correction coefficients
-mpm_params.proc.ISC = hmri_get_defaults(['imperfectSpoilCorr.',prot_tag]);
 
 % RF sensitivity bias correction
 mpm_params.proc.RFsenscorr = jobsubj.sensitivity;
@@ -1456,8 +1548,10 @@ if (mpm_params.T1widx && mpm_params.PDwidx)
     mpm_params.output(coutput).suffix = 'R1';
     mpm_params.output(coutput).units = 's-1';  
     mpm_params.output(coutput).descrip{1} = 'R1 map [s-1]';
-    if mpm_params.proc.ISC.enabled
-        mpm_params.output(coutput).descrip{end+1} = '- Imperfect Spoiling Correction applied';
+    if isfield(mpm_params.proc.ISC,'iscfile')
+        mpm_params.output(coutput).descrip{end+1} = '- Imperfect Spoiling Correction applied (a la Preibisch and Deichmann)';
+    elseif isfield(mpm_params.proc.ISC,'iscphase')
+        mpm_params.output(coutput).descrip{end+1} = '- Imperfect Spoiling Correction applied (a la Baudrexel et al.)';
     else
         mpm_params.output(coutput).descrip{end+1} = '- no Imperfect Spoiling Correction applied';
     end        
@@ -1511,6 +1605,9 @@ if (mpm_params.T1widx && mpm_params.PDwidx)
             end
         otherwise
             mpm_params.output(coutput).descrip{end+1} = sprintf('- B1+ bias correction using provided B1 map (%s)',B1transcorr{1});
+            if isfield(mpm_params.proc.ISC,'iscphase')
+                mpm_params.output(coutput).descrip{end+1} = '- Imperfect Spoiling Correction applied (a la Baudrexel et al.)';
+            end
     end
     switch RFsenscorr{1}
         case 'RF_none'
@@ -1555,6 +1652,9 @@ if (mpm_params.T1widx && mpm_params.PDwidx && mpm_params.MTwidx)
             end
         otherwise
            mpm_params.output(coutput).descrip{end+1} = sprintf('- B1+ bias correction using provided B1 map (%s)',B1transcorr{1});
+           if isfield(mpm_params.proc.ISC,'iscphase')
+               mpm_params.output(coutput).descrip{end+1} = '- Imperfect Spoiling Correction applied (a la Baudrexel et al.)';
+           end
     end
     switch RFsenscorr{1}
         case 'RF_none'

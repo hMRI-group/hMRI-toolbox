@@ -33,9 +33,7 @@ These pages are work-in-progress and updated on a regular basis.
 
 ## hMRI-Toolbox Paper
 
-For a reference on the scientific background, methods and concepts 
-please use this [pre-print paper](http://dx.doi.org/10.20347/WIAS.PREPRINT.2527) 
-and cite it when publishing results compiled with the hMRI-toolbox. 
+For a reference on the scientific background, methods and concepts please use this [paper](https://doi.org/10.1016/j.neuroimage.2019.01.029) (formerly available as a [pre-print paper](http://dx.doi.org/10.20347/WIAS.PREPRINT.2527)) and cite it when publishing results compiled with the hMRI-toolbox. 
 
 ## Licence
 

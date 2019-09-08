@@ -1052,14 +1052,17 @@ if mpm_params.proc.R2sOLS && ~isempty(fR2s_OLS)
     fR2s = fR2s_OLS_final;
 end
 if mpm_params.errormaps
-    for ccon = 1:mpm_params.ncon+1
+    for ccon = 1:mpm_params.ncon
         % move error maps to Results/Supplementary
-        movefile(PR2s_OLS_error{ccon}, fullfile(supplpath, spm_file(PR2s_OLS_error{ccon},'filename')));
         movefile(PR2s_param_error{ccon}, fullfile(supplpath, spm_file(PR2s_param_error{ccon},'filename')));
-
         try movefile([spm_str_manip(PR2s_OLS_error{ccon},'r') '.json'],fullfile(supplpath, [spm_file(PR2s_OLS_error{ccon},'basename') '.json'])); end
+        movefile(PR2s_OLS_error{ccon}, fullfile(supplpath, spm_file(PR2s_OLS_error{ccon},'filename')));
         try movefile([spm_str_manip(PR2s_param_error{ccon},'r') '.json'],fullfile(supplpath, [spm_file(PR2s_param_error{ccon},'basename') '.json'])); end
     end
+    ccon = ccon + 1;
+    movefile(PR2s_OLS_error{ccon}, fullfile(supplpath, spm_file(PR2s_OLS_error{ccon},'filename')));
+    try movefile([spm_str_manip(PR2s_param_error{ccon},'r') '.json'],fullfile(supplpath, [spm_file(PR2s_param_error{ccon},'basename') '.json'])); end
+    
 end
 
 if ~isempty(fMT)

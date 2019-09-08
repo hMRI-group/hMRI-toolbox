@@ -412,4 +412,9 @@ hmri_def.proc.w_warped = [[1 1];[1 1];[1 1];[0 0];[0 0];[0 0]];
 % Number of Gaussians per tissue class
 hmri_def.proc.nGauss = [2 2 2 3 4 2]; % originally in SPM [1 1 2 3 4 2]
 
+%==========================================================================
+% Experimental features 
+%==========================================================================
+hmri_def.errormaps = true;
+
 end

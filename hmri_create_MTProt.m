@@ -413,6 +413,10 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
         hmri_log(sprintf('\t-------- and fit to TE=0 for each contrast --------'),mpm_params.nopuflags);
  
         Nmap = nifti;
+        
+        if mpm_params.errormaps % Exp
+            NEmap = nifti;
+        end
         Pte0 = cell(1,mpm_params.ncon);
         for ccon = 1:mpm_params.ncon
             % requires a minimum of neco4R2sfit echoes for a robust fit
@@ -436,12 +440,37 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
                 % been added, the offset has changed and must be updated before
                 % writing the data to the file!)
                 Nmap(ccon) = nifti(Pte0{ccon});
+                if mpm_params.errormaps
+                    PR2s_OLS_error{ccon}    = fullfile(calcpath,[outbasename '_' mpm_params.input(ccon).tag 'w_errorESTATICS' '.nii']);
+                    Ni = hMRI_create_nifti(PR2s_OLS_error{ccon},V_pdw(1),dt,['Error map for ' mpm_params.input(ccon).tag 'w contrast']);
+                    NEmap(ccon) = Ni;
+                    
+                    % set metadata - just copied from above...
+                    input_files = mpm_params.input(ccon).fnam;
+                    Output_hdr = init_mpm_output_metadata(input_files, mpm_params);
+                    Output_hdr.history.output.imtype = Ni.descrip;
+                    Output_hdr.history.output.units = 'a.u.';
+                    set_metadata(PR2s_OLS_error{ccon},Output_hdr,mpm_params.json); 
+                    % re-load the updated NIFTI file (in case extended header has
+                    % been added, the offset has changed and must be updated before
+                    % writing the data to the file!)
+                    NEmap(ccon) = nifti(PR2s_OLS_error{ccon});
+                    
+                end
             else
                 Pte0{ccon} = '';
+                if mpm_params.errormaps
+                    PR2s_OLS_error{ccon} = '';
+                end
             end
         end
     end % init nifti objects for fullOLS case
-    
+    if mpm_params.errormaps
+        ccon = ccon + 1;
+        PR2s_OLS_error{ccon}    = fullfile(calcpath,[outbasename '_' 'R2s_errorESTATICS' '.nii']);
+        Ni = hMRI_create_nifti(PR2s_OLS_error{ccon},V_pdw(1),dt,'Error map for R2s contrast');
+        NEmap(ccon) = Ni;
+    end
     fR2s_OLS    = fullfile(calcpath,[outbasename '_R2s_OLS' '.nii']);
     Ni          = nifti;
     Ni.mat      = V_pdw(1).mat;
@@ -509,6 +538,10 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
             end
         end
         
+        if mpm_params.errormaps
+            hMRI_create_residuals(data,Y,reg,nechoes,NEmap,mpm_params,p,V_pdw(1))
+        end
+        
         Y = -reshape(Y(end,:), dm(1:2));
         
         % NB: mat field defined by V_pdw => first PDw echo
@@ -541,6 +574,11 @@ if mpm_params.fullOLS && all(mpm_params.estaticsR2s)
     for ccon = 1:mpm_params.ncon
         Pavg{ccon} = Pte0{ccon};
         Vavg(ccon) = spm_vol(Pavg{ccon});
+    end
+end
+if mpm_params.errormaps
+    for ccon = 1:mpm_params.ncon
+        Verror(ccon) = spm_vol(PR2s_OLS_error{ccon});
     end
 end
         
@@ -597,12 +635,29 @@ if T1widx; fa_t1w_rad = fa_t1w * pi / 180; end
 
 spm_progress_bar('Init',dm(3),'Calculating maps','planes completed');
 
+if mpm_params.errormaps
+    NEpara    = nifti;
+    for ccon = 1:mpm_params.ncon
+        PR2s_param_error{ccon}    = fullfile(calcpath,[outbasename '_' mpm_params.input(ccon).tag 'param_error.nii']);
+        Ni = hMRI_create_nifti(PR2s_param_error{ccon},V_pdw(1),dt,['Error map for ' mpm_params.input(ccon).tag 'param']);
+        NEpara(ccon) = Ni;
+        % set metadata are missing?
+    end
+end
+
 % First calculate R1 & MTR
 for p = 1:dm(3)
     M = M0*spm_matrix([0 0 p]);
 
     % PDw images are always available, so this bit is always loaded:
     PDw = spm_slice_vol(Vavg(PDwidx),Vavg(PDwidx).mat\M,dm(1:2),mpm_params.interp);
+    
+    if mpm_params.errormaps        
+        Edata = struct('PDw',[],'T1w',[],'MTw',[]);        
+        Edata.PDw  = spm_slice_vol(Verror(PDwidx),Verror(PDwidx).mat\M,dm(1:2),mpm_params.interp);
+        Edata.MTw  = spm_slice_vol(Verror(MTwidx),Verror(MTwidx).mat\M,dm(1:2),mpm_params.interp);
+        Edata.T1w  = spm_slice_vol(Verror(T1widx),Verror(T1widx).mat\M,dm(1:2),mpm_params.interp);
+    end
     
     if ~isempty(V_trans)
         f_T = spm_slice_vol(V_trans(2,:),V_trans(2,:).mat\M,dm(1:2),mpm_params.interp)/100; % divide by 100, since p.u. maps
@@ -659,7 +714,10 @@ for p = 1:dm(3)
         R1(R1<0) = 0;
         tmp      = R1;
         Nmap(mpm_params.qR1).dat(:,:,p) = min(max(tmp,-threshall.R1),threshall.R1)*0.001; % truncating images
-                
+        if mpm_params.errormaps
+            [dR1,Atmp] = hmri_make_dR1(PDw,T1w,Edata.PDw,Edata.T1w,fa_pdw_rad,fa_t1w_rad,TR_pdw,TR_t1w,f_T,R1,V_pdw(1));
+            NEpara(T1widx).dat(:,:,p) = Atmp;
+        end
     end
     spm_progress_bar('Set',p);
 end
@@ -691,6 +749,12 @@ spm_progress_bar('Init',dm(3),'Calculating maps (continued)','planes completed')
 for p = 1:dm(3)
     M = M0*spm_matrix([0 0 p]);
 
+    if mpm_params.errormaps        
+        Edata = struct('PDw',[],'T1w',[],'MTw',[]);        
+        Edata.PDw  = spm_slice_vol(Verror(PDwidx),Verror(PDwidx).mat\M,dm(1:2),mpm_params.interp);
+        Edata.MTw  = spm_slice_vol(Verror(MTwidx),Verror(MTwidx).mat\M,dm(1:2),mpm_params.interp);
+        Edata.T1w  = spm_slice_vol(Verror(T1widx),Verror(T1widx).mat\M,dm(1:2),mpm_params.interp);
+    end
     if ~isempty(V_trans)
         f_T = spm_slice_vol(V_trans(2,:),V_trans(2,:).mat\M,dm(1:2),mpm_params.interp)/100; % divide by 100, since p.u. maps
     elseif ~isempty(V_trans_unicort)
@@ -736,6 +800,13 @@ for p = 1:dm(3)
         Nmap(mpm_params.qPD).dat(:,:,p) = max(min(tmp,threshall.A),-threshall.A);
         % dynamic range increased to 10^5 to accommodate phased-array coils and symmetrical for noise distribution
 
+        if mpm_params.errormaps
+            T1_forMT = ((PDw / fa_pdw_rad) - (T1w / fa_t1w_rad)) ./ ...
+                max((T1w * (fa_t1w_rad / 2 / TR_t1w)) - (PDw * fa_pdw_rad / 2 / TR_pdw),eps);
+            A_forMT = T1_forMT .* (T1w * fa_t1w_rad / 2 / TR_t1w) + (T1w / fa_t1w_rad);
+            [dPD,AdPD] = hmri_make_dPD(PDw,T1w,Edata.PDw,Edata.T1w,fa_pdw_rad,fa_t1w_rad,TR_pdw,TR_t1w,A_forMT,V_pdw(1));
+            NEpara(PDwidx).dat(:,:,p) = AdPD;
+        end
         % for MT maps calculation, one needs MTw images on top of the T1w
         % and PDw ones...
         if MTwidx
@@ -746,6 +817,12 @@ for p = 1:dm(3)
             
             % MT in [p.u.]; offset by - famt * famt / 2 * 100 where MT_w = 0 (outside mask)
             MT       = ( (A_forMT * fa_mtw_rad - MTw) ./ (MTw+eps) ./ (T1_forMT + eps) * TR_mtw - fa_mtw_rad^2 / 2 ) * 100;
+            
+            if mpm_params.errormaps
+                [dMT,AdMT] = hmri_make_dMT(PDw,T1w,MTw,Edata.PDw,Edata.T1w,Edata.MTw,fa_pdw_rad,fa_t1w_rad,fa_mtw_rad,TR_pdw,TR_t1w,TR_mtw,V_pdw(1));
+                NEpara(MTwidx).dat(:,:,p) = AdMT*100;  
+            end
+            
             % f_T correction is applied either if:
             % - f_T has been provided as separate B1 mapping measurement (not
             % UNICORT!) or
@@ -974,6 +1051,16 @@ if mpm_params.proc.R2sOLS && ~isempty(fR2s_OLS)
     % the hmri_create_MTProt fR2s output in now the R2s_OLS map
     fR2s = fR2s_OLS_final;
 end
+if mpm_params.errormaps
+    for ccon = 1:mpm_params.ncon+1
+        % move error maps to Results/Supplementary
+        movefile(PR2s_OLS_error{ccon}, fullfile(supplpath, spm_file(PR2s_OLS_error{ccon},'filename')));
+        movefile(PR2s_param_error{ccon}, fullfile(supplpath, spm_file(PR2s_param_error{ccon},'filename')));
+
+        try movefile([spm_str_manip(PR2s_OLS_error{ccon},'r') '.json'],fullfile(supplpath, [spm_file(PR2s_OLS_error{ccon},'basename') '.json'])); end
+        try movefile([spm_str_manip(PR2s_param_error{ccon},'r') '.json'],fullfile(supplpath, [spm_file(PR2s_param_error{ccon},'basename') '.json'])); end
+    end
+end
 
 if ~isempty(fMT)
     fMT_final = fullfile(respath, spm_file(fMT,'filename'));
@@ -1090,6 +1177,12 @@ maskedA(isnan(maskedA)) = 0;
 maskedA(maskedA==threshA) = 0;
 spm_write_vol(V_maskedA,maskedA);
 
+if(mpm_params.errormaps)
+    outbasename = spm_file(mpm_params.input(mpm_params.PDwidx).fnam(1,:),'basename'); % for all output files
+
+    PPD_error   = fullfile(calcpath,[outbasename '_' mpm_params.input(mpm_params.PDwidx).tag 'w_errorESTATICS' '.nii']);
+    PDerror     = spm_read_vols(spm_vol(PPD_error));
+end
 % Bias-field correction of masked A map
 % use unified segmentation with uniform defaults across the toolbox:
 if isfield(mpm_params.proc.RFsenscorr,'RF_us')
@@ -1109,7 +1202,10 @@ if isfield(mpm_params.proc.RFsenscorr,'RF_us')
     % retrieved from previous step and applied onto the original A map.
     BFfnam = output_list.channel.biasfield{1};
     BF = double(spm_read_vols(spm_vol(BFfnam)));
-    Y = BF.*spm_read_vols(spm_vol(fA));
+    Y = BF.*spm_read_vols(spm_vol(fA));    
+    if(mpm_params.errormaps)
+        PDerror = BF.*PDerror;
+    end
 else
     Y = spm_read_vols(spm_vol(fA));
 end
@@ -1118,6 +1214,9 @@ end
 % matter value from the litterature (69%)
 A_WM = WMmask.*Y;
 Y = Y/mean(A_WM(A_WM~=0))*69;
+if(mpm_params.errormaps)
+    PDerror = PDerror/mean(A_WM(A_WM~=0))*69;
+end
 hmri_log(sprintf(['INFO (PD calculation):\n\tmean White Matter intensity: %.1f\n' ...
     '\tSD White Matter intensity %.1f\n'],mean(A_WM(A_WM~=0)),std(A_WM(A_WM~=0))), mpm_params.defflags);
 Y(Y>200) = 0;
@@ -1139,7 +1238,10 @@ if mpm_params.QA.enable
     spm_jsonwrite(mpm_params.QA.fnam,mpm_params.QA,struct('indent','\t'));
 end
 spm_write_vol(Vsave,Y);
-
+if(mpm_params.errormaps)
+    Vsave = spm_vol(PPD_error);
+    spm_write_vol(Vsave,PDerror);
+end
 end
 
 %% =======================================================================%
@@ -1609,6 +1711,10 @@ if size(mpm_params.input(mpm_params.PDwidx).fnam,1) > (mpm_params.neco4R2sfit-1)
 else
     mpm_params.qR2s = 0;
 end
+
+% Get experimental parameters
+mpm_params.errormaps = hmri_get_defaults('errormaps');
+
 
 % Summary of the output generated:
 LogMsg = 'SUMMARY OF THE MAPS CALCULATED';

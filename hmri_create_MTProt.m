@@ -417,6 +417,11 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
         if mpm_params.errormaps % Exp
             NEmap = nifti;
         end
+        if mpm_params.hom
+            PR2s_OLS_ohm = fullfile(calcpath,[outbasename '_R2sHO_OLS' '.nii']);
+            NHOmap = hMRI_create_nifti(PR2s_OLS_ohm,V_pdw(1),dt,['Higher-order temporal decay map [s-2]']);
+            create(NHOmap);
+        end
         Pte0 = cell(1,mpm_params.ncon);
         for ccon = 1:mpm_params.ncon
             % requires a minimum of neco4R2sfit echoes for a robust fit
@@ -490,12 +495,20 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
     
     % Same formalism as for PDw fit but now extra colums for the "S(0)" 
     % amplitudes of the different contrasts:
-    reg = zeros(sum(nechoes),mpm_params.ncon+1);
+    if mpm_params.hom
+        nummodel = 2;
+    else
+        nummodel = 1;
+    end
+    reg = zeros(sum(nechoes),mpm_params.ncon+nummodel);
+    
     for ccon = 1:mpm_params.ncon
-        % only if enough echoes
-        if mpm_params.estaticsR2s(ccon)
-            reg(sum(nechoes(1:ccon-1))+(1:nechoes(ccon)),ccon) = 1;
-            reg(sum(nechoes(1:ccon-1))+(1:nechoes(ccon)),end) = mpm_params.input(ccon).TE;
+        reg(sum(nechoes(1:ccon-1))+(1:nechoes(ccon)),ccon) = 1;
+        if mpm_params.hom            
+            reg(sum(nechoes(1:ccon-1))+(1:nechoes(ccon)),end-1) = -mpm_params.input(ccon).TE;
+            reg(sum(nechoes(1:ccon-1))+(1:nechoes(ccon)),end) = (mpm_params.input(ccon).TE).^2;
+        else
+            reg(sum(nechoes(1:ccon-1))+(1:nechoes(ccon)),end) = -mpm_params.input(ccon).TE;
         end
     end
     W = (reg'*reg)\reg';
@@ -542,12 +555,19 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
             hMRI_create_residuals(data,Y,reg,nechoes,NEmap,mpm_params,p,V_pdw(1))
         end
         
-        Y = -reshape(Y(end,:), dm(1:2));
-        
+        if mpm_params.hom       
+            Ytmp = reshape(Y(end,:), dm(1:2));
+            NHOmap.dat(:,:,p) = max(min(Ytmp,threshall.R2sHO),-threshall.R2sHO)*(1000)^2; 
+            Ytmp = reshape(Y(end-1,:), dm(1:2));
+        else
+            Ytmp = reshape(Y(end,:), dm(1:2));
+        end
+            
         % NB: mat field defined by V_pdw => first PDw echo
         % threshold T2* at +/- 0.1ms or R2* at +/- 10000 *(1/sec), 
         % negative values are allowed to preserve Gaussian distribution.
-        Ni.dat(:,:,p) = max(min(Y,threshall.R2s),-threshall.R2s)*1000; 
+        Ni.dat(:,:,p) = max(min(Ytmp,threshall.R2s),-threshall.R2s)*1000; 
+        clear Ytmp Y;
         spm_progress_bar('Set',p);
         
     end
@@ -1063,6 +1083,11 @@ if mpm_params.errormaps
     movefile(PR2s_OLS_error{ccon}, fullfile(supplpath, spm_file(PR2s_OLS_error{ccon},'filename')));
     try movefile([spm_str_manip(PR2s_param_error{ccon},'r') '.json'],fullfile(supplpath, [spm_file(PR2s_param_error{ccon},'basename') '.json'])); end
     
+end
+if mpm_params.hom
+    % move to Results/Supplementary
+    movefile(PR2s_OLS_ohm, fullfile(supplpath, spm_file(PR2s_OLS_ohm,'filename')));
+    try movefile([spm_str_manip(PR2s_OLS_ohm,'r') '.json'],fullfile(supplpath, [spm_file(PR2s_OLS_ohm,'basename') '.json'])); end
 end
 
 if ~isempty(fMT)
@@ -1717,6 +1742,7 @@ end
 
 % Get experimental parameters
 mpm_params.errormaps = hmri_get_defaults('errormaps');
+mpm_params.hom = hmri_get_defaults('hom');
 
 
 % Summary of the output generated:

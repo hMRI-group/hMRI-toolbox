@@ -1,48 +1,46 @@
 function hmri_local_defaults
-% PURPOSE
-% To set user-defined (site- or protocol-specific) defaults parameters
-% which are used by the hMRI toolbox. Customized processing parameters can
-% be defined, overwriting defaults from hmri_defaults. Acquisition
-% protocols can be specified here as a fallback solution when no metadata
-% are available. Note that the use of metadata is strongly recommended. 
+% Sets the defaults parameters which are used by the hMRI toolbox.
+%!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+% DON'T MODIFY THIS FILE, IT CONTAINS THE REFERENCE DEFAULTS PARAMETERS.
+% Please refer to hMRI-Toolbox\config\local\hmri_local_defaults.m to
+% customise defaults parameters.  
+%!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 %
-% RECOMMENDATIONS
-% Parameters defined in this file are identical, initially, to the ones
-% defined in hmri_defaults.m. It is recommended, when modifying this file,
-% to remove all unchanged entries and save the file with a meaningful name.
-% This will help you identifying the appropriate defaults to be used for
-% each protocol, and will improve the readability of the file by pointing
-% to the modified parameters only.
+% FORMAT hmri_defaults
+%__________________________________________________________________________
 %
-% WARNING
-% Modification of the defaults parameters may impair the integrity of the
-% toolbox, leading to unexpected behaviour. ONLY RECOMMENDED FOR ADVANCED
-% USERS - i.e. who have a good knowledge of the underlying algorithms and
-% implementation. The SAME SET OF DEFAULT PARAMETERS must be used to
-% process uniformly all the data from a given study. 
+% THIS FILE SHOULD NOT BE MODIFIED. 
+% To customize the hMRI-Toolbox defaults parameters so they match your own
+% site- or protocol-specific setup, please refer to the defaults files in
+% hMRI-Toolbox\config\local. In particular, use "hmri_local_defaults.m".
+% Make a copy with meaningful name, modify as desired and select as general
+% defaults file in the "Configure toolbox" branch of the hMRI-Toolbox.
 %
-% HOW DOES IT WORK?
-% The modified defaults file can be selected using the "Configure toolbox"
-% branch of the hMRI-Toolbox. For customization of B1 processing
-% parameters, type "help hmri_b1_standard_defaults.m". 
+% The structure and content of this file are largely inspired by the
+% equivalent file in SPM.
 %
 % DOCUMENTATION
 % A brief description of each parameter is provided together with
 % guidelines and recommendations to modify these parameters. With few
 % exceptions, parameters should ONLY be MODIFIED and customized BY ADVANCED
 % USERS, having a good knowledge of the underlying algorithms and
-% implementation. 
-% Please refer to the documentation in the github WIKI for more details. 
+% implementation. Please refer to the documentation in the github WIKI for
+% more details.  
 %__________________________________________________________________________
-% Written by E. Balteau, 2017.
+% Copyright (C) 2013 Wellcome Trust Centre for Neuroimaging
+
+% Written by C. Phillips, 2013.
 % Cyclotron Research Centre, University of Liege, Belgium
 
 % Global hmri_def variable used across the whole toolbox
 global hmri_def
 
-% Specify the research centre & scanner. Not mandatory.
-hmri_def.centre = 'centre' ; % 'fil', 'lren', 'crc', 'sciz', 'cbs', ...
-hmri_def.scanner = 'scanner name' ; % e.g. 'prisma', 'allegra', 'terra', 'achieva', ...
+% Specifying the research centre - to be customized in the local
+% configuration file (config/local/hmri_local_defaults.m). Not mandatory.
+hmri_def.centre = 'centre' ; 
+
+% Defaults customised defaults file location
+hmri_def.local_defaults = {fullfile(fileparts(mfilename('fullpath')),'local','hmri_local_defaults.m')};
 
 %==========================================================================
 % Common processing parameters 
@@ -199,7 +197,7 @@ hmri_def.PDproc.nr_echoes_forA = 6; % NOTE: in order to minimize R2* bias
 hmri_def.PDproc.T2scorr = 1; % to correct A map for T2*-weighting bias 
     % before PD map calculation. The correction is not required when
     % "fullOLS = true" (TE=0 fit) and will be automatically disabled.
-    
+
 %--------------------------------------------------------------------------
 % RF sensitivity bias correction: kernel for sensitivity map smoothing.
 % ADVANCED USER ONLY.
@@ -378,6 +376,16 @@ hmri_def.imperfectSpoilCorr.v3star.enabled = hmri_def.imperfectSpoilCorr.enabled
 hmri_def.imperfectSpoilCorr.Unknown.tag = 'Unknown protocol. No spoiling correction defined.';
 hmri_def.imperfectSpoilCorr.Unknown.enabled = false;
 
+%--------------------------------------------------------------------------
+% B1 mapping processing parameters 
+%--------------------------------------------------------------------------
+% All defaults for B1 map calculation are defined in 
+% hMRI-Toolbox\config\hmri_b1_standard_defaults.m. 
+% See examples of local customization in the hMRI-Toolbox\config\local
+% directory. 
+
+hmri_b1_standard_defaults;
+
 %==========================================================================
 % Maps processing parameters
 %==========================================================================
@@ -403,5 +411,13 @@ hmri_def.proc.w_native = [[1 1];[1 1];[1 1];[0 0];[0 0];[0 0]];
 hmri_def.proc.w_warped = [[1 1];[1 1];[1 1];[0 0];[0 0];[0 0]];
 % Number of Gaussians per tissue class
 hmri_def.proc.nGauss = [2 2 2 3 4 2]; % originally in SPM [1 1 2 3 4 2]
+
+%==========================================================================
+% Experimental features 
+%==========================================================================
+hmri_def.errormaps  = true;
+hmri_def.hom        = false;
+hmri_def.qMRI_maps_thresh.R2sHO       = true;    % [1/s^2]
+
 
 end

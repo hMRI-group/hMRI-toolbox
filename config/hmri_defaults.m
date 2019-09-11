@@ -415,6 +415,9 @@ hmri_def.proc.nGauss = [2 2 2 3 4 2]; % originally in SPM [1 1 2 3 4 2]
 %==========================================================================
 % Experimental features 
 %==========================================================================
-hmri_def.errormaps = true;
+hmri_def.errormaps  = true;
+hmri_def.hom        = true;
+hmri_def.qMRI_maps_thresh.R2sHO       = true;    % [1/s^2]
+
 
 end

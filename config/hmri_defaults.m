@@ -417,7 +417,11 @@ hmri_def.proc.nGauss = [2 2 2 3 4 2]; % originally in SPM [1 1 2 3 4 2]
 %==========================================================================
 hmri_def.errormaps  = true;
 hmri_def.hom        = true;
-hmri_def.qMRI_maps_thresh.R2sHO       = true;    % [1/s^2]
+hmri_def.qMRI_maps_thresh.R2sHO       = false;    % [1/s^2]
+hmri_def.wols       = true;
 
+% these belong to the weighted least square fit
+hmri_def.wolsdef.thr_w0 = 0.01; % regularization factor
+hmri_def.wolsdef.sigmaMPM = log(50); % noise - should go in via gui
 
 end

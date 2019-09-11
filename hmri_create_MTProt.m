@@ -417,8 +417,14 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
         if mpm_params.errormaps % Exp
             NEmap = nifti;
         end
+        if mpm_params.wols
+            ending = '_WOLS';
+        else
+            ending = '_OLS';
+        end
+        
         if mpm_params.hom
-            PR2s_OLS_ohm = fullfile(calcpath,[outbasename '_R2sHO_OLS' '.nii']);
+            PR2s_OLS_ohm = fullfile(calcpath,[outbasename '_R2sHO' ending '.nii']);
             NHOmap = hMRI_create_nifti(PR2s_OLS_ohm,V_pdw(1),dt,['Higher-order temporal decay map [s-2]']);
             create(NHOmap);
         end
@@ -426,7 +432,7 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
         for ccon = 1:mpm_params.ncon
             % requires a minimum of neco4R2sfit echoes for a robust fit
             if mpm_params.estaticsR2s(ccon)
-                Pte0{ccon}  = fullfile(calcpath,[outbasename '_' mpm_params.input(ccon).tag 'w_OLSfit_TEzero.nii']);
+                Pte0{ccon}  = fullfile(calcpath,[outbasename '_' mpm_params.input(ccon).tag 'w' ending 'fit_TEzero.nii']);
                 Ni          = nifti;
                 Ni.mat      = V_pdw(1).mat;
                 Ni.mat0     = V_pdw(1).mat;
@@ -476,7 +482,7 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
         Ni = hMRI_create_nifti(PR2s_OLS_error{ccon},V_pdw(1),dt,'Error map for R2s contrast');
         NEmap(ccon) = Ni;
     end
-    fR2s_OLS    = fullfile(calcpath,[outbasename '_R2s_OLS' '.nii']);
+    fR2s_OLS    = fullfile(calcpath,[outbasename '_R2s' ending '.nii']);
     Ni          = nifti;
     Ni.mat      = V_pdw(1).mat;
     Ni.mat0     = V_pdw(1).mat;
@@ -539,8 +545,14 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
                 end
             end
         end
-        Y = W*reshape(data, [sum(nechoes) prod(dm(1:2))]);
-
+        if mpm_params.wols
+            ydata   = reshape(data, [sum(nechoes) prod(dm(1:2))]);
+            Yols    = W*ydata;
+            [Y,w0]  = hMRI_FIT_ESTATICS('Y',Yols','DM',reg,'ydata',ydata','zpos',p,'thr_w0',mpm_params.wols.thr_w0,'sigmaMPM',mpm_params.wols.sigmaMPM);
+            Y = Y';
+        else
+            Y    = W*reshape(data, [sum(nechoes) prod(dm(1:2))]);
+        end
         % Writes "fullOLS" images (OLS fit to TE=0 for each contrast)
         if mpm_params.fullOLS
             for ccon = 1:mpm_params.ncon
@@ -580,7 +592,7 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
     Output_hdr = init_mpm_output_metadata(input_files, mpm_params);
     Output_hdr.history.output.imtype = mpm_params.output(mpm_params.qR2s).descrip;
     Output_hdr.history.output.units = mpm_params.output(mpm_params.qR2s).units;
-    set_metadata(fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qR2s).suffix '_OLS.nii']),Output_hdr,mpm_params.json);
+    set_metadata(fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qR2s).suffix ending '.nii']),Output_hdr,mpm_params.json);
    
 else
     hmri_log(sprintf('INFO: No R2* map will be calculated using the ESTATICS model. \nInsufficient number of echoes.'), mpm_params.defflags);
@@ -1743,6 +1755,8 @@ end
 % Get experimental parameters
 mpm_params.errormaps = hmri_get_defaults('errormaps');
 mpm_params.hom = hmri_get_defaults('hom');
+mpm_params.wols = hmri_get_defaults('wols');
+mpm_params.wolsdef = hmri_get_defaults('wolsdef');
 
 
 % Summary of the output generated:

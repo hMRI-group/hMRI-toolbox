@@ -208,7 +208,7 @@ hmri_def.RFsens.smooth_kernel = 12;
 % quantitative maps: quality evaluation and realignment to MNI
 %--------------------------------------------------------------------------
 % creates a matlab structure containing markers of data quality
-hmri_def.qMRI_maps.QA          = 1; 
+hmri_def.qMRI_maps.QA          = 0; 
 % realigns qMRI maps to MNI: the following parameter corresponds to the
 % realignment implemented as part of the map calculation (see
 % hmri_create_MTProt.m). Left here for backward compatibility. It is
@@ -416,7 +416,7 @@ hmri_def.proc.nGauss = [2 2 2 3 4 2]; % originally in SPM [1 1 2 3 4 2]
 % Experimental features 
 %==========================================================================
 hmri_def.errormaps  = true;
-hmri_def.hom        = false;
+hmri_def.hom        = true;
 hmri_def.qMRI_maps_thresh.R2sHO       = true;    % [1/s^2]
 
 

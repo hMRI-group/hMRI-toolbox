@@ -546,9 +546,14 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
             end
         end
         if mpm_params.wols
+            if ~isempty(mpm_params.wolsdef.brainmask)
+                AMSK    = spm_slice_vol(spm_vol(mpm_params.wolsdef.brainmask),M1,dm(1:2),mpm_params.interp);
+            else
+                AMSK    = ones(dm(1:2));
+            end
             ydata   = reshape(data, [sum(nechoes) prod(dm(1:2))]);
             Yols    = W*ydata;
-            [Y,w0]  = hMRI_FIT_ESTATICS('Y',Yols','DM',reg,'ydata',ydata','zpos',p,'thr_w0',mpm_params.wols.thr_w0,'sigmaMPM',mpm_params.wols.sigmaMPM);
+            [Y,w0]  = hMRI_FIT_ESTATICS('Y',Yols','DM',reg,'ydata',ydata','AMSK',AMSK,'zpos',p,'thr_w0',mpm_params.wolsdef.thr_w0,'sigmaMPM',mpm_params.wolsdef.sigmaMPM);
             Y = Y';
         else
             Y    = W*reshape(data, [sum(nechoes) prod(dm(1:2))]);

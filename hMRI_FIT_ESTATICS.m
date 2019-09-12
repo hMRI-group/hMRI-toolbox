@@ -43,7 +43,7 @@ w0(MSKtmp,:) = bsxfun(@rdivide,w0(MSKtmp,:),mw0(MSKtmp));
 % remove all voxels that have smaller weight than zero
 minw0 = min(w0,[],2);
 maxw0 = max(w0,[],2);
-MSKtmp = find(minw0>eps & maxw0<=1);
+MSKtmp = find(minw0>eps & maxw0<=1 & AMSK(:) > 0);
 w0 = w0(MSKtmp,:);   
 w0      = w0';
 ydata = ydata(MSKtmp,:);

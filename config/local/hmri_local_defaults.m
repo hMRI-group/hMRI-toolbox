@@ -416,13 +416,13 @@ hmri_def.proc.nGauss = [2 2 2 3 4 2]; % originally in SPM [1 1 2 3 4 2]
 % Experimental features 
 %==========================================================================
 hmri_def.errormaps  = true;
-hmri_def.hom        = false;
+hmri_def.hom        = true;
 hmri_def.qMRI_maps_thresh.R2sHO       = 1;    % [1/s^2]
 hmri_def.wols       = true;
 
 % these belong to the weighted least square fit
 hmri_def.wolsdef.thr_w0 = 0.01; % regularization factor
 hmri_def.wolsdef.sigmaMPM = log(50); % noise - should go in via gui
-hmri_def.wolsdef.brainmask = '/Volumes/Hard Drive /McColagan7T/1548408/2018-11-23_07-44/Results/Supplementary/brainmask.nii';
+hmri_def.wolsdef.brainmask = '/Volumes/Hard Drive /McColagan7T/122880a/2018-11-23_13-32/Run_02/Results/Supplementary/brainmask.nii';
 
 end

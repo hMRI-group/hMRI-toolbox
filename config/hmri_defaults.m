@@ -385,7 +385,6 @@ hmri_def.imperfectSpoilCorr.Unknown.enabled = false;
 % directory. 
 
 hmri_b1_standard_defaults;
-
 %==========================================================================
 % Maps processing parameters
 %==========================================================================
@@ -418,7 +417,7 @@ hmri_def.proc.nGauss = [2 2 2 3 4 2]; % originally in SPM [1 1 2 3 4 2]
 hmri_def.errormaps  = true;
 hmri_def.hom        = false;
 hmri_def.qMRI_maps_thresh.R2sHO       = 1;    % [1/s^2]
-hmri_def.wols       = true;
+hmri_def.wols       = false;
 
 % these belong to the weighted least square fit
 hmri_def.wolsdef.thr_w0 = 0.01; % regularization factor

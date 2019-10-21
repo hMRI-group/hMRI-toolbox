@@ -229,7 +229,7 @@ hmri_def.qMRI_maps.ACPCrealign = 0;
 % the statistical results.
 % ADVANCED USER ONLY.
 %--------------------------------------------------------------------------
-hmri_def.qMRI_maps_thresh.R1       = 2000; % 1000*[s-1]
+hmri_def.qMRI_maps_thresh.R1       = 20000; % 1000*[s-1]
 hmri_def.qMRI_maps_thresh.A        = 10^5; % [a.u.] based on input images with intensities ranging approx. [0 4096].
 hmri_def.qMRI_maps_thresh.R2s      = 10;   % 1000*[s-1]
 hmri_def.qMRI_maps_thresh.MTR      = 50;
@@ -384,7 +384,7 @@ hmri_def.imperfectSpoilCorr.Unknown.enabled = false;
 % See examples of local customization in the hMRI-Toolbox\config\local
 % directory. 
 
-hmri_b1_standard_defaults;
+hmri_b1_local_defaults;
 
 %==========================================================================
 % Maps processing parameters
@@ -416,13 +416,13 @@ hmri_def.proc.nGauss = [2 2 2 3 4 2]; % originally in SPM [1 1 2 3 4 2]
 % Experimental features 
 %==========================================================================
 hmri_def.errormaps  = true;
-hmri_def.hom        = true;
+hmri_def.hom        = false;
 hmri_def.qMRI_maps_thresh.R2sHO       = 1;    % [1/s^2]
 hmri_def.wols       = true;
 
 % these belong to the weighted least square fit
-hmri_def.wolsdef.thr_w0 = 0.01; % regularization factor
-hmri_def.wolsdef.sigmaMPM = log(50); % noise - should go in via gui
-hmri_def.wolsdef.brainmask = '/Volumes/Hard Drive /McColagan7T/122880a/2018-11-23_13-32/Run_02/Results/Supplementary/brainmask.nii';
+hmri_def.wolsdef.thr_w0 = 0.0001; % regularization factor
+hmri_def.wolsdef.sigmaMPM = log(150); % noise - should go in via gui
+hmri_def.wolsdef.brainmask = '/Users/siawoosh/Desktop/UCL/data/Histology/cst/R2s60mu/original/FLASH_3D_as_gre_0p06_cor_18_RR_0048/MSK_s2019-09-27_17-41-005026-00001-00001-1.nii';
 
 end

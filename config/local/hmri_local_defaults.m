@@ -64,7 +64,7 @@ hmri_def.json = struct('extended',false,'separate',true,'anonym','none',...
 % provides a series of tissue probability maps. These TPMs could be
 % replaced by other TPMs, to better match the population studied. 
 % ADVANCED USER ONLY.
-hmri_def.TPM = fullfile(fileparts(fileparts(fileparts(mfilename('fullpath')))),'etpm','eTPM.nii');
+hmri_def.TPM = fullfile(fileparts(fileparts(mfilename('fullpath'))),'etpm','eTPM.nii');
 % default template for auto-reorientation. The template can be selected
 % within the Auto-reorient module. The following is the default suggested
 % for T1w images. Please refer to the Auto-reorient documentation for an
@@ -132,7 +132,7 @@ hmri_def.segment.warp.write = [0 0];
 %--------------------------------------------------------------------------
 % The coregistration step can be disabled using the following flag (not
 % recommended). ADVANCED USER ONLY. 
-hmri_def.coreg2PDw = false; 
+hmri_def.coreg2PDw = 1; 
 
 %--------------------------------------------------------------------------
 % Ordinary Least Squares & fit at TE=0
@@ -208,7 +208,7 @@ hmri_def.RFsens.smooth_kernel = 12;
 % quantitative maps: quality evaluation and realignment to MNI
 %--------------------------------------------------------------------------
 % creates a matlab structure containing markers of data quality
-hmri_def.qMRI_maps.QA          = 0; 
+hmri_def.qMRI_maps.QA          = 1; 
 % realigns qMRI maps to MNI: the following parameter corresponds to the
 % realignment implemented as part of the map calculation (see
 % hmri_create_MTProt.m). Left here for backward compatibility. It is
@@ -229,7 +229,7 @@ hmri_def.qMRI_maps.ACPCrealign = 0;
 % the statistical results.
 % ADVANCED USER ONLY.
 %--------------------------------------------------------------------------
-hmri_def.qMRI_maps_thresh.R1       = 20000; % 1000*[s-1]
+hmri_def.qMRI_maps_thresh.R1       = 2000; % 1000*[s-1]
 hmri_def.qMRI_maps_thresh.A        = 10^5; % [a.u.] based on input images with intensities ranging approx. [0 4096].
 hmri_def.qMRI_maps_thresh.R2s      = 10;   % 1000*[s-1]
 hmri_def.qMRI_maps_thresh.MTR      = 50;
@@ -384,8 +384,7 @@ hmri_def.imperfectSpoilCorr.Unknown.enabled = false;
 % See examples of local customization in the hMRI-Toolbox\config\local
 % directory. 
 
-hmri_b1_local_defaults;
-
+hmri_b1_standard_defaults;
 %==========================================================================
 % Maps processing parameters
 %==========================================================================
@@ -418,11 +417,11 @@ hmri_def.proc.nGauss = [2 2 2 3 4 2]; % originally in SPM [1 1 2 3 4 2]
 hmri_def.errormaps  = true;
 hmri_def.hom        = false;
 hmri_def.qMRI_maps_thresh.R2sHO       = 1;    % [1/s^2]
-hmri_def.wols       = true;
+hmri_def.wols       = false;
 
 % these belong to the weighted least square fit
-hmri_def.wolsdef.thr_w0 = 0.0001; % regularization factor
-hmri_def.wolsdef.sigmaMPM = log(150); % noise - should go in via gui
-hmri_def.wolsdef.brainmask = '/Users/siawoosh/Desktop/UCL/data/Histology/cst/R2s60mu/original/FLASH_3D_as_gre_0p06_cor_18_RR_0048/MSK_s2019-09-27_17-41-005026-00001-00001-1.nii';
+hmri_def.wolsdef.thr_w0 = 0.01; % regularization factor
+hmri_def.wolsdef.sigmaMPM = log(50); % noise - should go in via gui
+hmri_def.wolsdef.brainmask = '';
 
 end

@@ -64,7 +64,7 @@ hmri_def.json = struct('extended',false,'separate',true,'anonym','none',...
 % provides a series of tissue probability maps. These TPMs could be
 % replaced by other TPMs, to better match the population studied. 
 % ADVANCED USER ONLY.
-hmri_def.TPM = fullfile(fileparts(fileparts(mfilename('fullpath'))),'etpm','eTPM.nii');
+hmri_def.TPM = fullfile(fileparts(fileparts(fileparts(mfilename('fullpath')))),'etpm','eTPM.nii');
 % default template for auto-reorientation. The template can be selected
 % within the Auto-reorient module. The following is the default suggested
 % for T1w images. Please refer to the Auto-reorient documentation for an
@@ -415,13 +415,13 @@ hmri_def.proc.nGauss = [2 2 2 3 4 2]; % originally in SPM [1 1 2 3 4 2]
 % Experimental features 
 %==========================================================================
 hmri_def.errormaps  = true;
-hmri_def.hom        = false;
+hmri_def.hom        = true;
 hmri_def.qMRI_maps_thresh.R2sHO       = 1;    % [1/s^2]
 hmri_def.wols       = false;
 
 % these belong to the weighted least square fit
-hmri_def.wolsdef.thr_w0 = 0.01; % regularization factor
+hmri_def.wolsdef.thr_w0 = 1e-10; % regularization factor
 hmri_def.wolsdef.sigmaMPM = log(50); % noise - should go in via gui
-hmri_def.wolsdef.brainmask = '';
+hmri_def.wolsdef.brainmask = '/Volumes/Hard Drive /ExvivoHuman/GE_7T_ROT/Echo1/pd_nw_mtflash3d_v4d_800um_8_0036/MSK_c1s2016-09-14_13-39-181110-00001-00240-1_R2s_ols.nii';
 
 end

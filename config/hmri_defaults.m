@@ -420,7 +420,7 @@ hmri_def.qMRI_maps_thresh.R2sHO       = 1;    % [1/s^2]
 hmri_def.wols       = false;
 
 % these belong to the weighted least square fit
-hmri_def.wolsdef.thr_w0 = 0.01; % regularization factor
+hmri_def.wolsdef.thr_w0 = 1e-10; % regularization factor
 hmri_def.wolsdef.sigmaMPM = log(50); % noise - should go in via gui
 hmri_def.wolsdef.brainmask = '';
 

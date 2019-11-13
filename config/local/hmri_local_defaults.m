@@ -415,13 +415,13 @@ hmri_def.proc.nGauss = [2 2 2 3 4 2]; % originally in SPM [1 1 2 3 4 2]
 % Experimental features 
 %==========================================================================
 hmri_def.errormaps  = true;
-hmri_def.hom        = true;
+hmri_def.hom        = false;
 hmri_def.qMRI_maps_thresh.R2sHO       = 1;    % [1/s^2]
 hmri_def.wols       = false;
 
 % these belong to the weighted least square fit
 hmri_def.wolsdef.thr_w0 = 1e-10; % regularization factor
 hmri_def.wolsdef.sigmaMPM = log(50); % noise - should go in via gui
-hmri_def.wolsdef.brainmask = '/Volumes/Hard Drive /ExvivoHuman/GE_7T_ROT/Echo1/pd_nw_mtflash3d_v4d_800um_8_0036/MSK_c1s2016-09-14_13-39-181110-00001-00240-1_R2s_ols.nii';
+hmri_def.wolsdef.brainmask = '';
 
 end

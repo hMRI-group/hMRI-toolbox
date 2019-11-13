@@ -81,11 +81,8 @@ hmri_def.b1map.i3D_EPI.b1proc.B1FWHM = 8; % For smoothing. FWHM in mm - i.e. it 
 hmri_def.b1map.i3D_EPI.b1proc.match_vdm = 1;
 hmri_def.b1map.i3D_EPI.b1proc.b0maskbrain = 1;
 % b1-acquisition
-% hmri_def.b1map.i3D_EPI.b1acq.beta = 115:-5:65;
-% hmri_def.b1map.i3D_EPI.b1acq.TM = 31.2;
-% for long acqu
-hmri_def.b1map.i3D_EPI.b1acq.beta = 135:-5:65;
-hmri_def.b1map.i3D_EPI.b1acq.TM = 33.24;
+hmri_def.b1map.i3D_EPI.b1acq.beta = 115:-5:65;
+hmri_def.b1map.i3D_EPI.b1acq.TM = 31.2;
 hmri_def.b1map.i3D_EPI.b1acq.tert = 540e-3*24; % EchoSpacing * numberPElines
 hmri_def.b1map.i3D_EPI.b1acq.blipDIR = 1;
 % b0-acquisition

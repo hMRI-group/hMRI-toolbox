@@ -1356,12 +1356,15 @@ if mpm_params.PDwidx && mpm_params.T1widx && ISC
         prot_tag = 'Unknown';
         hmri_log(sprintf(['WARNING: MPM protocol unknown. ' ...
             '\n\tCorrection for imperfect spoiling will not be applied.']),mpm_params.defflags);
+        hmri_get_defaults('imperfectSpoilCorr.enabled',false);
+        ISC = false;
     end
 else
     prot_tag = 'Unknown';
 end
 % now retrieve imperfect spoiling correction coefficients
 mpm_params.proc.ISC = hmri_get_defaults(['imperfectSpoilCorr.',prot_tag]);
+mpm_params.proc.ISC.enabled = ISC;
 
 % RF sensitivity bias correction
 mpm_params.proc.RFsenscorr = jobsubj.sensitivity;

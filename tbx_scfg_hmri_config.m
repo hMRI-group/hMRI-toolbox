@@ -75,6 +75,7 @@ hmri_defaults;
 % overwrite with customised defaults
 if isfield(job.hmri_setdef,'customised')
     deffnam = job.hmri_setdef.customised;
+    hmri_get_defaults('local_defaults',deffnam);
     spm('Run',deffnam);
 end
 out = hmri_get_defaults;

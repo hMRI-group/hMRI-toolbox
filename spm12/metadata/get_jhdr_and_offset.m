@@ -16,9 +16,12 @@ jhdr = spm_jsonwrite(hdr,struct('indent','\t'));
 
 % simulate header write, fprintf() returns actual bytes written. length()
 % doesn't work here because characters might be larger than one byte (UTF-8)
-fid = fopen(tempname, 'w');
+sim_fname = tempname();
+fid = fopen(sim_fname, 'w');
 jhdr_size = fprintf(fid, '%s', jhdr);
 fclose(fid);
+delete(sim_fname);
+
 % the length of the extension includes two 32-bit numbers = 8 bytes (the
 % size of the extension itself and the ID of the extension):
 ext_hdr_size = jhdr_size+8;

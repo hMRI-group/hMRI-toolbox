@@ -344,15 +344,15 @@ if mpm_params.QA.enable
             % % matField = cat(3, repmat(VPDw.mat, [1, 1, nPD]), ...
             % % repmat(VMTw.mat, [1, 1, nMT]), repmat(VT1w.mat, [1, 1, nT1]));
             
-            reg = [ones(size(TE)) TE(:)];
+            reg = [ones(numel(TE),1) TE(:)];
             W   = (reg'*reg)\reg';
             
             spm_progress_bar('Init',dm(3),'multi-contrast R2* fit','planes completed');
             for p = 1:dm(3),
                 M = spm_matrix([0 0 p 0 0 0 1 1 1]);
-                data = zeros([size(TE,1) dm(1:2)]);
+                data = zeros([numel(TE) dm(1:2)]);
                 
-                for cecho = 1:size(TE,1)
+                for cecho = 1:numel(TE)
                     % Take slice p (defined in M) and map to a location in the
                     % appropriate contrast using the matField entry for that
                     % contrast, which has been co-registered to the PD-weighted
@@ -364,7 +364,7 @@ if mpm_params.QA.enable
                     % aligned as we do for the standard PDw derived R2* estimate.
                     data(cecho,:,:) = log(max(spm_slice_vol(Vcon(cecho),M1,dm(1:2),mpm_params.interp),1));
                 end
-                Y = W*reshape(data, [size(TE,1) prod(dm(1:2))]);
+                Y = W*reshape(data, [numel(TE) prod(dm(1:2))]);
                 Y = -reshape(Y(end,:), dm(1:2));
                 
                 % NB: mat field defined by V_pdw => first PDw echo
@@ -732,6 +732,7 @@ for p = 1:dm(3)
         end
         
         tmp      = A;
+        tmp(isinf(tmp)) = 0;
         Nmap(mpm_params.qPD).dat(:,:,p) = max(min(tmp,threshall.A),-threshall.A);
         % dynamic range increased to 10^5 to accommodate phased-array coils and symmetrical for noise distribution
 
@@ -1091,27 +1092,23 @@ spm_write_vol(V_maskedA,maskedA);
 
 % Bias-field correction of masked A map
 % use unified segmentation with uniform defaults across the toolbox:
-if isfield(mpm_params.proc.RFsenscorr,'RF_us')
-    job_bfcorr = hmri_get_defaults('segment');
-    job_bfcorr.channel.vols = {V_maskedA.fname};
-    job_bfcorr.channel.biasreg = PDproc.biasreg;
-    job_bfcorr.channel.biasfwhm = PDproc.biasfwhm;
-    job_bfcorr.channel.write = [1 0]; % need the BiasField, obviously!
-    for ctis=1:length(job_bfcorr.tissue)
-        job_bfcorr.tissue(ctis).native = [0 0]; % no need to write c* volumes
-    end
-    output_list = spm_preproc_run(job_bfcorr);
-    
-    % Bias field correction of A map.
-    % Bias field calculation is based on the masked A map, while correction
-    % must be applied to the unmasked A map. The BiasField is therefore
-    % retrieved from previous step and applied onto the original A map.
-    BFfnam = output_list.channel.biasfield{1};
-    BF = double(spm_read_vols(spm_vol(BFfnam)));
-    Y = BF.*spm_read_vols(spm_vol(fA));
-else
-    Y = spm_read_vols(spm_vol(fA));
+job_bfcorr = hmri_get_defaults('segment');
+job_bfcorr.channel.vols = {V_maskedA.fname};
+job_bfcorr.channel.biasreg = PDproc.biasreg;
+job_bfcorr.channel.biasfwhm = PDproc.biasfwhm;
+job_bfcorr.channel.write = [1 0]; % need the BiasField, obviously!
+for ctis=1:length(job_bfcorr.tissue)
+    job_bfcorr.tissue(ctis).native = [0 0]; % no need to write c* volumes
 end
+output_list = spm_preproc_run(job_bfcorr);
+
+% Bias field correction of A map.
+% Bias field calculation is based on the masked A map, while correction
+% must be applied to the unmasked A map. The BiasField is therefore
+% retrieved from previous step and applied onto the original A map.
+BFfnam = output_list.channel.biasfield{1};
+BF = double(spm_read_vols(spm_vol(BFfnam)));
+Y = BF.*spm_read_vols(spm_vol(fA));
 
 % Calibration of flattened A map to % water content using typical white
 % matter value from the litterature (69%)
@@ -1355,12 +1352,15 @@ if mpm_params.PDwidx && mpm_params.T1widx && ISC
         prot_tag = 'Unknown';
         hmri_log(sprintf(['WARNING: MPM protocol unknown. ' ...
             '\n\tCorrection for imperfect spoiling will not be applied.']),mpm_params.defflags);
+        hmri_get_defaults('imperfectSpoilCorr.enabled',false);
+        ISC = false;
     end
 else
     prot_tag = 'Unknown';
 end
 % now retrieve imperfect spoiling correction coefficients
 mpm_params.proc.ISC = hmri_get_defaults(['imperfectSpoilCorr.',prot_tag]);
+mpm_params.proc.ISC.enabled = ISC;
 
 % RF sensitivity bias correction
 mpm_params.proc.RFsenscorr = jobsubj.sensitivity;
@@ -1540,9 +1540,9 @@ end
 if (mpm_params.T1widx && mpm_params.PDwidx && mpm_params.MTwidx)
     coutput = coutput+1;
     mpm_params.qMT = coutput;
-    mpm_params.output(coutput).suffix = 'MT';
+    mpm_params.output(coutput).suffix = 'MTsat';
     mpm_params.output(coutput).descrip{1} = 'MT saturation map [p.u.]';
-    mpm_params.output(coutput).units = 'a.u.';
+    mpm_params.output(coutput).units = 'p.u.';
     switch B1transcorr{1}
         case 'no_B1_correction'
             mpm_params.output(coutput).descrip{end+1} = '- no B1+ bias correction applied';

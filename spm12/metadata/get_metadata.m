@@ -16,7 +16,7 @@ function hdr = get_metadata(varargin)
 % spm_jsonread
 %==========================================================================
 % Written by
-% - Evelyne Balteau, Cyclotron Research Centre, Liège, Belgium
+% - Evelyne Balteau, Cyclotron Research Centre, LiÃ¨ge, Belgium
 % - Enrico Reimer, Max Planck Institute for Human Cognitive and Brain
 %   Sciences, Leipzig, Germany 
 %==========================================================================
@@ -41,7 +41,7 @@ for cfile = 1:size(filelist,1)
     switch lower(ext)
         case '.nii'
             % open nifti file
-            fid = fopen(cfname,'r+');
+            fid = fopen(cfname,'r');
             % standard header is always 348 bytes long, move first there:
             std_hdr_size = 348;
             fseek(fid, std_hdr_size, 'bof');

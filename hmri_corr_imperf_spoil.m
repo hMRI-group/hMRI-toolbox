@@ -22,7 +22,7 @@ TR=job.seq_params.TR_ms;  % [ms]
 Phi0=job.seq_params.Phi0_deg; % [deg]
 B1range=job.seq_params.B1range; % normalized to 1
 Gdur=job.seq_params.Gdur_ms; % [ms]
-Gamp=job.seq_params.Gamp_mt_per_m; % [[mt/m]
+Gamp=job.seq_params.Gamp_mT_per_m; % [[mt/m]
 
 if length(Gdur)~= length (Gamp)
     error('The vector of Gradient Durations and Gradient Amplitude must have the size')
@@ -119,9 +119,9 @@ Results.Output.P2_b = round(polyCoeffB,3);
 Results.Output.RMSE_percent.T1app=round(RMSE_App,3);
 Results.Output.RMSE_percent.T1corr=round(RMSE_Corr,3);
 
-Results.ToCopy{1}=['hmri_def.MPMacq_set.names{1} = ' job.prot_name ];
-Results.ToCopy{end+1}=['hmri_def.MPMacq_set.tags{1}  = ' strrep(job.prot_name,' ','')];
-Results.ToCopy{end+1}=['hmri_def.MPMacq_set.vals{1}  = [' num2str([TR TR FA]) '];'];
+Results.ToCopy{1}=['hmri_def.MPMacq_set.names{NN} = ' job.prot_name ];
+Results.ToCopy{end+1}=['hmri_def.MPMacq_set.tags{NN}  = ' strrep(job.prot_name,' ','')];
+Results.ToCopy{end+1}=['hmri_def.MPMacq_set.vals{NN}  = [' num2str([TR TR FA]) '];'];
 Results.ToCopy{end+1}=['hmri_def.imperfectSpoilCorr.' strrep(job.prot_name,' ','') '.tag = ' strrep(job.prot_name,' ','') ];
 Results.ToCopy{end+1}=['hmri_def.imperfectSpoilCorr.' strrep(job.prot_name,' ','') '.P2_a = [' num2str(round(polyCoeffA,3)) '];'];
 Results.ToCopy{end+1}=['hmri_def.imperfectSpoilCorr.' strrep(job.prot_name,' ','') '.P2_b = [' num2str(round(polyCoeffB,3)) '];'];

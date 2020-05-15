@@ -18,6 +18,7 @@ if ~isdeployed,
     addpath(fullfile(hMRIpath, 'spm12'));
     addpath(fullfile(hMRIpath, 'spm12','config'));
     addpath(fullfile(hMRIpath, 'spm12','metadata'));
+    addpath(genpath(fullfile(hMRIpath, 'EPG_for_hmri_tbx')));
 end
 
 % The toolbox is split into 5 main modules:

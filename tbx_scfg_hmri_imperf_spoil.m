@@ -30,7 +30,7 @@ outdir.num     = [1 1];
 prot_name        = cfg_entry;
 prot_name.tag     = 'prot_name';
 prot_name.name    = 'Protocol Name ';
-prot_name.val     = {'ClassicFILProtocol'};
+prot_name.val     = {'UnitTest_protocol'};
 prot_name.strtype = 's';
 prot_name.help    = {['Specify the name of the protocol']};
 % ---------------------------------------------------------------------
@@ -56,12 +56,12 @@ B1range.name    = 'B1 range ';
 B1range.val     = {[0.7 : 0.05 : 1.3]};
 B1range.strtype = 'e';
 B1range.num     = [1 Inf];
-B1range.help    = {['Specify the range of B1+ efficiency over which the ',...
+B1range.help    = {['Specify the range of transmit field efficiency (B1) over which the ',...
     'corrections factors will be computed. After the linear fitting ',...
-    'T1=A*T1app+B , a polynomial fiiting will be perfomed to estimate ',...
-    'A and B such as: A=P(B1+) and B=P(B1+) ',...
+    'T1=A*T1app+B , a polynomial fitting will be perfomed to estimate ',...
+    'A and B such as: A=P(B1) and B=P(B1) ',...
     ' with P , 2nd degree polynom. '...
-    'Note: B1+=1 corresponds to optimal B1+ efficiency']};
+    'Note: B1=1 corresponds to optimal transmit field efficiency']};
 
 % ---------------------------------------------------------------------
 % T2 [ms] 
@@ -95,8 +95,8 @@ Gdur.name    = 'Readout gradient duration';
 Gdur.val     = {[1.9998]};
 Gdur.strtype = 'e';
 Gdur.num     = [1 Inf];
-Gdur.help    = {['Specify the duration of the gradient in the readout direction',...
-                'of the FLASH acquisitions in ms']};
+Gdur.help    = {['Specify the duration (in ms) of the gradient in the readout direction',...
+                'of the FLASH acquisitions ']};
 % ---------------------------------------------------------------------
 % Readout gradient amplitude [ms] 
 % ---------------------------------------------------------------------
@@ -106,8 +106,8 @@ Gamp.name    = 'Readout gradient amplitude';
 Gamp.val     = {[44.04]};
 Gamp.strtype = 'e';
 Gamp.num     = [1 Inf];
-Gamp.help    = {['Specify the amplitude of the gradient in the readout direction',...
-                'of the FLASH acquisitions in mT/m']};
+Gamp.help    = {['Specify the amplitude (in mT/m) of the gradient in the readout direction',...
+                'of the FLASH acquisitions ']};
 
 % ---------------------------------------------------------------------
 % TR [ms] 
@@ -118,7 +118,7 @@ TR.name    = 'TR';
 TR.val     = {[25]};
 TR.strtype = 'e';
 TR.num     = [1];
-TR.help    = {['Specify the TR in ms of the FLASH acquisitions']};
+TR.help    = {['Specify the TR (in ms) of the FLASH acquisitions']};
 
 
 % ---------------------------------------------------------------------
@@ -130,7 +130,7 @@ Phi0.name    = 'RF spoiling increment';
 Phi0.val     = {[137]};
 Phi0.strtype = 'w';
 Phi0.num     = [1 1];
-Phi0.help    = {['Specify the TR in ms of the FLASH acquisitions']};
+Phi0.help    = {['Specify the RF SPoiling increment (in deg) of the FLASH acquisitions']};
 
 % ---------------------------------------------------------------------
 % Flip angles [deg]
@@ -141,8 +141,8 @@ FA.name    = 'Flip angles';
 FA.val     = {[6 21]};
 FA.strtype = 'e';
 FA.num     = [1 2];
-FA.help    = {['Specify the flip angles in degrees of the PD-weighted ',...
-    'and the T1-weighted acquisitions (in that order)']};
+FA.help    = {['Specify the flip angles (in deg) of the PD-weighted ',...
+    'and the T1-weighted FLASH acquisitions (in that order)']};
 
 % ---------------------------------------------------------------------
 % All tissue parameters

@@ -5,11 +5,11 @@ function hmri_corr_imperf_spoil(job)
 % T1 estimation as described in (Preibisch & Deichmann, MRM 2009).
 %
 % Numerical simulations are performed using the EPG formalism described in
-% Malik et al., MRM 2017 and available here: 
+% Malik et al., MRM 2017 and available here:
 % https://github.com/mriphysics/EPG-X
-% 
+%
 % The parameters used for the simulation and the resulting correction
-% factors are written to a JSON file in the output folder specified by the 
+% factors are written to a JSON file in the output folder specified by the
 % user.
 %==========================================================================
 
@@ -32,7 +32,7 @@ end
 
 %% Get tissue parameters
 T1range     = job.tissue_params.T1range_ms;     %[ms]
-T2          = job.tissue_params.T2_ms;          % [ms]
+T2range     = job.tissue_params.T2range_ms;     % [ms]
 D           = job.tissue_params.D_um2_per_ms;   % [um^2/ms]
 
 %% Build studture "diff" to account for diffusion effect
@@ -42,33 +42,38 @@ diff.G      = Gamp;
 diff.tau    = Gdur;
 
 %% Run EPG simulation
-S1  = zeros([length(T1range) length(B1range)]);
-S2  = zeros([length(T1range) length(B1range)]);
 nT1 = length(T1range);
+nT2 = length(T2range);
 nB1 = length(B1range);
+S1  = zeros([nT1 nT2 nB1]);
+S2  = zeros([nT1 nT2 nB1]);
 hmri_log(sprintf('\t-------- Simulating signals'));
 for T1val = 1 : nT1 % loop over T1 values, can use parfor for speed
     
     T1 = T1range(T1val);
     npulse = floor(15*T1/TR);   % To ensure steady state signal
     
-    for B1val = 1 : nB1  % loop over B1+ values
-        B1eff = B1range(B1val);
+    for T2val = 1 : nT2
+        T2 = T2range(T2val);
         
-        %%% make train of flip angles and their phases
-        phi_train = RF_phase_cycle(npulse,Phi0); % phase of the RF pulses
-        alpha_train1 = d2r(FA(1).*B1eff)*ones([1 npulse]); % flip angles of the PDw acquisitions
-        alpha_train2 = d2r(FA(2).*B1eff)*ones([1 npulse]); % flip angles of the T1w acquisitions
-        
-        % Calculate signals via EPG:
-        
-        %PDw
-        F0 = EPG_GRE(alpha_train1,phi_train,TR, T1, T2, 'diff', diff);
-        S1(T1val,B1val) = (abs(F0(end)));
-        %T1w
-        F0 = EPG_GRE(alpha_train2,phi_train,TR, T1, T2, 'diff', diff);
-        S2(T1val,B1val) = (abs(F0(end)));
-        
+        for B1val = 1 : nB1  % loop over B1+ values
+            B1eff = B1range(B1val);
+            
+            %%% make train of flip angles and their phases
+            phi_train = RF_phase_cycle(npulse,Phi0); % phase of the RF pulses
+            alpha_train1 = d2r(FA(1).*B1eff)*ones([1 npulse]); % flip angles of the PDw acquisitions
+            alpha_train2 = d2r(FA(2).*B1eff)*ones([1 npulse]); % flip angles of the T1w acquisitions
+            
+            % Calculate signals via EPG:
+            
+            %PDw
+            F0 = EPG_GRE(alpha_train1, phi_train, TR, T1, T2, 'diff', diff);
+            S1(T1val,T2val,B1val) = (abs(F0(end)));
+            %T1w
+            F0 = EPG_GRE(alpha_train2, phi_train, TR, T1, T2, 'diff', diff);
+            S2(T1val,T2val,B1val) = (abs(F0(end)));
+            
+        end
     end
 end
 
@@ -78,19 +83,19 @@ end
 % 2./ Fitting T1=A(B1eff)+B(B1eff)*T1app
 %*************************************************%%
 hmri_log(sprintf('\t-------- Determining Coefficients'));
-ABcoeff = zeros(2, length(B1range));
-T1app = zeros(length(B1range), length(T1range));
-for B1val = 1 : length(B1range)
+ABcoeff = zeros(2, nB1);
+T1app = zeros(nB1, nT1, nT2);
+for B1val = 1 : nB1
     
     B1eff = B1range(B1val);
     
     % Calculate T1app, accounting for B1+
-    T1app(B1val,:) = squeeze(2.*(S1(:,B1val)./d2r(FA(1).*B1eff)-S2(:,B1val)./d2r(FA(2).*B1eff))./(S2(:,B1val).*d2r(FA(2).*B1eff)./TR-S1(:,B1val).*d2r(FA(1).*B1eff)./TR));
+    T1app(B1val,:,:) = squeeze(2.*(S1(:,:,B1val)./d2r(FA(1).*B1eff)-S2(:,:,B1val)./d2r(FA(2).*B1eff))./(S2(:,:,B1val).*d2r(FA(2).*B1eff)./TR-S1(:,:,B1val).*d2r(FA(1).*B1eff)./TR));
     
     % build matrix X with column of ones and column of T1app
-    X = ones([length(T1range) 2]);
+    X = ones([nT1*nT2 2]);
     X(:,2) = T1app(B1val,:);
-    ABcoeff(:, B1val) = pinv(X)*T1range';
+    ABcoeff(:, B1val) = pinv(X)*repmat(T1range, [1 nT2]).';
     
 end
 
@@ -104,16 +109,18 @@ polyCoeffB = polyfit(B1range, ABcoeff(2,:), 2);
 %% *********************************************************%%
 % 4./ Compute RMSE on T1app and T1
 %***********************************************************%%
-T1corr = repmat(polyval(polyCoeffA, B1range)',[1 length(T1range)]) + repmat(polyval(polyCoeffB, B1range)',[1 length(T1range)]).*T1app;
-T1_Corr_Err = (T1corr - repmat(T1range, [length(B1range) 1]))./repmat(T1range, [length(B1range) 1])*100;
-T1_App_Err = (T1app - repmat(T1range, [length(B1range) 1]))./repmat(T1range, [length(B1range) 1])*100;
+T1app = T1app(:,:);
+T1corr = polyval(polyCoeffA, B1range).' + polyval(polyCoeffB, B1range).'.*T1app;
+T1_Corr_Err = (T1corr - repmat(repmat(T1range, [1 nT2]), [nB1 1]))./repmat(repmat(T1range, [1 nT2]), [nB1 1])*100;
+T1_App_Err = (T1app - repmat(repmat(T1range, [1 nT2]), [nB1 1]))./repmat(repmat(T1range, [1 nT2]), [nB1 1])*100;
+
 
 RMSE_Corr = sqrt(mean(T1_Corr_Err(:).^2));
 RMSE_App = sqrt(mean(T1_App_Err(:).^2));
 
 
 %% *********************************************************%%
-% 5./ Write parameters and correction factors in a json file 
+% 5./ Write parameters and correction factors in a json file
 % in the selected output directory
 %***********************************************************%%
 hmri_log(sprintf('\t-------- Writing results\n'));

@@ -38,7 +38,7 @@ prot_name.help    = {['Specify the name of the protocol']};
 % ---------------------------------------------------------------------
 T1range        = cfg_entry;
 T1range.tag     = 'T1range_ms';
-T1range.name    = 'T1 range ';
+T1range.name    = 'T1 range (ms)';
 T1range.val     = {[500:100:2000]};
 T1range.strtype = 'e';
 T1range.num     = [1 Inf];
@@ -65,12 +65,12 @@ B1range.help    = {['Specify the range of transmit field efficiency (B1+) over w
 % T2 [ms] 
 % ---------------------------------------------------------------------
 T2        = cfg_entry;
-T2.tag     = 'T2_ms';
-T2.name    = 'T2 (ms)';
+T2.tag     = 'T2range_ms';
+T2.name    = 'T2 range (ms)';
 T2.val     = {[70]};
 T2.strtype = 'r';
-T2.num     = [1 1];
-T2.help    = {['Specify an estimate of the T2 time in ms']};
+T2.num     = [1 Inf];
+T2.help    = {['Specify an estimate of the T2 time in ms, or an array of values']};
 
 
 % ---------------------------------------------------------------------

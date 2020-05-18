@@ -1,10 +1,10 @@
 {
 	"Input": {
-		"outdir": ["D:\\My Documents\\MATLAB"],
+		"outdir": ["C:\\Users\\ncorbin\\Documents\\MATLAB\\hMRI-Toolbox\\EPG_for_hmri_tbx"],
 		"prot_name": "Unit_Test_Protocol",
 		"seq_params": {
 			"FA_deg": [6,21],
-			"TR_ms": 25,
+			"TR_ms": [25,25],
 			"Phi0_deg": 137,
 			"B1range_percent": [70,75,80,85,90,95,100,105,110,115,120,125,130],
 			"Gdur_ms": 2,
@@ -25,10 +25,10 @@
 		}
 	},
 	"ToCopy": [
-		"hmri_def.MPMacq_set.names{NN} = Unit_Test_Protocol",
-		"hmri_def.MPMacq_set.tags{NN}  = Unit_Test_Protocol",
+		"hmri_def.MPMacq_set.names{NN} = 'Unit_Test_Protocol';",
+		"hmri_def.MPMacq_set.tags{NN}  = 'Unit_Test_Protocol';",
 		"hmri_def.MPMacq_set.vals{NN}  = [25  25   6  21];",
-		"hmri_def.imperfectSpoilCorr.Unit_Test_Protocol.tag = Unit_Test_Protocol",
+		"hmri_def.imperfectSpoilCorr.Unit_Test_Protocol.tag = 'Unit_Test_Protocol';",
 		"hmri_def.imperfectSpoilCorr.Unit_Test_Protocol.P2_a = [41.7149     -56.6128      28.8265];",
 		"hmri_def.imperfectSpoilCorr.Unit_Test_Protocol.P2_b = [-0.0977      0.0979      0.9647];",
 		"hmri_def.imperfectSpoilCorr.Unit_Test_Protocol.enabled = hmri_def.imperfectSpoilCorr.enabled;"

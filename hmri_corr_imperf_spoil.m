@@ -51,7 +51,7 @@ hmri_log(sprintf('\t-------- Simulating signals'));
 for T1val = 1 : nT1 % loop over T1 values, can use parfor for speed
     
     T1 = T1range(T1val);
-    npulse = floor(15*T1/TR);   % To ensure steady state signal
+    npulse = floor(15*T1/min(TR));   % To ensure steady state signal
     
     for T2val = 1 : nT2
         T2 = T2range(T2val);
@@ -67,10 +67,10 @@ for T1val = 1 : nT1 % loop over T1 values, can use parfor for speed
             % Calculate signals via EPG:
             
             %PDw
-            F0 = EPG_GRE(alpha_train1, phi_train, TR, T1, T2, 'diff', diff);
+            F0 = EPG_GRE(alpha_train1, phi_train, TR(1), T1, T2, 'diff', diff);
             S1(T1val,T2val,B1val) = (abs(F0(end)));
             %T1w
-            F0 = EPG_GRE(alpha_train2, phi_train, TR, T1, T2, 'diff', diff);
+            F0 = EPG_GRE(alpha_train2, phi_train, TR(2), T1, T2, 'diff', diff);
             S2(T1val,T2val,B1val) = (abs(F0(end)));
             
         end
@@ -90,7 +90,7 @@ for B1val = 1 : nB1
     B1eff = B1range(B1val);
     
     % Calculate T1app, accounting for B1+
-    T1app(B1val,:,:) = squeeze(2.*(S1(:,:,B1val)./d2r(FA(1).*B1eff)-S2(:,:,B1val)./d2r(FA(2).*B1eff))./(S2(:,:,B1val).*d2r(FA(2).*B1eff)./TR-S1(:,:,B1val).*d2r(FA(1).*B1eff)./TR));
+    T1app(B1val,:,:) = squeeze(2.*(S1(:,:,B1val)./d2r(FA(1).*B1eff)-S2(:,:,B1val)./d2r(FA(2).*B1eff))./(S2(:,:,B1val).*d2r(FA(2).*B1eff)./TR(2)-S1(:,:,B1val).*d2r(FA(1).*B1eff)./TR(1)));
     
     % build matrix X with column of ones and column of T1app
     X = ones([nT1*nT2 2]);
@@ -130,10 +130,10 @@ Results.Output.P2_b = round(polyCoeffB,4);
 Results.Output.RMSE_percent.T1app=round(RMSE_App,3);
 Results.Output.RMSE_percent.T1corr=round(RMSE_Corr,3);
 
-Results.ToCopy{1}    =['hmri_def.MPMacq_set.names{NN} = ' job.prot_name ];
-Results.ToCopy{end+1}=['hmri_def.MPMacq_set.tags{NN}  = ' strrep(job.prot_name,' ','')];
-Results.ToCopy{end+1}=['hmri_def.MPMacq_set.vals{NN}  = [' num2str([TR TR FA]) '];'];
-Results.ToCopy{end+1}=['hmri_def.imperfectSpoilCorr.' strrep(job.prot_name,' ','') '.tag = ' strrep(job.prot_name,' ','') ];
+Results.ToCopy{1}    =['hmri_def.MPMacq_set.names{NN} = ''' job.prot_name ''';' ];
+Results.ToCopy{end+1}=['hmri_def.MPMacq_set.tags{NN}  = ''' strrep(job.prot_name,' ','') ''';'];
+Results.ToCopy{end+1}=['hmri_def.MPMacq_set.vals{NN}  = [' num2str([TR FA]) '];'];
+Results.ToCopy{end+1}=['hmri_def.imperfectSpoilCorr.' strrep(job.prot_name,' ','') '.tag = ''' strrep(job.prot_name,' ','') ''';' ];
 Results.ToCopy{end+1}=['hmri_def.imperfectSpoilCorr.' strrep(job.prot_name,' ','') '.P2_a = [' num2str(round(polyCoeffA,4)) '];'];
 Results.ToCopy{end+1}=['hmri_def.imperfectSpoilCorr.' strrep(job.prot_name,' ','') '.P2_b = [' num2str(round(polyCoeffB,4)) '];'];
 Results.ToCopy{end+1}=['hmri_def.imperfectSpoilCorr.' strrep(job.prot_name,' ','') '.enabled = hmri_def.imperfectSpoilCorr.enabled;'];

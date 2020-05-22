@@ -114,10 +114,11 @@ Gamp.help    = {['Specify the amplitude (in mT/m) of the spoiling gradient ',...
 TR         = cfg_entry;
 TR.tag     = 'TR_ms';
 TR.name    = 'TR';
-TR.val     = {[25]};
+TR.val     = {[25 25]};
 TR.strtype = 'r';
-TR.num     = [1 1];
-TR.help    = {['Specify the TR (in ms) of the FLASH acquisitions']};
+TR.num     = [1 2];
+TR.help    = {['Specify the TR (in ms) of the PD-weighted ',...
+    'and the T1-weighted FLASH acquisitions (in that order)']};
 
 
 % ---------------------------------------------------------------------

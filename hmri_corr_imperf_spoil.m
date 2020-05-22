@@ -110,9 +110,9 @@ polyCoeffB = polyfit(B1range, ABcoeff(2,:), 2);
 % 4./ Compute RMSE on T1app and T1
 %***********************************************************%%
 T1app = T1app(:,:);
-T1corr = polyval(polyCoeffA, B1range).' + polyval(polyCoeffB, B1range).'.*T1app;
-T1_Corr_Err = (T1corr - repmat(repmat(T1range, [1 nT2]), [nB1 1]))./repmat(repmat(T1range, [1 nT2]), [nB1 1])*100;
-T1_App_Err = (T1app - repmat(repmat(T1range, [1 nT2]), [nB1 1]))./repmat(repmat(T1range, [1 nT2]), [nB1 1])*100;
+T1corr = repmat(polyval(polyCoeffA, B1range).',[1 nT1*nT2])+ repmat(polyval(polyCoeffB, B1range).',[1 nT1*nT2]).*T1app;
+T1_Corr_Err = (T1corr - repmat(T1range, [nB1 nT2]))./repmat(T1range, [nB1 nT2])*100;
+T1_App_Err = (T1app - repmat(T1range, [nB1 nT2]))./repmat(T1range, [nB1 nT2])*100;
 
 
 RMSE_Corr = sqrt(mean(T1_Corr_Err(:).^2));

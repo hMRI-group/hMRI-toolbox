@@ -1,0 +1,36 @@
+{
+	"Input": {
+		"outdir": ["D:\\My Documents\\MATLAB"],
+		"prot_name": "Unit_Test_Protocol",
+		"seq_params": {
+			"FA_deg": [6,21],
+			"TR_ms": [25,25],
+			"Phi0_deg": 137,
+			"B1range_percent": [70,75,80,85,90,95,100,105,110,115,120,125,130],
+			"Gdur_ms": 3.3876,
+			"Gamp_mT_per_m": 26
+		},
+		"tissue_params": {
+			"T1range_ms": [500,600,700,800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800,1900,2000],
+			"T2range_ms": 70,
+			"D_um2_per_ms": 0.8
+		}
+	},
+	"Output": {
+		"P2_a": [41.5044,-56.2888,28.6704],
+		"P2_b": [-0.0972,0.0973,0.9649],
+		"RMSE_percent": {
+			"T1app": 2.999,
+			"T1corr": 0.162
+		}
+	},
+	"ToCopy": [
+		"hmri_def.MPMacq_set.names{NN} = 'Unit_Test_Protocol';",
+		"hmri_def.MPMacq_set.tags{NN}  = 'Unit_Test_Protocol';",
+		"hmri_def.MPMacq_set.vals{NN}  = [25  25   6  21];",
+		"hmri_def.imperfectSpoilCorr.Unit_Test_Protocol.tag = 'Unit_Test_Protocol';",
+		"hmri_def.imperfectSpoilCorr.Unit_Test_Protocol.P2_a = [41.5044     -56.2888      28.6704];",
+		"hmri_def.imperfectSpoilCorr.Unit_Test_Protocol.P2_b = [-0.0972      0.0973      0.9649];",
+		"hmri_def.imperfectSpoilCorr.Unit_Test_Protocol.enabled = hmri_def.imperfectSpoilCorr.enabled;"
+	]
+}

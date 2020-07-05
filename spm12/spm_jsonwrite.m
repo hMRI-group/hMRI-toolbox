@@ -206,7 +206,7 @@ elseif numel(json) > 1
         if any(islogical(json)) || any(~isfinite(json))
             S = jsonwrite_cell(num2cell(json),'');
         else
-            S = ['[' sprintf('%23.16g,',json) ']']; % eq to num2str(json,16)
+            S = ['[' sprintf('%23.16g,',json(1:end-1)) sprintf('%23.16g',json(end)) ']'];
             S(S==' ') = [];
         end
     else % array

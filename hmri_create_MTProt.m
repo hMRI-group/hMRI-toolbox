@@ -674,7 +674,7 @@ for p = 1:dm(3)
             % correct T1 for transmit bias f_T with fa_true = f_T * fa_nom
             % T1corr = T1 / f_T / f_T
             
-            if isfield(ISC,'iscfile')
+            if ISC.enabled
                 % MFC: We do have P2_a and P2_b parameters for this sequence
                 % => T1 = A(B1) + B(B1)*T1app (see Preibisch 2009)
                 T1 = ISC.P2_a(1)*f_T.^2 + ...
@@ -1376,80 +1376,47 @@ hmri_log(sprintf('INFO: averaged PDw/T1w/MTw will be calculated based on the fir
         
 % if T1w and PDw data available, identify the protocol to define imperfect 
 % spoiling correction parameters (for T1 map calculation)
-if isfield(jobsubj.isc,'iscnone')
+ISC = hmri_get_defaults('imperfectSpoilCorr.enabled');
+if ~ISC
     hmri_log(sprintf(['INFO: Imperfect spoiling correction is disabled.' ...
         '\nIf your data were acquired with one of the standard MPM ' ...
         '\nprotocols (customized MT-FLASH sequence) for which the correction ' ...
         '\ncoefficients are available, it is recommended to enable that option.']),mpm_params.defflags);
-elseif mpm_params.PDwidx && mpm_params.T1widx 
-    if isfield(jobsubj.isc,'iscfile')
-        % old method here - has to be changed! (TODO)
-        % retrieve all available protocols:
-        MPMacq_sets = hmri_get_defaults('MPMacq_set');
-        % current protocol is defined by [TR_pdw TR_t1w fa_pdw fa_t1w]:
-        MPMacq_prot = [mpm_params.input(mpm_params.PDwidx).TR;
-            mpm_params.input(mpm_params.T1widx).TR;
-            mpm_params.input(mpm_params.PDwidx).fa;
-            mpm_params.input(mpm_params.T1widx).fa]';
-        % then match the values and find protocol tag
-        nsets = numel(MPMacq_sets.vals);
-        ii = 0; mtch = false;
-        while ~mtch && ii < nsets
-            ii = ii+1;
-            if all(MPMacq_prot == MPMacq_sets.vals{ii})
-                mtch  = true;
-                prot_tag = MPMacq_sets.tags{ii};
-                hmri_log(sprintf(['INFO: MPM acquisition protocol = %s.' ...
-                    '\n\tThe coefficients corresponding to this protocol will be applied' ...
-                    '\n\tto correct for imperfect spoiling. Please check carefully that' ...
-                    '\n\tthe protocol used is definitely the one for which the ' ...
-                    '\n\tcoefficients have been calculated.'],prot_tag),mpm_params.defflags);
-            end
-        end
-        if ~mtch
-            prot_tag = 'Unknown';
-            hmri_log(sprintf(['WARNING: MPM protocol unknown. ' ...
-                '\n\tCorrection for imperfect spoiling will not be applied.']),mpm_params.defflags);
-        end
-        % now retrieve imperfect spoiling correction coefficients
-        mpm_params.proc.ISC = hmri_get_defaults(['imperfectSpoilCorr.',prot_tag]);
-    elseif isfield(jobsubj.isc,'iscphase')
-        P = [];
-        % set parameters for spoiling correction due to Baudrexel et al. MRM 2018 (DOI 10.1002/mrm.26979)
-        if jobsubj.isc.iscphase == 50
-            P = [9.639e-1, 4.989e-3, -1.254e-4, -3.180e-6, 1.527e-7, -1.462e-9; ...
-                5.880e-3, -1.056e-3, 4.801e-5, -8.549e-7, 5.382e-9, 0; ...
-                4.143e-4, -4.920e-6, -1.560e-7, 2.282e-9, 0, 0; ...
-                -1.5059e-5, 2.334e-7, -1.189e-9, 0, 0, 0; ...
-                9.449e-8, -1.025e-9, 0, 0, 0, 0; ...
-                -4.255e-10, 0, 0, 0, 0, 0];
-        elseif jobsubj.isc.iscphase == 117
-            P = [9.381e-1, 4.266e-3, 2.535e-4, -2.289e-5, 5.402e-7, -4.146e-9; ...
-                1.653e-2, -2.172e-3, 7.491e-5, -1.051e-6, 5.331e-9, 0; ...
-                3.145e-4, 3.704e-5, -1.123e-6, 8.369e-9, 0, 0; ...
-                -3.848e-5, 2.773e-7, 1.662e-9, 0, 0, 0; ...
-                6.230e-7, -4.019e-9, 0, 0, 0, 0; ...
-                -2.988e-9, 0, 0, 0, 0, 0];
-        elseif jobsubj.isc.iscphase == 150
-            P = [6.678e-1, 9.131e-2, -7.728e-3, 2.863e-4, -4.869e-6, 3.112e-8; ...
-                -3.710e-2, 2.845e-3, -7.786e-5, 8.546e-7, 2.837e-9, 0; ...
-                1.448e-3, -7.537e-5, 1.403e-6, -8.865e-9, 0, 0; ...
-                -2.181e-5, 6.141e-7, -5.141e-9, 0, 0, 0; ...
-                1.990e-7, -1.978e-9, 0, 0, 0, 0; ...
-                -8.617e-10, 0, 0, 0, 0, 0];
-        end
-        if isempty(P)
-            hmri_log(sprintf(['WARNING: Imperfect Spoiling Correction can not be applied \n' ...
-                ' with the given Phase Increment of %i°, which is only available for 50°, 117°, and 150°.' ...
-                ' \nPlease check inputs!'],jobsubj.isc.iscphase), mpm_params.defflags);
-            mpm_params.proc.ISC.enabled = false;
-        else
-            mpm_params.proc.ISC = struct('iscphase',jobsubj.isc,'P',P);
-            hmri_log(sprintf(['INFO: Imperfect Spoiling Correction applied \n' ...
-                ' according to the given Phase Increment of %i°.'],jobsubj.isc.iscphase), mpm_params.nopuflags);
+end
+if mpm_params.PDwidx && mpm_params.T1widx && ISC
+    % retrieve all available protocols:
+    MPMacq_sets = hmri_get_defaults('MPMacq_set');
+    % current protocol is defined by [TR_pdw TR_t1w fa_pdw fa_t1w]:
+    MPMacq_prot = [mpm_params.input(mpm_params.PDwidx).TR;
+                   mpm_params.input(mpm_params.T1widx).TR;
+                   mpm_params.input(mpm_params.PDwidx).fa;
+                   mpm_params.input(mpm_params.T1widx).fa]';
+    % then match the values and find protocol tag
+    nsets = numel(MPMacq_sets.vals);
+    ii = 0; mtch = false;
+    while ~mtch && ii < nsets
+        ii = ii+1;
+        if all(MPMacq_prot == MPMacq_sets.vals{ii})
+            mtch  = true;
+            prot_tag = MPMacq_sets.tags{ii};
+            hmri_log(sprintf(['INFO: MPM acquisition protocol = %s.' ...
+                '\n\tThe coefficients corresponding to this protocol will be applied' ...
+                '\n\tto correct for imperfect spoiling. Please check carefully that' ...
+                '\n\tthe protocol used is definitely the one for which the ' ...
+                '\n\tcoefficients have been calculated.'],prot_tag),mpm_params.defflags);
         end
     end
+    if ~mtch
+        prot_tag = 'Unknown';
+        hmri_log(sprintf(['WARNING: MPM protocol unknown. ' ...
+            '\n\tCorrection for imperfect spoiling will not be applied.']),mpm_params.defflags);
+    end
+else
+    prot_tag = 'Unknown';
 end
+% now retrieve imperfect spoiling correction coefficients
+mpm_params.proc.ISC = hmri_get_defaults(['imperfectSpoilCorr.',prot_tag]);
+mpm_params.proc.ISC.enabled = ISC;
 
 % RF sensitivity bias correction
 mpm_params.proc.RFsenscorr = jobsubj.sensitivity;

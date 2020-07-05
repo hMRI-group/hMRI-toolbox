@@ -219,7 +219,7 @@ else
             % to correct for mismatch of outputs depending on data
             % Anonymous or not ('tProtocolName' returns a cell array of
             % cell array of char, while 'ProtocolName' returns a cell array
-            % of char): 
+            % of char):
             if iscell(val) && (nFieldFound==1)
                 if iscell(val{1})
                     val = val{1};
@@ -454,7 +454,7 @@ else
                         cRes = 1;
                         parLocation{cRes} = nam{1};
                         parValue{cRes} = val{1};
-                    end                
+                    end
                 else
                     fprintf(1,'\nINFO: This is a 2D sequence.\n');
                     parLocation{cRes} = [nam{1} '.lSize'];
@@ -525,7 +525,7 @@ else
                     parValue{cRes} = val{1};
                     fprintf(1,'\nINFO: Siemens SMS-EPI (%s) - MultiBandFactor stored in lMultiBandFactor. Value = %d.\n', ProtocolName, parValue{cRes});
                 end
-            end          
+            end
             
         case 'WipParameters'
             % Siemens-specific (NB: search made case insensitive since
@@ -583,7 +583,7 @@ else
                             if isempty(parValueSagCorTra(cdir).dSag);parValueSagCorTra(cdir).dSag = 0;end
                             if isempty(parValueSagCorTra(cdir).dCor);parValueSagCorTra(cdir).dCor = 0;end
                             if isempty(parValueSagCorTra(cdir).dTra);parValueSagCorTra(cdir).dTra = 0;end
-                            parValue{cRes}(:,cdir) = [parValueSagCorTra(cdir).dSag; parValueSagCorTra(cdir).dCor; parValueSagCorTra(cdir).dTra]; 
+                            parValue{cRes}(:,cdir) = [parValueSagCorTra(cdir).dSag; parValueSagCorTra(cdir).dCor; parValueSagCorTra(cdir).dTra];
                         end
                     end
                     
@@ -688,6 +688,7 @@ else
                 valEPI = get_metadata_val(mstruc, 'ScanningSequence');
                 valSEQ = get_metadata_val(mstruc, 'SequenceName');
                 valPROT = get_metadata_val(mstruc, 'ProtocolName');
+                valMODELNAME = get_metadata_val(mstruc, 'ManufacturerModelName');
                 
                 % Case al_B1mapping
                 if strfind(lower(valPROT),'b1map')
@@ -695,9 +696,9 @@ else
                     nFieldFound = 1;
                     switch lower(valSEQ)
                         case 'b1v2d3d2' % 540 us - Prisma
-                            EchoSpacing = 2*140+260; 
+                            EchoSpacing = 2*140+260;
                         case 'b1epi4a3d2' % 330 us - Allegra
-                            EchoSpacing = 330; 
+                            EchoSpacing = 330;
                         case 'b1epi2b3d2' % 1mm protocol from WTCN
                             EchoSpacing = 540;
                         case 'seste1d3d2' % 1mm protocol from WTCN
@@ -705,39 +706,44 @@ else
                             % adFree: [0,0,0,0,0,0,0,SlabGradScale,RefocCorr,0,0,RFSpoilBasicIncr]
                             Wip = get_metadata_val(mstruc, 'WipParameters');
                             EchoSpacing = Wip.alFree(5)*2+Wip.alFree(6);
-                        case {'b1sev1a3d2' 'b1sev1b3d2'} % Prisma versions by Kerrin Pine
-                            Wip = get_metadata_val(mstruc, 'WipParameters');
-                            EchoSpacing = Wip.alFree(5)*2+Wip.alFree(6);
-                        case {'b1epi2f3d2' 'b1epi2g3d2' 'b1sev1a'} % 7T versions by Kerrin Pine
-                            EchoSpacing = 540;
+                        case {'b1sev1a3d2' 'b1sev1b3d2' 'b1epi2f3d2' 'b1epi2g3d2' 'b1sev1a'} % 7T and Prisma versions by Kerrin Pine
+                            if contains(valMODELNAME,'Prisma','IgnoreCase',true)
+                                Wip = get_metadata_val(mstruc, 'WipParameters');
+                                EchoSpacing = Wip.alFree(5)*2+Wip.alFree(6);
+                            elseif contains(valMODELNAME,'7T','IgnoreCase',true)
+                                EchoSpacing = 540;
+                            else
+                                % Do nothing
+                            end
                         case 'b1epi2d3d2' % 800um protocol from WTCN
                             EchoSpacing = 540;
-                        otherwise
-                            fprintf(1,'\nWARNING: B1mapping version unknown, trying to base our guess on PixelBandwidth.\n');
-                            PixelBandwidth = get_metadata_val(mstruc,'BandwidthPerPixelRO');
-                            switch PixelBandwidth
-                                case 2300
-                                    EchoSpacing = 540e-3;
-                                case 3600
-                                    EchoSpacing = 330e-3;
-                                case 3550 % Allegra data
-                                    EchoSpacing = 330e-3;
-                                otherwise
-                                    fprintf(1,'Giving up: using default EchoSpacing value = 540 us.\n');
-                                    EchoSpacing = 2*140+260; % us
-                            end
+                    end
+                    if ~exist('EchoSpacing','var')
+                        fprintf(1,'\nWARNING: B1mapping version unknown, trying to base our guess on PixelBandwidth.\n');
+                        PixelBandwidth = get_metadata_val(mstruc,'BandwidthPerPixelRO');
+                        switch PixelBandwidth
+                            case 2300
+                                EchoSpacing = 540e-3;
+                            case 3600
+                                EchoSpacing = 330e-3;
+                            case 3550 % Allegra data
+                                EchoSpacing = 330e-3;
+                            otherwise
+                                fprintf(1,'Giving up: using default EchoSpacing value = 540 us.\n');
+                                EchoSpacing = 2*140+260; % us
+                        end
                     end
                     measPElin = get_metadata_val(mstruc,'PELinesPAT');
                     cRes = 1;
                     parLocation{cRes} = 'HardCodedParameter';
                     parValue{cRes} = EchoSpacing * measPElin * 0.001; % ms
-                
+                    
                     fprintf(1,['\nINFO: the EPI readout duration has been derived:' ...
                         '\n\tEchoSpacing = %5.2f us' ...
                         '\n\tmeasPElin = %d' ...
                         '\n\tepiReadoutDuration = %5.2f ms\n'], ...
                         EchoSpacing, measPElin,parValue{cRes});
-                
+                    
                 else
                     if strcmp(valEPI,'EP')
                         fprintf(1,['\nWARNING: Sequence defined as EPI but BandwidthPerPixelPhaseEncode\n' ...
@@ -777,7 +783,7 @@ else
                 cRes = 1;
                 epiROduration = get_metadata_val(mstruc,'epiReadoutDuration');
                 measPElin = get_metadata_val(mstruc,'PELinesPAT');
-                try 
+                try
                     parValue{cRes} = epiROduration/measPElin;
                     parLocation{cRes} = 'Derived';
                     nFieldFound = 1;
@@ -789,6 +795,7 @@ else
         case 'B1mapNominalFAValues' % [deg] for al_B1mapping - version dependent!!
             valSEQ = get_metadata_val(mstruc, 'SequenceName');
             valPROT = get_metadata_val(mstruc, 'ProtocolName');
+            valMODELNAME = get_metadata_val(mstruc, 'ManufacturerModelName');
             [nFieldFound, fieldList] = find_field_name(mstruc, 'sWipMemBlock','caseSens','insensitive','matchType','exact');
             [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
             if nFieldFound
@@ -824,12 +831,16 @@ else
                         % adFree: [RefocCorr ScaleSGrad? MaxRefocAngle DecRefocAngle FAforReferScans RFSpoilIncr]
                         parLocation{cRes} = [nam{1} '.adFree(3:4)'];
                         parValue{cRes} = val{1}.adFree(3):-val{1}.adFree(4):0;
-                    case {'b1sev1a3d2' 'b1sev1b3d2'} % Prisma versions by Kerrin Pine
-                        parLocation{cRes} = 'HardCodedParameter';
-                        parValue{cRes} = 230:-10:0;
-                    case {'b1epi2f3d2' 'b1epi2g3d2' 'b1sev1a'} % 7T versions by Kerrin Pine
-                        parLocation{cRes} = [nam{1} '.adFree(3:4)'];
-                        parValue{cRes} = val{1}.adFree(3):-val{1}.adFree(4):0;
+                    case {'b1sev1a3d2' 'b1sev1b3d2' 'b1epi2f3d2' 'b1epi2g3d2' 'b1sev1a'} % 7T and Prisma versions by Kerrin Pine
+                        if contains(valMODELNAME,'Prisma','IgnoreCase',true)
+                            parLocation{cRes} = 'HardCodedParameter';
+                            parValue{cRes} = 230:-10:0;
+                        elseif contains(valMODELNAME,'7T','IgnoreCase',true)
+                            parLocation{cRes} = [nam{1} '.adFree(3:4)'];
+                            parValue{cRes} = val{1}.adFree(3):-val{1}.adFree(4):0;      
+                        else
+                            parLocation{cRes}=[];
+                        end
                     otherwise
                         fprintf(1,'\nWARNING: B1mapping version unknown (%s/%s). Give up guessing FA values.\n', valSEQ, valPROT);
                 end
@@ -842,6 +853,7 @@ else
         case 'RFSpoilingPhaseIncrement' % [deg] defined in al_B1mapping and mtflash3d sequences - version dependent!!
             valSEQ = get_metadata_val(mstruc, 'SequenceName');
             valPROT = get_metadata_val(mstruc, 'ProtocolName');
+            valMODELNAME = get_metadata_val(mstruc, 'ManufacturerModelName');
             [nFieldFound, fieldList] = find_field_name(mstruc, 'sWipMemBlock','caseSens','insensitive','matchType','exact');
             [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
             if nFieldFound
@@ -867,7 +879,7 @@ else
                         % wip parameters are sorted as follows:
                         % alFree: [Tmixing DurationPer5Deg BWT_SE/STE_factor (?) CrusherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
                         % adFree: [RefocCorr ScaleSGrad? MaxRefocAngle DecRefocAngle FAforReferScans RFSpoilIncr]
-                        index = 6;                        
+                        index = 6;
                     case 'seste1d3d2' % 1mm protocol from WTCN (MFC)
                         % wip parameters are sorted as follows:
                         % alFree: [VoxDeph,SpoilAmp,EddCurr0,EddCurr1,TRamp,TFlat,BWT,0,0,0,0,0,2,MixingTime,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12345],
@@ -887,10 +899,14 @@ else
                         %          FlatTopSpoiler]
                         % adFree: [MTGaussianFA OffResonanceMTGaussianPulse RFSpoilIncr SpoilerAmpl]
                         index = 3;
-                    case {'b1sev1a3d2' 'b1sev1b3d2'} % Prisma versions by Kerrin Pine
-                        index = 12;
-                    case {'b1epi2f3d2' 'b1epi2g3d2' 'b1sev1a'} % 7T versions by Kerrin Pine
-                        index = 3;
+                    case {'b1sev1a3d2' 'b1sev1b3d2' 'b1epi2f3d2' 'b1epi2g3d2' 'b1sev1a'} % Prisma and 7T versions by Kerrin Pine
+                        if contains(valMODELNAME,'Prisma','IgnoreCase',true)
+                            index = 12;
+                        elseif contains(valMODELNAME,'7T','IgnoreCase',true)
+                            index = 3;
+                        else
+                            index = false;
+                        end
                     otherwise
                         fprintf(1,'Sequence version unknown (%s/%s). Give up guessing RF spoiling increment.\n', valSEQ, valPROT);
                 end
@@ -909,6 +925,7 @@ else
         case 'B1mapMixingTime' % [ms] for al_B1mapping - version dependent!!
             valSEQ = get_metadata_val(mstruc, 'SequenceName');
             valPROT = get_metadata_val(mstruc, 'ProtocolName');
+            valMODELNAME = get_metadata_val(mstruc, 'ManufacturerModelName');
             [nFieldFound, fieldList] = find_field_name(mstruc, 'sWipMemBlock','caseSens','insensitive','matchType','exact');
             [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
             if nFieldFound
@@ -940,10 +957,14 @@ else
                         % alFree: [Tmixing DurationPer5Deg BWT_SE/STE_factor (?) CrusherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
                         % adFree: [RefocCorr ScaleSGrad? MaxRefocAngle DecRefocAngle FAforReferScans RFSpoilIncr]
                         index = 1;
-                    case {'b1sev1a3d2' 'b1sev1b3d2'} % Prisma versions by Kerrin Pine
-                        index = 14;
-                    case {'b1epi2f3d2' 'b1epi2g3d2' 'b1sev1a'} % 7T versions by Kerrin Pine
-                        index = 1;
+                    case {'b1sev1a3d2' 'b1sev1b3d2' 'b1epi2f3d2' 'b1epi2g3d2' 'b1sev1a'} % 7T and Prisma versions by Kerrin Pine
+                        if contains(valMODELNAME,'Prisma','IgnoreCase',true)
+                            index = 14;
+                        elseif contains(valMODELNAME,'7T','IgnoreCase',true)
+                            index = 1;
+                        else
+                            index = false;
+                        end
                     otherwise
                         fprintf(1,'B1mapping version unknown (%s/%s). Give up guessing TM value.\n', valSEQ, valPROT);
                 end
@@ -1007,4 +1028,3 @@ else
     nam = {};
 end
 end
-

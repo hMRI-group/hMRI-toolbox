@@ -18,6 +18,7 @@ if ~isdeployed,
     addpath(fullfile(hMRIpath, 'spm12'));
     addpath(fullfile(hMRIpath, 'spm12','config'));
     addpath(fullfile(hMRIpath, 'spm12','metadata'));
+    addpath(genpath(fullfile(hMRIpath, 'EPG_for_hmri_tbx')));
 end
 
 % The toolbox is split into 5 main modules:
@@ -42,6 +43,6 @@ hmri.help    = {
     'and will include a number of (as yet unspecified) extensions in ',...
     'future updates.  Please report any bugs or problems to lreninfo@gmail.com.']
     }';
-hmri.values  = {tbx_scfg_hmri_config tbx_scfg_hmri_dicom_import tbx_scfg_hmri_autoreorient tbx_scfg_hmri_create tbx_scfg_hmri_quality tbx_scfg_hmri_proc };
+hmri.values  = {tbx_scfg_hmri_config tbx_scfg_hmri_dicom_import tbx_scfg_hmri_autoreorient tbx_scfg_hmri_imperf_spoil tbx_scfg_hmri_create tbx_scfg_hmri_proc};
 end
 

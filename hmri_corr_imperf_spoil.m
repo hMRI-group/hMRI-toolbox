@@ -1,4 +1,4 @@
-function hmri_corr_imperf_spoil(job)
+function out = hmri_corr_imperf_spoil(job)
 %==========================================================================
 % PURPOSE
 % Compute coefficients to correct for the effect of imperfect spoiling on
@@ -130,16 +130,24 @@ Results.Output.P2_b = round(polyCoeffB,4);
 Results.Output.RMSE_percent.T1app=round(RMSE_App,3);
 Results.Output.RMSE_percent.T1corr=round(RMSE_Corr,3);
 
-Results.ToCopy{1}    =['hmri_def.MPMacq_set.names{NN} = ''' job.prot_name ''';' ];
-Results.ToCopy{end+1}=['hmri_def.MPMacq_set.tags{NN}  = ''' strrep(job.prot_name,' ','') ''';'];
-Results.ToCopy{end+1}=['hmri_def.MPMacq_set.vals{NN}  = [' num2str([TR FA]) '];'];
+Results.ToCopy{1}    =['hmri_def.MPMacq_set.name = ''' job.prot_name ''';' ];
+Results.ToCopy{end+1}=['hmri_def.MPMacq_set.tag  = ''' strrep(job.prot_name,' ','') ''';'];
+Results.ToCopy{end+1}=['hmri_def.MPMacq_set.val  = [' num2str([TR FA]) '];'];
 Results.ToCopy{end+1}=['hmri_def.imperfectSpoilCorr.' strrep(job.prot_name,' ','') '.tag = ''' strrep(job.prot_name,' ','') ''';' ];
 Results.ToCopy{end+1}=['hmri_def.imperfectSpoilCorr.' strrep(job.prot_name,' ','') '.P2_a = [' num2str(round(polyCoeffA,4)) '];'];
 Results.ToCopy{end+1}=['hmri_def.imperfectSpoilCorr.' strrep(job.prot_name,' ','') '.P2_b = [' num2str(round(polyCoeffB,4)) '];'];
-Results.ToCopy{end+1}=['hmri_def.imperfectSpoilCorr.' strrep(job.prot_name,' ','') '.enabled = hmri_def.imperfectSpoilCorr.enabled;'];
 
 results_filename = fullfile(job.outdir,[strrep(job.prot_name,' ',''),'.json']);
 
 spm_jsonwrite(results_filename{1},Results,struct('indent','\t'));
+
+%% 6. write m-file for faster reading of parameters
+out.ISC_file = {strrep(results_filename{1},'.json','.m')};
+results_mfile = fopen(out.ISC_file{1},'w');
+fprintf(results_mfile,'global hmri_def\n');
+for n = 1:numel(Results.ToCopy)
+    fprintf(results_mfile,'%s\n',Results.ToCopy{n});
+end
+fclose(results_mfile);
 
 end

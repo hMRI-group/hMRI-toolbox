@@ -24,9 +24,9 @@ iscnone.val     = {'none'};
 iscfile         = cfg_files;
 iscfile.tag     = 'iscfile';
 iscfile.name    = 'Select ISC file';
-iscfile.help    = {['Select a *.json file containing the correction coefficients ' ...
+iscfile.help    = {['Select an *.m file containing the correction coefficients ' ...
     'corresponding to the current acquisition protocol.']};
-iscfile.filter = 'json';
+iscfile.filter = 'm';
 iscfile.dir     = fullfile(fileparts(mfilename('fullpath')),'config');
 iscfile.ufilter = '.*';
 iscfile.num     = [1 1];

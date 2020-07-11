@@ -158,15 +158,7 @@ sname = spm_file(V1.fname,'filename');
 
 % save output images
 VB1 = V1;
-% VB1.pinfo = [max(B1map(:))/16384;0;0];
-% VB1.fname = fullfile(outpath, [sname '_B1map.nii']);
-% spm_write_vol(VB1,B1map);
-
-% VB1.pinfo = [max(B1map_norm(:))/16384;0;0];
-% VB1.fname = fullfile(outpath, [sname '_B1map_norm.nii']);
-% spm_write_vol(VB1,B1map_norm);
-
-VB1.pinfo = [max(smB1map_norm(:))/16384;0;0];
+VB1.pinfo(1) = max(smB1map_norm(:))/spm_type(VB1.dt(1),'maxval');
 VB1.descrip = 'B1+ map - smoothed and normalised (p.u.) - AFI protocol';
 VB1.fname = fullfile(outpath, [sname '_B1map.nii']);
 spm_write_vol(VB1,smB1map_norm);
@@ -536,7 +528,7 @@ b1map_params.outpath = outpath;
 sname = spm_file(V1.fname,'basename');
 
 VB1 = V1;
-VB1.pinfo = [max(smB1map_norm(:))/16384;0;0]; % what is this for? (TL)
+VB1.pinfo(1) = max(smB1map_norm(:))/spm_type(VB1.dt(1),'maxval');
 VB1.fname = fullfile(outpath, [sname '_B1map.nii']);
 VB1.descrip = 'Smoothed & normalised (p.u.) B1 bias map - TFL B1map protocol';
 spm_write_vol(VB1,smB1map_norm);
@@ -595,7 +587,7 @@ b1map_params.outpath = outpath;
 sname = spm_file(V1.fname,'basename');
 
 VB1 = V1;
-VB1.pinfo = [max(smB1map_norm(:))/16384;0;0]; % what is this for? (TL)
+VB1.pinfo(1) = max(smB1map_norm(:))/spm_type(VB1.dt(1),'maxval');
 VB1.fname = fullfile(outpath, [sname '_B1map.nii']);
 VB1.descrip = 'Smoothed & normalised (p.u.) B1 bias map - TFL B1map protocol';
 spm_write_vol(VB1,smB1map_norm);

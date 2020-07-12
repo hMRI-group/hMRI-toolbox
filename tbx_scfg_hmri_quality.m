@@ -235,6 +235,7 @@ if ~isempty(disp_list)
         res = res+1;
         savenam = fullfile(job.res_dir, [job.check_type sprintf('_%0.3d.png', res)]);
     end
+    set_metadata(strrep(savenam,'png','json'),disp_list);
     print(h,'-dpng',spm_file(savenam,'suffix','_gray'));
     
     colormap(h,'jet');

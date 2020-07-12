@@ -182,6 +182,6 @@ function dep = vout_imperf_spoil(job)
 out.ISC_file = fullfile(job.outdir,[strrep(job.prot_name,' ',''),'.m']); %#ok<STRNU>
 dep(1) = cfg_dep;
 dep(1).sname      = 'ISC file';
-dep(1).src_output = substruct('.','ISC_file');spm fmri
+dep(1).src_output = substruct('.','ISC_file');
 dep(1).tgt_spec   = cfg_findspec({{'filter','file'}});
 end

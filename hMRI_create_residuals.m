@@ -1,7 +1,9 @@
-function hMRI_create_residuals(data,Y,reg,nechoes,NEmap,mpm_params,p,VG )
+function hMRI_create_residuals(data,Y,reg,nechoes,NEmap,NSMmap,mpm_params,p,VG,threshall)
 % This function creates residuals of the linearized mono-exponential fit 
 % per contrast and across contrasts (the latter would be for the ESTATICS model).
 % S. Mahammadi 06.09.2019
+% modified on 26.08.2020 - "errorESTATICS" map is now in the same units as
+% R2s.
 % 
 % In:
 % data          - measured signal
@@ -12,6 +14,7 @@ function hMRI_create_residuals(data,Y,reg,nechoes,NEmap,mpm_params,p,VG )
 % VG            - target structure of 
 % 
 % Out:
+% maps are written out
 % 
 
     dm = VG.dim;
@@ -31,8 +34,13 @@ function hMRI_create_residuals(data,Y,reg,nechoes,NEmap,mpm_params,p,VG )
     end
     ccon = ccon + 1;
     tmp = zeros(dm(1:2));
-    tmp(YMSK) = rms(Ydiff(:,YMSK),1);
-    NEmap(ccon).dat(:,:,p) = tmp;
+    AR2s = zeros(dm(1:2));
+    Ydiff       = Ydata- reg*Y;
+    tmp(YMSK)   = rms(Ydiff(:,YMSK),1);
+    AR2s(YMSK)        = Y(end,YMSK);
+    NEmap(ccon).dat(:,:,p) = tmp*1e3; % in ms
+    NSMmap.dat(:,:,p) = (AR2s./tmp).*(tmp>threshall.dR2s); % in ms
+    
     
 end
 

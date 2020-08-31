@@ -481,6 +481,10 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
         PR2s_OLS_error{ccon}    = fullfile(calcpath,[outbasename '_' 'R2s_errorESTATICS' '.nii']);
         Ni = hMRI_create_nifti(PR2s_OLS_error{ccon},V_pdw(1),dt,'Error map for R2s contrast');
         NEmap(ccon) = Ni;
+
+        PR2s_OLS_SM    = fullfile(calcpath,[outbasename '_' 'R2s_SM' '.nii']);
+        Ni      = hMRI_create_nifti(PR2s_OLS_SM,V_pdw(1),dt,'Standarized map for R2s contrast');
+        NSMmap = Ni;
     end
     fR2s_OLS    = fullfile(calcpath,[outbasename '_R2s' ending '.nii']);
     Ni          = nifti;
@@ -489,6 +493,7 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
     Ni.descrip  = 'OLS R2* map [s-1]';
     Ni.dat      = file_array(fR2s_OLS,dm,dt,0,1,0);
     create(Ni);
+
     
     % Combine the data and echo times:
     nechoes = zeros(1,mpm_params.ncon);
@@ -569,7 +574,7 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
         end
         
         if mpm_params.errormaps
-            hMRI_create_residuals(data,Y,reg,nechoes,NEmap,mpm_params,p,V_pdw(1))
+            hMRI_create_residuals(data,Y,reg,nechoes,NEmap,NSMmap,mpm_params,p,V_pdw(1),threshall)
         end
         
         if mpm_params.hom       
@@ -673,14 +678,21 @@ if T1widx; fa_t1w_rad = fa_t1w * pi / 180; end
 spm_progress_bar('Init',dm(3),'Calculating maps','planes completed');
 
 if mpm_params.errormaps
+    % set metadata are missing
     NEpara    = nifti;
+    NSMpara    = nifti;
     for ccon = 1:mpm_params.ncon
         PR2s_param_error{ccon}    = fullfile(calcpath,[outbasename '_' mpm_params.input(ccon).tag 'param_error.nii']);
         Ni = hMRI_create_nifti(PR2s_param_error{ccon},V_pdw(1),dt,['Error map for ' mpm_params.input(ccon).tag 'param']);
         NEpara(ccon) = Ni;
-        % set metadata are missing?
+
+        P_SMscore{ccon}    = fullfile(calcpath,[outbasename '_' mpm_params.input(ccon).tag '_SM.nii']);
+        Ni = hMRI_create_nifti(P_SMscore{ccon},V_pdw(1),dt,['Standardized ' mpm_params.input(ccon).tag 'map']);
+        NSMpara(ccon) = Ni;
+
     end
 end
+
 
 % First calculate R1 & MTR
 for p = 1:dm(3)
@@ -753,11 +765,12 @@ for p = 1:dm(3)
         end
         
         R1(R1<0) = 0;
-        tmp      = R1;
-        Nmap(mpm_params.qR1).dat(:,:,p) = min(max(tmp,-threshall.R1),threshall.R1)*0.001; % truncating images
+        tmp      = min(max(R1,-threshall.R1),threshall.R1)*0.001; % truncating images
+        Nmap(mpm_params.qR1).dat(:,:,p) = tmp; 
         if mpm_params.errormaps && T1widx
-            [dR1,Atmp] = hmri_make_dR1(PDw,T1w,Edata.PDw,Edata.T1w,fa_pdw_rad,fa_t1w_rad,TR_pdw,TR_t1w,f_T,R1,V_pdw(1));
+            [dR1,Atmp] = hmri_make_dR1(PDw,T1w,Edata.PDw,Edata.T1w,fa_pdw_rad,fa_t1w_rad,TR_pdw,TR_t1w,f_T,R1,V_pdw(1),threshall);
             NEpara(T1widx).dat(:,:,p) = Atmp;
+            NSMpara(T1widx).dat(:,:,p) = tmp./Atmp.*(Atmp>threshall.dR1); % has to become a default
         end
     end
     spm_progress_bar('Set',p);
@@ -842,15 +855,17 @@ for p = 1:dm(3)
         
         tmp      = A;
         tmp(isinf(tmp)) = 0;
-        Nmap(mpm_params.qPD).dat(:,:,p) = max(min(tmp,threshall.A),-threshall.A);
+        tmp             = max(min(tmp,threshall.A),-threshall.A);
+        Nmap(mpm_params.qPD).dat(:,:,p) = tmp;
         % dynamic range increased to 10^5 to accommodate phased-array coils and symmetrical for noise distribution
 
         if mpm_params.errormaps && T1widx
             T1_forMT = ((PDw / fa_pdw_rad) - (T1w / fa_t1w_rad)) ./ ...
                 max((T1w * (fa_t1w_rad / 2 / TR_t1w)) - (PDw * fa_pdw_rad / 2 / TR_pdw),eps);
             A_forMT = T1_forMT .* (T1w * fa_t1w_rad / 2 / TR_t1w) + (T1w / fa_t1w_rad);
-            [dPD,AdPD] = hmri_make_dPD(PDw,T1w,Edata.PDw,Edata.T1w,fa_pdw_rad,fa_t1w_rad,TR_pdw,TR_t1w,A_forMT,V_pdw(1));
+            [dPD,AdPD] = hmri_make_dPD(PDw,T1w,Edata.PDw,Edata.T1w,fa_pdw_rad,fa_t1w_rad,TR_pdw,TR_t1w,A_forMT,V_pdw(1),f_T,threshall);
             NEpara(PDwidx).dat(:,:,p) = AdPD;
+            NSMpara(PDwidx).dat(:,:,p) = tmp./AdPD.*(AdPD>1e-2); % has to become a default
         end
         % for MT maps calculation, one needs MTw images on top of the T1w
         % and PDw ones...
@@ -864,7 +879,10 @@ for p = 1:dm(3)
             MT       = ( (A_forMT * fa_mtw_rad - MTw) ./ (MTw+eps) ./ (T1_forMT + eps) * TR_mtw - fa_mtw_rad^2 / 2 ) * 100;
             
             if mpm_params.errormaps && MTwidx && T1widx
-                [dMT,AdMT] = hmri_make_dMT(PDw,T1w,MTw,Edata.PDw,Edata.T1w,Edata.MTw,fa_pdw_rad,fa_t1w_rad,fa_mtw_rad,TR_pdw,TR_t1w,TR_mtw,V_pdw(1));
+                [dMT,AdMT] = hmri_make_dMT(PDw,T1w,MTw,Edata.PDw,Edata.T1w,Edata.MTw,fa_pdw_rad,fa_t1w_rad,fa_mtw_rad,TR_pdw,TR_t1w,TR_mtw,V_pdw(1),threshall);
+                if (~isempty(f_T))&&(~mpm_params.UNICORT.R1 || mpm_params.UNICORT.MT)
+                    AdMT = AdMT .* (1 - 0.4) ./ (1 - 0.4 * f_T);
+                end
                 NEpara(MTwidx).dat(:,:,p) = AdMT*100;  
             end
             
@@ -878,7 +896,12 @@ for p = 1:dm(3)
             end
             
             tmp      = MT;
-            Nmap(mpm_params.qMT).dat(:,:,p) = max(min(tmp,threshall.MT),-threshall.MT);
+            tmp = max(min(tmp,threshall.MT),-threshall.MT);
+            Nmap(mpm_params.qMT).dat(:,:,p) = tmp;
+            
+            if mpm_params.errormaps && MTwidx && T1widx
+                NSMpara(MTwidx).dat(:,:,p) = tmp./(AdMT*100).*(AdMT*100>1e-4); % has to become a default
+            end
         end
     
     end
@@ -1103,10 +1126,14 @@ if mpm_params.errormaps
         try movefile([spm_str_manip(PR2s_OLS_error{ccon},'r') '.json'],fullfile(supplpath, [spm_file(PR2s_OLS_error{ccon},'basename') '.json'])); end
         movefile(PR2s_OLS_error{ccon}, fullfile(supplpath, spm_file(PR2s_OLS_error{ccon},'filename')));
         try movefile([spm_str_manip(PR2s_param_error{ccon},'r') '.json'],fullfile(supplpath, [spm_file(PR2s_param_error{ccon},'basename') '.json'])); end
+        movefile(P_SMscore{ccon}, fullfile(supplpath, spm_file(P_SMscore{ccon},'filename')));
+        try movefile([spm_str_manip(P_SMscore{ccon},'r') '.json'],fullfile(supplpath, [spm_file(P_SMscore{ccon},'basename') '.json'])); end
     end
     ccon = ccon + 1;
     movefile(PR2s_OLS_error{ccon}, fullfile(supplpath, spm_file(PR2s_OLS_error{ccon},'filename')));
     try movefile([spm_str_manip(PR2s_param_error{ccon},'r') '.json'],fullfile(supplpath, [spm_file(PR2s_param_error{ccon},'basename') '.json'])); end
+    movefile(PR2s_OLS_SM, fullfile(supplpath, spm_file(PR2s_OLS_SM,'filename')));
+    try movefile([spm_str_manip(PR2s_OLS_SM,'r') '.json'],fullfile(supplpath, [spm_file(PR2s_OLS_SM,'basename') '.json'])); end
     
 end
 if mpm_params.hom

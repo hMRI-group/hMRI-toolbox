@@ -417,11 +417,18 @@ hmri_def.proc.nGauss = [2 2 2 3 4 2]; % originally in SPM [1 1 2 3 4 2]
 hmri_def.errormaps  = true;
 hmri_def.hom        = false;
 hmri_def.qMRI_maps_thresh.R2sHO       = 1;    % [1/s^2]
+hmri_def.normPD     = false;
 hmri_def.wols       = false;
 
 % these belong to the weighted least square fit
 hmri_def.wolsdef.thr_w0 = 1e-10; % regularization factor
 hmri_def.wolsdef.sigmaMPM = log(50); % noise - should go in via gui
 hmri_def.wolsdef.brainmask = '';
+if hmri_def.errormaps
+    hmri_def.qMRI_maps_thresh.dR1 = 1e-4;
+    hmri_def.qMRI_maps_thresh.dPD = 1e-2;
+    hmri_def.qMRI_maps_thresh.dMT = 1e-4;
+    hmri_def.qMRI_maps_thresh.dR2s= 1e-6;
+end
 
 end

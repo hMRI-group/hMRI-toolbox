@@ -1,4 +1,4 @@
-function [dPD,Atmp] = hmri_make_dPD(SPD,ST1,dSPD,dST1,alpha_PD,alpha_T1,TRPD,TRT1,A_forMT,VG)
+function [dPD,Atmp] = hmri_make_dPD(SPD,ST1,dSPD,dST1,alpha_PD,alpha_T1,TRPD,TRT1,A_forMT,VG,f_T,threshall)
 % Calculate propagation of uncertainty for PD map
 % (https://en.wikipedia.org/wiki/Propagation_of_uncertainty). 
 % Here the code for generating the derivatives of Eq. A7 in Tabelow et al., NI, 2019:
@@ -43,6 +43,7 @@ function [dPD,Atmp] = hmri_make_dPD(SPD,ST1,dSPD,dST1,alpha_PD,alpha_T1,TRPD,TRT
 % TRPD          - repitition time of PDw signal
 % TRT1          - repitition time of T1w signal
 % A_forMT       - apparent proton density in arbritrary units
+% f_T           - map of transmit field 
 % VG            - target structure of 
 % 
 % Out:
@@ -50,12 +51,16 @@ function [dPD,Atmp] = hmri_make_dPD(SPD,ST1,dSPD,dST1,alpha_PD,alpha_T1,TRPD,TRT
 % AdPD          - error map for A in [a.u.]
 
 dm = VG.dim;
+if(~isempty(f_T))
+    alpha_PD = alpha_PD.*f_T;
+    alpha_T1 = alpha_T1.*f_T;
+end  
 
-dPDSPD = @(SPD,ST1,alpha_PD,alpha_T1,TRPD,TRT1) (SPD.*ST1.*TRPD*alpha_PD*((TRPD*alpha_T1)/alpha_PD - (TRT1*alpha_PD)/alpha_T1))./(SPD*TRPD*alpha_PD - ST1*TRT1*alpha_T1).^2 - (ST1.*((TRPD*alpha_T1)/alpha_PD - (TRT1*alpha_PD)/alpha_T1))./(SPD*TRPD*alpha_PD - ST1*TRT1*alpha_T1);
+dPDSPD = @(SPD,ST1,alpha_PD,alpha_T1,TRPD,TRT1) (SPD.*ST1.*TRPD.*alpha_PD.*((TRPD.*alpha_T1)./alpha_PD - (TRT1.*alpha_PD)./alpha_T1))./(SPD.*TRPD.*alpha_PD - ST1.*TRT1.*alpha_T1).^2 - (ST1.*((TRPD.*alpha_T1)./alpha_PD - (TRT1.*alpha_PD)./alpha_T1))./(SPD.*TRPD.*alpha_PD - ST1.*TRT1.*alpha_T1);
 
-dPDSR1 = @(SPD,ST1,alpha_PD,alpha_T1,TRPD,TRT1) - (SPD.*((TRPD*alpha_T1)/alpha_PD - (TRT1*alpha_PD)/alpha_T1))./(SPD*TRPD*alpha_PD - ST1*TRT1*alpha_T1) - (SPD.*ST1.*TRT1*alpha_T1*((TRPD*alpha_T1)/alpha_PD - (TRT1*alpha_PD)/alpha_T1))./(SPD*TRPD*alpha_PD - ST1*TRT1*alpha_T1).^2;
+dPDSR1 = @(SPD,ST1,alpha_PD,alpha_T1,TRPD,TRT1) - (SPD.*((TRPD.*alpha_T1)./alpha_PD - (TRT1*alpha_PD)./alpha_T1))./(SPD.*TRPD.*alpha_PD - ST1.*TRT1.*alpha_T1) - (SPD.*ST1.*TRT1.*alpha_T1.*((TRPD*alpha_T1)./alpha_PD - (TRT1.*alpha_PD)./alpha_T1))./(SPD.*TRPD.*alpha_PD - ST1.*TRT1.*alpha_T1).^2;
 dPD = sqrt(dPDSPD(SPD,ST1,alpha_PD,alpha_T1,TRPD,TRT1).^2.*dSPD.^2+dPDSR1(SPD,ST1,alpha_PD,alpha_T1,TRPD,TRT1).^2.*dST1.^2);
 Atmp     = zeros(dm(1:2));
 tmp1    = dPD;
-
-Atmp(A_forMT>1e-9)     = tmp1(A_forMT>1e-9);% should be replace by a default value from the configuration modul  
+A_forMT = max(min(tmp1,threshall.A),-threshall.A);
+Atmp(A_forMT>threshall.dPD)     = tmp1(A_forMT>threshall.dPD);

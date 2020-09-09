@@ -1381,6 +1381,7 @@ if isfield(jobsubj.isc,'iscnone')
         '\nIf your data were acquired with one of the standard MPM ' ...
         '\nprotocols (customized MT-FLASH sequence) for which the correction ' ...
         '\ncoefficients are available, it is recommended to enable that option.']),mpm_params.defflags);
+    mpm_params.proc.ISC.enabled = false;
 elseif mpm_params.PDwidx && mpm_params.T1widx 
     if isfield(jobsubj.isc,'iscfile')
         eval(sprintf('run(''%s'')',jobsubj.isc.iscfile{1}));

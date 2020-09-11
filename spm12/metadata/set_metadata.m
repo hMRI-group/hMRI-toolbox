@@ -123,7 +123,7 @@ for cfile = 1:size(filelist,1)
         % create handle to NIFTI object
         N = nifti(fullfile(pth, [fnam '.nii']));
         % create JSONified header and calculate NIFTI extended offset
-        [jhdr, offset] = get_jhdr_and_offset(mstruc);
+        [jhdr, jhdr_size, offset] = get_jhdr_and_offset(mstruc);
         % modify the nifti file offset 
         N.dat.offset = offset;
         % make this change effective by rewriting the NIFTI header
@@ -140,6 +140,6 @@ for cfile = 1:size(filelist,1)
             end
         end
         % write the extended header
-        write_extended_header(fullfile(pth, [fnam '.nii']),jhdr);
+        write_extended_header(fullfile(pth, [fnam '.nii']),jhdr,jhdr_size);
     end
 end

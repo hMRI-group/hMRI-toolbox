@@ -723,11 +723,11 @@ else
                         PixelBandwidth = get_metadata_val(mstruc,'BandwidthPerPixelRO');
                         switch PixelBandwidth
                             case 2300
-                                EchoSpacing = 540e-3;
+                                EchoSpacing = 540;
                             case 3600
-                                EchoSpacing = 330e-3;
+                                EchoSpacing = 330;
                             case 3550 % Allegra data
-                                EchoSpacing = 330e-3;
+                                EchoSpacing = 330;
                             otherwise
                                 fprintf(1,'Giving up: using default EchoSpacing value = 540 us.\n');
                                 EchoSpacing = 2*140+260; % us

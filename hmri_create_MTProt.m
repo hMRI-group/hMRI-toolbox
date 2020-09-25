@@ -934,7 +934,7 @@ if PDproc.T2scorr && (~isempty(fR2s)||~isempty(fR2s_OLS))
 end
 
 % PD map calculation continued
-if ~isempty(f_T) && (mpm_params.UNICORT.PD || ~mpm_params.UNICORT.R1)
+if ~isempty(f_T) && ~isempty(fA) && exist('fTPM','var') && (mpm_params.UNICORT.PD || ~mpm_params.UNICORT.R1)
     % if calibration enabled, do the Unified Segmentation bias correction
     % if required and calibrate the PD map
     if PDproc.calibr

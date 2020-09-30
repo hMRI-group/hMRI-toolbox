@@ -1,9 +1,10 @@
-function write_extended_header(fnam, jhdr)
+function write_extended_header(fnam, jhdr, jhdr_size)
 %==========================================================================
 % FORMAT
-% write_extended_header(fnam, jsonhdr)
+% write_extended_header(fnam, jhdr, jhdr_size)
 % fnam      the name of a nifti file
-% jsonhdr   the JSONified Matlab structure to be written as extended header
+% jhdr      the JSONified Matlab structure to be written as extended header
+% jhdr_size size of the JSON header encoding in bytes
 %==========================================================================
 % Written by
 % - Evelyne Balteau, Cyclotron Research Centre, Liège, Belgium
@@ -16,7 +17,7 @@ std_hdr_size = 348;
 isHdrExtended = [1 0 0 0];
 % the length of the extension includes two 32-bit numbers = 8 bytes (the
 % size itself and the ID of the extension):
-ext_hdr_size = length(jhdr)+8;
+ext_hdr_size = jhdr_size+8;
 % ID of the extension (32-bit number) = anything > 4, arbitrarily set to 27
 % for now, just because I like this number :)...
 ext_hdr_id = 27;

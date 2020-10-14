@@ -35,7 +35,7 @@ T1range     = job.tissue_params.T1range_ms;     %[ms]
 T2range     = job.tissue_params.T2range_ms;     % [ms]
 D           = job.tissue_params.D_um2_per_ms;   % [um^2/ms]
 
-%% Build studture "diff" to account for diffusion effect
+%% Build structure "diff" to account for diffusion effect
 diff        = struct;
 diff.D      = D*1e-9;
 diff.G      = Gamp;
@@ -90,7 +90,7 @@ for B1val = 1 : nB1
     B1eff = B1range(B1val);
     
     % Calculate T1app, accounting for B1+
-    T1app(B1val,:,:) = squeeze(2.*(S1(:,:,B1val)./d2r(FA(1).*B1eff)-S2(:,:,B1val)./d2r(FA(2).*B1eff))./(S2(:,:,B1val).*d2r(FA(2).*B1eff)./TR(2)-S1(:,:,B1val).*d2r(FA(1).*B1eff)./TR(1)));
+    T1app(B1val,:,:) = 1./hmri_calc_R1(struct('data',S1(:,:,B1val),'fa',d2r(FA(1)),'TR',TR(1),'B1',B1eff),struct('data',S2(:,:,B1val),'fa',d2r(FA(2)),'TR',TR(2),'B1',B1eff),job.small_angle_approx);
     
     % build matrix X with column of ones and column of T1app
     X = ones([nT1*nT2 2]);
@@ -127,6 +127,7 @@ hmri_log(sprintf('\t-------- Writing results\n'));
 Results.Input = job;
 Results.Output.P2_a = round(polyCoeffA,4);
 Results.Output.P2_b = round(polyCoeffB,4);
+Results.Output.small_angle_approx = job.small_angle_approx;
 Results.Output.RMSE_percent.T1app=round(RMSE_App,3);
 Results.Output.RMSE_percent.T1corr=round(RMSE_Corr,3);
 
@@ -136,6 +137,7 @@ Results.ToCopy{end+1}=['hmri_def.MPMacq_set.vals{NN}  = [' num2str([TR FA]) '];'
 Results.ToCopy{end+1}=['hmri_def.imperfectSpoilCorr.' strrep(job.prot_name,' ','') '.tag = ''' strrep(job.prot_name,' ','') ''';' ];
 Results.ToCopy{end+1}=['hmri_def.imperfectSpoilCorr.' strrep(job.prot_name,' ','') '.P2_a = [' num2str(round(polyCoeffA,4)) '];'];
 Results.ToCopy{end+1}=['hmri_def.imperfectSpoilCorr.' strrep(job.prot_name,' ','') '.P2_b = [' num2str(round(polyCoeffB,4)) '];'];
+Results.ToCopy{end+1}=['hmri_def.imperfectSpoilCorr.' strrep(job.prot_name,' ','') '.small_angle_approx = ' mat2str(job.small_angle_approx) ';'];
 Results.ToCopy{end+1}=['hmri_def.imperfectSpoilCorr.' strrep(job.prot_name,' ','') '.enabled = hmri_def.imperfectSpoilCorr.enabled;'];
 
 results_filename = fullfile(job.outdir,[strrep(job.prot_name,' ',''),'.json']);

@@ -90,7 +90,10 @@ for B1val = 1 : nB1
     B1eff = B1range(B1val);
     
     % Calculate T1app, accounting for B1+
-    T1app(B1val,:,:) = 1./hmri_calc_R1(struct('data',S1(:,:,B1val),'fa',d2r(FA(1)),'TR',TR(1),'B1',B1eff),struct('data',S2(:,:,B1val),'fa',d2r(FA(2)),'TR',TR(2),'B1',B1eff),job.small_angle_approx);
+    T1app(B1val,:,:) = 1./hmri_calc_R1(...
+        struct('data',S1(:,:,B1val),'fa',d2r(FA(1)),'TR',TR(1),'B1',B1eff),...
+        struct('data',S2(:,:,B1val),'fa',d2r(FA(2)),'TR',TR(2),'B1',B1eff),...
+        job.small_angle_approx);
     
     % build matrix X with column of ones and column of T1app
     X = ones([nT1*nT2 2]);

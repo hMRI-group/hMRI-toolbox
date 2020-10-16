@@ -3,8 +3,11 @@
 % Inputs of form:
 %   {PDw,T1w}.data (array)
 %   {PDw,T1w}.fa   (rad)
-%   {PDw,T1w}.TR   (ms)
+%   {PDw,T1w}.TR   (s or ms)
 %   {PDw,T1w}.B1   (actual fa / nominal fa)
+%
+% Output:
+%   R1 (in reciprocal of TR units)
 
 function R1=hmri_calc_R1(PDw,T1w,small_angle_approx)
 

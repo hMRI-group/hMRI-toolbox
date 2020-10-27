@@ -50,7 +50,7 @@ metadata.acqpar = hdr;
 
 if json.extended
     % JSONify the header and calculate the required offset
-    [jhdr, offset] = get_jhdr_and_offset(metadata);
+    [jhdr, jhdr_size, offset] = get_jhdr_and_offset(metadata);
     % modify the offset of the nifti
     N.dat.offset = offset;
     % make the offset modification effective by rewriting the standard
@@ -58,7 +58,7 @@ if json.extended
     create(N);
     % write the extended header (can be done before data are written or
     % after, does not matter:
-    write_extended_header(N.dat.fname,jhdr);
+    write_extended_header(N.dat.fname,jhdr,jhdr_size);
 end
 
 if json.separate

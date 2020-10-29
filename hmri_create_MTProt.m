@@ -270,16 +270,16 @@ hmri_log(sprintf('\t-------- Coregistering the images --------'),mpm_params.nopu
 % NOTE: coregistration can be disabled using the hmri_def.coreg2PDw flag
 
 x_MT2PD = [0 0 0 0 0 0];
-if MTwidx; 
+if MTwidx 
     if mpm_params.coreg
-        x_MT2PD = coreg_mt(Pavg{PDwidx}, Pavg{MTwidx});
+        x_MT2PD = coreg_mt(Pavg{PDwidx}, Pavg{MTwidx}, mpm_params.coreg_flags);
     end
 end
 x_T12PD = [0 0 0 0 0 0];   
-if T1widx; 
+if T1widx 
     if mpm_params.coreg
-        x_T12PD = coreg_mt(Pavg{PDwidx}, Pavg{T1widx});
-        coreg_mt(Pavg{PDwidx}, PT1w_forA);
+        x_T12PD = coreg_mt(Pavg{PDwidx}, Pavg{T1widx}, mpm_params.coreg_flags);
+        coreg_mt(Pavg{PDwidx}, PT1w_forA, mpm_params.coreg_flags);
     end
 end
 
@@ -289,7 +289,7 @@ if ~isempty(P_trans)
     % P_trans(1,:) = magnitude image (anatomical reference for coregistration) 
     % P_trans(2,:) = B1 map (p.u.)
     if mpm_params.coreg
-        coreg_bias_map(Pavg{PDwidx}, P_trans);
+        coreg_bias_map(Pavg{PDwidx}, P_trans, mpm_params.coreg_bias_flags);
     end
     V_trans = spm_vol(P_trans);
 end
@@ -1018,13 +1018,12 @@ end
 %% =======================================================================%
 % To coregister the structural images for MT protocol 
 %=========================================================================%
-function [x] = coreg_mt(P_ref, P_src)
+function [x] = coreg_mt(P_ref, P_src, coreg_flags)
 
 for src_nr = 1:size(P_src,1)
     VG = spm_vol(P_ref);
     VF = spm_vol(P_src(src_nr,:));
-    coregflags.sep = [4 2];
-    x = spm_coreg(VG,VF, coregflags);
+    x = spm_coreg(VG,VF,coreg_flags);
     M  = inv(spm_matrix(x));
     MM = spm_get_space(deblank(VF.fname));
     spm_get_space(deblank(deblank(VF.fname)), M*MM); %#ok<*MINV>
@@ -1035,15 +1034,12 @@ end
 % To coregister the B1 or receive maps with the anatomical images in the
 % MT protocol. 
 %=========================================================================%
-function [] = coreg_bias_map(P_ref, P_src)
+function [] = coreg_bias_map(P_ref, P_src, coreg_bias_flags)
 
 P_src(1,:);
 VG = spm_vol(P_ref);
 VF = spm_vol(P_src(1,:));
-%coregflags.sep = [2 1];
-coregflags.sep = [4 2];
-x = spm_coreg(VG,VF, coregflags);
-%x  = spm_coreg(mireg(i).VG, mireg(i).VF,flags.estimate);
+x = spm_coreg(VG,VF,coreg_bias_flags);
 M  = inv(spm_matrix(x));
 MM = spm_get_space(deblank(VF.fname));
 spm_get_space(deblank(deblank(VF.fname)), M*MM);
@@ -1469,6 +1465,16 @@ end
 
 % coregistration of all images to the PDw average (or TE=0 fit):
 mpm_params.coreg = hmri_get_defaults('coreg2PDw');
+
+% coregistration flags for weighted images
+mpm_params.coreg_flags = hmri_get_defaults('coreg_flags');
+hmri_log(sprintf('=== Registration Settings for weighted images ==='),mpm_params.nopuflags);
+hmri_log(sprintf('Method: %s, Sampling: %s, Smoothing: %s', mpm_params.coreg_flags.cost_fun, mat2str(mpm_params.coreg_flags.sep), mat2str(mpm_params.coreg_flags.fwhm)),mpm_params.nopuflags);
+
+% coregistration flags for B1 to PDw
+mpm_params.coreg_bias_flags = hmri_get_defaults('coreg_bias_flags');
+hmri_log(sprintf('=== Registration Settings for B1 bias images ==='),mpm_params.nopuflags);
+hmri_log(sprintf('Method: %s, Sampling: %s, Smoothing: %s', mpm_params.coreg_bias_flags.cost_fun, mat2str(mpm_params.coreg_bias_flags.sep), mat2str(mpm_params.coreg_bias_flags.fwhm)),mpm_params.nopuflags);
 
 % Prepare output for R1, PD, MT and R2* maps
 RFsenscorr = fieldnames(mpm_params.proc.RFsenscorr);

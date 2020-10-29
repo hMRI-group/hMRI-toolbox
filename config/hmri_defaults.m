@@ -140,6 +140,28 @@ hmri_def.coreg2PDw = 1;
 hmri_def.small_angle_approx = true;
 
 %--------------------------------------------------------------------------
+% Coregistration parameters for weighted images to the average 
+% (or TE=0 fit) PDw image; see spm_coreg.m for details
+%--------------------------------------------------------------------------
+% For high resolution (< 0.8 mm) data, we have found that adding extra 
+% steps to the registration can improve map quality, e.g. for 0.5 mm data
+% we have found
+%   hmri_def.coreg_flags.sep=[4 2 1 0.5];
+% to be needed to avoid registration artefacts, but this comes at the 
+% expense of slowing down map creation
+hmri_def.coreg_flags.sep=[4 2];
+hmri_def.coreg_flags.cost_fun = 'nmi';
+hmri_def.coreg_flags.fwhm = [7 7];
+
+%--------------------------------------------------------------------------
+% Coregistration parameters for B1 bias maps to the average (or TE=0 fit) 
+% PDw image; see spm_coreg.m for details
+%--------------------------------------------------------------------------
+hmri_def.coreg_bias_flags.sep=[4 2];
+hmri_def.coreg_bias_flags.cost_fun = 'nmi';
+hmri_def.coreg_bias_flags.fwhm = [7 7];
+
+%--------------------------------------------------------------------------
 % Ordinary Least Squares & fit at TE=0
 %--------------------------------------------------------------------------
 % create an Ordinary Least Squares R2* map. The ESTATICS model is applied

@@ -135,11 +135,6 @@ hmri_def.segment.warp.write = [0 0];
 hmri_def.coreg2PDw = 1; 
 
 %--------------------------------------------------------------------------
-% Decide whether to use small angle approximation when computing R1 and PD
-%--------------------------------------------------------------------------
-hmri_def.small_angle_approx = true;
-
-%--------------------------------------------------------------------------
 % Coregistration parameters for weighted images to the average 
 % (or TE=0 fit) PDw image; see spm_coreg.m for details
 %--------------------------------------------------------------------------
@@ -160,6 +155,11 @@ hmri_def.coreg_flags.fwhm = [7 7];
 hmri_def.coreg_bias_flags.sep=[4 2];
 hmri_def.coreg_bias_flags.cost_fun = 'nmi';
 hmri_def.coreg_bias_flags.fwhm = [7 7];
+
+%--------------------------------------------------------------------------
+% Decide whether to use small angle approximation when computing R1 and PD
+%--------------------------------------------------------------------------
+hmri_def.small_angle_approx = true;
 
 %--------------------------------------------------------------------------
 % Ordinary Least Squares & fit at TE=0

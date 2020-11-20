@@ -8,6 +8,77 @@ function create_mpm = tbx_scfg_hmri_create
 % Christophe Phillips
 
 %--------------------------------------------------------------------------
+% Imperfect spoiling correction - no correction
+%--------------------------------------------------------------------------
+iscnone         = cfg_entry;
+iscnone.tag     = 'iscnone';
+iscnone.name    = 'None';
+iscnone.help    = {'No correction will be applied.'};
+iscnone.strtype = 's';
+iscnone.num     = [1 Inf];
+iscnone.val     = {'none'};
+
+%--------------------------------------------------------------------------
+% Imperfect spoiling correction - select coefficients file
+%--------------------------------------------------------------------------
+iscfile         = cfg_files;
+iscfile.tag     = 'iscfile';
+iscfile.name    = 'Select ISC file';
+iscfile.help    = {['Select an *.m file containing the correction coefficients ' ...
+    'corresponding to the current acquisition protocol.']};
+iscfile.filter = 'm';
+iscfile.dir     = fullfile(fileparts(mfilename('fullpath')),'config');
+iscfile.ufilter = '.*';
+iscfile.num     = [1 1];
+
+%--------------------------------------------------------------------------
+% Imperfect spoiling correction - according to Phase Increment
+%--------------------------------------------------------------------------
+iscphase         = cfg_entry;
+iscphase.tag     = 'iscphase';
+iscphase.name    = 'Specify phase increment';
+iscphase.help    = {['Specify the phase increment of the spoiled ' ...
+     ' gradient echo sequence to correct imperfect spoiling. '...
+     ' Possible values (in degree): 50 (Siemens), 117 (General Electrics), and 150 (Philips).']};
+%scphase.values     = {50 117 150};
+iscphase.val     = {50};
+
+%--------------------------------------------------------------------------
+% Imperfect spoiling correction - select coefficients
+%--------------------------------------------------------------------------
+isc        = cfg_choice;
+isc.tag    = 'isc';
+isc.name   = 'Imperfect spoiling correction (ISC)';
+isc.help   = {['The RF- and gradient-spoiled gradient echo sequences used to ' ...
+    'acquire the multiparametric mapping (MPM) data apply RF and gradient spoiling to ' ...
+    'destroy unwanted transverse magnetisation. Imperfect spoiling can leave ' ...
+    'residual bias in the apparent R1 map if no further correction is applied ' ...
+    '[Preibisch and Deichmann 2009]. Correction coefficients are sequence-' ...
+    'specific and can be determined by simulation [Preibisch and Deichmann 2009] to ' ...
+    'account for deviation from the Ernst equation. '],[''], ...
+    'The following options are available:', ...
+    '- None [default]: no correction applied. ', ...
+    ['- Select ISC file: you must choose a set of correction coefficients. ' ...
+    'For the most standard MPM protocols using customised FLASH sequences on Siemens ' ...
+    'scanners, the hMRI-toolbox provides spoiling correction coefficients in '...
+    'the folder config/local/ISC_parameters. ' ...
+    'For other protocols, the coefficients can be calculated seperately ' ...
+    'by the additional hMRI module ''Imperfect Spoiling Calc.'' that efficiently ' ...
+    'calculates the protocol-specific correction parameters required to account for ' ...
+    'imperfect spoiling, which can be loaded here (also via dependency).'], ...
+    '- Specify RF spoiling phase increment for correction according to Baudrexel et al. 2018',[''], ...
+    ['WARNING: although the TR ' ...
+    'and FA values are key parameters in simulating the imperfect spoiling, ' ...
+    'correction coefficients cannot be chosen based on TR and FA only. ' ...
+    'Amplitude and duration of gradient spoilers, phase increment for RF ' ...
+    'spoiling and diffusion effects must be taken into account. ' ...
+    'Therefore, two different sequences using identical TR anf FA are unlikely to ' ...
+    'use identical correction coefficients.'],['']};
+isc.values = {iscnone iscfile iscphase};
+isc.val = {iscnone};
+
+
+%--------------------------------------------------------------------------
 % To enable/disable pop-up messages for all warnings - recommended when
 % piloting the data processing.
 %--------------------------------------------------------------------------
@@ -223,6 +294,20 @@ b1_input_tfl.val       = {b1raw};
 
 
 % ---------------------------------------------------------------------
+% SDAM B1 protocol
+% ---------------------------------------------------------------------
+b1_input_SDAM           = cfg_branch;
+b1_input_SDAM.tag       = 'SDAM';
+b1_input_SDAM.name      = 'Saturated Double Angle Method';
+b1_input_SDAM.help      = {'Saturated Double Angle Method (SDAM) protocol.', ...
+    'As B1 input, please select a 2*alpha/alpha (e.g. 120°/60°) pair of images in that order.', ...
+    ['Regarding processing parameters, you can either stick with metadata and standard ' ...
+    'defaults parameters (recommended) or select your own [hmri_b1_local_defaults_*.m] customised defaults file ' ...
+    '(fallback for situations where no metadata are available).']};
+b1_input_SDAM.val       = {b1raw b1parameters};
+
+
+% ---------------------------------------------------------------------
 % i3D_AFI B1 protocol
 % ---------------------------------------------------------------------
 b1_input_3DAFI           = cfg_branch;
@@ -271,6 +356,7 @@ b1_type.help    = {'Choose the methods for B1 bias correction.'
     'PLoS One 2012;7(3):e32379].']
     [' - 3D AFI: 3D actual flip angle imaging (AFI) method based on [Yarnykh VL, ' ...
     'Magn Reson Med 2007;57:192-200].']
+    [' - Saturated Double Angle Method (SDAM)']
     [' - tfl_b1_map: Siemens product sequence for B1 mapping based on turbo FLASH.']
     [' - rf_map: Siemens product sequence for B1 mapping based on SE/STE.']
     [' - no B1 correction: if selected no B1 bias correction will be applied.']
@@ -281,7 +367,7 @@ b1_type.help    = {'Choose the methods for B1 bias correction.'
     'using the approach described in [Weiskopf et al., NeuroImage 2011; 54:2116-2124]. ' ...
     'WARNING: the correction only applies to R1 maps.']
     }; %#ok<*NBRAK>
-b1_type.values  = {b1_input_3DEPI b1_input_3DAFI b1_input_tfl b1_input_rfmap b1_input_preproc b1_input_UNICORT b1_input_noB1};
+b1_type.values  = {b1_input_3DEPI b1_input_3DAFI b1_input_SDAM b1_input_tfl b1_input_rfmap b1_input_preproc b1_input_UNICORT b1_input_noB1};
 b1_type.val     = {b1_input_3DEPI};
 
 % ---------------------------------------------------------------------
@@ -417,7 +503,7 @@ subj            = cfg_branch;
 subj.tag        = 'subj';
 subj.name       = 'Subject';
 subj.help       = {'Specify a subject for maps calculation.'};
-subj.val        = {output sensitivity b1_type raws popup};
+subj.val        = {output sensitivity b1_type raws isc popup};
 
 % ---------------------------------------------------------------------
 % data Data

@@ -55,6 +55,10 @@ switch(b1map_params.b1type)
         % processing B1 map from rf_map data
         P_trans  = calc_rf_map(jobsubj, b1map_params);
         
+    case 'SDAM'
+        % processing B1 map from SDAM data
+        P_trans  = calc_SDAM_b1map(jobsubj, b1map_params);
+        
     case 'pre_processed_B1'
         if b1map_params.scafac ~= 1
             % rescale if scaling factor other than 1 is provided
@@ -154,15 +158,7 @@ sname = spm_file(V1.fname,'filename');
 
 % save output images
 VB1 = V1;
-% VB1.pinfo = [max(B1map(:))/16384;0;0];
-% VB1.fname = fullfile(outpath, [sname '_B1map.nii']);
-% spm_write_vol(VB1,B1map);
-
-% VB1.pinfo = [max(B1map_norm(:))/16384;0;0];
-% VB1.fname = fullfile(outpath, [sname '_B1map_norm.nii']);
-% spm_write_vol(VB1,B1map_norm);
-
-VB1.pinfo = [max(smB1map_norm(:))/16384;0;0];
+VB1.pinfo(1) = max(smB1map_norm(:))/spm_type(VB1.dt(1),'maxval');
 VB1.descrip = 'B1+ map - smoothed and normalised (p.u.) - AFI protocol';
 VB1.fname = fullfile(outpath, [sname '_B1map.nii']);
 spm_write_vol(VB1,smB1map_norm);
@@ -178,6 +174,75 @@ set_metadata(VB1.fname,Output_hdr,json);
 B1ref = fullfile(outpath, [sname '_B1ref.nii']);
 copyfile(char(fileTR1),B1ref);
 try copyfile([spm_str_manip(char(fileTR1),'r') '.json'],[spm_str_manip(B1ref,'r') '.json']); end %#ok<*TRYNC>
+
+% requires anatomic image + map
+P_trans  = char(B1ref,char(VB1.fname));
+
+% VB1.fname = fullfile(outpath, [sname '_B1map_mask.nii']);
+% spm_write_vol(VB1,Mask);
+
+end
+
+%% =======================================================================%
+% B1 map calculation - SDAM protocol % TL copied and adapted from AFI_b1map
+%=========================================================================%
+function P_trans = calc_SDAM_b1map(jobsubj, b1map_params)
+
+% default format specifications for the output metadata
+json = hmri_get_defaults('json');
+
+% define output dir
+outpath = jobsubj.path.b1path;
+b1map_params.outpath = outpath;
+
+% First image = alpha2 (2*alpha1) and second image = alpha1.
+file_alpha1 = b1map_params.b1input(2,:);
+file_alpha2 = b1map_params.b1input(1,:);
+V1 = spm_vol(file_alpha1);
+V2 = spm_vol(file_alpha2);
+Y1 = spm_read_vols(V1);
+Y2 = spm_read_vols(V2);
+
+alphanom = b1map_params.b1acq.alphanom;
+
+% Mask = squeeze(Vol1);
+% threshold = (prctile(Mask(:),98)-prctile(Mask(:),2))*0.1+prctile(Mask(:),2);
+% Mask = (Mask>threshold);
+
+B1map = (1/alphanom).*acosd(Y2./(2*Y1));
+B1map_norm = abs(B1map)*100;
+
+% smoothed map
+smB1map_norm = zeros(size(B1map_norm));
+pxs = sqrt(sum(V1.mat(1:3,1:3).^2)); % Voxel resolution
+smth = 8./pxs;
+spm_smooth(B1map_norm,smB1map_norm,smth);
+
+% masking
+% B1map = B1map.*Mask;
+% B1map_norm = B1map_norm.*Mask;
+% smB1map_norm = smB1map_norm.*Mask;
+
+sname = spm_file(V1.fname,'filename');
+
+% save output images
+VB1 = V1;
+VB1.pinfo(1) = max(smB1map_norm(:))/spm_type(VB1.dt(1),'maxval');
+VB1.descrip = 'B1+ map - smoothed and normalised (p.u.) - SDAM protocol';
+VB1.fname = fullfile(outpath, [sname '_B1map.nii']);
+spm_write_vol(VB1,smB1map_norm);
+
+% set and write metadata
+input_files = b1map_params.b1input;
+Output_hdr = init_b1_output_metadata(input_files, b1map_params);
+Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (SDAM protocol)'];
+Output_hdr.history.output.imtype = 'B1+ map (SDAM protocol)';
+set_metadata(VB1.fname,Output_hdr,json);
+
+% Rename anatomical reference for uniformity between protocols
+B1ref = fullfile(outpath, [sname '_B1ref.nii']);
+copyfile(char(file_alpha1),B1ref);
+try copyfile([spm_str_manip(char(file_alpha1),'r') '.json'],[spm_str_manip(B1ref,'r') '.json']); end %#ok<*TRYNC>
 
 % requires anatomic image + map
 P_trans  = char(B1ref,char(VB1.fname));
@@ -463,7 +528,7 @@ b1map_params.outpath = outpath;
 sname = spm_file(V1.fname,'basename');
 
 VB1 = V1;
-VB1.pinfo = [max(smB1map_norm(:))/16384;0;0]; % what is this for? (TL)
+VB1.pinfo(1) = max(smB1map_norm(:))/spm_type(VB1.dt(1),'maxval');
 VB1.fname = fullfile(outpath, [sname '_B1map.nii']);
 VB1.descrip = 'Smoothed & normalised (p.u.) B1 bias map - TFL B1map protocol';
 spm_write_vol(VB1,smB1map_norm);
@@ -522,7 +587,7 @@ b1map_params.outpath = outpath;
 sname = spm_file(V1.fname,'basename');
 
 VB1 = V1;
-VB1.pinfo = [max(smB1map_norm(:))/16384;0;0]; % what is this for? (TL)
+VB1.pinfo(1) = max(smB1map_norm(:))/spm_type(VB1.dt(1),'maxval');
 VB1.fname = fullfile(outpath, [sname '_B1map.nii']);
 VB1.descrip = 'Smoothed & normalised (p.u.) B1 bias map - TFL B1map protocol';
 spm_write_vol(VB1,smB1map_norm);
@@ -787,6 +852,26 @@ switch b1_protocol
                     'Default acquisition and processing parameters will be used.']),b1map_params.defflags);
             end
         end
+        
+    case 'SDAM'
+        if ~isempty(b1map_params.b1input)
+            hmri_log(sprintf('SDAM protocol selected ...'),b1map_params.nopuflags);
+            b1hdr = get_metadata(b1map_params.b1input(1,:));
+            
+            try
+                fa = get_metadata_val(b1hdr{2},'FlipAngle');
+                if isempty(fa)
+                    hmri_log(sprintf('WARNING: using defaults values for flip angle\n(FA = %d deg) instead of metadata', ...
+                        b1map_params.b1acq.alphanom),b1map_params.defflags);
+                else
+                    b1map_params.b1acq.alphanom = fa;
+                end
+                
+            catch
+                hmri_log(sprintf(['WARNING: possibly no metadata associated to the input images. \n' ...
+                    'Default acquisition and processing parameters will be used.']),b1map_params.defflags);
+            end
+        end    
         
     case 'tfl_b1_map'
         if ~isempty(b1map_params.b1input)

@@ -1507,6 +1507,16 @@ end
 % coregistration of all images to the PDw average (or TE=0 fit):
 mpm_params.coreg = hmri_get_defaults('coreg2PDw');
 
+% coregistration flags for weighted images
+mpm_params.coreg_flags = hmri_get_defaults('coreg_flags');
+hmri_log(sprintf('=== Registration Settings for weighted images ==='),mpm_params.nopuflags);
+hmri_log(sprintf('Method: %s, Sampling: %s, Smoothing: %s', mpm_params.coreg_flags.cost_fun, mat2str(mpm_params.coreg_flags.sep), mat2str(mpm_params.coreg_flags.fwhm)),mpm_params.nopuflags);
+
+% coregistration flags for B1 to PDw
+mpm_params.coreg_bias_flags = hmri_get_defaults('coreg_bias_flags');
+hmri_log(sprintf('=== Registration Settings for B1 bias images ==='),mpm_params.nopuflags);
+hmri_log(sprintf('Method: %s, Sampling: %s, Smoothing: %s', mpm_params.coreg_bias_flags.cost_fun, mat2str(mpm_params.coreg_bias_flags.sep), mat2str(mpm_params.coreg_bias_flags.fwhm)),mpm_params.nopuflags);
+
 % Prepare output for R1, PD, MT and R2* maps
 RFsenscorr = fieldnames(mpm_params.proc.RFsenscorr);
 B1transcorr = fieldnames(jobsubj.b1_type);

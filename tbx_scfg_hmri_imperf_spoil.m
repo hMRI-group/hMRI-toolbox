@@ -174,14 +174,4 @@ imperf_spoil.help    = {'Given input info about the sequence settings and expect
     'this module computes coefficients required to correct for imperfect spoiling in the FLASH volumes ' ...
     'using the method proposed by Preibisch & Deichmann, MRM 2009, 61(1):125'};
 imperf_spoil.prog    = @hmri_corr_imperf_spoil;
-imperf_spoil.vout    = @vout_imperf_spoil;
-end
-
-% output m-file filename as dependency
-function dep = vout_imperf_spoil(job)
-out.ISC_file = fullfile(job.outdir,[strrep(job.prot_name,' ',''),'.m']); %#ok<STRNU>
-dep(1) = cfg_dep;
-dep(1).sname      = 'ISC file';
-dep(1).src_output = substruct('.','ISC_file');
-dep(1).tgt_spec   = cfg_findspec({{'filter','file'}});
 end

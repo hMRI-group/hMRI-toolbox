@@ -59,7 +59,7 @@ hmri_def.cleanup = true;
 % text. The following settings are recommended. No modification currently
 % foreseen as useful...
 hmri_def.json = struct('extended',false,'separate',true,'anonym','none',...
-    'overwrite',true, 'indent','\t'); 
+    'overwrite',true, 'indent','\t');
 % recommended TPM for segmentation and spatial processing. The hMRI toolbox
 % provides a series of tissue probability maps. These TPMs could be
 % replaced by other TPMs, to better match the population studied. 
@@ -279,6 +279,50 @@ hmri_def.MPMacq.fa_mtw = 6;    % [deg]
 hmri_def.MPMacq.fa_t1w = 21;   % [deg]
 hmri_def.MPMacq.fa_pdw = 6;    % [deg]
 hmri_def.MPMacq.tag    = 'v2k';
+
+% IMPREFECT RF SPOILING CORRECTION 
+% The RF- and gradient-spoiled gradient echo sequences used to acquire the
+% multiparametric mapping (MPM) data apply RF and gradient spoiling to
+% destroy unwanted transverse magnetisation. Imperfect spoiling can leave
+% residual bias in the apparent R1 map if no further correction is applied
+% [Preibisch and Deichmann, MRM 61:125-135, 2009]. 
+% Correction coefficients are sequence-specific and can be determined by 
+% simulation [Preibisch and Deichmann 2009] to account for deviation from 
+% the Ernst equation.
+% Since no run-time calculation of the correction parametes is currently
+% performed in the toolbox, they've been calculated and stored for a
+% series of standard protocols in a separate folder:
+%   config/local/ISC_parameters
+% Additional protocol types and correction factors can be computed on-line
+% (see more details below) and added to the local defaults file to apply 
+% proper RF correction, respectively.
+% For the most standard MPM protocols using customised FLASH sequences on Siemens
+% scanners, the above mentioned files folder contains files with spoiling correction coefficients 
+% The correction values P2_a and P2_b were obtained using the code supplied by R. Deichmann with the experimental 
+% parameters used for the standard MPM protocol and assuming T2 = 64 ms at 3T.
+% When enabling the imperfect spoiling correction, make sure the
+% coefficients used by choosing the appropriate file are definitely calculated for
+% the protocol used!
+% WARNING: although the TR and FA values are key parameters in simulating the 
+% imperfect spoiling, correction coefficients cannot be chosen based on TR 
+% and FA only. Amplitude and duration of gradient spoilers, phase increment 
+% for RF spoiling and diffusion effects must be taken into account.
+% Therefore, two different sequences using identical TR anf FA are unlikely to
+% use identical correction coefficients.
+% Instead, the coefficients can be calculated seperately for other protocols
+% by the additional hMRI module 'Imperfect Spoiling Calc.' that efficiently
+% calculates the protocol-specific correction parameters required to account for
+% imperfect spoiling. The produced output file can then be set in the local
+% defaults file to be incorporated in the processing.
+% If not all acquisition parameters are known and vendor sequences at 3 T MRI are
+% used, an alternative correction according to Baudrexel et al., 79:3082–3092, 
+% 2018 can be applied by specifying the RF spoiling phase increment, which
+% differs per vendor. Please consult the paper for assumptions and full set
+% of correction parameters.
+% By default the spoiling correction is disabled. For enabling please set
+% up the method of choice in the local defaults file.
+% ADVANCED USER ONLY.
+hmri_def.imperfectSpoilCorr.enabled = false;
 
 %--------------------------------------------------------------------------
 % B1 mapping processing parameters 

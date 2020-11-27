@@ -232,7 +232,7 @@ hmri_def.RFsens.smooth_kernel = 12;
 % quantitative maps: quality evaluation and realignment to MNI
 %--------------------------------------------------------------------------
 % creates a matlab structure containing markers of data quality
-hmri_def.qMRI_maps.QA          = 1; 
+hmri_def.qMRI_maps.QA          = false; 
 % realigns qMRI maps to MNI: the following parameter corresponds to the
 % realignment implemented as part of the map calculation (see
 % hmri_create_MTProt.m). Left here for backward compatibility. It is
@@ -312,9 +312,9 @@ hmri_def.MPMacq.tag    = 'v2k';
 % Therefore, two different sequences using identical TR anf FA are unlikely to
 % use identical correction coefficients.
 
-% Example setting for choosing the classic FIL protocol (uncomment following two lines to use): 
-% hmri_def.imperfectSpoilCorr.enabled = true;
-% hmri_def.imperfectSpoilCorr.iscfile = fullfile(fileparts(fileparts(mfilename('fullpath'))),'ISC_parameters','protocol_01_classic_FIL.m');
+% Example setting for choosing the classic FIL protocol (uncomment for usage): 
+hmri_def.imperfectSpoilCorr.enabled = true;
+hmri_def.imperfectSpoilCorr.iscfile = fullfile(fileparts(mfilename('fullpath')),'ISC_parameters','protocol_01_classic_FIL.m');
 
 % Instead, the coefficients can be calculated seperately for other protocols
 % by the additional hMRI module 'Imperfect Spoiling Calc.' that efficiently
@@ -328,7 +328,8 @@ hmri_def.MPMacq.tag    = 'v2k';
 % of correction parameters. Following parameter values (in degree) are possible: 
 % 50 (Siemens), 117 (General Electrics), and 150 (Philips).
 
-% Example setting for choosing the phase increment at Philips scanners (uncomment following two lines to use): 
+
+% Example setting for choosing the phase increment at Philips scanners: 
 % hmri_def.imperfectSpoilCorr.enabled = true;
 % hmri_def.imperfectSpoilCorr.iscphase = 150;
 

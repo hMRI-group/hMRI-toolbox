@@ -330,7 +330,7 @@ if mpm_params.QA.enable
             % % repmat(VMTw.mat, [1, 1, nMT]), repmat(VT1w.mat, [1, 1, nT1]));
             spm_progress_bar('Init',dm(3),'multi-contrast R2* fit','planes completed');
             for p = 1:dm(3)
-                data = zeros([dm(1:2),numel(V_pdw)]);
+                data = zeros([dm(1:2),numel(Vcon)]);
                 for cecho = 1:numel(mpm_params.input(ccon).TE)
                     % Allows for reslicing across TE
                     data(:,:,cecho) = hmri_read_vols(Vcon(cecho),V_pdw(1),p,mpm_params.interp);
@@ -421,8 +421,7 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
         end
     end
         
-    spm_progress_bar('Init',dm(3),'OLS R2* fit','planes completed');
-    
+    spm_progress_bar('Init',dm(3),'OLS R2* fit','planes completed');   
     for p = 1:dm(3)
         
         for ccon = 1:mpm_params.ncon
@@ -433,7 +432,13 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
                 Vcon = spm_vol(mpm_params.input(ccon).fnam);
                 
                 for cecho = 1:nechoes(ccon)
-                    data(:,:,cecho) = max(hmri_read_vols(Vcon(cecho),V_pdw(1),p,mpm_params.interp), 1);
+                    % Can't directly use hmri_read_vols here because there 
+                    % are three spaces to consider: V_pdw (target), the
+                    % native echo space Vcon(echo) and the co-registered 
+                    % echo-averaged space Vavg(ccon) where the intercepts 
+                    % are to be.
+                    M1 = Vavg(ccon).mat\V_pdw(1).mat*spm_matrix([0 0 p 0 0 0 1 1 1]);
+                    data(:,:,cecho) = max(spm_slice_vol(Vcon(cecho),M1,dm(1:2),mpm_params.interp),1);
                 end
                 dataToFit(ccon).data = data;
                 dataToFit(ccon).TE = mpm_params.input(ccon).TE;

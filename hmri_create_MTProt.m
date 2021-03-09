@@ -259,17 +259,14 @@ end
 hmri_log(sprintf('\t-------- Coregistering the images --------'),mpm_params.nopuflags);
 % NOTE: coregistration can be disabled using the hmri_def.coreg2PDw flag
 
-x_MT2PD = [0 0 0 0 0 0];
-if MTwidx 
-    if mpm_params.coreg
-        x_MT2PD = coreg_mt(Pavg{PDwidx}, Pavg{MTwidx}, mpm_params.coreg_flags);
+contrastCoregParams = zeros(mpm_params.ncon, 6);
+if mpm_params.coreg
+    if MTwidx
+        contrastCoregParams(MTwidx,:) = hmri_coreg(Pavg{PDwidx}, Pavg{MTwidx}, mpm_params.coreg_flags);
     end
-end
-x_T12PD = [0 0 0 0 0 0];   
-if T1widx 
-    if mpm_params.coreg
-        x_T12PD = coreg_mt(Pavg{PDwidx}, Pavg{T1widx}, mpm_params.coreg_flags);
-        coreg_mt(Pavg{PDwidx}, PT1w_forA, mpm_params.coreg_flags);
+    if T1widx 
+        contrastCoregParams(T1widx,:) = hmri_coreg(Pavg{PDwidx}, Pavg{T1widx}, mpm_params.coreg_flags);
+        hmri_coreg(Pavg{PDwidx}, PT1w_forA, mpm_params.coreg_flags);
     end
 end
 
@@ -279,7 +276,7 @@ if ~isempty(P_trans)
     % P_trans(1,:) = magnitude image (anatomical reference for coregistration) 
     % P_trans(2,:) = B1 map (p.u.)
     if mpm_params.coreg
-        coreg_bias_map(Pavg{PDwidx}, P_trans, mpm_params.coreg_bias_flags);
+        hmri_coreg(Pavg{PDwidx}, P_trans, mpm_params.coreg_bias_flags);
     end
     V_trans = spm_vol(P_trans);
 end
@@ -289,8 +286,8 @@ if mpm_params.QA.enable
     if exist(mpm_params.QA.fnam,'file')
         mpm_params.QA = spm_jsonread(mpm_params.QA.fnam);
     end
-    mpm_params.QA.ContrastCoreg.MT2PD = x_MT2PD;
-    mpm_params.QA.ContrastCoreg.T12PD = x_T12PD;
+    mpm_params.QA.ContrastCoreg.MT2PD = contrastCoregParams(MTwidx,:);
+    mpm_params.QA.ContrastCoreg.T12PD = contrastCoregParams(T1widx,:);
     spm_jsonwrite(mpm_params.QA.fnam, mpm_params.QA, struct('indent','\t'));
 end
 
@@ -432,13 +429,10 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
                 Vcon = spm_vol(mpm_params.input(ccon).fnam);
                 
                 for cecho = 1:nechoes(ccon)
-                    % Can't directly use hmri_read_vols here because there 
-                    % are three spaces to consider: V_pdw (target), the
-                    % native echo space Vcon(echo) and the co-registered 
-                    % echo-averaged space Vavg(ccon) where the intercepts 
-                    % are to be.
-                    M1 = Vavg(ccon).mat\V_pdw(1).mat*spm_matrix([0 0 p 0 0 0 1 1 1]);
-                    data(:,:,cecho) = max(spm_slice_vol(Vcon(cecho),M1,dm(1:2),mpm_params.interp),1);
+                    % Additionally pass the result of co-registration since
+                    % want output (e.g. intercept) in Vavg space.
+                    data(:,:,cecho) = max(hmri_read_vols(Vcon(cecho),V_pdw(1),p,mpm_params.interp, contrastCoregParams(ccon,:)), 1);
+                    
                 end
                 dataToFit(ccon).data = data;
                 dataToFit(ccon).TE = mpm_params.input(ccon).TE;
@@ -950,41 +944,6 @@ hmri_log(sprintf('\t============ MPM PROCESSING: completed (%s) ============', d
 
 end
 
-%% =======================================================================%
-% To coregister the structural images for MT protocol 
-%=========================================================================%
-function [x] = coreg_mt(P_ref, P_src, coreg_flags)
-
-for src_nr = 1:size(P_src,1)
-    VG = spm_vol(P_ref);
-    VF = spm_vol(P_src(src_nr,:));
-    x = spm_coreg(VG,VF,coreg_flags);
-    M  = inv(spm_matrix(x));
-    MM = spm_get_space(deblank(VF.fname));
-    spm_get_space(deblank(deblank(VF.fname)), M*MM); %#ok<*MINV>
-end
-end
-
-%% =======================================================================%
-% To coregister the B1 or receive maps with the anatomical images in the
-% MT protocol. 
-%=========================================================================%
-function [] = coreg_bias_map(P_ref, P_src, coreg_bias_flags)
-
-P_src(1,:);
-VG = spm_vol(P_ref);
-VF = spm_vol(P_src(1,:));
-x = spm_coreg(VG,VF,coreg_bias_flags);
-M  = inv(spm_matrix(x));
-MM = spm_get_space(deblank(VF.fname));
-spm_get_space(deblank(deblank(VF.fname)), M*MM);
-
-VF2 = spm_vol(P_src(2,:)); % now also apply transform to the map
-M  = inv(spm_matrix(x));
-MM = spm_get_space(deblank(VF2.fname));
-spm_get_space(deblank(deblank(VF2.fname)), M*MM);
-
-end
 
 %% =======================================================================%
 % Proton density map calculation

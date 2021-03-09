@@ -64,7 +64,7 @@ hmri_def.json = struct('extended',false,'separate',true,'anonym','none',...
 % provides a series of tissue probability maps. These TPMs could be
 % replaced by other TPMs, to better match the population studied. 
 % ADVANCED USER ONLY.
-hmri_def.TPM = fullfile(fileparts(fileparts(mfilename('fullpath'))),'etpm','eTPM.nii');
+hmri_def.TPM = fullfile(fileparts(fileparts(which('hmri_defaults.m'))),'etpm','eTPM.nii');
 % default template for auto-reorientation. The template can be selected
 % within the Auto-reorient module. The following is the default suggested
 % for T1w images. Please refer to the Auto-reorient documentation for an
@@ -357,7 +357,7 @@ hmri_def.MPMacq_set.vals{7}  = [25 25 6 21];
 % When enabling the imperfect spoiling correction, make sure the
 % coefficients retrieved in the list below are definitely calculated for
 % the protocol used!
-hmri_def.imperfectSpoilCorr.enabled = false;
+hmri_def.imperfectSpoilCorr.enabled = true;
 
 % 1) classic FIL protocol (Weiskopf et al., Neuroimage 2011):
 hmri_def.imperfectSpoilCorr.ClassicFIL.tag = 'Classic FIL protocol';

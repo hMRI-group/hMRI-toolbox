@@ -150,7 +150,7 @@ spm_smooth(B1map_norm,smB1map_norm,smth);
 % B1map_norm = B1map_norm.*Mask;
 % smB1map_norm = smB1map_norm.*Mask;
 
-sname = spm_file(V1.fname,'filename');
+sname = spm_file(V1.fname,'basename');
 
 % save output images
 VB1 = V1;

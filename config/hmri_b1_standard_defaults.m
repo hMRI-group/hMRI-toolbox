@@ -47,6 +47,12 @@ hmri_def.b1map.i3D_AFI.procreq = true;
 hmri_def.b1map.i3D_AFI.b1acq.TR2TR1ratio = 5;
 hmri_def.b1map.i3D_AFI.b1acq.alphanom = 60;
 
+% 'SDAM'
+hmri_def.b1map.SDAM.b1type = 'SDAM'; 
+hmri_def.b1map.SDAM.b1avail = true;
+hmri_def.b1map.SDAM.procreq = true;
+hmri_def.b1map.SDAM.b1acq.alphanom = 60;
+
 % 'pre_processed_B1'
 hmri_def.b1map.pre_processed_B1.b1type = 'pre_processed_B1'; 
 hmri_def.b1map.pre_processed_B1.b1avail   = true;

@@ -10,7 +10,7 @@ function imperf_spoil=tbx_scfg_hmri_imperf_spoil
 %
 %_______________________________________________________________________
 % Wellcome Centre for Human Neuroimaging
-% Nadège Corbin - May 2020
+% Nadï¿½ge Corbin - May 2020
 % ======================================================================
 
 % ---------------------------------------------------------------------
@@ -174,3 +174,4 @@ imperf_spoil.help    = {'Given input info about the sequence settings and expect
     'this module computes coefficients required to correct for imperfect spoiling in the FLASH volumes ' ...
     'using the method proposed by Preibisch & Deichmann, MRM 2009, 61(1):125'};
 imperf_spoil.prog    = @hmri_corr_imperf_spoil;
+end

@@ -103,14 +103,18 @@ nFieldFound = 0;
 switch inParName
     case 'RepetitionTime' % [ms]
         % Valid for all vendors
-        [nFieldFound, fieldList] = find_field_name(mstruc, 'RepetitionTime', 'caseSens','sensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc,'RepetitionTime',...
+                                                   'caseSens','sensitive',...
+                                                   'matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         if nFieldFound
             cRes = 1;
             parLocation{cRes} = nam{1};
             parValue{cRes} = val{1} * 1000; % [ms]
         else
-          [nFieldFound, fieldList] = find_field_name(mstruc, 'RepetitionTimeExitation', 'caseSens','sensitive','matchType','exact');
+          [nFieldFound, fieldList] = find_field_name(mstruc,'RepetitionTimeExitation',...
+                                                     'caseSens','sensitive',...
+                                                     'matchType','exact');
           [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
           if nFieldFound
               cRes = 1;
@@ -122,7 +126,9 @@ switch inParName
         
     case 'RepetitionTimes' % [ms]
         % Not strictly a Bids field
-        [nFieldFound, fieldList] = find_field_name(mstruc, 'RepetitionTimeSeries', 'caseSens','sensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc,'RepetitionTimeSeries',...
+                                                   'caseSens','sensitive',...
+                                                   'matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         if nFieldFound
             cRes = 1;
@@ -130,11 +136,14 @@ switch inParName
             parValue{cRes} = val{1} * 1000; % [ms]
         else
             [parValue, parLocation] = get_metadata_val(mstruc, 'RepetitionTime');
+            nFieldFound = size(parLocation, 1);
         end
         
     case 'EchoTime' % [ms]
         % Valid for all vendors
-        [nFieldFound, fieldList] = find_field_name(mstruc, 'EchoTime', 'caseSens','sensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc,'EchoTime',...
+                                                   'caseSens','sensitive',...
+                                                   'matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         if nFieldFound
             cRes = 1;
@@ -144,7 +153,9 @@ switch inParName
         
     case 'EchoTimes' % [ms]
         % Siemens-specific but made valid for all vendors
-        [nFieldFound, fieldList] = find_field_name(mstruc, 'EchoTimeSeries', 'caseSens','sensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc,'EchoTimeSeries',...
+                                                   'caseSens','sensitive',...
+                                                   'matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         if nFieldFound
             cRes = 1;
@@ -152,11 +163,14 @@ switch inParName
             parValue{cRes} = val{1} * 1000; % [ms]
         else
             [parValue, parLocation] = get_metadata_val(mstruc, 'EchoTime');
+            nFieldFound = size(parLocation, 1);
         end
         
     case 'FlipAngle' % [deg]
         % Valid for all vendors
-        [nFieldFound, fieldList] = find_field_name(mstruc, 'FlipAngle', 'caseSens','sensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc,'FlipAngle',...
+                                                   'caseSens','sensitive',...
+                                                   'matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         if nFieldFound
             cRes = 1;
@@ -168,7 +182,9 @@ switch inParName
         
     case 'SequenceName'
         % Valid for all vendors
-        [nFieldFound, fieldList] = find_field_name(mstruc, 'SequenceName','caseSens','sensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc,'SequenceName',...
+                                                   'caseSens','sensitive',...
+                                                   'matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         % Keep only first value if many
         if nFieldFound
@@ -181,7 +197,9 @@ switch inParName
         % Not BIDS field
         % may be need to be converted from On/Off
         % if fails get from file name
-        [nFieldFound, fieldList] = find_field_name(mstruc, 'MTState','caseSens','sensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc,'MTState',...
+                                                   'caseSens','sensitive',...
+                                                   'matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList); %#ok<ASGLU>
         if nFieldFound
             cRes = 1;
@@ -199,10 +217,19 @@ switch inParName
               parValue{cRes} = (val{1} > 0);
             end
         else
-            nFieldFound = 1;
-            cRes = 1;
-            parLocation{cRes} = 'NullParameterNotDefinedInStruct';
-            parValue{cRes} = 0;
+          % trying from filename
+          if isfield(mstruc, 'filename')
+            mt = find_entity(mstruc.filename, 'mt-');
+            if strcmpi(mt, 'on') || strcmp(mt, '1')
+              nFieldFound = 1;
+              parLocation{1} = 'filename';
+              parValue{1} = 1;
+            elseif strcmpi(mt, 'off') || strcmp(mt, '0')
+              nFieldFound = 1;
+              parLocation{1} = 'filename';
+              parValue{1} = 0;
+            end
+          end
         end
         
     case 'FieldStrength' % [T]
@@ -210,7 +237,9 @@ switch inParName
         % NB: flNominalB0 returns ~2.8936 for a 3T magnet, but is Siemens
         % specific so unusable with GE/Philips data. However, since more
         % accurate, we first try and retrieve it:
-        [nFieldFound, fieldList] = find_field_name(mstruc, 'MagneticFieldStrength','caseSens','sensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc,'MagneticFieldStrength',...
+                                                   'caseSens','sensitive',...
+                                                   'matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         if nFieldFound
             cRes = 1;
@@ -222,7 +251,9 @@ switch inParName
         
     case 'ScanningSequence' % e.g. 'EP' for EPI...
         % Valid for all vendors
-        [nFieldFound, fieldList] = find_field_name(mstruc, 'ScanningSequence','caseSens','sensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc,'ScanningSequence',...
+                                                   'caseSens','sensitive',...
+                                                   'matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         if nFieldFound
             cRes = 1;
@@ -237,7 +268,9 @@ switch inParName
         
     case 'PhaseEncodingDirectionSign'
         % Siemens-specific:
-        [nFieldFound, fieldList] = find_field_name(mstruc, 'PhaseEncodingDirection','caseSens','sensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc,'PhaseEncodingDirection',...
+                                                   'caseSens','sensitive',...
+                                                   'matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         % PhaseEncodingDirection = [ijk][+-].
         if nFieldFound
@@ -253,7 +286,9 @@ switch inParName
         
     case 'PhaseEncodingDirection' % 'COL' (A>>P/P>>A) or 'ROW' (R>>L/L>>R)
         % Valid for all vendors
-        [nFieldFound, fieldList] = find_field_name(mstruc, 'PhaseEncodingDirection','caseSens','sensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc,'PhaseEncodingDirection',...
+                                                   'caseSens','sensitive',...
+                                                   'matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
         % Keep only first value if many
@@ -261,9 +296,9 @@ switch inParName
             cRes = 1;
             parLocation{cRes} = nam{1};
             PEd = val{1};
-            if PEd(1) == 'i'
+            if PEd(1) == 'j'
               parValue{cRes} = 'COL';
-            elseif PEd(1) == 'j'
+            elseif PEd(1) == 'i'
               parValue{cRes} = 'ROW';
             else
               warning(['Invalid PhaseEncodingDirection ' PEd]);
@@ -279,15 +314,53 @@ switch inParName
     % WipParameters not BIDs
 
     % AllDiffusionDirections not BIDS (probably equivalent to bvec)
+    case 'AllDiffusionDirections'
+      if isfield(mstruc, 'filename')
+        ext = find_entity(mstruc.filename, 'extension');
+        bvec_file = [ mstruc.filename(1:end-size(ext,2)) '.bvec']
+        if exist(bvec_file, 'file')
+          nFieldFound = 1;
+          parLocation{1} = mstruc.filename;
+          parValue{1} = dlmread(bvec_file);
+        end
+      end
+
     % AllBValues not BIDS (probably equivalent to bval)    
-    % DiffusionDirection not BIDS (above)
+    case 'AllBValues'
+      if isfield(mstruc, 'filename')
+        ext = find_entity(mstruc.filename, 'extension');
+        bvec_file = [ mstruc.filename(1:end-size(ext,2)) '.bval']
+        if exist(bvec_file, 'file')
+          nFieldFound = 1;
+          parLocation{1} = mstruc.filename;
+          parValue{1} = dlmread(bvec_file);
+        end
+      end
+
+    % DiffusionDirection not BIDS (can be retrieved from all values with index?)
     % BValue not BIDS (above)
 
     % isDWI need filename
+    case 'isDWI'
+      if isfield(mstruc, 'filename')
+        nFieldFound = 1;
+        suffix = find_entity(mstruc.filename, 'suffix');
+        parLocation{1} = 'filename';
+        if strcmpi(suffix, 'dwi')
+          parValue{1} = 1;
+        else
+          parValue{1} = 0;
+        end
+
+      else
+        nFieldFound = 0;
+      end
         
     % epiReadout not BIDS but related to TotalReadoutTime
     case 'epiReadoutDuration' % [ms]
-        [nFieldFound, fieldList] = find_field_name(mstruc, 'epiReadoutTime','caseSens','sensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc,'epiReadoutTime',...
+                                                   'caseSens','sensitive',...
+                                                   'matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         if nFieldFound
             cRes = 1;
@@ -296,7 +369,9 @@ switch inParName
         else
           fprintf(1,['\nWARNING: epiReadoutTime not defined. '...
                      'Using TotalReadoutTime instead\n']);
-          [nFieldFound, fieldList] = find_field_name(mstruc, 'TotalReadoutTime','caseSens','sensitive','matchType','exact');
+          [nFieldFound, fieldList] = find_field_name(mstruc,'TotalReadoutTime',...
+                                                     'caseSens','sensitive',...
+                                                     'matchType','exact');
           if nFieldFound
               cRes = 1;
               parLocation{cRes} = nam{1};
@@ -305,7 +380,9 @@ switch inParName
         end
         
     case 'EchoSpacing' % [ms]
-        [nFieldFound, fieldList] = find_field_name(mstruc, 'EffectiveEchoSpacing','caseSens','sensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc,'EffectiveEchoSpacing',...
+                                                   'caseSens','sensitive',...
+                                                   'matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         if nFieldFound
             cRes = 1;
@@ -315,7 +392,9 @@ switch inParName
         
     % B1mapNominalFAValues not BIDS, using custom FlipAngleSeries
     case 'B1mapNominalFAValues' % [deg]
-        [nFieldFound, fieldList] = find_field_name(mstruc, 'FlipAngleSeries','caseSens','insensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc,'FlipAngleSeries',...
+                                                   'caseSens','insensitive',...
+                                                   'matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         if nFieldFound
             cRes = 1;
@@ -325,7 +404,9 @@ switch inParName
         
 
     case 'RFSpoilingPhaseIncrement' % [deg]
-        [nFieldFound, fieldList] = find_field_name(mstruc, 'SpoilingRFPhaseIncrement','caseSens','insensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc,'SpoilingRFPhaseIncrement',...
+                                                   'caseSens','insensitive',...
+                                                   'matchType','exact');
         if nFieldFound
             cRes = 1;
             parLocation{cRes} = nam{1};
@@ -333,7 +414,9 @@ switch inParName
         end
         
     case 'B1mapMixingTime' % [ms] for al_B1mapping - version dependent!!
-        [nFieldFound, fieldList] = find_field_name(mstruc, 'MixingTime','caseSens','insensitive','matchType','exact');
+        [nFieldFound, fieldList] = find_field_name(mstruc,'MixingTime',...
+                                                   'caseSens','insensitive',...
+                                                   'matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         if nFieldFound
           cRes = 1;
@@ -389,4 +472,30 @@ else
     val = {};
     nam = {};
 end
+end
+
+function res = find_entity(fname, field)
+  [pth, base, ext] = fileparts(fname);
+  base = [base, ext];
+  res = [];
+
+  l_field = size(field, 2);
+  pos = 0;
+
+  for i = 1:size(base,2)
+    if base(i) == '_'
+      sub = base(pos + 1: i - 1);
+      pos = i;
+      if strncmp(sub, field, l_field)
+        res = sub(l_field: end);
+        break
+      end
+    elseif base(i) == '.'
+      if strcmp('suffix', field)
+        res = base(pos + 1: i - 1);
+      elseif strcmp('extension', field)
+        res = base(i:end);
+      end
+    end
+  end
 end

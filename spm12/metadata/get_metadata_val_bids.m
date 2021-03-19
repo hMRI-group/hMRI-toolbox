@@ -246,6 +246,21 @@ switch inParName
             parLocation{cRes} = nam{1};
             parValue{cRes} = val{1};
         end
+
+    case 'MagneticFieldStrength' % [T]
+        % Valid for all vendors
+        % NB: flNominalB0 returns ~2.8936 for a 3T magnet, but is Siemens
+        % specific so unusable with GE/Philips data. However, since more
+        % accurate, we first try and retrieve it:
+        [nFieldFound, fieldList] = find_field_name(mstruc,'MagneticFieldStrength',...
+                                                   'caseSens','sensitive',...
+                                                   'matchType','exact');
+        [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
+        if nFieldFound
+            cRes = 1;
+            parLocation{cRes} = nam{1};
+            parValue{cRes} = val{1};
+        end
         
     % Frequency not BIDS field 
         

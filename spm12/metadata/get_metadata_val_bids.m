@@ -414,7 +414,11 @@ switch inParName
         if nFieldFound
             cRes = 1;
             parLocation{cRes} = nam{1};
-            parValue{cRes} = val{1};
+            if isrow(val{1})
+              parValue{cRes} = val{1};
+            else
+              parValue{cRes} = val{1}';
+            end
         end
         
 

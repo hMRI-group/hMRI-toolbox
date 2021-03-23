@@ -4,37 +4,102 @@ tests = functiontests(localfunctions);
 end
 
 %% Test Functions
-function testSingleContrast(testCase)
+function testSingleContrast3D(testCase)
+
+% Test on 3D simulated data that the calculated R2* is within a defined
+% tolerance given a single contrast input.
 
 dims=[32,77,68];
 R2s=100*rand(dims)+50; % in [50,150] / s
 
 TEs=(2:2.5:20)*1e-3; % s
-w=2000*rand(dims)+500;
-w=decaySignal(w,TEs,R2s);
+signal_TE0=2000*rand(dims)+500;
+
+% Create signal decay given R2s and TEs:
+signal=decaySignal(signal_TE0,TEs,R2s);
 
 % Check that it works without outputting the extrapolated values
-R2sEst=hmri_calc_R2s(struct('data',w,'TE',TEs));
+R2sEst=hmri_calc_R2s(struct('data',signal,'TE',TEs));
 
+% Check every element is less than pre-defined threshold, here 1e-9 %TODO
+% -rationale for threshold.
 assertLessThan(testCase,abs(R2s-R2sEst),1e-9)
 
 end
 
-function test1D(testCase)
+
+function testMultipleContrast3D(testCase)
+
+% Test on 3D simulated data that the calculated R2* and contrast-specific
+% intercepts are within a defined tolerance given multiple contrast input.
+
+dims=[46,57,62];
+R2s=100*rand(dims)+50; % in [50,150] / s
+
+TEs1=(2:2.5:20)*1e-3; % s
+signal1_TE0=2000*rand(dims)+500; % [500 2500]
+signal1=decaySignal(signal1_TE0,TEs1,R2s);
+
+% First four TEs for second contrast
+TEs2=TEs1(1:4); % s
+signal2_TE0=1000*rand(dims)+100; % [100 1100]
+signal2=decaySignal(signal2_TE0,TEs2,R2s);
+
+[R2sEst,extrapolated]=hmri_calc_R2s([struct('data',signal1,'TE',TEs1),struct('data',signal2,'TE',TEs2)]);
+
+assertLessThan(testCase,abs(R2s-R2sEst),1e-9)
+assertLessThan(testCase,abs(extrapolated{1}-signal1_TE0),1e-9)
+assertLessThan(testCase,abs(extrapolated{2}-signal2_TE0),1e-9)
+
+end
+
+function testSingleContrast1D(testCase)
+
+% Test on 1D simulated data that the calculated R2* and intercept
+% are within a defined tolerance given single contrast input.
 
 dims=[32,1];
 R2s=100*rand(dims)+50; % in [50,150] / s
 
 TEs=(2:2.5:20)*1e-3; % s
-w_TE0=2000*rand(dims)+500;
-w=decaySignal(w_TE0,TEs,R2s);
+signal_TE0=2000*rand(dims)+500;
+signal=decaySignal(signal_TE0,TEs,R2s);
 
-[R2sEst,extrapolated]=hmri_calc_R2s(struct('data',w,'TE',TEs));
+[R2sEst,extrapolated]=hmri_calc_R2s(struct('data',signal,'TE',TEs));
 
 assertLessThan(testCase,abs(R2s-R2sEst),1e-9)
-assertLessThan(testCase,abs(extrapolated{1}-w_TE0),1e-9)
+assertLessThan(testCase,abs(extrapolated{1}-signal_TE0),1e-9)
 
 end
+
+function testZero2DInputs(testCase)
+
+% Test on 2D simulated data that the calculated R2* is NaN for a single
+% contrast input where the signal is actually zero.
+
+dims=[32,56,8]; % last dim is echoes
+signal=zeros(dims);
+TEs=(2:2.5:20)*1e-3; % s
+
+% Check that it fails when zeros are input
+R2sEst=hmri_calc_R2s(struct('data',signal,'TE',TEs));
+
+% Check every element is less than pre-defined threshold, here 1e-9 %TODO
+% -rationale for threshold.
+assertTrue(testCase,all(isnan(R2sEst(:))))
+
+end
+
+% function testNonStructInput(testCase)
+% 
+% import matlab.unittest.constraints.Throws;
+% 
+% TEs=(2:2.5:20)*1e-3; % s
+% 
+% % TO DO Check that an error is thrown if the input isn't a struct
+% % testCase.assertThat(hmri_calc_R2s(zeros([32,56,8])), Throws('hmri:structError'));
+%     
+% end
 
 function test1DNoise(testCase)
 
@@ -58,27 +123,7 @@ assertLessThan(testCase,abs(extrapolated{1}-w_TE0)./w_TE0,0.05)
 
 end
 
-function testMultipleContrast(testCase)
 
-dims=[32,77,68];
-R2s=100*rand(dims)+50; % in [50,150] / s
-
-TEs1=(2:2.5:20)*1e-3; % s
-
-w1_TE0=2000*rand(dims)+500;
-w1=decaySignal(w1_TE0,TEs1,R2s);
-
-TEs2=TEs1(1:4); % s
-w2_TE0=2000*rand(dims)+500;
-w2=decaySignal(w2_TE0,TEs2,R2s);
-
-[R2sEst,extrapolated]=hmri_calc_R2s([struct('data',w1,'TE',TEs1),struct('data',w2,'TE',TEs2)]);
-
-assertLessThan(testCase,abs(R2s-R2sEst),1e-9)
-assertLessThan(testCase,abs(extrapolated{1}-w1_TE0),1e-9)
-assertLessThan(testCase,abs(extrapolated{2}-w2_TE0),1e-9)
-
-end
 
 function testMultipleContrastNoise(testCase)
 

@@ -55,8 +55,7 @@ if exist(respath,'dir')
     newrespath = true;
 end
 if ~exist(respath,'dir'); mkdir(respath); end
-% Trick toolbox into copying B1 map files into result directory
-supplpath = respath;
+supplpath = fullfile(outpath, 'Results', 'Supplementary');
 if ~exist(supplpath,'dir'); mkdir(supplpath); end
 
 % define other paths for processing data
@@ -65,6 +64,7 @@ if ~exist(b1path,'dir'); mkdir(b1path); end
 
 % save all these paths in the job.subj structure
 job.subj.path.b1path = b1path;
+job.subj.path.b1respath = respath; % copy B1 maps to results folder
 job.subj.path.respath = respath;
 job.subj.path.supplpath = supplpath;
 
@@ -99,6 +99,11 @@ out_loc.subj.B1ref=P_trans(1);
 out_loc.subj.B1map=P_trans(2);
 
 out_loc.subj.B1  = P_trans;
+
+% clean after if required
+if hmri_get_defaults('cleanup')
+    rmdir(job.subj.path.b1path,'s');
+end
 
 f = fopen(fullfile(respath, '_finished_'), 'wb');
 fclose(f);

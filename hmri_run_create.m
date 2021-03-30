@@ -89,6 +89,7 @@ if ~exist(mpmpath,'dir'); mkdir(mpmpath); end
 
 % save all these paths in the job.subj structure
 job.subj.path.b1path = b1path;
+job.subj.path.b1respath = supplpath; % copy B1 maps to supplementary folder
 job.subj.path.rfsenspath = rfsenspath;
 job.subj.path.mpmpath = mpmpath;
 job.subj.path.respath = respath;

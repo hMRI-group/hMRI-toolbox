@@ -92,8 +92,8 @@ end
 
 if ~isempty(P_trans)
     P_trans = spm_file(P_trans,'number','');
-    P_trans_copy{1} = fullfile(jobsubj.path.supplpath, spm_file(P_trans(1,:), 'filename'));
-    P_trans_copy{2} = fullfile(jobsubj.path.supplpath, spm_file(P_trans(2,:), 'filename'));    
+    P_trans_copy{1} = fullfile(jobsubj.path.b1respath, spm_file(P_trans(1,:), 'filename'));
+    P_trans_copy{2} = fullfile(jobsubj.path.b1respath, spm_file(P_trans(2,:), 'filename'));
     copyfile(deblank(P_trans(1,:)), P_trans_copy{1});
     try copyfile([spm_str_manip(P_trans(1,:),'r') '.json'],[spm_str_manip(P_trans_copy{1},'r') '.json']); end %#ok<*TRYNC>
     copyfile(deblank(P_trans(2,:)), P_trans_copy{2});

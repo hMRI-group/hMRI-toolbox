@@ -108,6 +108,6 @@ end
 f = fopen(fullfile(respath, '_finished_'), 'wb');
 fclose(f);
 
-hmri_log(sprintf('\t============ CREATE hMRI MAPS MODULE: completed (%s) ============', datestr(now)),flags);
+hmri_log(sprintf('\t============ CREATE B1 MAP MODULE: completed (%s) ============', datestr(now)),flags);
 
 end

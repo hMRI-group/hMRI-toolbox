@@ -105,9 +105,9 @@ if ~isstruct(mstruc)
 end
 
 if isfield(mstruc, 'acqpar')
-  [parValue, parLocation] = get_metadata_val_classic(varargin{:});
+  [parValue, parLocation] = get_metadata_val_classic(mstruc,inParName);
 else
-  [parValue, parLocation] = get_metadata_val_bids(varargin{:});
+  [parValue, parLocation] = get_metadata_val_bids(mstruc,inParName);
 end
 
 end

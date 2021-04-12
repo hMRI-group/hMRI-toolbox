@@ -400,6 +400,7 @@ switch inParName
           [nFieldFound, fieldList] = find_field_name(mstruc,'TotalReadoutTime',...
                                                      'caseSens','sensitive',...
                                                      'matchType','exact');
+          [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
           if nFieldFound
               cRes = 1;
               parLocation{cRes} = nam{1};

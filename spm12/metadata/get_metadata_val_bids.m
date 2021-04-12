@@ -89,13 +89,13 @@ end
 
 mstruc = varargin{1};
 inParName = varargin{2};
-
-% filename as argument, first retrieve the matlab structure:
-if ischar(mstruc)
-    mstruc = get_metadata(mstruc);
-    mstruc = mstruc{1};
-end
-
+% Should not be accessed directly ?
+% % filename as argument, first retrieve the matlab structure:
+% if ischar(mstruc)
+%     mstruc = get_metadata(mstruc);
+%     mstruc = mstruc{1};
+% end
+% 
 parValue = [];
 parLocation = [];
 nFieldFound = 0;
@@ -332,7 +332,7 @@ switch inParName
     case 'AllDiffusionDirections'
       if isfield(mstruc, 'filename')
         ext = find_entity(mstruc.filename, 'extension');
-        bvec_file = [ mstruc.filename(1:end-size(ext,2)) '.bvec']
+        bvec_file = [ mstruc.filename(1:end-size(ext,2)) '.bvec'];
         if exist(bvec_file, 'file')
           nFieldFound = 1;
           parLocation{1} = mstruc.filename;
@@ -344,7 +344,7 @@ switch inParName
     case 'AllBValues'
       if isfield(mstruc, 'filename')
         ext = find_entity(mstruc.filename, 'extension');
-        bvec_file = [ mstruc.filename(1:end-size(ext,2)) '.bval']
+        bvec_file = [ mstruc.filename(1:end-size(ext,2)) '.bval'];
         if exist(bvec_file, 'file')
           nFieldFound = 1;
           parLocation{1} = mstruc.filename;
@@ -390,7 +390,7 @@ switch inParName
           if nFieldFound
               cRes = 1;
               parLocation{cRes} = nam{1};
-              parValue{cRes} = val{1} * 1000;
+              parValue{cRes} = val{1} * 1000; 
           end
         end
         

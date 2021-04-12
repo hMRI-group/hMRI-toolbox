@@ -297,6 +297,19 @@ switch inParName
             else
               parValue{cRes} = 1;
             end
+        else
+            fprintf(1,['\nWARNING: PhaseEncodingDirection not defined. '...
+                     'Using PhaseEncodingDirectionSign directly instead\n']);
+            [nFieldFound, fieldList] = find_field_name(mstruc, ...
+                            'PhaseEncodingDirectionSign',...
+                            'caseSens','sensitive',...
+                            'matchType','exact');
+          [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
+          if nFieldFound
+              cRes = 1;
+              parLocation{cRes} = nam{1};
+              parValue{cRes} = val{1}; 
+          end            
         end
         
     case 'PhaseEncodingDirection' % 'COL' (A>>P/P>>A) or 'ROW' (R>>L/L>>R)

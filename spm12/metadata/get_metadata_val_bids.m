@@ -89,13 +89,6 @@ end
 
 mstruc = varargin{1};
 inParName = varargin{2};
-% Should not be accessed directly ?
-% % filename as argument, first retrieve the matlab structure:
-% if ischar(mstruc)
-%     mstruc = get_metadata(mstruc);
-%     mstruc = mstruc{1};
-% end
-% 
 parValue = [];
 parLocation = [];
 nFieldFound = 0;
@@ -338,7 +331,19 @@ switch inParName
     % PATparameters not BIDs
     % AccelFactorPE not BIDS (possibly corresponds to MultibandAccelerationFactor)
     % AccelFactor3D not BIDS (possibly corresponds to MultibandAccelerationFactor)
+
     % MultiBandFactor not BIDS (possibly corresponds to MultibandAccelerationFactor)
+    case 'MultiBandFactor'
+      [nFieldFound, fieldList] = find_field_name(mstruc,'MultibandAccelerationFactor',...
+                                                'caseSens','sensitive',...
+                                                'matchType','exact');
+      [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
+      if nFieldFound
+        cRes = 1;
+        parLocation{cRes} = nam{1};
+        parValue{cRes} = val{1};
+      end
+
     % WipParameters not BIDs
 
     % AllDiffusionDirections not BIDS (probably equivalent to bvec)

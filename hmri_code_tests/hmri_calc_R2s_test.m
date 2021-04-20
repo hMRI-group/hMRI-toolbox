@@ -40,7 +40,7 @@ classdef hmri_calc_R2s_test < matlab.unittest.TestCase
             
             % Check every element is less than pre-defined threshold, here 1e-9 %TODO
             % -rationale for threshold.
-            assertLessThan(testCase,abs(R2s-R2sEst),tolerance)
+            assertEqual(testCase,R2sEst,R2s,'AbsTol',tolerance)
         end
         
        
@@ -64,9 +64,9 @@ classdef hmri_calc_R2s_test < matlab.unittest.TestCase
             
             [R2sEst,extrapolated]=hmri_calc_R2s([struct('data',signal1,'TE',TEs1),struct('data',signal2,'TE',TEs2)]);
             
-            assertLessThan(testCase,abs(R2s-R2sEst),tolerance)
-            assertLessThan(testCase,abs(extrapolated{1}-signal1_TE0),tolerance)
-            assertLessThan(testCase,abs(extrapolated{2}-signal2_TE0),tolerance)
+            assertEqual(testCase,R2sEst,R2s,'AbsTol',tolerance)
+            assertEqual(testCase,extrapolated{1},signal1_TE0,'AbsTol',tolerance)
+            assertEqual(testCase,extrapolated{2},signal2_TE0,'AbsTol',tolerance)
             
         end
         
@@ -84,8 +84,8 @@ classdef hmri_calc_R2s_test < matlab.unittest.TestCase
             
             [R2sEst,extrapolated]=hmri_calc_R2s(struct('data',signal,'TE',TEs));
             
-            assertLessThan(testCase,abs(R2s-R2sEst),tolerance)
-            assertLessThan(testCase,abs(extrapolated{1}-signal_TE0),tolerance)
+            assertEqual(testCase,R2sEst,R2s,'AbsTol',tolerance)
+            assertEqual(testCase,extrapolated{1},signal_TE0,'AbsTol',tolerance)
             
         end
         
@@ -130,8 +130,8 @@ classdef hmri_calc_R2s_test < matlab.unittest.TestCase
             [R2sEst,extrapolated]=hmri_calc_R2s(struct('data',wN,'TE',TEs));
             
             % Check relative error less than 5%
-            assertLessThan(testCase,abs(R2s-R2sEst)./R2s,noiseTol)
-            assertLessThan(testCase,abs(extrapolated{1}-w_TE0)./w_TE0,noiseTol)
+            assertEqual(testCase,R2sEst,R2s,'RelTol',noiseTol)
+            assertEqual(testCase,extrapolated{1},w_TE0,'RelTol',noiseTol)
             
         end
         
@@ -156,9 +156,9 @@ classdef hmri_calc_R2s_test < matlab.unittest.TestCase
             [R2sEst,extrapolated]=hmri_calc_R2s([struct('data',w1N,'TE',TEs1),struct('data',w2N,'TE',TEs2)]);
             
             % Check relative error less than 5%
-            assertLessThan(testCase,abs(R2s-R2sEst)./R2s,noiseTol)
-            assertLessThan(testCase,abs(extrapolated{1}-w1_TE0)./w1_TE0,noiseTol)
-            assertLessThan(testCase,abs(extrapolated{2}-w2_TE0)./w2_TE0,noiseTol)
+            assertEqual(testCase,R2sEst,R2s,'RelTol',noiseTol)
+            assertEqual(testCase,extrapolated{1},w1_TE0,'RelTol',noiseTol)
+            assertEqual(testCase,extrapolated{2},w2_TE0,'RelTol',noiseTol)
             
         end
     end

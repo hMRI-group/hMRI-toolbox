@@ -30,7 +30,7 @@ classdef hmri_calc_R2s_test < matlab.unittest.TestCase
             signal_TE0=2000*rand(dims)+500;
             
             % Create signal decay given R2s and TEs:
-            signal=decaySignal(signal_TE0,TEs,R2s);
+            signal=hmri_calc_R2s_test.decaySignal(signal_TE0,TEs,R2s);
             
             % Check that it works without outputting the extrapolated values
             R2sEst=hmri_calc_R2s(struct('data',signal,'TE',TEs));
@@ -52,12 +52,12 @@ classdef hmri_calc_R2s_test < matlab.unittest.TestCase
             
             TEs1=(2:2.5:20)*1e-3; % s
             signal1_TE0=2000*rand(dims)+500; % [500 2500]
-            signal1=decaySignal(signal1_TE0,TEs1,R2s);
+            signal1=hmri_calc_R2s_test.decaySignal(signal1_TE0,TEs1,R2s);
             
             % First four TEs for second contrast
             TEs2=TEs1(1:4); % s
             signal2_TE0=1000*rand(dims)+100; % [100 1100]
-            signal2=decaySignal(signal2_TE0,TEs2,R2s);
+            signal2=hmri_calc_R2s_test.decaySignal(signal2_TE0,TEs2,R2s);
             
             [R2sEst,extrapolated]=hmri_calc_R2s([struct('data',signal1,'TE',TEs1),struct('data',signal2,'TE',TEs2)]);
             
@@ -77,7 +77,7 @@ classdef hmri_calc_R2s_test < matlab.unittest.TestCase
             
             TEs=(2:2.5:20)*1e-3; % s
             signal_TE0=2000*rand(dims)+500;
-            signal=decaySignal(signal_TE0,TEs,R2s);
+            signal=hmri_calc_R2s_test.decaySignal(signal_TE0,TEs,R2s);
             
             [R2sEst,extrapolated]=hmri_calc_R2s(struct('data',signal,'TE',TEs));
             
@@ -119,7 +119,7 @@ classdef hmri_calc_R2s_test < matlab.unittest.TestCase
             % exponential decrease in SNR with TE
             TEs=(2:2.5:20)*1e-3; % s
             w_TE0=2000*rand(dims)+500;
-            w=decaySignal(w_TE0,TEs,R2s);
+            w=hmri_calc_R2s_test.decaySignal(w_TE0,TEs,R2s);
             
             % SNR = w_TE0
             wN=w+randn(size(w));
@@ -142,12 +142,12 @@ classdef hmri_calc_R2s_test < matlab.unittest.TestCase
             TEs1=(2:2.5:20)*1e-3; % s
             
             w1_TE0=2000*rand(dims)+500;
-            w1=decaySignal(w1_TE0,TEs1,R2s);
+            w1=hmri_calc_R2s_test.decaySignal(w1_TE0,TEs1,R2s);
             w1N=w1+randn(size(w1));
             
             TEs2=TEs1(1:6); % s
             w2_TE0=2000*rand(dims)+500;
-            w2=decaySignal(w2_TE0,TEs2,R2s);
+            w2=hmri_calc_R2s_test.decaySignal(w2_TE0,TEs2,R2s);
             w2N=w2+randn(size(w2));
             
             [R2sEst,extrapolated]=hmri_calc_R2s([struct('data',w1N,'TE',TEs1),struct('data',w2N,'TE',TEs2)]);
@@ -159,17 +159,21 @@ classdef hmri_calc_R2s_test < matlab.unittest.TestCase
             
         end        
     end
-end
+    
+    methods(Static)
+        
+        function w_TEs=decaySignal(w_TE0,TEs,R2s)
+            
+            dims=size(w_TE0);
+            
+            % Account for 1D case
+            if (length(dims)==2)&&(dims(2)==1), dims=dims(1); end
+            
+            TEs=reshape(TEs,[ones(1,length(dims)),length(TEs)]);
+            
+            w_TEs=w_TE0.*exp(-R2s.*TEs);
+            
+        end
 
-function w_TEs=decaySignal(w_TE0,TEs,R2s)
-
-    dims=size(w_TE0);
-
-    % Account for 1D case
-    if (length(dims)==2)&&(dims(2)==1), dims=dims(1); end
-
-    TEs=reshape(TEs,[ones(1,length(dims)),length(TEs)]);
-
-    w_TEs=w_TE0.*exp(-R2s.*TEs);
-
+    end
 end

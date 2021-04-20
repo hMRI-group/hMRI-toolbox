@@ -1,18 +1,27 @@
+% Unit tests implemented:
+%   Multiple or single contrast weighting
+%   1, 2 and 3D datasets tests, via permutation along dimensions
+%   Zeros as input will return NaNs
+%   Higher tolerance with noise added
+%   Checks that input must be a structure
+
 classdef hmri_calc_R2s_test < matlab.unittest.TestCase
     properties (TestParameter)
         sizes1 = {1,10,100};
         sizes2 = {1,10,100};
         sizes3 = {1,10,100};
         tolerance = {1e-9};
+        noiseTol = {0.05};
     end
     
     methods (Test)
         
         %% Test Functions
-        function testSingleContrast(testCase,sizes1,sizes2,sizes3)
+        function testSingleContrast(testCase,sizes1,sizes2,sizes3,tolerance)
             
             % Test on 3D simulated data that the calculated R2* is within a defined
             % tolerance given a single contrast input.
+            % Single output (only) case is tested.
             
             dims=[sizes1,sizes2,sizes3];
             R2s=100*rand(dims)+50; % in [50,150] / s
@@ -28,14 +37,15 @@ classdef hmri_calc_R2s_test < matlab.unittest.TestCase
             
             % Check every element is less than pre-defined threshold, here 1e-9 %TODO
             % -rationale for threshold.
-            assertLessThan(testCase,abs(R2s-R2sEst),1e-9)
+            assertLessThan(testCase,abs(R2s-R2sEst),tolerance)
         end
         
        
-        function testMultipleContrast(testCase,sizes1,sizes2,sizes3)
+        function testMultipleContrast(testCase,sizes1,sizes2,sizes3,tolerance)
             
             % Test on 3D simulated data that the calculated R2* and contrast-specific
             % intercepts are within a defined tolerance given multiple contrast input.
+            % Two outputs case is tested.
             
             dims=[sizes1,sizes2,sizes3];
             R2s=100*rand(dims)+50; % in [50,150] / s
@@ -51,13 +61,13 @@ classdef hmri_calc_R2s_test < matlab.unittest.TestCase
             
             [R2sEst,extrapolated]=hmri_calc_R2s([struct('data',signal1,'TE',TEs1),struct('data',signal2,'TE',TEs2)]);
             
-            assertLessThan(testCase,abs(R2s-R2sEst),1e-9)
-            assertLessThan(testCase,abs(extrapolated{1}-signal1_TE0),1e-9)
-            assertLessThan(testCase,abs(extrapolated{2}-signal2_TE0),1e-9)
+            assertLessThan(testCase,abs(R2s-R2sEst),tolerance)
+            assertLessThan(testCase,abs(extrapolated{1}-signal1_TE0),tolerance)
+            assertLessThan(testCase,abs(extrapolated{2}-signal2_TE0),tolerance)
             
         end
         
-        function testSingleContrast1D(testCase,sizes1)
+        function testSingleContrast1D(testCase,sizes1,tolerance)
             
             % Test on 1D simulated data that the calculated R2* and intercept
             % are within a defined tolerance given single contrast input.
@@ -71,8 +81,8 @@ classdef hmri_calc_R2s_test < matlab.unittest.TestCase
             
             [R2sEst,extrapolated]=hmri_calc_R2s(struct('data',signal,'TE',TEs));
             
-            assertLessThan(testCase,abs(R2s-R2sEst),1e-9)
-            assertLessThan(testCase,abs(extrapolated{1}-signal_TE0),1e-9)
+            assertLessThan(testCase,abs(R2s-R2sEst),tolerance)
+            assertLessThan(testCase,abs(extrapolated{1}-signal_TE0),tolerance)
             
         end
         
@@ -88,8 +98,7 @@ classdef hmri_calc_R2s_test < matlab.unittest.TestCase
             % Check that it fails when zeros are input
             R2sEst=hmri_calc_R2s(struct('data',signal,'TE',TEs));
             
-            % Check every element is less than pre-defined threshold, here 1e-9 %TODO
-            % -rationale for threshold.
+            % Check NaNs are returned
             assertTrue(testCase,all(isnan(R2sEst(:))))
             
         end
@@ -101,7 +110,7 @@ classdef hmri_calc_R2s_test < matlab.unittest.TestCase
             
         end
         
-        function testNoise(testCase,sizes1,sizes2,sizes3)
+        function testNoise(testCase,sizes1,sizes2,sizes3,noiseTol)
             
             dims=[sizes1,sizes2,sizes3];
             R2s=100*rand(dims)+50; % in [50,150] / s
@@ -118,12 +127,12 @@ classdef hmri_calc_R2s_test < matlab.unittest.TestCase
             [R2sEst,extrapolated]=hmri_calc_R2s(struct('data',wN,'TE',TEs));
             
             % Check relative error less than 5%
-            assertLessThan(testCase,abs(R2s-R2sEst)./R2s,0.05)
-            assertLessThan(testCase,abs(extrapolated{1}-w_TE0)./w_TE0,0.05)
+            assertLessThan(testCase,abs(R2s-R2sEst)./R2s,noiseTol)
+            assertLessThan(testCase,abs(extrapolated{1}-w_TE0)./w_TE0,noiseTol)
             
         end
         
-        function testMultipleContrastNoise(testCase,sizes1,sizes2,sizes3)
+        function testMultipleContrastNoise(testCase,sizes1,sizes2,sizes3,noiseTol)
             
             dims=[sizes1,sizes2,sizes3];
             R2s=100*rand(dims)+50; % in [50,150] / s
@@ -144,9 +153,9 @@ classdef hmri_calc_R2s_test < matlab.unittest.TestCase
             [R2sEst,extrapolated]=hmri_calc_R2s([struct('data',w1N,'TE',TEs1),struct('data',w2N,'TE',TEs2)]);
             
             % Check relative error less than 5%
-            assertLessThan(testCase,abs(R2s-R2sEst)./R2s,0.05)
-            assertLessThan(testCase,abs(extrapolated{1}-w1_TE0)./w1_TE0,0.05)
-            assertLessThan(testCase,abs(extrapolated{2}-w2_TE0)./w2_TE0,0.05)
+            assertLessThan(testCase,abs(R2s-R2sEst)./R2s,noiseTol)
+            assertLessThan(testCase,abs(extrapolated{1}-w1_TE0)./w1_TE0,noiseTol)
+            assertLessThan(testCase,abs(extrapolated{2}-w2_TE0)./w2_TE0,noiseTol)
             
         end        
     end

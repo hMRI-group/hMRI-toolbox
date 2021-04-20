@@ -13,6 +13,9 @@ classdef hmri_calc_R2s_test < matlab.unittest.TestCase
         tolerance = {1e-9};
         noiseTol = {0.05};
     end
+    properties
+        rnd = [];
+    end
     
     methods (Test)
         
@@ -157,8 +160,32 @@ classdef hmri_calc_R2s_test < matlab.unittest.TestCase
             assertLessThan(testCase,abs(extrapolated{1}-w1_TE0)./w1_TE0,noiseTol)
             assertLessThan(testCase,abs(extrapolated{2}-w2_TE0)./w2_TE0,noiseTol)
             
-        end        
+        end
     end
+    
+    %% Test Setup and Teardown Functions
+    
+    methods(TestMethodSetup)
+        function seedRandomNumberGenerator(testCase) %#ok<MANU>
+            % set randomness method and seed for reproducability
+            %
+            % it would be best to use a separate radom stream for each test
+            % for simplicity we set the global stream
+            % this will seed the RNG separately on every worker
+            rng(319, 'twister');
+        end
+    end
+
+    methods(TestClassSetup)
+        function enableRngLegacyWarnings(testCase) %#ok<MANU>
+            % make sure the use oflegacy code that breaks random number
+            % handling is going to generate a warning
+            warning('on','MATLAB:RandStream:ActivatingLegacyGenerators')
+            warning('on','MATLAB:RandStream:ReadingInactiveLegacyGeneratorState') 
+        end
+    end
+    
+    %% Auxilary Functions
     
     methods(Static)
         

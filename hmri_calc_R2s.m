@@ -34,7 +34,7 @@ function [R2s,extrapolated]=hmri_calc_R2s(weighted_data)
 %     Weiskopf et al. Front. Neurosci., (2014) 
 %         https://doi.org/10.3389/fnins.2014.00278
 
-assert(isstruct(weighted_data(1)),['inputs must be structs; see help ' mfilename])
+assert(isstruct(weighted_data(1)),'hmri:structError',['inputs must be structs; see help ' mfilename])
 
 dims=size(weighted_data(1).data);
 Nvoxels=prod(dims(1:end-1));

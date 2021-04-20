@@ -90,16 +90,12 @@ assertTrue(testCase,all(isnan(R2sEst(:))))
 
 end
 
-% function testNonStructInput(testCase)
-% 
-% import matlab.unittest.constraints.Throws;
-% 
-% TEs=(2:2.5:20)*1e-3; % s
-% 
-% % TO DO Check that an error is thrown if the input isn't a struct
-% % testCase.assertThat(hmri_calc_R2s(zeros([32,56,8])), Throws('hmri:structError'));
-%     
-% end
+function testNonStructInput(testCase)
+
+% Check that an error is thrown if the input isn't a struct
+assertError(testCase, @() hmri_calc_R2s(zeros([32,56,8])), 'hmri:structError');
+    
+end
 
 function test1DNoise(testCase)
 

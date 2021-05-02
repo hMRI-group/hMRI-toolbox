@@ -58,7 +58,8 @@ for ccon = 1:rfsens_params.ncon
     %==========================================================================
     % Calculate quantitative RF sensitivity maps (HC/BC division)
     %==========================================================================
-    qsensmap = spm_imcalc(smoothedmaps, fullfile(calcpath, sprintf('sensMap_HC_over_BC_division_%s.nii',rfsens_params.input(ccon).tag)), 'i1./i2');
+    qsensmap = spm_imcalc(smoothedmaps, fullfile(calcpath, rfsens_params.input(ccon).tag, ...
+        sprintf('sensMap_HC_over_BC_division_%s.nii',rfsens_params.input(ccon).tag)), 'i1./i2');
     qsensmap = qsensmap.fname;
     % set metadata
     input_files = sensmaps;
@@ -73,7 +74,8 @@ for ccon = 1:rfsens_params.ncon
     corrected_structurals = cell(nSTRUCT,1);
     
     for i=1:nSTRUCT
-        corrected_structurals{i} = fullfile(calcpath, spm_file(spm_file(structurals(i,:),'filename'),'suffix','_RFSC'));
+        corrected_structurals{i} = fullfile(calcpath, rfsens_params.input(ccon).tag, ...
+            spm_file(spm_file(structurals(i,:),'filename'),'suffix','_RFSC'));
         spm_imcalc({structurals(i,:), qsensmap}, corrected_structurals{i}, 'i1./i2');
         % set metadata (relates only to original inputs to keep it
         % readable and trackable since intermediate calculation directories
@@ -137,6 +139,7 @@ else
     ccon = ccon+1;
     rfsens_params.input(ccon).fnam = tmpfnam;
     rfsens_params.input(ccon).tag = 'MT';
+    mkdir(fullfile(rfsens_params.calcpath,'MT'))
     rfsens_params.MTidx = ccon;
 end
 % 2) try PDw contrast:
@@ -147,6 +150,7 @@ else
     ccon = ccon+1;
     rfsens_params.input(ccon).fnam = tmpfnam;
     rfsens_params.input(ccon).tag = 'PD';
+    mkdir(fullfile(rfsens_params.calcpath,'PD'))
     rfsens_params.PDidx = ccon;
 end
 % 3) try T1w contrast:
@@ -157,6 +161,7 @@ else
     ccon = ccon+1;
     rfsens_params.input(ccon).fnam = tmpfnam;
     rfsens_params.input(ccon).tag = 'T1';
+    mkdir(fullfile(rfsens_params.calcpath,'T1'))
     rfsens_params.T1idx = ccon; % zero index means no contrast available
 end
 rfsens_params.ncon = ccon; % number of contrasts available
@@ -193,7 +198,8 @@ elseif isfield(jobsubj.sensitivity,'RF_per_contrast')
         end
         for csens=1:length(raw_sens_input)
             tmprawfnam = spm_file(raw_sens_input{csens},'number','');
-            tmpfnam{csens} = fullfile(rfsens_params.calcpath,spm_file(tmprawfnam,'filename'));
+            tmpfnam{csens} = fullfile(rfsens_params.calcpath, ...
+                rfsens_params.input(ccon).tag, spm_file(tmprawfnam,'filename'));
             copyfile(tmprawfnam, tmpfnam{csens});
             try copyfile([spm_str_manip(tmprawfnam,'r') '.json'],[spm_str_manip(tmpfnam{csens},'r') '.json']); end
         end
@@ -256,7 +262,7 @@ for i = 1:size(sensfnam,1)
     matlabbatch{1}.spm.spatial.coreg.estwrite.roptions.wrap = [0 0 0];
     matlabbatch{1}.spm.spatial.coreg.estwrite.roptions.mask = 0;
     output_list = spm_jobman('run',matlabbatch);
-    coregsensfnam{i} = fullfile(calcpath, spm_file(output_list{1}.rfiles{1},'filename')); %#ok<AGROW>
+    coregsensfnam{i} = fullfile(calcpath, tag, spm_file(output_list{1}.rfiles{1},'filename')); %#ok<AGROW>
 end
 coregsensfnam = coregsensfnam'; % must be a nx1 cellstr
 clear matlabbatch

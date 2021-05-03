@@ -1,4 +1,4 @@
-function b1_type = tbx_scfg_hmri_B1_menu
+function [b1_type,b1parameters] = tbx_scfg_hmri_B1_menu
 % Configuration file for the "histological MRI" (hMRI) toolbox
 % Previously named "Voxel-Based Quantification" (VBQ)
 % -> Dealing with menu options for the creation of B1 maps

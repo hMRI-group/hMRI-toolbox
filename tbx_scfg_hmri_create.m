@@ -81,6 +81,12 @@ raws.val        = {raws1 raws2 raws3};
 [b1_type,b1parameters] = tbx_scfg_hmri_B1_menu;
 
 % ---------------------------------------------------------------------
+% New B1 mapping methods should be added to tbx_scfg_hmri_B1_menu.m
+% Only B1 mapping methods which cannot be run independently of the rest of 
+% the hMRI toolbox should be added here!
+% ---------------------------------------------------------------------
+
+% ---------------------------------------------------------------------
 % UNICORT B1 bias correction
 % ---------------------------------------------------------------------
 b1_input_UNICORT           = cfg_branch;
@@ -91,7 +97,6 @@ b1_input_UNICORT.help      = {'UNICORT will be applied for B1 bias correction.'
     ['Customized processing parameters may be introduced by loading ' ...
     'customized defaults from a selected [hmri_b1_local_defaults_*.m] file.']};
 b1_input_UNICORT.val       = {b1parameters};
-
 % ---------------------------------------------------------------------
 % No B1 bias correction
 % ---------------------------------------------------------------------
@@ -104,9 +109,11 @@ b1_input_noB1.help      = {'No B1 bias correction will be applied.'
 b1_input_noB1.strtype = 's';
 b1_input_noB1.num     = [1 Inf];
 b1_input_noB1.val     = {'noB1'};
-
+% ---------------------------------------------------------------------
+% Add extra B1 mapping methods which cannot be run independently of the
+% MPM map creation to the menu
+% ---------------------------------------------------------------------
 b1_type.values  = [b1_type.values {b1_input_UNICORT, b1_input_noB1}];
-
 b1_type.help={b1_type.help{1},[' - UNICORT: Use this option when B1 maps not available. ' ...
     'Bias field estimation and correction will be performed ' ...
     'using the approach described in [Weiskopf et al., NeuroImage 2011; 54:2116-2124]. ' ...

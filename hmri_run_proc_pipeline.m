@@ -48,10 +48,6 @@ job_US.many_sdatas.channel.vols = job.s_vols;
 job_US.many_sdatas.vox = job.vox;
 job_US.many_sdatas.bb  = job.bb;
 
-% Only spit out CSF in native space (no Dartel imported) & warped (no modulation)
-job_US.tissue(3).native = [1 0];
-job_US.tissue(3).warped = [0 0];
-
 % Get the output direcotry across
 job_US.many_sdatas.output = job.output;
 

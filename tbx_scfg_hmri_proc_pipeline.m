@@ -4,10 +4,12 @@ function proc_pipel = tbx_scfg_hmri_proc_pipeline
 % -> Provides standard processign pipelines.
 % 
 % For simplicity, 2 standard pipelines are also set up:
-% - US+Smooth -> applies US, warps into MNI, then smoothes
-%               (weighted-average)
-% - US+Dartel+Smooth -> applies US, builds Dartel template and warps into
-%                       MNI, then smoothes (weighted-average)
+% - US+Smooth+MaskCrt
+%       -> applies US, warps into MNI, smoothes (weighted-average), then
+%          creates tissue masks
+% - US+Dartel+Smooth+MaskCrt
+%       -> applies US, builds Dartel template and warps into MNI, smoothes
+%          (weighted-average), then creates tissue masks
 % Most of the parameters are therefore pre-defined and hardcoded!
 % For more flexibility, you ought to use the individual modules and build
 % your own pipeline.
@@ -110,13 +112,13 @@ pipe_c.tag    = 'pipe_c';
 pipe_c.name   = 'Pipeline';
 pipe_c.help   = {
     'Chose the predefined pipeline that you prefer:'
-    '- US+Smooth -> applies US, warps into MNI, then smoothes (weighted-average)'
-    ['- US+Dartel+Smooth -> applies US, builds Dartel template and warps into' ...
-      'MNI, then smoothes (weighted-average)']
+    '- US+Smooth+MaskCrt -> applies US, warps into MNI, smoothes (weighted-average), then creates tissue masks'
+    ['- US+Dartel+Smooth+MaskCrt -> applies US, builds Dartel template and warps into' ...
+      'MNI, smoothes (weighted-average), then creates tissue masks']
     }';
 pipe_c.labels = {
-                 'US+smooth'
-                 'US+Dartel+smooth'}';
+                 'US+Smooth+MaskCrt'
+                 'US+Dartel+Smooth+MaskCrt'}';
 pipe_c.values = {1 2};
 pipe_c.val    = {2};
 

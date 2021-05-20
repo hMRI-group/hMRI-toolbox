@@ -220,6 +220,28 @@ json = hmri_get_defaults('json');
 P    = b1map_params.b1input; % B1 data - 11 pairs
 Q    = b1map_params.b0input; % B0 data - 3 volumes
 
+% splitting images in echo1 and echo2 volumes
+% wold be nice to check that echo times are as expected
+P_e1 = P(1:2:end, :);
+P_e2 = P(2:2:end, :);
+
+% calc_SESTE_b1map expects fa in decreasing order
+[b1map_params.b1acq.beta, fa_order] = sort(b1map_params.b1acq.beta, ...
+                                           'descend');
+% rearanging P_e1 and P_e2 in decreasing fa
+P_e1 = P_e1(fa_order, :);
+P_e2 = P_e2(fa_order, :);
+
+% In my eyes keeping echo1 and echo2 separated is easier to read:
+% V = [spm_vol(P_e1) spm_vol(P_e2)]
+% but requires a lot of code changes below, so merging into same 
+% list with correct order
+
+% Don't use 'end' as hMRI may add B1map and B1ref to P
+% from previous runs
+P(1:2:size(P_e1, 1)*2, :) = P_e1;
+P(2:2:size(P_e2, 1)*2, :) = P_e2;
+
 V = spm_vol(P);
 n = numel(V);
 Y_tmptmp = zeros([V(1).dim(1:2) n]);

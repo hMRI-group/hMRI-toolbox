@@ -226,6 +226,7 @@ if size(P, 1) ~= 2 * size(b1map_params.b1acq.beta, 2)
 end  
 
 % splitting images in echo1 and echo2 volumes
+% TODO: check that echo times are as expected
 P_echo1 = P(1:2:end, :);
 P_echo2 = P(2:2:end, :);
 
@@ -236,7 +237,7 @@ P_echo2 = P(2:2:end, :);
 P_echo1 = P_echo1(fa_order, :);
 P_echo2 = P_echo2(fa_order, :);
 
-% In my eyes keeping echo1 and echo2 separated is easier to read:
+% TODO: In my eyes keeping echo1 and echo2 separated is easier to read:
 % V = [spm_vol(P_echo1) spm_vol(P_echo2)]
 % but requires a lot of code changes below, so merging into same 
 % list with correct order

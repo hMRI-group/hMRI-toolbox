@@ -227,25 +227,25 @@ end
 
 % splitting images in echo1 and echo2 volumes
 % TODO: check that echo times are as expected
-P_echo1 = P(1:2:end, :);
-P_echo2 = P(2:2:end, :);
+P_SE = P(1:2:end, :);
+P_STE = P(2:2:end, :);
 
 % calc_SESTE_b1map expects fa in decreasing order
 [b1map_params.b1acq.beta, fa_order] = sort(b1map_params.b1acq.beta, ...
                                            'descend');
 % rearanging P_e1 and P_e2 in decreasing fa
-P_echo1 = P_echo1(fa_order, :);
-P_echo2 = P_echo2(fa_order, :);
+P_SE = P_SE(fa_order, :);
+P_STE = P_STE(fa_order, :);
 
-% TODO: In my eyes keeping echo1 and echo2 separated is easier to read:
-% V = [spm_vol(P_echo1) spm_vol(P_echo2)]
+% TODO: In my eyes keeping SE and STE separated is easier to read:
+% V = [spm_vol(P_SE) spm_vol(P_STE)]
 % but requires a lot of code changes below, so merging into same 
 % list with correct order
 
 % Don't use 'end' as hMRI may add B1map and B1ref to P
 % from previous runs
-P(1:2:size(P_echo1, 1)*2, :) = P_echo1;
-P(2:2:size(P_echo2, 1)*2, :) = P_echo2;
+P(1:2:size(P_SE, 1)*2, :) = P_SE;
+P(2:2:size(P_STE, 1)*2, :) = P_STE;
 
 V = spm_vol(P);
 n = numel(V);

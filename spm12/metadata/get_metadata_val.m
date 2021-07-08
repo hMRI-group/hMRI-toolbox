@@ -695,7 +695,7 @@ else
                     fprintf(1,'\nTrying to derive the epiReadoutDuration from the Sequence version (%s/%s).\n',valSEQ,valPROT);
                     nFieldFound = 1;
                     switch lower(valSEQ)
-                        case 'b1v2d3d2' % 540 us - Prisma
+                        case {'b1v2d3d2' 'b1ep2d23d2'} % 540 us - Prisma/Trio
                             EchoSpacing = 2*140+260;
                         case 'b1epi4a3d2' % 330 us - Allegra
                             EchoSpacing = 330;
@@ -801,7 +801,7 @@ else
             if nFieldFound
                 cRes = 1;
                 switch lower(valSEQ)
-                    case 'b1v2d3d2' % VD13 Prisma data
+                    case {'b1v2d3d2' 'b1ep2d23d2'} % VD13 Prisma/Trio
                         % wip parameters are sorted as follows:
                         % alFree: [Tmixing DurationPer5Deg BWT_SE/STE_factor CrusherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
                         % adFree: [RefocCorr ScaleSGrad MaxRefocAngle DecRefocAngle FAforReferScans RFSpoilIncr]
@@ -860,7 +860,7 @@ else
                 cRes = 1;
                 index = 0;
                 switch lower(valSEQ)
-                    case 'b1v2d3d2' % VD13 Prisma
+                    case {'b1v2d3d2' 'b1ep2d23d2'} % VD13 Prisma/Trio
                         % wip parameters are sorted as follows:
                         % alFree: [Tmixing DurationPer5Deg BWT_SE/STE_factor CursherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
                         % adFree: [RefocCorr ScaleSGrad MaxRefocAngle DecRefocAngle FAforReferScans RFSpoilIncr]
@@ -932,7 +932,7 @@ else
                 cRes = 1;
                 index = 0;
                 switch lower(valSEQ)
-                    case 'b1v2d3d2'
+                    case {'b1v2d3d2' 'b1ep2d23d2'} % VD13 Prisma/Trio
                         % wip parameters are sorted as follows:
                         % alFree: [Tmixing DurationPer5Deg BWT_SE/STE_factor CursherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
                         % adFree: [RefocCorr ScaleSGrad MaxRefocAngle DecRefocAngle FAforReferScans RFSpoilIncr]

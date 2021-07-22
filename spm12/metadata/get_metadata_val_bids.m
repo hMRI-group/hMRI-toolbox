@@ -155,8 +155,28 @@ switch inParName
             parLocation{cRes} = nam{1};
             parValue{cRes} = val{1} * 1000; % [ms]
         else
+          count = 1;
+          parValue{1} = [];
+          parLocation{1} = [];
+          while true
+            field = sprintf('EchoTime%d', count);
+            [nFieldFound, fieldList] = find_field_name(mstruc,field,...
+                                                       'caseSens','sensitive',...
+                                                       'matchType','exact');
+            [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
+            if ~nFieldFound
+              break
+            end
+            count = count + 1;
+            parValue{1}(end + 1, 1) = val{1} * 1000;
+            parLocation{1} = nam{1};
+          end
+          nFieldFound = count - 1;
+
+          if nFieldFound == 0
             [parValue, parLocation] = get_metadata_val(mstruc, 'EchoTime');
             nFieldFound = size(parLocation, 1);
+          end
         end
         
     case 'FlipAngle' % [deg]
@@ -207,7 +227,7 @@ switch inParName
                 parValue{cRes} = 0;
               end
             else
-              parValue{cRes} = (val{1} > 0);
+              parValue{cRes} = double(val{1} > 0);
             end
         else
           % trying from filename
@@ -445,6 +465,7 @@ switch inParName
         [nFieldFound, fieldList] = find_field_name(mstruc,'SpoilingRFPhaseIncrement',...
                                                    'caseSens','insensitive',...
                                                    'matchType','exact');
+        [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         if nFieldFound
             cRes = 1;
             parLocation{cRes} = nam{1};

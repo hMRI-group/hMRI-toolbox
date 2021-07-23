@@ -220,32 +220,28 @@ json = hmri_get_defaults('json');
 P    = b1map_params.b1input; % B1 data - 11 pairs
 Q    = b1map_params.b0input; % B0 data - 3 volumes
 
-if size(P, 1) ~= 2 * size(b1map_params.b1acq.beta, 2)
- error('Expected %d B1 map images, recieved %d', ...
-       2 * size(b1map_params.b1acq.beta, 2), size(P, 1));
-end  
+assert(numel(P) == 2 * numel(b1map_params.b1acq.beta), ...
+   ['Number of B1 mapping image pairs (%d) does not match ' ...
+    'the number of nominal flip angles (%d)!'], ...
+    numel(P)/2, numel(b1map_params.b1acq.beta));
 
-% splitting images in echo1 and echo2 volumes
-% TODO: check that echo times are as expected
-P_SE = P(1:2:end, :);
-P_STE = P(2:2:end, :);
+% splitting images into P_SE and P_STE volumes
+% TODO: check that correct data selected (compare echo times?)
+P_SE = P(1:2:end);
+P_STE = P(2:2:end);
 
 % calc_SESTE_b1map expects fa in decreasing order
-[b1map_params.b1acq.beta, fa_order] = sort(b1map_params.b1acq.beta, ...
-                                           'descend');
-% rearanging P_e1 and P_e2 in decreasing fa
-P_SE = P_SE(fa_order, :);
-P_STE = P_STE(fa_order, :);
+[b1map_params.b1acq.beta, fa_order] = sort(b1map_params.b1acq.beta, 'descend');
 
-% TODO: In my eyes keeping SE and STE separated is easier to read:
-% V = [spm_vol(P_SE) spm_vol(P_STE)]
-% but requires a lot of code changes below, so merging into same 
-% list with correct order
+% rearranging P_SE and P_STE in decreasing fa
+P_SE = P_SE(fa_order);
+P_STE = P_STE(fa_order);
 
-% Don't use 'end' as hMRI may add B1map and B1ref to P
-% from previous runs
-P(1:2:size(P_SE, 1)*2, :) = P_SE;
-P(2:2:size(P_STE, 1)*2, :) = P_STE;
+% TODO: Keeping SE and STE separated might be easier to read
+% but requires a lot of code changes below, so merging into
+% original list with corrected order
+P(1:2:end) = P_SE;
+P(2:2:end) = P_STE;
 
 V = spm_vol(P);
 n = numel(V);

@@ -482,6 +482,17 @@ switch inParName
           parLocation{cRes} = nam{1};
           parValue{cRes} = val{1} * 1000; % in ms
         end
+
+    otherwise % failsafe, just triyng to get parameter from name
+        [nFieldFound, fieldList] = find_field_name(mstruc, inParName,...
+                                                   'caseSens','insensitive',...
+                                                   'matchType','exact');
+        [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
+        if nFieldFound
+          cRes = 1;
+          parLocation{cRes} = nam{1};
+          parValue{cRes} = val{1}; % in ms
+        end
 end
 
 if ~nFieldFound

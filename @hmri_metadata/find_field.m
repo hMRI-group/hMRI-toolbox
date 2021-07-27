@@ -26,7 +26,6 @@ function [res, status] = find_field_value(inStruct, fieldName, casesensitive)
     end
 
     if iscell(inStruct(1).(f{i}))
-      :w
 
 
 end

@@ -6,6 +6,11 @@ classdef hmri_metadata < handle
     meta_hash
   end
 
+  methods(Static)
+    [res, status] = find_field_value(inStruct, fieldName, casesensitive)
+
+  end
+
   methods
     function obj = hmri_metadata(files, varargin)
       % Basic object for retrieving metadata from MRI images

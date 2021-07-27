@@ -79,6 +79,7 @@ for cfile = 1:size(filelist,1)
             % contained in the file into a matlab structure:
             try
                 hdr{cfile} = spm_jsonread(filelist(cfile,:));
+                hdr{cfile}.filename = filelist(cfile,:);
             catch 
                 fprintf(1,'\nError when reading the JSON file \n%s \nFile might be empty or corrupted.\n',filelist(cfile,:));
                 hdr{cfile} = [];

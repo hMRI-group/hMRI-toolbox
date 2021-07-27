@@ -3,9 +3,17 @@ function tests = metadataTests
 end
 
 function setupOnce(testCase)
+
   basePath = fileparts(mfilename('fullpath'));
   bidsDataset = fullfile(basePath, 'data', 'bidsified');
   bidsData = cellstr(spm_select('FPListRec', bidsDataset, '.*\.nii'));
+
+  % Adding generic paths
+  %
+  % matlabbatch for running spm_select
+  addpath(fullfile(spm('dir'), 'matlabbatch'));
+  % get_metadata series of functions
+  addpath(fullfile(basePath, '..', 'spm12', 'metadata'));
 
   fid = fopen(fullfile(basePath, 'metafields_bids.txt'));
   meta = textscan(fid, '%s');
@@ -50,7 +58,7 @@ function tests = testMetafields(testCase)
 
       % bypass of field strenght calculation
       if strcmp(meta, 'FieldStrength')
-        assertEqual(bids_val, 3);
+        assert(bids_val == 3);
         continue;
       end
 

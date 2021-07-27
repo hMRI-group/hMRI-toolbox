@@ -1,4 +1,4 @@
-function [parValue, parLocation] = get_metadata_val_bids(varargin)
+function [parValue, parLocation] = get_metadata_val_classic(varargin)
 % This is get_metadata_val, part of the metadata library
 %
 % PURPOSE

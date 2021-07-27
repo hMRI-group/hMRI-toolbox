@@ -220,31 +220,36 @@ json = hmri_get_defaults('json');
 P    = b1map_params.b1input; % B1 data - 11 pairs
 Q    = b1map_params.b0input; % B0 data - 3 volumes
 
-assert(numel(P) == 2 * numel(b1map_params.b1acq.beta), ...
+V = spm_vol(P);
+n = numel(V);
+
+assert(rem(n,2)==0, ...
+   ['B1 mapping image volumes must be a set of SE, STE pairs ' ...
+   'thus the number of input volumes (currently %d) must be even.'], n);
+
+assert(n == 2 * numel(b1map_params.b1acq.beta), ...
    ['Number of B1 mapping image pairs (%d) does not match ' ...
     'the number of nominal flip angles (%d)!'], ...
-    numel(P)/2, numel(b1map_params.b1acq.beta));
+    n/2, numel(b1map_params.b1acq.beta));
 
-% splitting images into P_SE and P_STE volumes
+% splitting images into SE and STE volumes
 % TODO: check that correct data selected (compare echo times?)
-P_SE = P(1:2:end);
-P_STE = P(2:2:end);
+V_SE = V(1:2:end);
+V_STE = V(2:2:end);
 
 % calc_SESTE_b1map expects fa in decreasing order
 [b1map_params.b1acq.beta, fa_order] = sort(b1map_params.b1acq.beta, 'descend');
 
-% rearranging P_SE and P_STE in decreasing fa
-P_SE = P_SE(fa_order);
-P_STE = P_STE(fa_order);
+% rearranging volumes in decreasing fa
+V_SE = V_SE(fa_order);
+V_STE = V_STE(fa_order);
 
 % TODO: Keeping SE and STE separated might be easier to read
 % but requires a lot of code changes below, so merging into
 % original list with corrected order
-P(1:2:end) = P_SE;
-P(2:2:end) = P_STE;
+V(1:2:end) = V_SE;
+V(2:2:end) = V_STE;
 
-V = spm_vol(P);
-n = numel(V);
 Y_tmptmp = zeros([V(1).dim(1:2) n]);
 Y_ab = zeros(V(1).dim(1:3));
 Y_cd = zeros(V(1).dim(1:3));

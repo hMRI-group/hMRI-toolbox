@@ -5,7 +5,7 @@ end
 function setupOnce(testCase)
 
   basePath = fileparts(mfilename('fullpath'));
-  bidsDataset = fullfile(basePath, 'data', 'bidsified');
+  bidsDataset = fullfile(basePath, 'data', 'hmri_sample_dataset_bids');
   bidsData = cellstr(spm_select('FPListRec', bidsDataset, '.*\.nii'));
 
   % Adding generic paths

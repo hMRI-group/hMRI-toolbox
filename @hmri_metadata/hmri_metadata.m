@@ -7,7 +7,7 @@ classdef hmri_metadata < handle
   end
 
   methods(Static)
-    [res, status] = find_field_value(inStruct, fieldName, casesensitive)
+    [res, status] = find_field(inStruct, fieldName, casesensitive)
 
   end
 

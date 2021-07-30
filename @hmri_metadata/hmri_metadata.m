@@ -6,9 +6,16 @@ classdef hmri_metadata < handle
     meta_hash
   end
 
-  methods(Static)
-    [res, status] = find_field(inStruct, fieldName, casesensitive)
+  properties(Constant)
+    retrieve = {@hmri_metadata.get_val_classic; ...
+                @hmri_metadata.get_val_header; ...
+                @hmri_metadata.get_val_bids};
+  end
 
+
+  methods(Static)
+    [res, status] = get_val_raw(inStruct, fieldName, casesensitive)
+    res = find_bids_entity(fname, entity)
   end
 
   methods
@@ -75,6 +82,5 @@ classdef hmri_metadata < handle
       % Loading first file
       obj.set_file(1, true);
     end
-
   end
 end

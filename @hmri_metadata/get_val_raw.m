@@ -1,4 +1,4 @@
-function [res, status] = find_field(inStruct, fieldName, casesensitive)
+function [res, status] = get_val_raw(inStruct, fieldName, casesensitive)
   % Recusively retrives value of the first found field in inStruct
   % If casesensitive is false, than field names are maches
   % are not case sensitive
@@ -37,6 +37,10 @@ function [res, status] = find_field(inStruct, fieldName, casesensitive)
 
   f = fieldnames(inStruct(1));
   for i = 1:numel(f)
+    if status
+      break;
+    end
+
     s2 = strtrim(f{i});
     if ~casesensitive
       s2 = lower(s2);
@@ -46,24 +50,29 @@ function [res, status] = find_field(inStruct, fieldName, casesensitive)
 
     if status
       res = inStruct(1).(f{i});
-      return;
+      break;
     end
 
     if iscell(inStruct(1).(f{i}))
       for cc = 1:numel(inStruct(1).(f{i}))
-        [res, status] = hmri_metadata.find_field(inStruct(1).(f{i}){cc}, ...
-                                                 s1, casesensitive);
+        [res, status] = hmri_metadata.get_val_raw(inStruct(1).(f{i}){cc}, ...
+                                                  s1, casesensitive);
         if status
-          return;
+          break;
         end
       end
     end
 
     if isstruct(inStruct(1).(f{i}))
-      [res, status] = hmri_metadata.find_field(inStruct(1).(f{i}), ...
-                                               s1, casesensitive);
+      [res, status] = hmri_metadata.get_val_raw(inStruct(1).(f{i}), ...
+                                                s1, casesensitive);
       if status
-        return;
+        break;
       end
     end
+  end
+
+  if ischar(res)
+    res = strtrim(res);
+  end
 end

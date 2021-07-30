@@ -29,55 +29,75 @@ function setupOnce(testCase)
 end
 
 
-function tests = test_find_field(testCase)
+function tests = test_get_val_raw(testCase)
   inStruct = testCase.TestData.testJSON;
 
   % Non-recursive search
-  [res, status] = hmri_metadata.find_field(inStruct, 'topLevelScalar', true);
+  [res, status] = hmri_metadata.get_val_raw(inStruct, 'topLevelScalar', true);
   assert(status);
   assert(res == 2);
 
-  [res, status] = hmri_metadata.find_field(inStruct, 'toplevelscalar', false);
+  [res, status] = hmri_metadata.get_val_raw(inStruct, 'toplevelscalar', false);
   assert(status);
   assert(res == 2);
 
-  [res, status] = hmri_metadata.find_field(inStruct, 'topLevelString', true);
+  [res, status] = hmri_metadata.get_val_raw(inStruct, 'topLevelString', true);
   assert(status);
   assert(strcmp(res, 'abc'));
 
-  [res, status] = hmri_metadata.find_field(inStruct, 'toplevelstring', true);
+  [res, status] = hmri_metadata.get_val_raw(inStruct, 'toplevelstring', true);
   assert(~status);
   assert(isempty(res));
 
-  [res, status] = hmri_metadata.find_field(inStruct, ...
+  [res, status] = hmri_metadata.get_val_raw(inStruct, ...
                                            sprintf('  topLevelString\t'), ...
                                            true);
   assert(status);
   assert(strcmp(res, 'abc'));
 
 
-  [res, status] = hmri_metadata.find_field(inStruct, 'topLevelList', true);
+  [res, status] = hmri_metadata.get_val_raw(inStruct, 'topLevelList', true);
   assert(status);
   assert(all(res == [1; 2; 3]));
 
-  [res, status] = hmri_metadata.find_field(inStruct, 'topLevelLongList', true);
+  [res, status] = hmri_metadata.get_val_raw(inStruct, 'topLevelLongList', true);
   assert(status);
   assert(all(res == [11; 12; 13; 21; 22; 23]));
 
-  [res, status] = hmri_metadata.find_field(inStruct, 'topLevelStruct', true);
+  [res, status] = hmri_metadata.get_val_raw(inStruct, 'topLevelStruct', true);
   assert(status);
   assert(res.subLevelScalar == 3.14);
   assert(strcmp(res.subLevelString, 'def'));
 
   % Recursive search
-  res = hmri_metadata.find_field(inStruct, 'topLevelNested', true);
-  res
-  [res, status] = hmri_metadata.find_field(inStruct, 'item1', true);
+  res = hmri_metadata.get_val_raw(inStruct, 'topLevelNested', true);
+  [res, status] = hmri_metadata.get_val_raw(inStruct, 'item1', true);
   assert(status);
   assert(strcmp(res.i1j1, 'val_i1j1'));
 
 
-  [res, status] = hmri_metadata.find_field(inStruct, 'i1j3', true);
+  [res, status] = hmri_metadata.get_val_raw(inStruct, 'i1j3', true);
   assert(status);
   assert(strcmp(res, 'val_i1j3'));
+end
+
+
+function tests = test_find_bids_entity(testCase)
+  fname = 'sub-aaa_ses-bbb_acq-ddd_sufXYZ.nii.gz';
+
+  res = hmri_metadata.find_bids_entity(fname, 'sub-');
+  assertEqual(testCase, res, 'aaa');
+
+  res = hmri_metadata.find_bids_entity(fname, 'ses-');
+  assertEqual(testCase, res, 'bbb');
+
+  res = hmri_metadata.find_bids_entity(fname, 'suffix');
+  assertEqual(testCase, res, 'sufXYZ');
+
+  res = hmri_metadata.find_bids_entity(fname, 'extension');
+  assertEqual(testCase, res, '.nii.gz');
+
+  res = hmri_metadata.find_bids_entity(fname, 'xyz-');
+  assertEqual(testCase, res, []);
+
 end

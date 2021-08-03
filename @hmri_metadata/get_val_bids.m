@@ -5,9 +5,9 @@ function [value, result] = get_val_bids(obj, fieldName)
   switch fieldName
     case 'RepetitionTime'
       % Valid for all vendors
-      [value, result] = get_val_raw(obj.meta_hash, 'RepetitionTime', true);
+      [value, result] = obj.get_val_raw(obj.meta_hash, 'RepetitionTime', true);
       if ~result
-        [value, result] = get_val_raw(obj.meta_hash, 'RepetitionTimeExcitation', true);
+        [value, result] = obj.get_val_raw(obj.meta_hash, 'RepetitionTimeExcitation', true);
       end
 
       if result
@@ -16,14 +16,14 @@ function [value, result] = get_val_bids(obj, fieldName)
 
     case 'EchoTime'
       % Valid for all vendors
-      [value, result] = get_val_raw(obj.meta_hash, 'EchoTime', true);
+      [value, result] = obj.get_val_raw(obj.meta_hash, 'EchoTime', true);
 
       if result
         value = value * 1000; % converting to ms
       end
 
     case 'MT'
-      [value, result] = get_val_raw(obj.meta_hash, 'MTstate', true);
+      [value, result] = obj.get_val_raw(obj.meta_hash, 'MTstate', true);
       if result
         if ischar(value)
           if strcmpi(value, 'on')
@@ -49,10 +49,10 @@ function [value, result] = get_val_bids(obj, fieldName)
       end
 
     case 'FieldStrength'
-      [value, result] = get_val_raw(obj.meta_hash, 'MagneticFieldStrength', true);
+      [value, result] = obj.get_val_raw(obj.meta_hash, 'MagneticFieldStrength', true);
 
     case 'PhaseEncodingDirectionSign'
-      [value, result] = get_val_raw(obj.meta_hash, 'PhaseEncodingDirection', true);
+      [value, result] = obj.get_val_raw(obj.meta_hash, 'PhaseEncodingDirection', true);
       if result
         if value(end) == '-'
           value = -1;
@@ -61,11 +61,11 @@ function [value, result] = get_val_bids(obj, fieldName)
         end
       else
         warning('PhaseEncodingDirection not found, using PhaseEncodingDirectionSign');
-        [value, result] = get_val_raw(obj.meta_hash, 'PhaseEncodingDirectionSign', true);
+        [value, result] = obj.get_val_raw(obj.meta_hash, 'PhaseEncodingDirectionSign', true);
       end
 
     case 'PhaseEncodingDirection' % 'COL' (A>>P/P>>A/j) or 'ROW' (R>>L/L>>R/i)
-      [value, result] = get_val_raw(obj.meta_hash, 'PhaseEncodingDirection', true);
+      [value, result] = obj.get_val_raw(obj.meta_hash, 'PhaseEncodingDirection', true);
       if result
         if value == 'j'
           value = 'COL';
@@ -79,7 +79,7 @@ function [value, result] = get_val_bids(obj, fieldName)
       end
 
     case 'MultiBandFactor'
-      [value, result] = get_val_raw(obj.meta_hash, 'MultibandAccelerationFactor', true);
+      [value, result] = obj.get_val_raw(obj.meta_hash, 'MultibandAccelerationFactor', true);
 
     case 'isDWI'
         suffix = find_bids_entity(obj.filelist{obj.index}, 'suffix');
@@ -91,10 +91,10 @@ function [value, result] = get_val_bids(obj, fieldName)
         end
 
     case 'epiReadoutDuration'
-      [value, result] = get_val_raw(obj.meta_hash, 'epiReadoutTime', true);
+      [value, result] = obj.get_val_raw(obj.meta_hash, 'epiReadoutTime', true);
       if ~result
         warning('epiReadoutTime not found using TotalReadoutTime');
-        [value, result] = get_val_raw(obj.meta_hash, 'TotalReadoutTime', true);
+        [value, result] = obj.get_val_raw(obj.meta_hash, 'TotalReadoutTime', true);
       end
 
       if result
@@ -102,19 +102,19 @@ function [value, result] = get_val_bids(obj, fieldName)
       end
 
     case 'EchoSpacing'
-      [value, result] = get_val_raw(obj.meta_hash, 'EffectiveEchoSpacing', true);
+      [value, result] = obj.get_val_raw(obj.meta_hash, 'EffectiveEchoSpacing', true);
       if result
         value = value * 1000;
       end
 
     case 'B1mapMixingTime'
-      [value, result] = get_val_raw(obj.meta_hash, 'MixingTime', true);
+      [value, result] = obj.get_val_raw(obj.meta_hash, 'MixingTime', true);
       if result
         value = value * 1000;
       end
 
     otherwise
-      [value, result] = get_val_raw(obj.meta_hash, fieldName, true);
+      [value, result] = obj.get_val_raw(obj.meta_hash, fieldName, true);
   end
 
   return;

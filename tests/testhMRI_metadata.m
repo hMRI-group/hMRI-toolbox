@@ -101,3 +101,9 @@ function tests = test_find_bids_entity(testCase)
   assertEqual(testCase, res, []);
 
 end
+
+
+function test_get_val_bids(testCase)
+  metadata = hmri_metadata({testCase.TestData.bidsData{1:10}}, 'mode', 'bids');
+  assertEqual(testCase, metadata.get_val_bids('RepetitionTime'), 123);
+end

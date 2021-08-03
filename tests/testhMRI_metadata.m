@@ -104,6 +104,28 @@ end
 
 
 function test_get_val_bids(testCase)
-  metadata = hmri_metadata({testCase.TestData.bidsData{1:10}}, 'mode', 'bids');
-  assertEqual(testCase, metadata.get_val_bids('RepetitionTime'), 123);
+  metadata = hmri_metadata(testCase.TestData.bidsData, 'mode', 'bids');
+  for iFile = 1:size(testCase.TestData.bidsData)
+    [~, fname, ~] = fileparts(testCase.TestData.bidsData{iFile});
+    metadata.set_file(iFile);
+    [source_name, status] = metadata.get_val_bids('OriginalFile');
+    assertTrue(testCase, status, [fname ': OriginalFile not defined']);
+    assertNotEmpty(testCase, source_name, [fname ': OriginalFile empty']);
+
+    source_index = find(endsWith(testCase.TestData.sourceDataset, ...
+                                 source_name));
+    assertGreaterThan(testCase, size(source_index, 1), 0, ...
+                      [fname, ': no source files found']);
+    source_file = testCase.TestData.sourceDataset{source_index(1)};
+    source_header = get_metadata(source_file);
+    source_header = source_header{1};
+    
+    meta = 'RepetitionTime';
+    source_val = get_metadata_val(source_header, meta);
+    [bids_val, status] = metadata.get_val_bids(meta);
+
+    if ~isempty(source_val)
+      verifyEqual(testCase, bids_val, source_val, [fname ' -- ' meta]);
+    end 
+  end
 end

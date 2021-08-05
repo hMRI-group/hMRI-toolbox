@@ -38,7 +38,7 @@ function [value, result] = get_val_bids(obj, fieldName)
           value = double(value > 0);
         end
       else
-        mt = find_bids_entity(obj.filelist{index}, 'mt-');
+        mt = obj.find_bids_entity(obj.filelist{obj.index}, 'mt-');
         if strcmpi(mt, 'on') || strcmp(mt, '1')
           result = true;
           value = 1.;
@@ -67,10 +67,10 @@ function [value, result] = get_val_bids(obj, fieldName)
     case 'PhaseEncodingDirection' % 'COL' (A>>P/P>>A/j) or 'ROW' (R>>L/L>>R/i)
       [value, result] = obj.get_val_raw(obj.meta_hash, 'PhaseEncodingDirection', true);
       if result
-        if value == 'j'
+        if value(1) == 'j'
           value = 'COL';
-        elseif value == 'i'
-          value = 'ROW'
+        elseif value(1) == 'i'
+          value = 'ROW';
         else
           warning(['Invalid PhaseEncodingDirection ' value]);
           value = [];
@@ -82,7 +82,7 @@ function [value, result] = get_val_bids(obj, fieldName)
       [value, result] = obj.get_val_raw(obj.meta_hash, 'MultibandAccelerationFactor', true);
 
     case 'isDWI'
-        suffix = find_bids_entity(obj.filelist{obj.index}, 'suffix');
+        suffix = obj.find_bids_entity(obj.filelist{obj.index}, 'suffix');
         result = true;
         if strcmpi(suffix, 'dwi')
           value = 1;

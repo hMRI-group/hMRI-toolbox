@@ -17,6 +17,13 @@ function setupOnce(testCase)
   % get_metadata series of functions
   addpath(fullfile(basePath, '..', 'spm12', 'metadata'));
 
+  % Loading list of metadata to test
+  fid = fopen(fullfile(basePath, 'fields_names.txt'));
+  meta = textscan(fid, '%s');
+  MetaFields = meta{1};
+  fclose(fid);
+  testCase.TestData.MetaFields = MetaFields;
+
   sourceDataset = fullfile(dataPath, 'hmri_sample_dataset_with_maps');
   sourceDataset = spm_select('FPListRec', sourceDataset, '.*\.nii');
   sourceDataset = cellstr(sourceDataset);
@@ -120,12 +127,34 @@ function test_get_val_bids(testCase)
     source_header = get_metadata(source_file);
     source_header = source_header{1};
     
-    meta = 'RepetitionTime';
-    source_val = get_metadata_val(source_header, meta);
-    [bids_val, status] = metadata.get_val_bids(meta);
+    for iMeta = 1:size(testCase.TestData.MetaFields)
+      meta = testCase.TestData.MetaFields{iMeta};
+      source_val = get_metadata_val(source_header, meta);
+      if ischar(source_val)
+        source_val = strtrim(source_val);
+      end
 
-    if ~isempty(source_val)
-      verifyEqual(testCase, bids_val, source_val, [fname ' -- ' meta]);
-    end 
+      switch meta
+        case 'FieldStrength'
+          source_val = 3;
+        case 'FlipAngle'
+          source_val = [];
+      end
+
+      [bids_val, status] = metadata.get_val_bids(meta);
+
+      if status
+        if ~isempty(source_val)
+          if isnumeric(source_val)
+            verifyThat(testCase, bids_val, ...
+                       matlab.unittest.constraints.IsEqualTo(source_val, 'Within', ...
+                       matlab.unittest.constraints.RelativeTolerance(1e-10)), ...
+                       [fname ' -- ' meta]);
+          else
+            verifyEqual(testCase, bids_val, source_val, [fname ' -- ' meta]);
+          end
+        end 
+      end
+    end
   end
 end

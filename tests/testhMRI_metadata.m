@@ -158,3 +158,35 @@ function test_get_val_bids(testCase)
     end
   end
 end
+
+
+function test_get_val_classic(testCase)
+  metadata = hmri_metadata(testCase.TestData.sourceDataset, 'mode', 'classic');
+  for iFile = 1:size(testCase.TestData.sourceDataset)
+    [~, fname, ~] = fileparts(testCase.TestData.sourceDataset{iFile});
+    metadata.set_file(iFile);
+
+    source_header = get_metadata(testCase.TestData.sourceDataset{iFile});
+    source_header = source_header{1};
+    
+    for iMeta = 1:size(testCase.TestData.MetaFields)
+      meta = testCase.TestData.MetaFields{iMeta};
+      source_val = get_metadata_val(source_header, meta);
+      if ischar(source_val)
+        source_val = strtrim(source_val);
+      end
+
+      [classic_val, status] = metadata.get_val_classic(meta);
+
+      if ~isempty(source_val)
+        testCase.verifyTrue(status, [fname ' -- ' meta]);
+        testCase.verifyEqual(classic_val, source_val, [fname ' -- ' meta]);
+      elseif strcmp(meta, 'EchoSpacing')
+        testCase.verifyTrue(status, [fname ' -- ' meta]);
+        testCase.verifyEqual(classic_val, 0.54, [fname ' -- ' meta]);
+      else
+        testCase.verifyFalse(status, [fname ' -- ' meta]);
+      end
+    end
+  end
+end

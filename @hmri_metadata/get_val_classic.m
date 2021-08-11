@@ -14,7 +14,7 @@ function [value, result] = get_val_classic(obj, fieldName)
       if result
         value = double(value > 0);
       else
-        reuslt = true;
+        result = true;
         value = 0;
       end
         
@@ -53,11 +53,11 @@ function [value, result] = get_val_classic(obj, fieldName)
       % Siemens-specific towards validation for all vendors...
       [value, result] = obj.get_val_raw(obj.meta_hash, 'lPhaseEncodingLines', true);
       if ~result
-        [value, result] = obj.get_val_classic('PhaseEncodingDirection');
-        if strcmp(value, 'ROW')
-          [value, result] = obj.get_val_raw(obj.meta_hash, 'Rows');
+        [valPE, resPE] = obj.get_val_classic('PhaseEncodingDirection');
+        if resPE && strcmp(valPE, 'ROW')
+          [value, result] = obj.get_val_raw(obj.meta_hash, 'Rows', true);
         else
-          [value, result] = obj.get_val_raw(obj.meta_hash, 'Columns');
+          [value, result] = obj.get_val_raw(obj.meta_hash, 'Columns', true);
         end
       end
         
@@ -66,7 +66,7 @@ function [value, result] = get_val_classic(obj, fieldName)
       % acceleration but not partial Fourier. Used to calculate the total
       % EPI Readout duration for FieldMap undistortion.
       % Siemens-specific.
-      [value, result] = obj.get_val_classic('PELines', true);
+      [value, result] = obj.get_val_classic('PELines');
       [valuePAT, resultPAT] = obj.get_val_raw(obj.meta_hash, 'lAccelFactPE', true);
       if ~resultPAT
         result = true;
@@ -75,6 +75,10 @@ function [value, result] = get_val_classic(obj, fieldName)
         value = floor(value / valuePAT);
       end
         
+    case 'PhaseEncodingDirection'
+      % Siemens-specific:
+      [value, result] = obj.get_val_raw(obj.meta_hash, 'InPlanePhaseEncodingDirection', true);
+
     case 'PhaseEncodingDirectionSign'
       % Siemens-specific:
       [value, result] = obj.get_val_raw(obj.meta_hash, 'PhaseEncodingDirectionPositive', true);
@@ -85,7 +89,9 @@ function [value, result] = get_val_classic(obj, fieldName)
         
     case 'NumberOfMeasurements' % Siemens-specific
       [value, result] = obj.get_val_raw(obj.meta_hash, 'lRepetitions', true);
-      if ~result
+      if result
+        value = value + 1;
+      else
         result = true;
         value = 1;
       end
@@ -94,7 +100,7 @@ function [value, result] = get_val_classic(obj, fieldName)
       [value, result] = obj.get_val_raw(obj.meta_hash, 'sSliceArray', true);
       if result
         if value.lSize == 1 && ...
-            strcmp(obj.get_val_raw(obj.meta_hash, 'MRAcquisitionType'),'3D')
+            strcmp(obj.get_val_raw(obj.meta_hash, 'MRAcquisitionType', true),'3D')
           [value, result] = obj.get_val_raw(obj.meta_hash, 'lImagesPerSlab', true);
         else
           value = value.lSize;
@@ -118,7 +124,7 @@ function [value, result] = get_val_classic(obj, fieldName)
       % determine sequence (CMRR versus Siemens product)
       [valSeq, resSeq] = obj.get_val_raw(obj.meta_hash, 'tSequenceFileName', true);
       if resSeq
-        if strfind(lower(valSeq), 'cmrr')
+        if contains(lower(valSeq), 'cmrr')
           [value, result] = obj.get_val_raw(obj.meta_hash, 'MiscSequenceParam', true);
           if result
             value = value(12);
@@ -169,313 +175,199 @@ function [value, result] = get_val_classic(obj, fieldName)
         % case, relying on sequence version, BWPP and resolution :/...
         
         % first check whether BandwidthPerPixelPhaseEncode is defined
-        [nFieldFound, fieldList] = find_field_name(mstruc, 'BandwidthPerPixelPhaseEncode','caseSens','sensitive','matchType','exact');
-        [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
-        % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
-        % Keep only first value if many
-        if nFieldFound
-            cRes = 1;
-            parLocation{cRes} = nam{1};
-            parValue{cRes} = 1/val{1}*1000;
+        [value, result] = obj.get_val_raw(obj.meta_hash, 'BandwidthPerPixelPhaseEncode', true);
+        if result
+          % BPPPE is defined, deriving readout duration directly
+          value = 1 / value * 1e3;
         else
-            fprintf(1,['\nWARNING: BandwidthPerPixelPhaseEncode not defined for the current sequence\n' ...
-                'For 3D-EPI B1 mapping sequences, values are deduced from the sequence\n' ...
-                'version. Be aware that it might not be correct if the version is unknown.\n']);
-            
-            % check whether it is an EPI sequence (al_B1mapping is not defined as 'EP' but 'RM'):
-            valEPI = get_metadata_val(mstruc, 'ScanningSequence');
-            valSEQ = get_metadata_val(mstruc, 'SequenceName');
-            valPROT = get_metadata_val(mstruc, 'ProtocolName');
-            valMODELNAME = get_metadata_val(mstruc, 'ManufacturerModelName');
-            
-            % Case al_B1mapping
-            if strfind(lower(valPROT),'b1map')
-                fprintf(1,'\nTrying to derive the epiReadoutDuration from the Sequence version (%s/%s).\n',valSEQ,valPROT);
-                nFieldFound = 1;
-                switch lower(valSEQ)
-                    case 'b1v2d3d2' % 540 us - Prisma
-                        EchoSpacing = 2*140+260;
-                    case 'b1epi4a3d2' % 330 us - Allegra
-                        EchoSpacing = 330;
-                    case 'b1epi2b3d2' % 1mm protocol from WTCN
-                        EchoSpacing = 540;
-                    case 'seste1d3d2' % 1mm protocol from WTCN
-                        % alFree: [VoxDeph,SpoilAmp,EddCurr0,EddCurr1,TRamp,TFlat,BWT,0,0,0,0,0,2,MixingTime,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12345],
-                        % adFree: [0,0,0,0,0,0,0,SlabGradScale,RefocCorr,0,0,RFSpoilBasicIncr]
-                        Wip = get_metadata_val(mstruc, 'WipParameters');
-                        EchoSpacing = Wip.alFree(5)*2+Wip.alFree(6);
-                    case {'b1sev1a3d2' 'b1sev1b3d2' 'b1epi2f3d2' 'b1epi2g3d2' 'b1sev1a'} % 7T and Prisma versions by Kerrin Pine
-                        if contains(valMODELNAME,'Prisma','IgnoreCase',true)
-                            Wip = get_metadata_val(mstruc, 'WipParameters');
-                            EchoSpacing = Wip.alFree(5)*2+Wip.alFree(6);
-                        elseif contains(valMODELNAME,'7T','IgnoreCase',true)
-                            EchoSpacing = 540;
-                        else
-                            % Do nothing
-                        end
-                    case 'b1epi2d3d2' % 800um protocol from WTCN
-                        EchoSpacing = 540;
-                end
-                if ~exist('EchoSpacing','var')
-                    fprintf(1,'\nWARNING: B1mapping version unknown, trying to base our guess on PixelBandwidth.\n');
-                    PixelBandwidth = get_metadata_val(mstruc,'BandwidthPerPixelRO');
-                    switch PixelBandwidth
-                        case 2300
-                            EchoSpacing = 540e-3;
-                        case 3600
-                            EchoSpacing = 330e-3;
-                        case 3550 % Allegra data
-                            EchoSpacing = 330e-3;
-                        otherwise
-                            fprintf(1,'Giving up: using default EchoSpacing value = 540 us.\n');
-                            EchoSpacing = 2*140+260; % us
-                    end
-                end
-                measPElin = get_metadata_val(mstruc,'PELinesPAT');
-                cRes = 1;
-                parLocation{cRes} = 'HardCodedParameter';
-                parValue{cRes} = EchoSpacing * measPElin * 0.001; % ms
-                
-                fprintf(1,['\nINFO: the EPI readout duration has been derived:' ...
-                    '\n\tEchoSpacing = %5.2f us' ...
-                    '\n\tmeasPElin = %d' ...
-                    '\n\tepiReadoutDuration = %5.2f ms\n'], ...
-                    EchoSpacing, measPElin,parValue{cRes});
-                
-            else
-                if strcmp(valEPI,'EP')
-                    fprintf(1,['\nWARNING: Sequence defined as EPI but BandwidthPerPixelPhaseEncode\n' ...
-                        'not defined. No value returned.\n']);
-                else
-                    fprintf(1,['\nWARNING: This might not be an EPI sequence. \n' ...
-                        'Could not work out EPI readout duration.\n']);
-                end
+          % BPPPE not defined, deriving readout duration from protocol
+          valEPI = obj.get_val_raw(obj.meta_hash, 'ScanningSequence', true);
+          valPROT = obj.get_val_raw(obj.meta_hash, 'ProtocolName', true);
+
+          if contains(lower(valPROT),'b1map')
+            [EchoSpacing, statusES] = obj.get_val_classic('EchoSpacing');
+            [measPElin, statusPE] = obj.get_val_classic('PELinesPAT');
+            if statusES && statusPE
+              value = EchoSpacing * measPElin;
+              result = true;
             end
+          else
+            if strcmp(valEPI,'EP')
+              warning(['%s (%s): Sequence is EPI but ' ...
+                       'BandwidthPerPixelPhaseEncode not defined'], ...
+                      obj.filelist{obj.index}, fieldName);
+            else
+              warning('%s (%s): Sequence not EPI', ...
+                      obj.filelist{obj.index}, fieldName);
+            end
+          end
         end
         
     case 'EchoSpacing' % [ms]
-        % Siemens-specific
-        % This information is easily retrievable from standard EPI
-        % sequences, where the "BandwidthPerPixelPhaseEncoding" is defined.
-        % In Customer-written sequences, this parameter might be missing in
-        % the header...
+      % Siemens-specific
+      % This information is easily retrievable from standard EPI
+      % sequences, where the "BandwidthPerPixelPhaseEncoding" is defined.
+      % In Customer-written sequences, this parameter might be missing in
+      % the header...
         
-        % first check whether BandwidthPerPixelPhaseEncode is defined
-        [nFieldFound, fieldList] = find_field_name(mstruc, 'BandwidthPerPixelPhaseEncode','caseSens','sensitive','matchType','exact');
-        [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
-        % if (nFieldFound>1);warning('More than one value was found for %s. First one kept.', inParName);end
-        % Keep only first value if many
-        if nFieldFound
-            cRes = 1;
-            parLocation{cRes} = nam{1};
-            epiROduration = 1/val{1}*1000;
-            measPElin = get_metadata_val(mstruc,'PELinesPAT');
-            try
-                parValue{cRes} = epiROduration/measPElin;
-            catch
-                fprintf(1,'\nWARNING: Cannot retrieve the EchoSpacing for the current sequence.\n');
-            end
+      % first check whether BandwidthPerPixelPhaseEncode is defined
+      [BPPPE, resBPP] = obj.get_val_raw(obj.meta_hash, 'BandwidthPerPixelPhaseEncode', true);
+      [PELines, resPELines] = obj.get_val_classic('PELinesPAT');
+      if resBPP && resPELines
+        value = 1. / (BPPPE * PELines);
+        result = true;
+      end
+
+      if ~result
+        % Retriving EchoSpacing based on Sequence
+        valSEQ = obj.get_val_raw(obj.meta_hash, 'SequenceName', true);
+        valMODELNAME = obj.get_val_raw(obj.meta_hash, 'ManufacturerModelName', true);
+        wip = obj.get_val_raw(obj.meta_hash, 'sWipMemBlock', false);
+        [value, result] = get_EchoSpacing(valSEQ, wip, valMODELNAME);
+      end
+
+      if ~result
+        % Based on BPPPRO
+        [PixelBandwidth, resPB]  = obj.get_val_raw(obj.meta_hash, 'BandwidthPerPixelRO', true);
+        if resPB
+          [value, result] = get_EchoSpacing_BPP(PixelBandwidth);
+        end
+      end
+
+      if ~result
+        % Default value
+        value = 0.540; % 2*140+260 us
+        result = true;
+        warning('%s (%s): Unable to get EchoSpacing. Using default %f', ...
+                obj.filelist{obj.index}, fieldName, value);
+      end
+        
+    case 'RFSpoilingPhaseIncrement'
+      % [deg] defined in al_B1mapping and mtflash3d sequences - version dependent!!
+      valSEQ = obj.get_val_raw(obj.meta_hash, 'SequenceName', true);
+      valPROT = obj.get_val_raw(obj.meta_hash, 'ProtocolName', true);
+      valMODELNAME = obj.get_val_raw(obj.meta_hash, 'ManufacturerModelName', true);
+      [wip, statusWIP] = obj.get_val_raw(obj.meta_hash, 'sWipMemBlock', false);
+      index = 0;
+
+      switch lower(valSEQ)
+        case {'b1v2d3d2', 'b1epi4a3d2', 'b1epi2d3d2'} 
+          index = 6;
+
+        case {'fl3d_2l3d8', 'fl3d_2d3d6'}
+          index = 3;
+
+        case {'seste1d3d2'}
+          index = 12;
+
+        case {'b1sev1a3d2' 'b1sev1b3d2' 'b1epi2f3d2' 'b1epi2g3d2' 'b1sev1a'}
+          if contains(valMODELNAME,'Prisma','IgnoreCase',true)
+              index = 12;
+          elseif contains(valMODELNAME,'7T','IgnoreCase',true)
+              index = 3;
+          end
+        otherwise
+          warning(['%s (%s): Unknown sequence %s (%s). ' ...
+                   'Unable to extract RF spoiling increment'], ...
+                  obj.filelist{obj.index}, fieldName, valSEQ, valPROT)
+      end
+      if statusWIP && index > 0
+        if index <= numel(wip.adFree)
+          value = wip.adFree(index);
+          result = true;
         else
-            fprintf(1,['\nWARNING: BandwidthPerPixelPhaseEncode not defined for the current sequence.\n' ...
-                'Trying to derive the echo spacing from the epiReadoutDuration...\n']);
-            cRes = 1;
-            epiROduration = get_metadata_val(mstruc,'epiReadoutDuration');
-            measPElin = get_metadata_val(mstruc,'PELinesPAT');
-            try
-                parValue{cRes} = epiROduration/measPElin;
-                parLocation{cRes} = 'Derived';
-                nFieldFound = 1;
-            catch
-                fprintf(1,'\nWARNING: Failed deriving the Echo Spacing for the current protocol.\n');
-            end
+          warning('%s (%s): Index %d out of range for sWipMemBlock', ...
+                  obj.filelist{obj.index}, fieldName, index);
         end
-        
-    case 'B1mapNominalFAValues' % [deg] for al_B1mapping - version dependent!!
-        valSEQ = get_metadata_val(mstruc, 'SequenceName');
-        valPROT = get_metadata_val(mstruc, 'ProtocolName');
-        valMODELNAME = get_metadata_val(mstruc, 'ManufacturerModelName');
-        [nFieldFound, fieldList] = find_field_name(mstruc, 'sWipMemBlock','caseSens','insensitive','matchType','exact');
-        [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
-        if nFieldFound
-            cRes = 1;
-            switch lower(valSEQ)
-                case 'b1v2d3d2' % VD13 Prisma data
-                    % wip parameters are sorted as follows:
-                    % alFree: [Tmixing DurationPer5Deg BWT_SE/STE_factor CrusherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
-                    % adFree: [RefocCorr ScaleSGrad MaxRefocAngle DecRefocAngle FAforReferScans RFSpoilIncr]
-                    parLocation{cRes} = [nam{1} '.adFree(3:4)'];
-                    parValue{cRes} = val{1}.adFree(3):-val{1}.adFree(4):0;
-                case 'b1epi4a3d2' % VA35 Allegra data
-                    % wip parameters are sorted as follows:
-                    % alFree: [EddyCurrentDelay MixingTime NoRefAverages DurationPer5Deg BWT_SE/STE_factor NoDummyScans CrusherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
-                    % adFree: [RefocCorr CrusherAmplitude MaxRefocAngle DecRefocAngle FAforReferScans RFSpoilIncr]
-                    parLocation{cRes} = [nam{1} '.adFree(3:4)'];
-                    parValue{cRes} = val{1}.adFree(3):-val{1}.adFree(4):0;
-                case 'b1epi2b3d2' % 1mm protocol from WTCN
-                    % wip parameters are sorted as follows:
-                    % alFree: [EddyCurrentDelay Tmixing (?) DurationPer5Deg BWT_SE/STE_factor (?) CrusherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
-                    % adFree: [RefocCorr ScaleSGrad? MaxRefocAngle DecRefocAngle FAforReferScans]
-                    parLocation{cRes} = [nam{1} '.adFree(3:4)'];
-                    parValue{cRes} = val{1}.adFree(3):-val{1}.adFree(4):0;
-                case 'seste1d3d2' % 1mm protocol from WTCN (MFC)
-                    % wip parameters are sorted as follows:
-                    % alFree: [VoxDeph,SpoilAmp,EddCurr0,EddCurr1,TRamp,TFlat,BWT,0,0,0,0,0,2,MixingTime,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12345],
-                    % adFree: [0,0,0,0,0,0,0,SlabGradScale,RefocCorr,0,0,RFSpoilBasicIncr]
-                    parLocation{cRes} = 'HardCodedParameter';
-                    parValue{cRes} = 230:-10:0;
-                case 'b1epi2d3d2' % 800um protocol from WTCN
-                    % wip parameters are sorted as follows:
-                    % alFree: [Tmixing DurationPer5Deg BWT_SE/STE_factor (?) CrusherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
-                    % adFree: [RefocCorr ScaleSGrad? MaxRefocAngle DecRefocAngle FAforReferScans RFSpoilIncr]
-                    parLocation{cRes} = [nam{1} '.adFree(3:4)'];
-                    parValue{cRes} = val{1}.adFree(3):-val{1}.adFree(4):0;
-                case {'b1sev1a3d2' 'b1sev1b3d2' 'b1epi2f3d2' 'b1epi2g3d2' 'b1sev1a'} % 7T and Prisma versions by Kerrin Pine
-                    if contains(valMODELNAME,'Prisma','IgnoreCase',true)
-                        parLocation{cRes} = 'HardCodedParameter';
-                        parValue{cRes} = 230:-10:0;
-                    elseif contains(valMODELNAME,'7T','IgnoreCase',true)
-                        parLocation{cRes} = [nam{1} '.adFree(3:4)'];
-                        parValue{cRes} = val{1}.adFree(3):-val{1}.adFree(4):0;      
-                    else
-                        parLocation{cRes}=[];
-                    end
-                otherwise
-                    fprintf(1,'\nWARNING: B1mapping version unknown (%s/%s). Give up guessing FA values.\n', valSEQ, valPROT);
-            end
-            if ~isempty(parLocation)
-                nmeas = get_metadata_val(mstruc,'NumberOfMeasurements');
-                parValue{cRes} = parValue{cRes}(1:nmeas)*0.5;
-            end
-        end
-        
-    case 'RFSpoilingPhaseIncrement' % [deg] defined in al_B1mapping and mtflash3d sequences - version dependent!!
-        valSEQ = get_metadata_val(mstruc, 'SequenceName');
-        valPROT = get_metadata_val(mstruc, 'ProtocolName');
-        valMODELNAME = get_metadata_val(mstruc, 'ManufacturerModelName');
-        [nFieldFound, fieldList] = find_field_name(mstruc, 'sWipMemBlock','caseSens','insensitive','matchType','exact');
-        [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
-        if nFieldFound
-            cRes = 1;
-            index = 0;
-            switch lower(valSEQ)
-                case 'b1v2d3d2' % VD13 Prisma
-                    % wip parameters are sorted as follows:
-                    % alFree: [Tmixing DurationPer5Deg BWT_SE/STE_factor CursherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
-                    % adFree: [RefocCorr ScaleSGrad MaxRefocAngle DecRefocAngle FAforReferScans RFSpoilIncr]
-                    index = 6;
-                case 'b1epi4a3d2' % VA35 Allegra data
-                    % wip parameters are sorted as follows:
-                    % alFree: [EddyCurrentDelay MixingTime NoRefAverages DurationPer5Deg BWT_SE/STE_factor NoDummyScans CrusherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
-                    % adFree: [RefocCorr CrusherAmplitude MaxRefocAngle DecRefocAngle FAforReferScans RFSpoilIncr]
-                    index = 6;
-                case 'fl3d_2l3d8' % VD13 Prisma
-                    % wip parameters are sorted as follows:
-                    % alFree: [RawDataExport(off/on=1/2) MTRepFactor DurationMTGaussianPulse FlatTopMTSpoiler DurPrewRamp DurPrewFlat DurRORamp RFExc(RectNonSel/SincNonSel/SincSlabSel = 1/2/3) RectFixedDur SincFixedDur BWTSinc]
-                    % adFree: [MTGaussianFA OffResonanceMTGaussianPulse RFSpoilIncr]
-                    index = 3;
-                case 'b1epi2d3d2' % 800um protocol from WTCN
-                    % wip parameters are sorted as follows:
-                    % alFree: [Tmixing DurationPer5Deg BWT_SE/STE_factor (?) CrusherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
-                    % adFree: [RefocCorr ScaleSGrad? MaxRefocAngle DecRefocAngle FAforReferScans RFSpoilIncr]
-                    index = 6;
-                case 'seste1d3d2' % 1mm protocol from WTCN (MFC)
-                    % wip parameters are sorted as follows:
-                    % alFree: [VoxDeph,SpoilAmp,EddCurr0,EddCurr1,TRamp,TFlat,BWT,0,0,0,0,0,2,MixingTime,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12345],
-                    % adFree: [0,0,0,0,0,0,0,SlabGradScale,RefocCorr,0,0,RFSpoilBasicIncr]
-                    index = 12;
-                case 'fl3d_2d3d6' % VA35 Allegra
-                    % wip parameters are sorted as follows:
-                    % alFree: [MTSaturationMode (1/2 = Gaussian/Binomial)
-                    %          MTRepFactor
-                    %          BalancedMTSaturation (1/2 = false/true)
-                    %          DurationMTGaussianPulse
-                    %          RFExc(RectNonSel/SincNonSel/SincSlabSel = 1/2/3)
-                    %          GRAPPA&RefScans (1/2 = false/true)
-                    %          DurPrewRamp
-                    %          DurPrewFlat
-                    %          DurRORamp
-                    %          FlatTopSpoiler]
-                    % adFree: [MTGaussianFA OffResonanceMTGaussianPulse RFSpoilIncr SpoilerAmpl]
-                    index = 3;
-                case {'b1sev1a3d2' 'b1sev1b3d2' 'b1epi2f3d2' 'b1epi2g3d2' 'b1sev1a'} % Prisma and 7T versions by Kerrin Pine
-                    if contains(valMODELNAME,'Prisma','IgnoreCase',true)
-                        index = 12;
-                    elseif contains(valMODELNAME,'7T','IgnoreCase',true)
-                        index = 3;
-                    else
-                        index = false;
-                    end
-                otherwise
-                    fprintf(1,'Sequence version unknown (%s/%s). Give up guessing RF spoiling increment.\n', valSEQ, valPROT);
-            end
-            if index
-                parLocation{cRes} = [nam{1} '.adFree(' num2str(index) ')'];
-                try
-                    parValue{cRes} = val{1}.adFree(index); % in deg
-                catch %#ok<*CTCH>
-                    % if index^th element = 0, it is not specified in the
-                    % header and index exceeds matrix dimension:
-                    parValue{cRes} = 0;
-                end
-            end
-        end
+      end
         
     case 'B1mapMixingTime' % [ms] for al_B1mapping - version dependent!!
-        valSEQ = get_metadata_val(mstruc, 'SequenceName');
-        valPROT = get_metadata_val(mstruc, 'ProtocolName');
-        valMODELNAME = get_metadata_val(mstruc, 'ManufacturerModelName');
-        [nFieldFound, fieldList] = find_field_name(mstruc, 'sWipMemBlock','caseSens','insensitive','matchType','exact');
-        [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
-        if nFieldFound
-            cRes = 1;
-            index = 0;
-            switch lower(valSEQ)
-                case 'b1v2d3d2'
-                    % wip parameters are sorted as follows:
-                    % alFree: [Tmixing DurationPer5Deg BWT_SE/STE_factor CursherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
-                    % adFree: [RefocCorr ScaleSGrad MaxRefocAngle DecRefocAngle FAforReferScans RFSpoilIncr]
-                    index = 1;
-                case 'b1epi4a3d2' % VA35 Allegra data
-                    % wip parameters are sorted as follows:
-                    % alFree: [EddyCurrentDelay MixingTime NoRefAverages DurationPer5Deg BWT_SE/STE_factor NoDummyScans CrusherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
-                    % adFree: [RefocCorr CrusherAmplitude MaxRefocAngle DecRefocAngle FAforReferScans RFSpoilIncr]
-                    index = 2;
-                case 'b1epi2b3d2' % 1mm protocol from WTCN
-                    % wip parameters are sorted as follows:
-                    % alFree: [EddyCurrentDelay Tmixing (?) DurationPer5Deg BWT_SE/STE_factor (?) CrusherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
-                    % adFree: [RefocCorr ScaleSGrad? MaxRefocAngle DecRefocAngle FAforReferScans]
-                    index = 2;
-                case 'seste1d3d2' % 1mm protocol from WTCN (MFC)
-                    % wip parameters are sorted as follows:
-                    % alFree: [VoxDeph,SpoilAmp,EddCurr0,EddCurr1,TRamp,TFlat,BWT,0,0,0,0,0,2,MixingTime,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12345],
-                    % adFree: [0,0,0,0,0,0,0,SlabGradScale,RefocCorr,0,0,RFSpoilBasicIncr]
-                    index = 14;
-                case 'b1epi2d3d2' % 800um protocol from WTCN
-                    % wip parameters are sorted as follows:
-                    % alFree: [Tmixing DurationPer5Deg BWT_SE/STE_factor (?) CrusherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
-                    % adFree: [RefocCorr ScaleSGrad? MaxRefocAngle DecRefocAngle FAforReferScans RFSpoilIncr]
-                    index = 1;
-                case {'b1sev1a3d2' 'b1sev1b3d2' 'b1epi2f3d2' 'b1epi2g3d2' 'b1sev1a'} % 7T and Prisma versions by Kerrin Pine
-                    if contains(valMODELNAME,'Prisma','IgnoreCase',true)
-                        index = 14;
-                    elseif contains(valMODELNAME,'7T','IgnoreCase',true)
-                        index = 1;
-                    else
-                        index = false;
-                    end
-                otherwise
-                    fprintf(1,'B1mapping version unknown (%s/%s). Give up guessing TM value.\n', valSEQ, valPROT);
-            end
-            if index
-                parLocation{cRes} = [nam{1} '.alFree(' num2str(index) ')'];
-                parValue{cRes} = val{1}.alFree(index)*0.001; % in ms
-            end
+      valSEQ = obj.get_val_raw(obj.meta_hash, 'SequenceName', true);
+      valPROT = obj.get_val_raw(obj.meta_hash, 'ProtocolName', true);
+      valMODELNAME = obj.get_val_raw(obj.meta_hash, 'ManufacturerModelName', true);
+      [wip, statusWIP] = obj.get_val_raw(obj.meta_hash, 'sWipMemBlock', false);
+      index = 0;
+
+      switch lower(valSEQ)
+        case {'b1v2d3d2', 'b1epi2d3d2'}
+          index = 1;
+        case {'b1epi4a3d2', 'b1epi2b3d2'}
+          index = 2;
+        case 'seste1d3d2'
+          index = 14;
+        case {'b1sev1a3d2' 'b1sev1b3d2' 'b1epi2f3d2' 'b1epi2g3d2' 'b1sev1a'}
+          if contains(valMODELNAME,'Prisma','IgnoreCase',true)
+            index = 14;
+          elseif contains(valMODELNAME,'7T','IgnoreCase',true)
+            index = 1;
+          end
+        otherwise
+          warning(['%s (%s): Unknown sequence %s (%s). ' ...
+                   'Unable to extract B1mapMixingTime'], ...
+                  obj.filelist{obj.index}, fieldName, valSEQ, valPROT)
+      end
+
+      if statusWIP && index > 0
+        if index <= numel(wip.alFree)
+          value = wip.alFree(index) / 1000;
+          result = true;
+        else
+          warning('%s (%s): Index %d out of range for sWipMemBlock', ...
+                  obj.filelist{obj.index}, fieldName, index);
         end
+      end
         
     otherwise
-        [nFieldFound, fieldList] = find_field_name(mstruc, inParName, 'caseSens','insensitive','matchType','partial');
-        [parValue,parLocation] = get_val_nam_list(mstruc, nFieldFound, fieldList);
+      [value, result] = obj.get_val_raw(obj.meta_hash, fieldName, true);
+  end
+end
 
 
+function [res, status] = get_EchoSpacing(sequence, wip, model)
+  res = [];
+  status = false;
+
+  switch lower(sequence)
+    case {'b1v2d3d2', ... % 540 us - Prisma 
+          'b1epi2b3d2', ... % 1mm protocol from WTCN'
+          'b1epi2d3d2'}
+      res = 0.540;
+      status = true;
+    case 'b1epi4a3d2' % 330 us - Allegra
+      res = 0.330;
+      status = true;
+    case 'seste1d3d2'
+      try
+        res = (wip.alFree(5) * 2 + wip.alFree(6)) / 1000;
+        status = true;
+      catch
+        warning('EchoSpacing: Unable to get WipParameters');
+      end
+   case {'b1sev1a3d2', 'b1sev1b3d2', 'b1epi2f3d2', 'b1epi2g3d2', 'b1sev1a'}
+      % 7T and Prisma versions by Kerrin Pine
+      if contains(model, '7T', 'IgnoreCase', true)
+        res = 0.540;
+        status = true;
+      elseif contains(model, 'Prisma', 'IgnoreCase', true)
+        try
+          res = (wip.alFree(5) * 2 + wip.alFree(6)) / 1000;
+          status = true;
+        catch
+          warning('EchoSpacing: Unable to get WipParameters');
+        end
+      end
+   end
+end
+
+function [res, status] = get_EchoSpacing_BPP(PixelBandwidth)
+  res = [];
+  status = false;
+  switch PixelBandwidth
+    case 2300
+      res = 0.540;
+      status = true;
+    case {3600, 3550}
+      res = 0.330;
+      status = true;
   end
 end

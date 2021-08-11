@@ -53,7 +53,7 @@ function set_file(obj, index, force)
           obj.mode = 2;
         else
           error('File (%d) %s: only extended header are supported', ...
-                i, files{i});
+                i, [basename, ext]);
         end
       end
     case 1 % classic hdr
@@ -63,11 +63,11 @@ function set_file(obj, index, force)
           hdr = hdr.acqpar;
         else
           error('File (%d) %s: missing ''acqpar'' field', ...
-                i, files{i});
+                i, [basename, ext]);
         end
       else
         error('File (%d) %s: missing json file', ...
-              i, files{i});
+              i, [basename, ext]);
       end
 
     case 2
@@ -85,7 +85,7 @@ function set_file(obj, index, force)
           hdr = spm_jsonread(jsonhdr);
         else
           error('File (%d) %s: only extended header are supported', ...
-                i, files{i});
+                i, [basename, ext]);
         end
 
     case 3
@@ -93,11 +93,11 @@ function set_file(obj, index, force)
         hdr = spm_jsonread(json_file);
         if isfield(hdr, 'acqpar')
           error('File (%d) %s: missing ''acqpar'' field', ...
-                i, files{i});
+                i, [basename, ext]);
         end
       else
         error('File (%d) %s: missing json file', ...
-              i, files{i});
+              i, [basename, ext]);
       end
   end
   obj.meta_hash = hdr;

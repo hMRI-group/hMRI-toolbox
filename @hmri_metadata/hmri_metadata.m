@@ -6,13 +6,6 @@ classdef hmri_metadata < handle
     meta_hash
   end
 
-  properties(Constant)
-    retrieve = {@get_val_classic; ...
-                @get_val_classic; ...
-                @get_val_bids};
-  end
-
-
   methods(Static)
     [res, status] = get_val_raw(inStruct, fieldName, casesensitive)
     res = find_bids_entity(fname, entity)

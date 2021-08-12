@@ -3,6 +3,18 @@ function [value, result] = get_val_classic(obj, fieldName)
   result = false;
 
   switch fieldName
+    case 'RepetitionTimes'
+      [value, result] = obj.get_val_raw(obj.meta_hash, 'alTR', true);
+      if result
+        value = value / 1000;
+      end
+
+    case 'EchoTimes'
+      [value, result] = obj.get_val_raw(obj.meta_hash, 'alTE', true);
+      if result
+        value = value / 1000;
+      end
+
     case 'MT'
       % Siemens-specific
       % NB: parameters set to 0 are usually omitted in the DICOM header.
@@ -150,11 +162,34 @@ function [value, result] = get_val_classic(obj, fieldName)
       end
         
     case 'BValue'
-        % Siemens-specific
-        if obj.get_val_classic('isDWI')
-          [value, result] = obj.get_val_raw(obj.meta_hash, 'B_value', false);
-        end
+      % Siemens-specific
+      [value, result] = obj.get_val_raw(obj.meta_hash, 'B_value', false);
         
+    case 'AllDiffusionDirections'
+      [diffusion, diffRes] = obj.get_val_raw(obj.meta_hash, 'sDiffusion', false);
+      if diffRes && isfield(diffusion, 'sFreeDiffusionData')
+        ndir = diffusion.sFreeDiffusionData.lDiffDirections;
+        parValueSagCorTra = diffusion.sFreeDiffusionData.asDiffDirVector;
+        value = zeroes(3, ndir);
+        for cdir = 1:length(parValueSagCorTra)
+          if isempty(parValueSagCorTra(cdir).dSag)
+            parValueSagCorTra(cdir).dSag = 0;
+          end
+          if isempty(parValueSagCorTra(cdir).dCor)
+            parValueSagCorTra(cdir).dCor = 0;
+          end
+          if isempty(parValueSagCorTra(cdir).dTra)
+            parValueSagCorTra(cdir).dTra = 0;
+          end
+          value(:, cdir) = [parValueSagCorTra(cdir).dSag; ...
+                            parValueSagCorTra(cdir).dCor; ...
+                            parValueSagCorTra(cdir).dTra];
+        end
+      end
+
+    case 'AllBValues'
+      [value, result] = obj.get_val_raw(obj.meta_hash, 'alBvalue', true);
+
     case 'isDWI'
         % Siemens-specific
         [value, result] = obj.get_val_raw(obj.meta_hash, 'sDiffusion', false);
@@ -241,7 +276,35 @@ function [value, result] = get_val_classic(obj, fieldName)
         warning('%s (%s): Unable to get EchoSpacing. Using default %f', ...
                 obj.filelist{obj.index}, fieldName, value);
       end
-        
+
+    case 'B1mapNominalFAValues'
+      valSEQ = obj.get_val_raw(obj.meta_hash, 'SequenceName', true);
+      valMODELNAME = obj.get_val_raw(obj.meta_hash, 'ManufacturerModelName', true);
+      wip = obj.get_val_raw(obj.meta_hash, 'sWipMemBlock', false);
+      switch lower(valSEQ)
+        case {'b1v2d3d2', 'b1epi4a3d2', 'b1epi2b3d2', 'b1epi2d3d2'}
+          value = wip.adFree(3):-wip.adFree(4):0;
+          result = true;
+
+        case 'seste1d3d2'
+          value = 230:-10:0;
+          result = true;
+
+        case {'b1sev1a3d2' 'b1sev1b3d2' 'b1epi2f3d2' 'b1epi2g3d2' 'b1sev1a'}
+          if contains(valMODELNAME,'Prisma','IgnoreCase',true)
+            value = 230:-10:0;
+            result = true;
+          elseif contains(valMODELNAME,'7T','IgnoreCase',true)
+            value = wip.adFree(3):-wip.adFree(4):0;
+            result = true;
+          end
+      end
+
+      if result
+        nmeas = obj.get_val('NumberOfMeasurements');
+        value = value(1:nmeas) * 0.5;
+      end
+
     case 'RFSpoilingPhaseIncrement'
       % [deg] defined in al_B1mapping and mtflash3d sequences - version dependent!!
       valSEQ = obj.get_val_raw(obj.meta_hash, 'SequenceName', true);

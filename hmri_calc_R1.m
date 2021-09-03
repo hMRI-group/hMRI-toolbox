@@ -25,8 +25,8 @@ end
 R1=0.5*( PDw.data.*PDw.t/PDw.TR - T1w.data.*T1w.t/T1w.TR )...
     ./( T1w.data./T1w.t - PDw.data./PDw.t );
 
-% Zero data points where we cannot estimate result
-zeromask=(T1w.data==0)|(PDw.data==0)|(T1w.t==0)|(PDw.t==0);
-R1(zeromask)=0;
+% Make data points with missing data NaN
+nanmask=(T1w.data==0)|(PDw.data==0)|(T1w.t==0)|(PDw.t==0);
+R1(nanmask)=NaN;
 
 end

@@ -645,6 +645,7 @@ for p = 1:dm(3)
         R1 = R1*1e6;
         R1(R1<0) = 0;
         tmp      = R1;
+        tmp(isnan(tmp)) = 0;
         Nmap(mpm_params.qR1).dat(:,:,p) = min(max(tmp,-threshall.R1),threshall.R1)*1e-3; % truncating images
                 
     end
@@ -723,6 +724,7 @@ for p = 1:dm(3)
         
         tmp      = A;
         tmp(isinf(tmp)) = 0;
+        tmp(isnan(tmp)) = 0;
         Nmap(mpm_params.qPD).dat(:,:,p) = max(min(tmp,threshall.A),-threshall.A);
         % dynamic range increased to 10^5 to accommodate phased-array coils and symmetrical for noise distribution
 
@@ -733,9 +735,11 @@ for p = 1:dm(3)
             R1_forMT = hmri_calc_R1(struct('data',PDw,'fa',fa_pdw_rad,'TR',TR_pdw,'B1',1),...
                 struct('data',T1w,'fa',fa_t1w_rad,'TR',TR_t1w,'B1',1),...
                 mpm_params.small_angle_approx);
+            R1_forMT(isnan(R1_forMT))=0;
             A_forMT = hmri_calc_A(struct('data',PDw,'fa',fa_pdw_rad,'TR',TR_pdw,'B1',1),...
                 struct('data',T1w_forA,'fa',fa_t1w_rad,'TR',TR_t1w,'B1',1),...
                 mpm_params.small_angle_approx);
+            A_forMT(isnan(A_forMT))=0;
             
             % MT in [p.u.]; offset by - famt * famt / 2 * 100 where MT_w = 0 (outside mask)
             MT  = ( (A_forMT * fa_mtw_rad - MTw) ./ (MTw+eps) .* R1_forMT*TR_mtw - fa_mtw_rad^2 / 2 ) * 100;

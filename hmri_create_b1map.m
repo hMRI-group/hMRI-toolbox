@@ -158,9 +158,10 @@ VB1 = V1;
 % VB1.fname = fullfile(outpath, [sname '_B1map.nii']);
 % spm_write_vol(VB1,B1map);
 
-% VB1.pinfo = [max(B1map_norm(:))/16384;0;0];
-% VB1.fname = fullfile(outpath, [sname '_B1map_norm.nii']);
-% spm_write_vol(VB1,B1map_norm);
+VB1.pinfo = [max(B1map_norm(:))/16384;0;0];
+VB1.descrip = 'B1+ map - normalised (p.u.) - AFI protocol';
+VB1.fname = fullfile(outpath, [sname '_unsmoothed_B1map.nii']);
+spm_write_vol(VB1,B1map_norm);
 
 VB1.pinfo = [max(smB1map_norm(:))/16384;0;0];
 VB1.descrip = 'B1+ map - smoothed and normalised (p.u.) - AFI protocol';

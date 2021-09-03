@@ -17,7 +17,7 @@ T1w=addDataFields(T1w,testCase.TestData.PD,testCase.TestData.R1,testCase.TestDat
 
 R1est=hmri_calc_R1(PDw,T1w,small_angle_approx);
 
-verifyLessThan(testCase,abs(R1est(:)-testCase.TestData.R1(:)),testCase.TestData.tol,'Estimated R1 has large error!')
+assertEqual(testCase,R1est,testCase.TestData.R1,'AbsTol',testCase.TestData.tol,'Estimated R1 has large error!')
 
 end
 
@@ -34,7 +34,7 @@ T1w=addDataFields(T1w,testCase.TestData.PD,testCase.TestData.R1,testCase.TestDat
 
 R1est=hmri_calc_R1(PDw,T1w,small_angle_approx);
 
-verifyLessThan(testCase,abs(R1est(:)-testCase.TestData.R1(:)),testCase.TestData.tol,'Estimated R1 has large error!')
+assertEqual(testCase,R1est,testCase.TestData.R1,'AbsTol',testCase.TestData.tol,'Estimated R1 has large error!')
 
 end
 
@@ -49,16 +49,9 @@ verifyLessThan(testCase,abs(newerr)-abs(olderr),testCase.TestData.tol,'Old calcu
 end
 
 %% subfunctions
-% Ernst equation
-function S=ernst(alpha,TR,R1)
-
-S=sin(alpha).*(1-exp(-TR.*R1))./(1-cos(alpha).*exp(-TR.*R1));
-
-end
-
 function w=addDataFields(w,PD,R1,B1)
 
-w.data=reshape(bsxfun(@times,PD,ernst(w.fa*B1(:),w.TR,R1)),size(B1));
+w.data=bsxfun(@times,PD,hmri_test_utils.ernst(w.fa*B1,w.TR,R1));
 w.B1=B1;
 
 end
@@ -95,8 +88,8 @@ for p = 1:size(PDw.data,3)
     
 end
 
-newerr=R1est(:)-testCase.TestData.R1(:);
-olderr=R1sa(:)-testCase.TestData.R1(:);
+newerr=R1est-testCase.TestData.R1;
+olderr=R1sa-testCase.TestData.R1;
 
 end
 
@@ -111,16 +104,20 @@ end
 
 %% Optional fresh fixtures  
 function setup(testCase)  % do not change function name
+
+% Reset random seed for reproducibility
+hmri_test_utils.seedRandomNumberGenerator;
+
 % Define reasonable parameter set
 dims=[20,50,30];
 
 R1min=0.5; % / s
 R1max=2; % / s
-testCase.TestData.R1=R1min+(R1max-R1min)*rand(prod(dims),1); % / s
+testCase.TestData.R1=R1min+(R1max-R1min)*rand([dims,1]); % / s
 
 PDmin=500;
 PDmax=2000;
-testCase.TestData.PD=PDmin+(PDmax-PDmin)*rand(prod(dims),1);
+testCase.TestData.PD=PDmin+(PDmax-PDmin)*rand([dims,1]);
 
 B1min=0.4;
 B1max=1.6;

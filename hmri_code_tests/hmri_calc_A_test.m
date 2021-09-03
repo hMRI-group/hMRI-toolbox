@@ -17,7 +17,7 @@ T1w=addDataFields(T1w,testCase.TestData.PD,testCase.TestData.R1,testCase.TestDat
 
 PDest=hmri_calc_A(PDw,T1w,small_angle_approx);
 
-verifyLessThan(testCase,abs(PDest(:)-testCase.TestData.PD(:)),testCase.TestData.tol,'Estimated PD has large error!')
+assertEqual(testCase,PDest,testCase.TestData.PD,'AbsTol',testCase.TestData.tol,'Estimated PD has large error!')
 
 end
 
@@ -34,31 +34,24 @@ T1w=addDataFields(T1w,testCase.TestData.PD,testCase.TestData.R1,testCase.TestDat
 
 PDest=hmri_calc_A(PDw,T1w,small_angle_approx);
 
-verifyLessThan(testCase,abs(PDest(:)-testCase.TestData.PD(:)),testCase.TestData.tol,'Estimated PD has large error!')
+assertEqual(testCase,PDest,testCase.TestData.PD,'AbsTol',testCase.TestData.tol,'Estimated PD has large error!')
 
 end
 
 function compareToOldMethodTest(testCase)
 
 [newerr,olderr]=compareToOldMethod(testCase,false);
-verifyLessThan(testCase,abs(newerr)-abs(olderr),testCase.TestData.tol,'Small angle approximation gives significantly smaller residuals than the estimation without this approximation in some cases!')
+verifyLessThan(testCase,abs(newerr)-abs(olderr),testCase.TestData.tol,'Small angle approximation gives much smaller residuals than the estimation without this approximation in some cases!')
 
 [newerr,olderr]=compareToOldMethod(testCase,true);
-verifyLessThan(testCase,abs(newerr)-abs(olderr),testCase.TestData.tol,'Old calculation method gives significantly smaller residuals than the new one in some cases!')
+verifyLessThan(testCase,abs(newerr)-abs(olderr),testCase.TestData.tol,'Old calculation method gives much smaller residuals than the new one in some cases!')
 
 end
 
 %% subfunctions
-% Ernst equation
-function S=ernst(alpha,TR,R1)
-
-S=sin(alpha).*(1-exp(-TR.*R1))./(1-cos(alpha).*exp(-TR.*R1));
-
-end
-
 function w=addDataFields(w,PD,R1,B1)
 
-w.data=reshape(bsxfun(@times,PD,ernst(w.fa*B1(:),w.TR,R1)),size(B1));
+w.data=bsxfun(@times,PD,hmri_test_utils.ernst(w.fa.*B1,w.TR,R1));
 w.B1=B1;
 
 end
@@ -76,7 +69,7 @@ T1w=addDataFields(T1w,testCase.TestData.PD,testCase.TestData.R1,testCase.TestDat
 
 PDest=hmri_calc_A(PDw,T1w,small_angle_approx);
 
-% Old implementation of R1 calculation in hMRI toolbox
+% Old implementation of A calculation in hMRI toolbox
 PDsa=zeros(size(PDest));
 for p = 1:size(PDw.data,3)
     
@@ -95,8 +88,8 @@ for p = 1:size(PDw.data,3)
     
 end
 
-newerr=PDest(:)-testCase.TestData.PD(:);
-olderr=PDsa(:)-testCase.TestData.PD(:);
+newerr=PDest-testCase.TestData.PD;
+olderr=PDsa-testCase.TestData.PD;
 
 end
 
@@ -112,16 +105,19 @@ end
 %% Optional fresh fixtures  
 function setup(testCase)  % do not change function name
 
+% Reset random seed for reproducibility
+hmri_test_utils.seedRandomNumberGenerator;
+
 % Define reasonable parameter set
 dims=[20,50,30];
 
 R1min=0.5; % / s
 R1max=2; % / s
-testCase.TestData.R1=R1min+(R1max-R1min)*rand(prod(dims),1); % / s
+testCase.TestData.R1=R1min+(R1max-R1min)*rand([dims,1]); % / s
 
 PDmin=500;
 PDmax=2000;
-testCase.TestData.PD=PDmin+(PDmax-PDmin)*rand(prod(dims),1);
+testCase.TestData.PD=PDmin+(PDmax-PDmin)*rand([dims,1]);
 
 B1min=0.4;
 B1max=1.6;

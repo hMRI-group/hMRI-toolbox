@@ -1,4 +1,4 @@
-% Calculate A (PD) map from PDw and T1w data.
+% Calculate A (unnormalised PD) map from PDw and T1w data.
 % 
 % Inputs of form:
 %   {PDw,T1w}.data (array)

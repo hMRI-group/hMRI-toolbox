@@ -22,10 +22,12 @@ assertEqual(testCase,PDest,testCase.TestData.PD,'AbsTol',testCase.TestData.tol,'
 end
 
 function typical3TprotocolTest(testCase)
-PDw.TR=25e-3; % s
+
+% Protocol from Weiskopf, et al. Front. Neuroscience (2013)
+PDw.TR=23.7e-3; % s
 PDw.fa=deg2rad(6); % rad
-T1w.TR=25e-3; % s
-T1w.fa=deg2rad(21); % rad
+T1w.TR=18.7e-3; % s
+T1w.fa=deg2rad(20); % rad
 
 small_angle_approx=false;
 
@@ -58,7 +60,7 @@ end
 
 function [newerr,olderr]=compareToOldMethod(testCase,small_angle_approx)
 
-% Protocol from Weiskopf, et al. (2013).
+% Protocol from Weiskopf, et al. Front. Neuroscience (2013)
 PDw.TR=23.7e-3; % s
 PDw.fa=deg2rad(6); % rad
 T1w.TR=18.7e-3; % s

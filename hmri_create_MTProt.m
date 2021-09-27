@@ -1311,6 +1311,17 @@ hmri_log(sprintf('INFO: averaged PDw/T1w/MTw will be calculated based on the fir
 
 % parameter determining whether to use small flip angle assumption or not
 mpm_params.small_angle_approx = hmri_get_defaults('small_angle_approx');
+if mpm_params.PDwidx && mpm_params.T1widx 
+    if mpm_params.small_angle_approx
+        hmri_log('INFO: Calculation of R1 and PD will use the small angle approximation.',mpm_params.defflags);
+    elseif ~mpm_params.small_angle_approx
+        hmri_log('INFO: Calculation of R1 and PD will not use the small angle approximation.',mpm_params.defflags);
+    else
+        hmri_log(sprintf(['WARNING: mpm_params.small_angle_approx flag not set.' ...
+            '\nPlease check that hmri_def.small_angle_approx is set' ...
+            '\nin the appropriate defaults file.']),mpm_params.defflags);
+    end
+end
 
 % if T1w and PDw data available, identify the protocol to define imperfect 
 % spoiling correction parameters (for T1 map calculation)

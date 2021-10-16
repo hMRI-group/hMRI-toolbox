@@ -169,7 +169,10 @@ hmri_def.small_angle_approx = true;
 % create an Ordinary Least Squares R2* map. The ESTATICS model is applied
 % to calculate R2* map from all available contrasts. 
 % ADVANCED USER ONLY.
-hmri_def.R2sOLS = 1; 
+hmri_def.R2sOLS = true; 
+
+% Options are 'OLS','robust','WLS1','WLS3','ARLO','dARLO','NLLS-OLS','NLLS-WLS1'
+hmri_def.R2sOLSmethod = 'OLS';
 
 % Minimum number of echoes to calculate R2s map. Strictly speaking, the
 % minimum is 2. For a robust estimation, the minimum number of echoes

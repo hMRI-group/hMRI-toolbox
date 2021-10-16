@@ -10,8 +10,9 @@ classdef hmri_calc_R2s_test < matlab.unittest.TestCase
         % Augment TestParameter with parameters over which tests will run,
         % as well as parameters needed by the test functions.
         sizes1 = {1,10,100};
-        sizes2 = {1,10,100};
-        sizes3 = {1,10,100};
+        sizes2 = {1,10};%,100};
+        sizes3 = {1,10};%,100};
+        fitmethod = {'OLS','WLS1','NLLS-OLS'};
         tolerance = {1e-9};
         noiseTol = {0.05};
     end
@@ -38,7 +39,7 @@ classdef hmri_calc_R2s_test < matlab.unittest.TestCase
             signal=hmri_test_utils.createDecaySignal(signal_TE0,TEs,R2s);
             
             % Check that it works without outputting the extrapolated values
-            R2sEst=hmri_calc_R2s(struct('data',signal,'TE',TEs));
+            R2sEst=hmri_calc_R2s(struct('data',signal,'TE',TEs),'OLS');
             
             % Check every element of R2sEst is equal to R2s to within a 
             % pre-defined threshold, defined as object property. 
@@ -65,7 +66,7 @@ classdef hmri_calc_R2s_test < matlab.unittest.TestCase
             signal2_TE0=1000*rand(dims)+100; % [100 1100]
             signal2=hmri_test_utils.createDecaySignal(signal2_TE0,TEs2,R2s);
             
-            [R2sEst,extrapolated]=hmri_calc_R2s([struct('data',signal1,'TE',TEs1),struct('data',signal2,'TE',TEs2)]);
+            [R2sEst,extrapolated]=hmri_calc_R2s([struct('data',signal1,'TE',TEs1),struct('data',signal2,'TE',TEs2)],'OLS');
             
             assertEqual(testCase,R2sEst,R2s,'AbsTol',tolerance)
             assertEqual(testCase,extrapolated{1},signal1_TE0,'AbsTol',tolerance)
@@ -85,7 +86,7 @@ classdef hmri_calc_R2s_test < matlab.unittest.TestCase
             signal_TE0=2000*rand(dims)+500;
             signal=hmri_test_utils.createDecaySignal(signal_TE0,TEs,R2s);
             
-            [R2sEst,extrapolated]=hmri_calc_R2s(struct('data',signal,'TE',TEs));
+            [R2sEst,extrapolated]=hmri_calc_R2s(struct('data',signal,'TE',TEs),'OLS');
             
             assertEqual(testCase,R2sEst,R2s,'AbsTol',tolerance)
             assertEqual(testCase,extrapolated{1},signal_TE0,'AbsTol',tolerance)
@@ -102,7 +103,9 @@ classdef hmri_calc_R2s_test < matlab.unittest.TestCase
             signal=zeros([dims,length(TEs)]);
             
             % Check that it fails when zeros are input
-            R2sEst=hmri_calc_R2s(struct('data',signal,'TE',TEs));
+            warning('off','hmri:zerosInInput')
+            R2sEst=hmri_calc_R2s(struct('data',signal,'TE',TEs),'OLS');
+            warning('on','hmri:zerosInInput')
             
             % Check NaNs are returned
             assertTrue(testCase,all(isnan(R2sEst(:))))
@@ -112,11 +115,11 @@ classdef hmri_calc_R2s_test < matlab.unittest.TestCase
         function testNonStructInput(testCase)
             
             % Check that an error is thrown if the input isn't a struct
-            assertError(testCase, @() hmri_calc_R2s(zeros([32,56,8])), 'hmri:structError');
+            assertError(testCase, @() hmri_calc_R2s(zeros([32,56,8]),'OLS'), 'hmri:structError');
             
         end
         
-        function testNoise(testCase,sizes1,sizes2,sizes3,noiseTol)
+        function testNoise(testCase,sizes1,sizes2,sizes3,fitmethod,noiseTol)
             
             dims=[sizes1,sizes2,sizes3];
             R2s=100*rand(dims)+50; % in [50,150] / s
@@ -130,7 +133,7 @@ classdef hmri_calc_R2s_test < matlab.unittest.TestCase
             % SNR = w_TE0
             wN=w+randn(size(w));
             
-            [R2sEst,extrapolated]=hmri_calc_R2s(struct('data',wN,'TE',TEs));
+            [R2sEst,extrapolated]=hmri_calc_R2s(struct('data',wN,'TE',TEs),fitmethod);
             
             % Check R2sEst and R2s are equal to with a relative error,
             % specified as a class property.
@@ -139,7 +142,7 @@ classdef hmri_calc_R2s_test < matlab.unittest.TestCase
             
         end
         
-        function testMultipleContrastNoise(testCase,sizes1,sizes2,sizes3,noiseTol)
+        function testMultipleContrastNoise(testCase,sizes1,sizes2,sizes3,fitmethod,noiseTol)
             
             dims=[sizes1,sizes2,sizes3];
             R2s=100*rand(dims)+50; % in [50,150] / s
@@ -157,7 +160,7 @@ classdef hmri_calc_R2s_test < matlab.unittest.TestCase
             w2=hmri_test_utils.createDecaySignal(w2_TE0,TEs2,R2s);
             w2N=w2+randn(size(w2));
             
-            [R2sEst,extrapolated]=hmri_calc_R2s([struct('data',w1N,'TE',TEs1),struct('data',w2N,'TE',TEs2)]);
+            [R2sEst,extrapolated]=hmri_calc_R2s([struct('data',w1N,'TE',TEs1),struct('data',w2N,'TE',TEs2)],fitmethod);
             
             % Check relative error less than 5%
             assertEqual(testCase,R2sEst,R2s,'RelTol',noiseTol)
@@ -171,14 +174,7 @@ classdef hmri_calc_R2s_test < matlab.unittest.TestCase
     
     methods(TestMethodSetup)
         % These methods are run before each test
-        function seedRandomNumberGenerator(testCase) %#ok<MANU>
-            % set randomness method and seed for reproducability
-            %
-            % it would be best to use a separate random stream for each test
-            % for simplicity we set the global stream
-            % this will seed the RNG separately on every worker
-            rng(319, 'twister');
-        end
+        %hmri_test_utils.seedRandomNumberGenerator;
     end
 
     methods(TestClassSetup)

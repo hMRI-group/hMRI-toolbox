@@ -21,7 +21,7 @@ assert(isstruct(weighted_data(1)),'hmri:structError',['inputs must be structs; s
 switch lower(method)
     case {'ols','robust','wls1','wls','wls3'}
         [R2s,extrapolated]=hmri_calc_R2sLL(weighted_data,method);        
-    case {'arlo','darlo','nlls-ols','nlls-wls1'}
+    case {'arlo','darlo','nlls_ols','nlls_wls1'}
         [R2s,extrapolated]=hmri_calc_R2sNL(weighted_data,method);
     otherwise
         error('fitting method not available!')

@@ -142,7 +142,7 @@ switch lower(method)
     otherwise
         % Check for NLLS case, where specification of the log-linear 
         % initialisation method is in the method string following a hyphen
-        r=regexp(lower(method),'^nlls-(.*)$','tokens');
+        r=regexp(lower(method),'^nlls_(.*)$','tokens');
         if ~isempty(r)
             initmethod=r{1}{1};
             

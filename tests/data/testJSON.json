@@ -1,0 +1,30 @@
+{
+  "topLevelScalar": 2,
+  "topLevelString": "abc",
+  "topLevelList": [1, 2, 3],
+  "topLevelLongList": [11, 12, 13,
+                       21, 22, 23],
+  "topLevelStruct":{
+    "subLevelScalar": 3.14,
+    "subLevelString": "def",
+    "subLevelList": [4, 5, 6],
+    "topLevelString": "ghi"
+  },
+  "topLevelNested": [
+    {
+      "item1": {
+        "i1j1": "val_i1j1",
+        "i1j2": "val_i1j2",
+        "i1j3": "val_i1j3"
+      }
+    },
+    {
+      "item2": {
+        "i2j1": "val_i2j1",
+        "i2j2": "val_i2j2",
+        "i2j3": "val_i2j3",
+        "i1j3": "dupl_val_i1j3"
+      }
+    }
+  ]
+}

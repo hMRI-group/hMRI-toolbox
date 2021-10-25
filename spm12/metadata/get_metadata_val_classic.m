@@ -648,11 +648,11 @@ switch inParName
                 nFieldFound = 1;
                 switch lower(valSEQ)
                     case 'b1v2d3d2' % 540 us - Prisma
-                        EchoSpacing = 2*140+260;
+                        EchoSpacing = 2*140+260; % us
                     case 'b1epi4a3d2' % 330 us - Allegra
-                        EchoSpacing = 330;
+                        EchoSpacing = 330; % us
                     case 'b1epi2b3d2' % 1mm protocol from WTCN
-                        EchoSpacing = 540;
+                        EchoSpacing = 540; % us
                     case 'seste1d3d2' % 1mm protocol from WTCN
                         % alFree: [VoxDeph,SpoilAmp,EddCurr0,EddCurr1,TRamp,TFlat,BWT,0,0,0,0,0,2,MixingTime,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12345],
                         % adFree: [0,0,0,0,0,0,0,SlabGradScale,RefocCorr,0,0,RFSpoilBasicIncr]
@@ -661,25 +661,25 @@ switch inParName
                     case {'b1sev1a3d2' 'b1sev1b3d2' 'b1epi2f3d2' 'b1epi2g3d2' 'b1sev1a'} % 7T and Prisma versions by Kerrin Pine
                         if contains(valMODELNAME,'Prisma','IgnoreCase',true)
                             Wip = get_metadata_val(mstruc, 'WipParameters');
-                            EchoSpacing = Wip.alFree(5)*2+Wip.alFree(6);
+                            EchoSpacing = Wip.alFree(5)*2+Wip.alFree(6); % us
                         elseif contains(valMODELNAME,'7T','IgnoreCase',true)
-                            EchoSpacing = 540;
+                            EchoSpacing = 540; % us
                         else
                             % Do nothing
                         end
                     case 'b1epi2d3d2' % 800um protocol from WTCN
-                        EchoSpacing = 540;
+                        EchoSpacing = 540; % us
                 end
                 if ~exist('EchoSpacing','var')
                     fprintf(1,'\nWARNING: B1mapping version unknown, trying to base our guess on PixelBandwidth.\n');
                     PixelBandwidth = get_metadata_val(mstruc,'BandwidthPerPixelRO');
                     switch PixelBandwidth
                         case 2300
-                            EchoSpacing = 540;
+                            EchoSpacing = 540; % us
                         case 3600
-                            EchoSpacing = 330;
+                            EchoSpacing = 330; % us
                         case 3550 % Allegra data
-                            EchoSpacing = 330;
+                            EchoSpacing = 330; % us
                         otherwise
                             fprintf(1,'Giving up: using default EchoSpacing value = 540 us.\n');
                             EchoSpacing = 2*140+260; % us

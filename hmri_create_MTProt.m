@@ -628,37 +628,25 @@ for p = 1:dm(3)
 
         T1w = spm_slice_vol(Vavg(T1widx),Vavg(T1widx).mat\M,dm(1:2),mpm_params.interp);
         
-        if isempty(f_T)
-            % semi-quantitative T1
-            R1 = (((T1w * (fa_t1w_rad / 2 / TR_t1w)) - (PDw * fa_pdw_rad / 2 / TR_pdw)) ./ ...
-                max(((PDw / fa_pdw_rad) - (T1w / fa_t1w_rad)),eps))*10^6;
-        else
-            % Transmit bias corrected quantitative T1 values
-            % correct T1 for transmit bias f_T with fa_true = f_T * fa_nom
-            % T1corr = T1 / f_T / f_T
+        % Transmit bias corrected quantitative T1 values; if f_T empty then semi-quantitative
+        R1=hmri_calc_R1(struct('data',PDw,'fa',fa_pdw_rad,'TR',TR_pdw,'B1',f_T),...
+            struct('data',T1w,'fa',fa_t1w_rad,'TR',TR_t1w,'B1',f_T),...
+            mpm_params.small_angle_approx);
             
-            if ISC.enabled
-                % MFC: We do have P2_a and P2_b parameters for this sequence
-                % => T1 = A(B1) + B(B1)*T1app (see Preibisch 2009)
-                T1 = ISC.P2_a(1)*f_T.^2 + ...
-                    ISC.P2_a(2)*f_T + ...
-                    ISC.P2_a(3) + ...
-                    (ISC.P2_b(1)*f_T.^2+ISC.P2_b(2)*f_T+ISC.P2_b(3)) .* ...
-                    ((((PDw / fa_pdw_rad) - (T1w / fa_t1w_rad)+eps) ./ ...
-                    max((T1w * fa_t1w_rad / 2 / TR_t1w) - (PDw * fa_pdw_rad / 2 / TR_pdw),eps))./f_T.^2);
-            else
-                % MFC: We do not have P2_a or P2_b parameters for this sequence
-                % => T1 = T1app
-                T1 = ((((PDw / fa_pdw_rad) - (T1w / fa_t1w_rad)+eps) ./ ...
-                    max((T1w * fa_t1w_rad / 2 / TR_t1w) - (PDw * fa_pdw_rad / 2 / TR_pdw),eps))./f_T.^2);
-            end
-            
-            R1 = 1./T1*10^6;
+        if ISC.enabled&&~isempty(f_T)
+            % MFC: We do have P2_a and P2_b parameters for this sequence
+            % => T1 = A(B1) + B(B1)*T1app (see Preibisch 2009)
+            R1 = R1./(...
+                +(ISC.P2_a(1)*f_T.^2 + ISC.P2_a(2)*f_T + ISC.P2_a(3)).*R1 ...
+                +(ISC.P2_b(1)*f_T.^2 + ISC.P2_b(2)*f_T + ISC.P2_b(3)) ...
+                );
         end
         
+        R1 = R1*1e6;
         R1(R1<0) = 0;
         tmp      = R1;
-        Nmap(mpm_params.qR1).dat(:,:,p) = min(max(tmp,-threshall.R1),threshall.R1)*0.001; % truncating images
+        tmp(isnan(tmp)) = 0;
+        Nmap(mpm_params.qR1).dat(:,:,p) = min(max(tmp,-threshall.R1),threshall.R1)*1e-3; % truncating images
                 
     end
     spm_progress_bar('Set',p);
@@ -707,7 +695,6 @@ for p = 1:dm(3)
     if T1widx
 
         T1w = spm_slice_vol(Vavg(T1widx),Vavg(T1widx).mat\M,dm(1:2),mpm_params.interp);
-        T1 = 10^3./spm_slice_vol(V_R1,V_R1.mat\M,dm(1:2),mpm_params.interp);
         
         % if "fullOLS" option enabled, use the OLS fit at TE=0 as
         % "T1w_forA"; otherwise use the average calculated earlier (by
@@ -725,14 +712,19 @@ for p = 1:dm(3)
         % - f_T has been calculated using UNICORT *AND* the UNICORT.PD flag
         % is enabled (advanced user only! method not validated yet!)
         if(~isempty(f_T))&&(~mpm_params.UNICORT.R1 || mpm_params.UNICORT.PD)
-            A = T1 .* (T1w_forA .*(fa_t1w_rad*f_T) / 2 / TR_t1w) + (T1w_forA ./ (fa_t1w_rad*f_T));
+            A = hmri_calc_A(struct('data',PDw,'fa',fa_pdw_rad,'TR',TR_pdw,'B1',f_T),...
+                struct('data',T1w_forA,'fa',fa_t1w_rad,'TR',TR_t1w,'B1',f_T),...
+                mpm_params.small_angle_approx);
         else
             % semi-quantitative A
-            A = T1 .* (T1w_forA * fa_t1w_rad / 2 / TR_t1w) + (T1w_forA / fa_t1w_rad);
+            A = hmri_calc_A(struct('data',PDw,'fa',fa_pdw_rad,'TR',TR_pdw,'B1',1),...
+                struct('data',T1w_forA,'fa',fa_t1w_rad,'TR',TR_t1w,'B1',1),...
+                mpm_params.small_angle_approx);
         end
         
         tmp      = A;
         tmp(isinf(tmp)) = 0;
+        tmp(isnan(tmp)) = 0;
         Nmap(mpm_params.qPD).dat(:,:,p) = max(min(tmp,threshall.A),-threshall.A);
         % dynamic range increased to 10^5 to accommodate phased-array coils and symmetrical for noise distribution
 
@@ -740,12 +732,17 @@ for p = 1:dm(3)
         % and PDw ones...
         if MTwidx
             MTw = spm_slice_vol(Vavg(MTwidx),Vavg(MTwidx).mat\M,dm(1:2),3);
-            T1_forMT = ((PDw / fa_pdw_rad) - (T1w / fa_t1w_rad)) ./ ...
-                max((T1w * (fa_t1w_rad / 2 / TR_t1w)) - (PDw * fa_pdw_rad / 2 / TR_pdw),eps);
-            A_forMT = T1_forMT .* (T1w * fa_t1w_rad / 2 / TR_t1w) + (T1w / fa_t1w_rad);
+            R1_forMT = hmri_calc_R1(struct('data',PDw,'fa',fa_pdw_rad,'TR',TR_pdw,'B1',1),...
+                struct('data',T1w,'fa',fa_t1w_rad,'TR',TR_t1w,'B1',1),...
+                mpm_params.small_angle_approx);
+            R1_forMT(isnan(R1_forMT))=0;
+            A_forMT = hmri_calc_A(struct('data',PDw,'fa',fa_pdw_rad,'TR',TR_pdw,'B1',1),...
+                struct('data',T1w_forA,'fa',fa_t1w_rad,'TR',TR_t1w,'B1',1),...
+                mpm_params.small_angle_approx);
+            A_forMT(isnan(A_forMT))=0;
             
             % MT in [p.u.]; offset by - famt * famt / 2 * 100 where MT_w = 0 (outside mask)
-            MT       = ( (A_forMT * fa_mtw_rad - MTw) ./ (MTw+eps) ./ (T1_forMT + eps) * TR_mtw - fa_mtw_rad^2 / 2 ) * 100;
+            MT  = ( (A_forMT * fa_mtw_rad - MTw) ./ (MTw+eps) .* R1_forMT*TR_mtw - fa_mtw_rad^2 / 2 ) * 100;
             % f_T correction is applied either if:
             % - f_T has been provided as separate B1 mapping measurement (not
             % UNICORT!) or
@@ -1311,7 +1308,21 @@ end
 % AND one more than the maxTEval4avg:
 mpm_params.nr_echoes4avg = min(length(find(mpm_params.input(1).TE<maxTEval4avg))+1,ncommonTEvals);
 hmri_log(sprintf('INFO: averaged PDw/T1w/MTw will be calculated based on the first %d echoes.',mpm_params.nr_echoes4avg),mpm_params.nopuflags);
-        
+
+% parameter determining whether to use small flip angle assumption or not
+mpm_params.small_angle_approx = hmri_get_defaults('small_angle_approx');
+if mpm_params.PDwidx && mpm_params.T1widx 
+    if mpm_params.small_angle_approx
+        hmri_log('INFO: Calculation of R1 and PD will use the small angle approximation.',mpm_params.defflags);
+    elseif ~mpm_params.small_angle_approx
+        hmri_log('INFO: Calculation of R1 and PD will not use the small angle approximation.',mpm_params.defflags);
+    else
+        hmri_log(sprintf(['WARNING: mpm_params.small_angle_approx flag not set.' ...
+            '\nPlease check that hmri_def.small_angle_approx is set' ...
+            '\nin the appropriate defaults file.']),mpm_params.defflags);
+    end
+end
+
 % if T1w and PDw data available, identify the protocol to define imperfect 
 % spoiling correction parameters (for T1 map calculation)
 ISC = hmri_get_defaults('imperfectSpoilCorr.enabled');
@@ -1356,7 +1367,39 @@ else
 end
 % now retrieve imperfect spoiling correction coefficients
 mpm_params.proc.ISC = hmri_get_defaults(['imperfectSpoilCorr.',prot_tag]);
-mpm_params.proc.ISC.enabled = ISC;
+if ISC % only check for small_angle_approx assumptions if ISC applied
+    % assume ISC parameters without small_angle_approx flag were generated with small angle approximation
+    if ~isfield(mpm_params.proc.ISC,'small_angle_approx')
+        hmri_log(sprintf(['WARNING: Small angle approx flag not set for' ...
+            '\nthe imperfect spoiling correction parameters' ...
+            '\nassociated with this MPM protocol.' ...
+            '\nAssuming they were generated using the small angle approximation.']),mpm_params.defflags);
+        mpm_params.proc.ISC.small_angle_approx = true;
+    end
+    % check small angle approximation used consistently, as causes change in
+    % correction parameters
+    if (mpm_params.proc.ISC.small_angle_approx)&&(~mpm_params.small_angle_approx)
+        hmri_log(sprintf(['WARNING: Imperfect spoiling correction (ISC) coefficients were computed using the' ...
+            '\nsmall angle approximation but maps will be created without this approximation.' ...
+            '\nCorrection for imperfect spoiling will thus not be applied.' ...
+            '\nTo use ISC, either calculate ISC coefficients without the small angle' ...
+            '\napproximation or set hmri_def.small_angle_approx = true in the appropriate' ...
+            '\nlocal defaults file.']),mpm_params.defflags);
+        mpm_params.proc.ISC.enabled = false;
+    elseif (~mpm_params.proc.ISC.small_angle_approx)&&(mpm_params.small_angle_approx)
+        hmri_log(sprintf(['WARNING: Imperfect spoiling correction (ISC) coefficients were computed without the' ...
+            '\nsmall angle approximation but maps will be created using this approximation.' ...
+            '\nCorrection for imperfect spoiling will thus not be applied.' ...
+            '\nTo use ISC, either calculate ISC coefficients using the small angle' ...
+            '\napproximation or set hmri_def.small_angle_approx = false in the appropriate' ...
+            '\nlocal defaults file.']),mpm_params.defflags);
+        mpm_params.proc.ISC.enabled = false;
+    else
+        mpm_params.proc.ISC.enabled = true;
+    end
+else
+    mpm_params.proc.ISC.enabled = false;
+end
 
 % RF sensitivity bias correction
 mpm_params.proc.RFsenscorr = jobsubj.sensitivity;

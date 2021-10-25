@@ -286,8 +286,12 @@ if mpm_params.QA.enable
     if exist(mpm_params.QA.fnam,'file')
         mpm_params.QA = spm_jsonread(mpm_params.QA.fnam);
     end
-    mpm_params.QA.ContrastCoreg.MT2PD = contrastCoregParams(MTwidx,:);
-    mpm_params.QA.ContrastCoreg.T12PD = contrastCoregParams(T1widx,:);
+    if MTwidx
+        mpm_params.QA.ContrastCoreg.MT2PD = contrastCoregParams(MTwidx,:);
+    end
+    if T1widx
+        mpm_params.QA.ContrastCoreg.T12PD = contrastCoregParams(T1widx,:);
+    end
     spm_jsonwrite(mpm_params.QA.fnam, mpm_params.QA, struct('indent','\t'));
 end
 

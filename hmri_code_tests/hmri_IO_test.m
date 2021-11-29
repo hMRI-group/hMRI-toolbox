@@ -1,5 +1,4 @@
 % Unit tests based on input/output:
-%   hmri_create_nifti - to do
 %   hmri_read_vols - to do
 %   
 

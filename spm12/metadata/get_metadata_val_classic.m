@@ -350,11 +350,15 @@ switch inParName
         [nFieldFound, fieldList] = find_field_name(mstruc, 'PhaseEncodingDirectionPositive','caseSens','sensitive','matchType','exact');
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         % PhaseEncodingDirectionPositive = 0/1 for -1/+1.
-        % Note that null parameters are not saved in the header.
+        % Note that null parameters were not saved in the header in older datasets.
         if nFieldFound
             cRes = 1;
             parLocation{cRes} = nam{1};
-            parValue{cRes} = val{1};
+            if val{1}
+                parValue{cRes} = 1;
+            else 
+                parValue{cRes} = -1;
+            end
         else
             nFieldFound = 1;
             cRes = 1;

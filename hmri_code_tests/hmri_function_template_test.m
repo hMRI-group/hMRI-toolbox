@@ -53,4 +53,15 @@
 % 
 %     end
 %  
+%     methods(TestMethodTeardown)
+%         
+%         function deleteTempData(testCase)
+%             % Destructor 
+%             delete(testCase.src_file)
+%         end
+%     end
+%     
+%     methods(TestClassTeardown)
+% 
+%     end
 % end

@@ -6,13 +6,14 @@ classdef hmri_coreg_test < matlab.unittest.TestCase
     properties (TestParameter)
         % Augment TestParameter with parameters over which tests will run,
         % as well as parameters needed by the test functions.
-        coregTol = {0.05}
+        coregTol = {0.001}
 
     end
     properties
         % Parameters independent of TestParameter
-        refStruct
-        srcStruct
+        src_file
+        src
+        ref
     end
     
     methods (Test)
@@ -20,29 +21,21 @@ classdef hmri_coreg_test < matlab.unittest.TestCase
         %% Test Functions
         function test_hmri_coreg(testCase,coregTol)
             
-            ref = spm_vol(testCase.refStruct.fname);
-            src = spm_vol(testCase.srcStruct.fname);
-%             pn = 'D:\My Documents\Test\gre_field_mapping_1acq_rl_0004';
-%             fn2 = 's2017-10-16_12-29-124020-00001-00001-2.nii';
-%             fn = 's2017-10-16_12-29-124019-00001-00001-1.nii';
-%             ref = spm_vol([pn filesep fn]);
-%             src = spm_vol([pn filesep fn2]);
-            
             % Create transformation matrix and inverse:
             x = [10 8 5 0.02 0.01 0.008];
             M = pinv(spm_matrix(x));
             
             % Apply transformation to source:
-            spm_get_space(deblank(deblank(src.fname)), M*spm_get_space(deblank(src.fname)));
-            src = spm_vol(src.fname); % read in src again to pick up modified header
+            spm_get_space(deblank(deblank(testCase.src.fname)), M*spm_get_space(deblank(testCase.src.fname)));
+            testCase.src = spm_vol(testCase.src.fname); % read in src again to pick up modified header
             
             % Estimate transformation:
-            x_est = hmri_coreg(ref, src, []);
+            x_est = hmri_coreg(testCase.ref, testCase.src, []);
             
-            % %TODO - find way to test the assertion.  High residuals using
-            % phantom data.  Good performance with in vivo test data.
+            % Test equivalence after coregistration:
             x_app = spm_imatrix(M);
-%             assertEqual(testCase,x_est,x_app(1:length(x_est)),'RelTol',coregTol)
+            assertEqual(testCase,x_est,x_app(1:length(x_est)),'RelTol',coregTol)
+            
         end
             
  
@@ -53,21 +46,36 @@ classdef hmri_coreg_test < matlab.unittest.TestCase
     methods(TestMethodSetup)
         % These methods are run before each test
         
+        function getData(testCase)
+            % These methods are run when instantiating the class
+            ut_data_dir = [fileparts(which('hmri_test_utils')) filesep 'example_data'];
+            ref_file = [ut_data_dir filesep 'field_map_1.nii'];
+            testCase.src_file = [ut_data_dir filesep 'field_map_1_copy.nii'];
+            testCase.ref = spm_vol(ref_file);
+            copyfile(ref_file, testCase.src_file);
+            testCase.src = spm_vol(testCase.src_file);
+        end
+        
     end
 
     methods(TestClassSetup)
-        % These methods are run when instantiating the class
-        
-        % Create synthetic phantom
-        function generatePhantom(testCase)
-            [~,testCase.refStruct]=...
-                hmri_test_utils.makePhantom([tempname '.nii'], eye(4));
-            [~,testCase.srcStruct]=...
-                hmri_test_utils.makePhantom([tempname '.nii'], eye(4));
-        end
-
+        % These methods are run before each test suite (i.e. before all 
+        % tests of this class are run)
+  
     end
     
-    % TODO Destructor to remove testCase.V.fname == tempname.nii
+    methods(TestMethodTeardown)
+        
+        function deleteTempData(testCase)
+            % Destructor 
+            delete(testCase.src_file)
+            
+            % Should also delete ps coreg output created by spm
+        end
+    end
+    
+    methods(TestClassTeardown)
+
+    end
  
 end

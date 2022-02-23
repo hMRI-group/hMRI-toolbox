@@ -354,7 +354,7 @@ end
 % [Reference: ESTATICS, Weiskopf et al. 2014]
 %=========================================================================%
 fR2s_OLS = '';
-hmri_log(sprintf('\t-------- R2* map calculation (ESTATICS) --------'),mpm_params.nopuflags);
+hmri_log(sprintf('\t-------- %s R2* map calculation (ESTATICS) --------',mpm_params.R2s_fit_method),mpm_params.nopuflags);
 LogMsg = sprintf(['INFO: minimum number of echoes required for R2* map calculation is %d.' ...
     '\nNumber of echoes available: '], mpm_params.neco4R2sfit);
 for ccon = 1:mpm_params.ncon
@@ -1338,17 +1338,18 @@ mpm_params.proc.R2sOLS = hmri_get_defaults('R2sOLS');
 % method to calculate R2*
 mpm_params.R2s_fit_method = hmri_get_defaults('R2s_fit_method');
 if mpm_params.proc.R2sOLS
-    hmri_log(sprintf('Will use %s method to compute R2*',mpm_params.R2s_fit_method),mpm_params.defflags);
+    outstring=sprintf('Using %s method to compute R2*.',mpm_params.R2s_fit_method);
     switch lower(mpm_params.R2s_fit_method)
         case {'ols'}
-             hmri_log(sprintf('Note that %s is non-optimal for low SNR data, and that "wls1" might improve your R2* maps.',mpm_params.R2s_fit_method),mpm_params.defflags);
+             outstring=[outstring sprintf('\nNote that %s is non-optimal, and that "wls1" might improve your R2* maps at the expense of a longer computation.',mpm_params.R2s_fit_method)];
         case {'wls1','wls2','wls3'}
-             hmri_log(sprintf('Note that %s uses the parallel toolbox for acceleration.',mpm_params.R2s_fit_method),mpm_params.defflags);
+             outstring=[outstring sprintf('\nNote that %s uses the parallel toolbox for acceleration.',mpm_params.R2s_fit_method)];
         case {'nlls_ols','nlls_wls1','nlls_wls2','nlls_wls3'}
-            hmri_log(sprintf('Note that %s is very slow! Consider using "wls1" instead.',mpm_params.R2s_fit_method),mpm_params.defflags);
+            outstring=[outstring sprintf('\nNote that %s is very slow! Consider using "wls1" instead.',mpm_params.R2s_fit_method)];
         otherwise
-            hmri_log(sprintf('WARNING: But %s could not be found!',mpm_params.R2s_fit_method),mpm_params.defflags);  
+            outstring=[outstring sprintf('\nWARNING: But %s could not be found!',mpm_params.R2s_fit_method)];  
     end
+    hmri_log(outstring,mpm_params.defflags);
 end
 
 % check whether there are enough echoes (neco4R2sfit) to estimate R2*

@@ -10,9 +10,9 @@ classdef hmri_calc_R2s_test < matlab.unittest.TestCase
         % Augment TestParameter with parameters over which tests will run,
         % as well as parameters needed by the test functions.
         sizes1 = {1,10,100};
-        sizes2 = {1,10,100};
-        sizes3 = {1,10,100};
-        fitmethod = {'OLS','WLS1'};%,'NLLS-OLS'};
+        sizes2 = {1,10};
+        sizes3 = {1,10};
+        fitmethod = {'OLS','WLS1','WLS3','NLLS_OLS'};
     end
     properties
         % Parameters independent of TestParameter

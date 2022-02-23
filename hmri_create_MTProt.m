@@ -339,7 +339,7 @@ if mpm_params.QA.enable
                 % Don't want log of < 1 => assuming typical dynamic range of Dicom
                 % data, e.g. 12bit @TODO
                 data = max(data, 1);
-                R2s = hmri_calc_R2s(struct('data',data,'TE',mpm_params.input(ccon).TE),mpm_params.R2s_fit_method);
+                R2s = hmri_calc_R2s(struct('data',data,'TE',mpm_params.input(ccon).TE),'ols');
                 
                 Ni.dat(:,:,p) = max(min(R2s,threshall.R2s),-threshall.R2s)*1000; % threshold T2* at +/- 0.1ms or R2* at +/- 10000 *(1/sec), negative values are allowed to preserve Gaussian distribution
                 spm_progress_bar('Set',p);
@@ -354,7 +354,7 @@ end
 % [Reference: ESTATICS, Weiskopf et al. 2014]
 %=========================================================================%
 fR2s_OLS = '';
-hmri_log(sprintf('\t-------- OLS R2* map calculation (ESTATICS) --------'),mpm_params.nopuflags);
+hmri_log(sprintf('\t-------- R2* map calculation (ESTATICS) --------'),mpm_params.nopuflags);
 LogMsg = sprintf(['INFO: minimum number of echoes required for R2* map calculation is %d.' ...
     '\nNumber of echoes available: '], mpm_params.neco4R2sfit);
 for ccon = 1:mpm_params.ncon
@@ -388,9 +388,9 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
         for ccon = 1:mpm_params.ncon
             % requires a minimum of neco4R2sfit echoes for a robust fit
             if mpm_params.estaticsR2s(ccon)
-                Pte0{ccon}  = fullfile(calcpath,[outbasename '_' mpm_params.input(ccon).tag 'w_OLSfit_TEzero.nii']);
+                Pte0{ccon}  = fullfile(calcpath,[outbasename '_' mpm_params.input(ccon).tag 'w_' mpm_params.R2s_fit_method 'fit_TEzero.nii']);
                 Ni = hmri_create_nifti(Pte0{ccon}, V_pdw(1), dt, ...
-                    sprintf('OLS fit to TE=0 for %sw images - %d echoes', mpm_params.input(ccon).tag, length(mpm_params.input(ccon).TE)));
+                    sprintf('%s fit to TE=0 for %sw images - %d echoes', mpm_params.R2s_fit_method, mpm_params.input(ccon).tag, length(mpm_params.input(ccon).TE)));
                                 
                 % set metadata
                 input_files = mpm_params.input(ccon).fnam;
@@ -409,9 +409,9 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
         end
     end % init nifti objects for fullOLS case
     
-    fR2s_OLS    = fullfile(calcpath,[outbasename '_R2s_OLS' '.nii']);
+    fR2s_OLS    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qR2s).suffix '_' mpm_params.R2s_fit_method '.nii']);
     Ni = hmri_create_nifti(fR2s_OLS, V_pdw(1), dt, ...
-        'OLS R2* map [s-1]');
+        [mpm_params.R2s_fit_method ' R2* map [s-1]']);
     
     % Combine the data and echo times:
     nechoes = zeros(1,mpm_params.ncon);
@@ -422,7 +422,7 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
         end
     end
         
-    spm_progress_bar('Init',dm(3),'OLS R2* fit','planes completed');   
+    spm_progress_bar('Init',dm(3),[mpm_params.R2s_fit_method ' R2* fit','planes completed']);
     for p = 1:dm(3)
         
         for ccon = 1:mpm_params.ncon
@@ -472,7 +472,7 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
     Output_hdr = init_mpm_output_metadata(input_files, mpm_params);
     Output_hdr.history.output.imtype = mpm_params.output(mpm_params.qR2s).descrip;
     Output_hdr.history.output.units = mpm_params.output(mpm_params.qR2s).units;
-    set_metadata(fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qR2s).suffix '_OLS.nii']),Output_hdr,mpm_params.json);
+    set_metadata(fR2s_OLS,Output_hdr,mpm_params.json);
    
 else
     hmri_log(sprintf('INFO: No R2* map will be calculated using the ESTATICS model. \nInsufficient number of echoes.'), mpm_params.defflags);
@@ -1336,8 +1336,20 @@ end
 mpm_params.proc.R2sOLS = hmri_get_defaults('R2sOLS');
 
 % method to calculate R2*
-%TODO: output method to console
 mpm_params.R2s_fit_method = hmri_get_defaults('R2s_fit_method');
+if mpm_params.proc.R2sOLS
+    hmri_log(sprintf('Will use %s method to compute R2*',mpm_params.R2s_fit_method),mpm_params.defflags);
+    switch lower(mpm_params.R2s_fit_method)
+        case {'ols'}
+             hmri_log(sprintf('Note that %s is non-optimal for low SNR data, and that "wls1" might improve your R2* maps.',mpm_params.R2s_fit_method),mpm_params.defflags);
+        case {'wls1','wls2','wls3'}
+             hmri_log(sprintf('Note that %s uses the parallel toolbox for acceleration.',mpm_params.R2s_fit_method),mpm_params.defflags);
+        case {'nlls_ols','nlls_wls1','nlls_wls2','nlls_wls3'}
+            hmri_log(sprintf('Note that %s is very slow! Consider using "wls1" instead.',mpm_params.R2s_fit_method),mpm_params.defflags);
+        otherwise
+            hmri_log(sprintf('WARNING: But %s could not be found!',mpm_params.R2s_fit_method),mpm_params.defflags);  
+    end
+end
 
 % check whether there are enough echoes (neco4R2sfit) to estimate R2*
 % (1) for basic R2* estimation, check only PDw images
@@ -1538,7 +1550,7 @@ if size(mpm_params.input(mpm_params.PDwidx).fnam,1) > (mpm_params.neco4R2sfit-1)
     mpm_params.output(coutput).descrip{1} = 'R2* map [s-1]';
     mpm_params.output(coutput).units = '[s-1]';
     if mpm_params.proc.R2sOLS
-        mpm_params.output(coutput).descrip{end+1} = '- ESTATICS model (OLS R2* map calculation)';
+        mpm_params.output(coutput).descrip{end+1} = '- ESTATICS model (R2* map calculation)';
     end   
     mpm_params.output(coutput).descrip{end+1} = '- B1+ bias correction does not apply';
     switch RFsenscorr{1}

@@ -178,7 +178,7 @@ if mpm_params.basicR2s
         % Don't want log of < 1 => assuming typical dynamic range of Dicom
         % data, e.g. 12bit @TODO
         data = max(data, 1);
-        R2s = hmri_calc_R2s(struct('data',data,'TE',TE_pdw),mpm_params.R2sOLSmethod);
+        R2s = hmri_calc_R2s(struct('data',data,'TE',TE_pdw),mpm_params.R2s_fit_method);
         
         Ni.dat(:,:,p) = max(min(R2s,threshall.R2s),-threshall.R2s)*1000; % threshold T2* at +/- 0.1ms or R2* at +/- 10000 *(1/sec), negative values are allowed to preserve Gaussian distribution
         spm_progress_bar('Set',p);
@@ -339,7 +339,7 @@ if mpm_params.QA.enable
                 % Don't want log of < 1 => assuming typical dynamic range of Dicom
                 % data, e.g. 12bit @TODO
                 data = max(data, 1);
-                R2s = hmri_calc_R2s(struct('data',data,'TE',mpm_params.input(ccon).TE),mpm_params.R2sOLSmethod);
+                R2s = hmri_calc_R2s(struct('data',data,'TE',mpm_params.input(ccon).TE),mpm_params.R2s_fit_method);
                 
                 Ni.dat(:,:,p) = max(min(R2s,threshall.R2s),-threshall.R2s)*1000; % threshold T2* at +/- 0.1ms or R2* at +/- 10000 *(1/sec), negative values are allowed to preserve Gaussian distribution
                 spm_progress_bar('Set',p);
@@ -444,7 +444,7 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
                 dataToFit(ccon).TE = mpm_params.input(ccon).TE;
             end   
         end
-        [R2s, intercepts] = hmri_calc_R2s(dataToFit,mpm_params.R2sOLSmethod);
+        [R2s, intercepts] = hmri_calc_R2s(dataToFit,mpm_params.R2s_fit_method);
 
         % Writes "fullOLS" images (OLS fit to TE=0 for each contrast)
         if mpm_params.fullOLS
@@ -1337,7 +1337,7 @@ mpm_params.proc.R2sOLS = hmri_get_defaults('R2sOLS');
 
 % method to calculate R2*
 %TODO: output method to console
-mpm_params.R2sOLSmethod = hmri_get_defaults('R2sOLSmethod');
+mpm_params.R2s_fit_method = hmri_get_defaults('R2s_fit_method');
 
 % check whether there are enough echoes (neco4R2sfit) to estimate R2*
 % (1) for basic R2* estimation, check only PDw images

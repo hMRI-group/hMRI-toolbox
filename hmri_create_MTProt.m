@@ -1343,9 +1343,9 @@ if mpm_params.proc.R2sOLS
         case {'ols'}
              outstring=[outstring sprintf('\nNote that %s is sub-optimal, and that "wls1" might improve your R2* maps at the expense of a longer computation (Edwards et al. ISMRM 2022).',mpm_params.R2s_fit_method)];
         case {'wls1','wls2','wls3'}
-             outstring=[outstring sprintf('\nNote that %s uses the parallel toolbox for acceleration.',mpm_params.R2s_fit_method)];
+             outstring=[outstring sprintf('\nNote that %s uses the parallel toolbox for acceleration if available, but otherwise may be slow!',mpm_params.R2s_fit_method)];
         case {'nlls_ols','nlls_wls1','nlls_wls2','nlls_wls3'}
-            outstring=[outstring sprintf('\nWARNING that %s is very slow! Consider using "wls1" instead (Edwards et al. ISMRM 2022).',mpm_params.R2s_fit_method)];
+            outstring=[outstring sprintf('\nWARNING that %s is very slow even if the parallel toolbox is available for acceleration! Consider using "wls1" instead (Edwards et al. ISMRM 2022).',mpm_params.R2s_fit_method)];
         otherwise
             outstring=[outstring sprintf('\nWARNING: But %s could not be found!',mpm_params.R2s_fit_method)];  
     end

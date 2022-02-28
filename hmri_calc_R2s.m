@@ -26,7 +26,7 @@ function [R2s,extrapolated]=hmri_calc_R2s(weighted_data,method)
 %                             with '[N]' iterations, where '[N]' is 1, 2 , 
 %                             or 3; uses OLS signal estimates for initial 
 %                             weights),
-%                   'nlls_[METHOD]' (non-linear least squares estimate,
+%                   'NLLS_[METHOD]' (non-linear least squares estimate,
 %                                    where [METHOD] is the method to be
 %                                    used for the initial guess of the
 %                                    parameters, e.g. 'ols' or 'wls1'; note 
@@ -85,7 +85,7 @@ Nvoxels=prod(dims(1:end-1));
 Nweighted=numel(weighted_data);
 
 %% Build regression arrays
-% Design matrix
+% Build design matrix
 D=[];
 for w=1:Nweighted
     d=zeros(length(weighted_data(w).TE),Nweighted+1);
@@ -94,22 +94,23 @@ for w=1:Nweighted
     D=[D;d]; %#ok<AGROW>
 end
 
-% Response variable vector
+% Build response variable vector
 y=[];
 for w=1:Nweighted
     
-    nTE=length(weighted_data(w).TE);
-    assert(nTE>1,'each weighting must have more than one TE')
+    nTEs=length(weighted_data(w).TE);
+    assert(nTEs>1,'each weighting must have more than one TE')
     
     localDims=size(weighted_data(w).data);
-    assert(localDims(end)==nTE,'echoes must be in the final dimension')
+    assert(localDims(end)==nTEs,'echoes must be in the final dimension')
     assert(prod(localDims(1:end-1))==Nvoxels,'all input data must have the same number of voxels');
     
-    rData=reshape(weighted_data(w).data,Nvoxels,nTE);
+    rData=reshape(weighted_data(w).data,Nvoxels,nTEs);
     
-    % log(0) is not defined, so warn the user about zeroes in their data.
+    % log(0) is not defined, so warn the user about zeroes in their data 
+    % for methods involving a log transform.
     % The warning can be disabled with "warning('off','hmri:zerosInInput')"
-    if any(rData(:)==0)
+    if any(rData(:)==0)&&~contains(lower(method),'nlls')
         warning('hmri:zerosInInput',[...
             'Zero values detected in some voxels in the input data. This ',...
             'will cause estimation to fail in these voxels due to the log ',...

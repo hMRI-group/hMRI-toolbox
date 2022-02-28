@@ -10,7 +10,7 @@ function imperf_spoil=tbx_scfg_hmri_imperf_spoil
 %
 %_______________________________________________________________________
 % Wellcome Centre for Human Neuroimaging
-% Nadège Corbin - May 2020
+% NadÃ¨ge Corbin - May 2020
 % ======================================================================
 
 % ---------------------------------------------------------------------
@@ -163,13 +163,24 @@ seq_params.help       = {'Input all the sequence parameters.'};
 seq_params.val        = {FA TR Phi0 B1range Gdur Gamp};
 
 % ---------------------------------------------------------------------
+% Approximation parameters
+% ---------------------------------------------------------------------
+small_angle_approx        = cfg_menu;
+small_angle_approx.tag    = 'small_angle_approx';
+small_angle_approx.name   = 'Small angle approximation';
+small_angle_approx.help   = {'Should the small angle approximation be used to compute T1? This can lead to significant differences in the computed parameters.'};
+small_angle_approx.labels = { 'yes', 'no' };
+small_angle_approx.values = { true false };
+small_angle_approx.val    = { true };
+
+% ---------------------------------------------------------------------
 % Compute correction factors for imperfect spoiling
 % ---------------------------------------------------------------------
 
 imperf_spoil         = cfg_exbranch;
 imperf_spoil.tag     = 'imperf_spoil';
 imperf_spoil.name    = 'Imperfect Spoiling Calc.';
-imperf_spoil.val     = { outdir prot_name seq_params tissue_params };
+imperf_spoil.val     = { outdir prot_name seq_params tissue_params small_angle_approx };
 imperf_spoil.help    = {'Given input info about the sequence settings and expected tissue properties, ' ...
     'this module computes coefficients required to correct for imperfect spoiling in the FLASH volumes ' ...
     'using the method proposed by Preibisch & Deichmann, MRM 2009, 61(1):125'};

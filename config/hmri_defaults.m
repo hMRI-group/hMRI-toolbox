@@ -157,6 +157,11 @@ hmri_def.coreg_bias_flags.cost_fun = 'nmi';
 hmri_def.coreg_bias_flags.fwhm = [7 7];
 
 %--------------------------------------------------------------------------
+% Decide whether to use small angle approximation when computing R1 and PD
+%--------------------------------------------------------------------------
+hmri_def.small_angle_approx = true;
+
+%--------------------------------------------------------------------------
 % Ordinary Least Squares & fit at TE=0
 %--------------------------------------------------------------------------
 % create an Ordinary Least Squares R2* map. The ESTATICS model is applied
@@ -363,31 +368,38 @@ hmri_def.imperfectSpoilCorr.enabled = false;
 hmri_def.imperfectSpoilCorr.ClassicFIL.tag = 'Classic FIL protocol';
 hmri_def.imperfectSpoilCorr.ClassicFIL.P2_a = [78.9228195006542,-101.113338489192,47.8783287525126];
 hmri_def.imperfectSpoilCorr.ClassicFIL.P2_b = [-0.147476233142129,0.126487385091045,0.956824374979504];
+hmri_def.imperfectSpoilCorr.ClassicFIL.small_angle_approx = true;
 % 2) new FIL/Helms protocol
 hmri_def.imperfectSpoilCorr.NewFILHelms.tag = 'New FIL/Helms protocol';
 hmri_def.imperfectSpoilCorr.NewFILHelms.P2_a = [93.455034845930480,-120.5752858196904,55.911077913369060];
 hmri_def.imperfectSpoilCorr.NewFILHelms.P2_b = [-0.167301931434861,0.113507432776106,0.961765216743606];
+hmri_def.imperfectSpoilCorr.NewFILHelms.small_angle_approx = true;
 % 3) Siemens product sequence protocol used in Lausanne (G Krueger)
 hmri_def.imperfectSpoilCorr.SiemPrLausGK.tag = 'Siemens product Lausanne (GK) protocol';
 hmri_def.imperfectSpoilCorr.SiemPrLausGK.P2_a = [67.023102027100880,-86.834117103841540,43.815818592349870];
 hmri_def.imperfectSpoilCorr.SiemPrLausGK.P2_b = [-0.130876849571103,0.117721807209409,0.959180058389875];
+hmri_def.imperfectSpoilCorr.SiemPrLausGK.small_angle_approx = true;
 % 4) High-res (0.8mm) FIL protocol:
 hmri_def.imperfectSpoilCorr.HResFIL.tag = 'High-res FIL protocol';
 hmri_def.imperfectSpoilCorr.HResFIL.P2_a = [1.317257319014170e+02,-1.699833074433892e+02,73.372595677371650];
 hmri_def.imperfectSpoilCorr.HResFIL.P2_b = [-0.218804328507184,0.178745853134922,0.939514554747592];
+hmri_def.imperfectSpoilCorr.HResFIL.small_angle_approx = true;
 % 5)NEW  High-res (0.8mm) FIL protocol:
 hmri_def.imperfectSpoilCorr.NHResFIL.tag = 'New High-res FIL protocol';
 hmri_def.imperfectSpoilCorr.NHResFIL.P2_a = [88.8623036106612,-114.526218941363,53.8168602253166];
 hmri_def.imperfectSpoilCorr.NHResFIL.P2_b = [-0.132904017579521,0.113959390779008,0.960799295622202];
+hmri_def.imperfectSpoilCorr.NHResFIL.small_angle_approx = true;
 % 6)NEW  1mm protocol - seq version v2k:
 hmri_def.imperfectSpoilCorr.v2k.tag = 'v2k protocol';
 hmri_def.imperfectSpoilCorr.v2k.P2_a = [71.2817617982844,-92.2992876164017,45.8278193851731];
 hmri_def.imperfectSpoilCorr.v2k.P2_b = [-0.137859046784839,0.122423212397157,0.957642744668469];
+hmri_def.imperfectSpoilCorr.v2k.small_angle_approx = true;
 % 7) 800um protocol - seq version v3* released used by MEG group:
 hmri_def.imperfectSpoilCorr.v3star.tag = 'v3star protocol';
 hmri_def.imperfectSpoilCorr.v3star.P2_a = [57.427573706259864,-79.300742898810441,39.218584751863879];
 hmri_def.imperfectSpoilCorr.v3star.P2_b = [-0.121114060111119,0.121684347499374,0.955987357483519];
-% Unknwon protocol
+hmri_def.imperfectSpoilCorr.v3star.small_angle_approx = true;
+% Unknown protocol
 hmri_def.imperfectSpoilCorr.Unknown.tag = 'Unknown protocol. No spoiling correction defined.';
 
 %--------------------------------------------------------------------------

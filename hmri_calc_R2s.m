@@ -1,19 +1,8 @@
 function [R2s,extrapolated]=hmri_calc_R2s(weighted_data,method)
 % R2* estimation using an implementation of the ESTATICS
-% model (Weiskopf2014). Can utilise weighted least squares (WLS) to account 
+% model (Weiskopf2014). Can utilise weighted least squares (WLS) instead of
+% the original ordinary least squares (OLS; Weiskopf2014) to account 
 % for the heteroscedasticity of log transformed data (Edwards2022).
-%
-% ledwards@cbs.mpg.de
-%
-% Based on the ESTATICS implementation in the hMRI toolbox:
-%   https://github.com/hMRI-group/hMRI-toolbox
-% and the weighted ESTATICS implementation from Siawoosh Mohammadi:
-%   https://github.com/siawoosh/hMRI-toolbox/blob/master/hMRI_FIT_ESTATICS.m
-% At present there is no debiasing or outlier detection.
-% The WLS method applied here differs from the weighted least squares
-% implementations used in (Weiskopf2014), which attempted to estimate
-% weights based on a method of outlier detection, rather than choosing
-% weights to account for the log-transform induced heteroscedasticity.
 %
 % Input:
 %   array of structures (one per contrast) in the form:
@@ -47,7 +36,8 @@ function [R2s,extrapolated]=hmri_calc_R2s(weighted_data,method)
 %      intensities. These weights can be iteratively updated using the
 %      estimated signal intensities (Salvador2005). However the benefit of
 %      iteratively updating the weights has been found to be relatively 
-%      small for typical MPM data, and so 'wls1' seems to be sufficient.
+%      small for typical MPM data, and so 'wls1' seems to be sufficient
+%      to improve R2* map quality over OLS (Edwards2022).
 %
 % Outputs:
 %   R2s (NvoxelsX x NvoxelsY x ...): the voxelwise-estimated

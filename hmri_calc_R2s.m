@@ -34,7 +34,7 @@ function [R2s,extrapolated]=hmri_calc_R2s(weighted_data,method)
 %                                    accurate, this method is very slow!)
 %     -The weights in the WLS case depend on the unknown true signal
 %      intensities. These weights can be iteratively updated using the
-%      estimated signal intensities (Salvador2005). However the benefit of
+%      estimated signal intensities. However the benefit of
 %      iteratively updating the weights has been found to be relatively 
 %      small for typical MPM data, and so 'wls1' seems to be sufficient
 %      to improve R2* map quality over OLS (Edwards2022).
@@ -74,9 +74,6 @@ function [R2s,extrapolated]=hmri_calc_R2s(weighted_data,method)
 %   Edwards et al. Proc. Int. Soc. Magn. Reson. Med. (2022), "Robust and 
 %     efficient R2* estimation in human brain using log-linear weighted 
 %     least squares"
-%   Salvador et al., Hum. Brain Mapp. (2005), "Formal characterization and
-%     extension of the linearized diffusion tensor model",
-%     https://doi.org/10.1002/hbm.20076
 
 assert(isstruct(weighted_data),'hmri:structError',['inputs must be structs; see help ' mfilename])
 

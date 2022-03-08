@@ -105,6 +105,7 @@ b1_input_preproc.help      = {'Input pre-calculated B1 bias map.'
     'a scaling factor can be introduced (see Scaling factor description for more details).']};
 b1_input_preproc.val       = {b1raw scafac};
 
+
 % ---------------------------------------------------------------------
 % RF_MAP B1 protocol
 % ---------------------------------------------------------------------
@@ -115,6 +116,7 @@ b1_input_rfmap.help      = {'Input B1 images for rf_map B1 map protocol.' ...
     'As B1 input, please select the pair of anatomical and precalculated B1 map, in that order.'};
 b1_input_rfmap.val       = {b1raw};
 
+
 % ---------------------------------------------------------------------
 % TFL_B1_MAP B1 protocol
 % ---------------------------------------------------------------------
@@ -124,6 +126,21 @@ b1_input_tfl.name      = 'tfl_b1_map';
 b1_input_tfl.help      = {'Input B1 images for TFL B1 map protocol.' ...
     'As B1 input, please select the pair of anatomical and precalculated B1 map, in that order.'};
 b1_input_tfl.val       = {b1raw};
+
+
+% ---------------------------------------------------------------------
+% SDAM B1 protocol
+% ---------------------------------------------------------------------
+b1_input_SDAM           = cfg_branch;
+b1_input_SDAM.tag       = 'SDAM';
+b1_input_SDAM.name      = 'Saturated Double Angle Method';
+b1_input_SDAM.help      = {'Saturated Double Angle Method (SDAM) protocol.', ...
+    'As B1 input, please select a 2*alpha/alpha (e.g. 120°/60°) pair of images in that order.', ...
+    ['Regarding processing parameters, you can either stick with metadata and standard ' ...
+    'defaults parameters (recommended) or select your own [hmri_b1_local_defaults_*.m] customised defaults file ' ...
+    '(fallback for situations where no metadata are available).']};
+b1_input_SDAM.val       = {b1raw b1parameters};
+
 
 % ---------------------------------------------------------------------
 % i3D_AFI B1 protocol
@@ -137,6 +154,7 @@ b1_input_3DAFI.help      = {'3D Actual Flip Angle Imaging (AFI) protocol.', ...
     'defaults parameters (recommended) or select your own [hmri_b1_local_defaults_*.m] customised defaults file ' ...
     '(fallback for situations where no metadata are available).']};
 b1_input_3DAFI.val       = {b1raw b1parameters};
+
 
 % ---------------------------------------------------------------------
 % i3D_EPI B1 protocol
@@ -156,6 +174,7 @@ b1_input_3DEPI.help      = {'Input B0/B1 data for 3D EPI protocol'
     '(fallback for situations where no metadata are available).']};
 b1_input_3DEPI.val       = {b1raw b0raw b1parameters};
 
+
 % ---------------------------------------------------------------------
 % menu b1_type
 % ---------------------------------------------------------------------
@@ -172,12 +191,13 @@ b1_type.help    = {'Choose the methods for B1 bias correction.'
     'PLoS One 2012;7(3):e32379].']
     [' - 3D AFI: 3D actual flip angle imaging (AFI) method based on [Yarnykh VL, ' ...
     'Magn Reson Med 2007;57:192-200].']
+    [' - Saturated Double Angle Method (SDAM)']
     [' - tfl_b1_map: Siemens product sequence for B1 mapping based on turbo FLASH.']
     [' - rf_map: Siemens product sequence for B1 mapping based on SE/STE.']
     [' - pre-processed B1: B1 map pre-calculated outside the hMRI toolbox, must ' ...
     'be expressed in percent units of the nominal flip angle value (percent bias).']
     }; %#ok<*NBRAK>
-b1_type.values  = {b1_input_3DEPI b1_input_3DAFI b1_input_tfl b1_input_rfmap b1_input_preproc};
+b1_type.values  = {b1_input_3DEPI b1_input_3DAFI b1_input_SDAM b1_input_tfl b1_input_rfmap b1_input_preproc};
 b1_type.val     = {b1_input_3DEPI};
 
 end

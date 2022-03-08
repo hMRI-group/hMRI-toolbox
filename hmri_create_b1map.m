@@ -172,8 +172,8 @@ set_metadata(VB1.fname,Output_hdr,json);
 
 % Rename anatomical reference for uniformity between protocols
 B1ref = fullfile(outpath, [sname '_B1ref.nii']);
-copyfile(char(fileTR1),B1ref);
-try copyfile([spm_str_manip(char(fileTR1),'r') '.json'],[spm_str_manip(B1ref,'r') '.json']); end %#ok<*TRYNC>
+copyfile(char(V1.fname),B1ref);
+try copyfile([spm_str_manip(char(V1.fname),'r') '.json'],[spm_str_manip(B1ref,'r') '.json']); end %#ok<*TRYNC>
 
 % requires anatomic image + map
 P_trans  = char(B1ref,char(VB1.fname));
@@ -223,7 +223,7 @@ spm_smooth(B1map_norm,smB1map_norm,smth);
 % B1map_norm = B1map_norm.*Mask;
 % smB1map_norm = smB1map_norm.*Mask;
 
-sname = spm_file(V1.fname,'filename');
+sname = spm_file(V1.fname,'basename');
 
 % save output images
 VB1 = V1;
@@ -241,8 +241,8 @@ set_metadata(VB1.fname,Output_hdr,json);
 
 % Rename anatomical reference for uniformity between protocols
 B1ref = fullfile(outpath, [sname '_B1ref.nii']);
-copyfile(char(file_alpha1),B1ref);
-try copyfile([spm_str_manip(char(file_alpha1),'r') '.json'],[spm_str_manip(B1ref,'r') '.json']); end %#ok<*TRYNC>
+copyfile(char(V1.fname),B1ref);
+try copyfile([spm_str_manip(char(V1.fname),'r') '.json'],[spm_str_manip(B1ref,'r') '.json']); end %#ok<*TRYNC>
 
 % requires anatomic image + map
 P_trans  = char(B1ref,char(VB1.fname));

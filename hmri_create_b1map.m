@@ -132,26 +132,27 @@ V2 = spm_vol(fileTR2);
 Y1 = spm_read_vols(V1);
 Y2 = spm_read_vols(V2);
 
+sname = spm_file(V1.fname,'basename');
+
+% copy and rename anatomical reference for uniformity between protocols
+B1ref = fullfile(outpath, [sname '_B1ref.nii']);
+copyfile(char(V1.fname),B1ref);
+try copyfile([spm_str_manip(char(V1.fname),'r') '.json'],[spm_str_manip(B1ref,'r') '.json']); end %#ok<*TRYNC>
+
 TR1 = 1; % only the ratio [TR2/TR1=n] matters
 TR2 = b1map_params.b1acq.TR2TR1ratio;
 alphanom = b1map_params.b1acq.alphanom;
 
-% Mask = squeeze(Vol1);
-% threshold = (prctile(Mask(:),98)-prctile(Mask(:),2))*0.1+prctile(Mask(:),2);
-% Mask = (Mask>threshold);
-
+% compute B1 map
+% TODO: warn if volumes seem to be in the wrong order
 B1map = acos((Y2./Y1*TR2/TR1-1)./(TR2/TR1*ones(size(Y1))-Y2./Y1))*180/pi;
 B1map_norm = abs(B1map)*100/alphanom;
 
-% smoothed map
-smB1map_norm = smoothB1(V1,B1map_norm,b1map_params.b1proc.B1FWHM);
-
 % masking
-% B1map = B1map.*Mask;
-% B1map_norm = B1map_norm.*Mask;
-% smB1map_norm = smB1map_norm.*Mask;
+mask = maskB1(spm_vol(B1ref),b1map_params.b1mask);
 
-sname = spm_file(V1.fname,'basename');
+% smoothed map
+smB1map_norm = smoothB1(V1,mask.*B1map_norm,b1map_params.b1proc.B1FWHM,mask);
 
 % save output images
 VB1 = V1;
@@ -167,16 +168,8 @@ Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (AF
 Output_hdr.history.output.imtype = 'B1+ map (AFI protocol)';
 set_metadata(VB1.fname,Output_hdr,json);
 
-% Rename anatomical reference for uniformity between protocols
-B1ref = fullfile(outpath, [sname '_B1ref.nii']);
-copyfile(char(V1.fname),B1ref);
-try copyfile([spm_str_manip(char(V1.fname),'r') '.json'],[spm_str_manip(B1ref,'r') '.json']); end %#ok<*TRYNC>
-
 % requires anatomic image + map
 P_trans  = char(B1ref,char(VB1.fname));
-
-% VB1.fname = fullfile(outpath, [sname '_B1map_mask.nii']);
-% spm_write_vol(VB1,Mask);
 
 end
 
@@ -192,7 +185,7 @@ json = hmri_get_defaults('json');
 outpath = jobsubj.path.b1path;
 b1map_params.outpath = outpath;
 
-% First image = 2alpha (2*alpha) and second image = alpha.
+% first image = 2alpha (2*alpha) and second image = alpha.
 file_alpha = b1map_params.b1input(2,:);
 file_2alpha = b1map_params.b1input(1,:);
 V1 = spm_vol(file_alpha);
@@ -200,26 +193,21 @@ V2 = spm_vol(file_2alpha);
 Y1 = spm_read_vols(V1);
 Y2 = spm_read_vols(V2);
 
+sname = spm_file(V1.fname,'basename');
+
+% copy and rename anatomical reference for uniformity between protocols
+B1ref = fullfile(outpath, [sname '_B1ref.nii']);
+copyfile(char(V1.fname),B1ref);
+try copyfile([spm_str_manip(char(V1.fname),'r') '.json'],[spm_str_manip(B1ref,'r') '.json']); end %#ok<*TRYNC>
+
 alphanom = b1map_params.b1acq.alphanom;
 
-% Mask = squeeze(Vol1);
-% threshold = (prctile(Mask(:),98)-prctile(Mask(:),2))*0.1+prctile(Mask(:),2);
-% Mask = (Mask>threshold);
-
-% TODO: warn if too many imaginary values detected (sign of incorrect file
-% order)
+% compute B1 map
+% Note: imaginary component is erroneous and should only appear in 
+% background voxels. Too many would be a sign of incorrect file order.
+% TODO: warn if too many imaginary values detected.
 B1map = (1/alphanom).*acosd(Y2./(2*Y1));
 B1map_norm = real(B1map)*100;
-
-% smoothed map
-smB1map_norm = smoothB1(V1,B1map_norm,b1map_params.b1proc.B1FWHM);
-
-% masking
-% B1map = B1map.*Mask;
-% B1map_norm = B1map_norm.*Mask;
-% smB1map_norm = smB1map_norm.*Mask;
-
-sname = spm_file(V1.fname,'basename');
 
 % save output images
 VB1 = V1;
@@ -235,16 +223,8 @@ Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (DA
 Output_hdr.history.output.imtype = 'B1+ map (DAM protocol)';
 set_metadata(VB1.fname,Output_hdr,json);
 
-% Rename anatomical reference for uniformity between protocols
-B1ref = fullfile(outpath, [sname '_B1ref.nii']);
-copyfile(char(V1.fname),B1ref);
-try copyfile([spm_str_manip(char(V1.fname),'r') '.json'],[spm_str_manip(B1ref,'r') '.json']); end %#ok<*TRYNC>
-
 % requires anatomic image + map
 P_trans  = char(B1ref,char(VB1.fname));
-
-% VB1.fname = fullfile(outpath, [sname '_B1map_mask.nii']);
-% spm_write_vol(VB1,Mask);
 
 end
 
@@ -942,6 +922,10 @@ if isfield(b1map_params, 'b1proc')
     hmri_log(sprintf('B1 processing parameters (check carefully!):\n\n%s', ...
         printstruct(b1map_params.b1proc)),b1map_params.defflags);
 end
+if isfield(b1map_params, 'b1mask')
+    hmri_log(sprintf('B1 masking parameters (check carefully!):\n\n%s', ...
+        printstruct(b1map_params.b1mask)),b1map_params.defflags);
+end
 
 end
 
@@ -977,7 +961,7 @@ end
 %=========================================================================%
 % To smooth B1 map calculation output.
 %=========================================================================%
-function smB1map_norm=smoothB1(V,B1map_norm,B1FWHM)
+function smB1map_norm = smoothB1(V,B1map_norm,B1FWHM,mask)
 
 assert(numel(B1FWHM)==1||numel(B1FWHM)==3,...
     ['FWHM of B1 smoothing kernel (B1FWHM) must have either one element ' ...
@@ -989,6 +973,26 @@ assert(all(B1FWHM(:)>=0),['FWHM of B1 smoothing kernel (B1FWHM) cannot be ' ...
 smB1map_norm = zeros(size(B1map_norm));
 pxs = sqrt(sum(V.mat(1:3,1:3).^2)); % Voxel resolution
 smth = B1FWHM./pxs;
-spm_smooth(B1map_norm,smB1map_norm,smth);
+spm_smooth(mask.*B1map_norm,smB1map_norm,smth);
+
+% Renormalise so that we are not biased by zeroed background voxels
+if numel(mask)>1 % i.e. mask is not a scalar
+    norm_factor = zeros(size(B1map_norm));
+    spm_smooth(double(mask),norm_factor,smth);
+    smB1map_norm(norm_factor~=0)=smB1map_norm(norm_factor~=0)./norm_factor(norm_factor~=0);
+end
+
+end
+
+%=========================================================================%
+% To mask B1 map before smoothing.
+%=========================================================================%
+function bmask = maskB1(Vanat,flags)
+
+if flags.domask
+    bmask=hmri_create_pm_brain_mask(Vanat,flags);    
+else
+    bmask=true; % return a scalar
+end
 
 end

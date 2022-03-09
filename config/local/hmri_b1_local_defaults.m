@@ -55,6 +55,11 @@ hmri_def.b1map.i3D_AFI.b1avail = true;
 hmri_def.b1map.i3D_AFI.procreq = true; 
 hmri_def.b1map.i3D_AFI.b1acq.TR2TR1ratio = 5;
 hmri_def.b1map.i3D_AFI.b1acq.alphanom = 60;
+hmri_def.b1map.i3D_AFI.b1mask.domask = false; % whether to mask using hmri_create_pm_brain_mask.m
+hmri_def.b1map.i3D_AFI.b1mask.fwhm = 5; % options for hmri_create_pm_brain_mask.m
+hmri_def.b1map.i3D_AFI.b1mask.nerode = 2;
+hmri_def.b1map.i3D_AFI.b1mask.ndilate = 4;
+hmri_def.b1map.i3D_AFI.b1mask.thresh = 0.5;
 hmri_def.b1map.i3D_AFI.b1proc.B1FWHM = 8; % For smoothing. FWHM in mm; set to 0 to disable smoothing
 
 % 'DAM'
@@ -62,6 +67,11 @@ hmri_def.b1map.DAM.b1type = 'DAM';
 hmri_def.b1map.DAM.b1avail = true;
 hmri_def.b1map.DAM.procreq = true;
 hmri_def.b1map.DAM.b1acq.alphanom = 60;
+hmri_def.b1map.DAM.b1mask.domask = false; % whether to mask using hmri_create_pm_brain_mask.m
+hmri_def.b1map.DAM.b1mask.fwhm = 5; % options for hmri_create_pm_brain_mask.m
+hmri_def.b1map.DAM.b1mask.nerode = 2;
+hmri_def.b1map.DAM.b1mask.ndilate = 4;
+hmri_def.b1map.DAM.b1mask.thresh = 0.5;
 hmri_def.b1map.DAM.b1proc.B1FWHM = 8; % For smoothing. FWHM in mm; set to 0 to disable smoothing
 
 % 'pre_processed_B1'

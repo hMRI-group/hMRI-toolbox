@@ -752,28 +752,32 @@ switch b1_protocol
                 if isempty(tmp)
                     hmri_log(sprintf('WARNING: using defaults value for nominal SE/STE flip angle values \n(%s) instead of metadata', ...
                         sprintf('%d ',b1map_params.b1acq.beta)),b1map_params.defflags);
-                else b1map_params.b1acq.beta = tmp;
+                else
+                    b1map_params.b1acq.beta = tmp;
                 end
                 
                 tmp = get_metadata_val(b1hdr{1},'B1mapMixingTime');
                 if isempty(tmp)
                     hmri_log(sprintf('WARNING: using defaults value for mixing time \n(%d ms) instead of metadata', ...
                         b1map_params.b1acq.TM),b1map_params.defflags);
-                else b1map_params.b1acq.TM = tmp;
+                else
+                    b1map_params.b1acq.TM = tmp;
                 end
                 
                 tmp = get_metadata_val(b1hdr{1},'epiReadoutDuration'); % must take into account PAT but not PF acceleration
                 if isempty(tmp)
                     hmri_log(sprintf('WARNING: using defaults value for EPI readout duration\n(%d ms) instead of metadata', ...
                         b1map_params.b1acq.tert),b1map_params.defflags);
-                else b1map_params.b1acq.tert = tmp;
+                else
+                    b1map_params.b1acq.tert = tmp;
                 end
                 
                 tmp = get_metadata_val(b1hdr{1},'PhaseEncodingDirectionSign');
                 if isempty(tmp)
                     hmri_log(sprintf('WARNING: using defaults value for PE direction\n(%d) instead of metadata', ...
                         b1map_params.b1acq.blipDIR),b1map_params.defflags);
-                else b1map_params.b1acq.blipDIR = tmp;
+                else
+                    b1map_params.b1acq.blipDIR = tmp;
                 end
                 
                 % consistency check for T1 value and field strength:
@@ -843,14 +847,16 @@ switch b1_protocol
                     if isempty(tmp)
                         hmri_log(sprintf('WARNING: using defaults value for B0 mapping TEs\n(short TE=%.2fms) instead of metadata', ...
                             b1map_params.b0acq.shortTE),b1map_params.defflags);
-                    else b1map_params.b0acq.shortTE = tmp;
+                    else
+                        b1map_params.b0acq.shortTE = tmp;
                     end
                     
                     tmp = get_metadata_val(b1map_params.b0input(2,:),'EchoTime');
                     if isempty(tmp)
                         hmri_log(sprintf('WARNING: using defaults value for B0 mapping TEs\n(long TE=%.2fms) instead of metadata', ...
                             b1map_params.b0acq.longTE),b1map_params.defflags);
-                    else b1map_params.b0acq.longTE = tmp;
+                    else
+                        b1map_params.b0acq.longTE = tmp;
                     end
                     b1map_params.b0acq.iformat = 'PM';
                 end
@@ -869,14 +875,16 @@ switch b1_protocol
                 if isempty(tr)
                     hmri_log(sprintf('WARNING: using defaults values for TRs\n(TR ratio = %.1f) instead of metadata', ...
                         b1map_params.b1acq.TR2TR1ratio),b1map_params.defflags);
-                else b1map_params.b1acq.TR2TR1ratio = tr(2)/tr(1);
+                else
+                    b1map_params.b1acq.TR2TR1ratio = tr(2)/tr(1);
                 end
                 
                 tmp = get_metadata_val(b1hdr{1},'FlipAngle');
                 if isempty(tmp)
-                    hmri_log(sprintf('WARNING: using defaults value for flip ange \n(%d deg) instead of metadata', ...
+                    hmri_log(sprintf('WARNING: using defaults value for flip angle \n(%d deg) instead of metadata', ...
                         b1map_params.b1acq.alphanom), b1map_params.defflags);
-                else b1map_params.b1acq.alphanom = tmp;
+                else
+                    b1map_params.b1acq.alphanom = tmp;
                 end
             catch
                 hmri_log(sprintf(['WARNING: possibly no metadata associated to the input images. \n' ...
@@ -966,7 +974,7 @@ metastruc = init_output_metadata_structure(input_files, proc, output);
 end
 
 %=========================================================================%
-% To rpint a structure into text - assumes simple structure (no
+% To print a structure into text - assumes simple structure (no
 % sub-structure in it at this point)
 %=========================================================================%
 function s = printstruct(struc)

@@ -131,15 +131,15 @@ b1_input_tfl.val       = {b1raw};
 % ---------------------------------------------------------------------
 % SDAM B1 protocol
 % ---------------------------------------------------------------------
-b1_input_SDAM           = cfg_branch;
-b1_input_SDAM.tag       = 'SDAM';
-b1_input_SDAM.name      = 'Saturated Double Angle Method';
-b1_input_SDAM.help      = {'Saturated Double Angle Method (SDAM) protocol.', ...
+b1_input_DAM           = cfg_branch;
+b1_input_DAM.tag       = 'DAM';
+b1_input_DAM.name      = 'Double Angle Method';
+b1_input_DAM.help      = {'Double Angle Method (SDAM) protocol.', ...
     'As B1 input, please select a 2*alpha/alpha (e.g. 120°/60°) pair of images in that order.', ...
     ['Regarding processing parameters, you can either stick with metadata and standard ' ...
     'defaults parameters (recommended) or select your own [hmri_b1_local_defaults_*.m] customised defaults file ' ...
     '(fallback for situations where no metadata are available).']};
-b1_input_SDAM.val       = {b1raw b1parameters};
+b1_input_DAM.val       = {b1raw b1parameters};
 
 
 % ---------------------------------------------------------------------
@@ -191,13 +191,13 @@ b1_type.help    = {'Choose the methods for B1 bias correction.'
     'PLoS One 2012;7(3):e32379].']
     [' - 3D AFI: 3D actual flip angle imaging (AFI) method based on [Yarnykh VL, ' ...
     'Magn Reson Med 2007;57:192-200].']
-    [' - Saturated Double Angle Method (SDAM)']
+    [' - Double Angle Method (DAM)']
     [' - tfl_b1_map: Siemens product sequence for B1 mapping based on turbo FLASH.']
     [' - rf_map: Siemens product sequence for B1 mapping based on SE/STE.']
     [' - pre-processed B1: B1 map pre-calculated outside the hMRI toolbox, must ' ...
     'be expressed in percent units of the nominal flip angle value (percent bias).']
     }; %#ok<*NBRAK>
-b1_type.values  = {b1_input_3DEPI b1_input_3DAFI b1_input_SDAM b1_input_tfl b1_input_rfmap b1_input_preproc};
+b1_type.values  = {b1_input_3DEPI b1_input_3DAFI b1_input_DAM b1_input_tfl b1_input_rfmap b1_input_preproc};
 b1_type.val     = {b1_input_3DEPI};
 
 end

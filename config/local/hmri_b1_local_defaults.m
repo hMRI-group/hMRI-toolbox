@@ -57,6 +57,13 @@ hmri_def.b1map.i3D_AFI.b1acq.TR2TR1ratio = 5;
 hmri_def.b1map.i3D_AFI.b1acq.alphanom = 60;
 hmri_def.b1map.i3D_AFI.deffnam  = {fullfile(fileparts(mfilename('fullpath')),'config','local','hmri_b1_local_defaults.m')};
 
+% 'DAM'
+hmri_def.b1map.DAM.b1type = 'DAM'; 
+hmri_def.b1map.DAM.b1avail = true;
+hmri_def.b1map.DAM.procreq = true;
+hmri_def.b1map.DAM.b1acq.alphanom = 60;
+hmri_def.b1map.DAM.deffnam  = {fullfile(fileparts(mfilename('fullpath')),'config','local','hmri_b1_local_defaults.m')};
+
 % 'pre_processed_B1'
 hmri_def.b1map.pre_processed_B1.b1type = 'pre_processed_B1'; 
 hmri_def.b1map.pre_processed_B1.b1avail   = true;

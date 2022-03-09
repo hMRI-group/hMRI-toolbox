@@ -46,12 +46,14 @@ hmri_def.b1map.i3D_AFI.b1avail = true;
 hmri_def.b1map.i3D_AFI.procreq = true; 
 hmri_def.b1map.i3D_AFI.b1acq.TR2TR1ratio = 5;
 hmri_def.b1map.i3D_AFI.b1acq.alphanom = 60;
+hmri_def.b1map.i3D_AFI.b1proc.B1FWHM = 8; % For smoothing. FWHM in mm; set to 0 to disable smoothing
 
 % 'DAM'
 hmri_def.b1map.DAM.b1type = 'DAM'; 
 hmri_def.b1map.DAM.b1avail = true;
 hmri_def.b1map.DAM.procreq = true;
 hmri_def.b1map.DAM.b1acq.alphanom = 60;
+hmri_def.b1map.DAM.b1proc.B1FWHM = 8;  % For smoothing. FWHM in mm; set to 0 to disable smoothing
 
 % 'pre_processed_B1'
 hmri_def.b1map.pre_processed_B1.b1type = 'pre_processed_B1'; 
@@ -100,10 +102,12 @@ hmri_def.b1map.i3D_EPI.b0acq.iformat = 'PM'; % ms
 hmri_def.b1map.tfl_b1_map.b1type = 'tfl_b1_map'; 
 hmri_def.b1map.tfl_b1_map.b1avail   = true; 
 hmri_def.b1map.tfl_b1_map.procreq = true; 
+hmri_def.b1map.tfl_b1_map.b1proc.B1FWHM = 8; % For smoothing. FWHM in mm; set to 0 to disable smoothing
 
 % 'rf_map'
 hmri_def.b1map.rf_map.b1type = 'rf_map'; 
 hmri_def.b1map.rf_map.b1avail   = true; 
 hmri_def.b1map.rf_map.procreq = true; 
+hmri_def.b1map.rf_map.b1proc.B1FWHM = 8; % For smoothing. FWHM in mm; set to 0 to disable smoothing
 
 end

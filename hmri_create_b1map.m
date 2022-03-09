@@ -144,10 +144,7 @@ B1map = acos((Y2./Y1*TR2/TR1-1)./(TR2/TR1*ones(size(Y1))-Y2./Y1))*180/pi;
 B1map_norm = abs(B1map)*100/alphanom;
 
 % smoothed map
-smB1map_norm = zeros(size(B1map_norm));
-pxs = sqrt(sum(V1.mat(1:3,1:3).^2)); % Voxel resolution
-smth = 8./pxs;
-spm_smooth(B1map_norm,smB1map_norm,smth);
+smB1map_norm = smoothB1(V1,B1map_norm,b1map_params.b1proc.B1FWHM);
 
 % masking
 % B1map = B1map.*Mask;
@@ -159,7 +156,7 @@ sname = spm_file(V1.fname,'basename');
 % save output images
 VB1 = V1;
 VB1.pinfo(1) = max(smB1map_norm(:))/spm_type(VB1.dt(1),'maxval');
-VB1.descrip = 'B1+ map - smoothed and normalised (p.u.) - AFI protocol';
+VB1.descrip = ['B1+ map - smoothed ( ' sprintf('%d ',b1map_params.b1proc.B1FWHM) 'mm ) and normalised (p.u.) - AFI protocol'];
 VB1.fname = fullfile(outpath, [sname '_B1map.nii']);
 spm_write_vol(VB1,smB1map_norm);
 
@@ -215,11 +212,7 @@ B1map = (1/alphanom).*acosd(Y2./(2*Y1));
 B1map_norm = real(B1map)*100;
 
 % smoothed map
-% TODO: make smoothing parameter adjustable
-smB1map_norm = zeros(size(B1map_norm));
-pxs = sqrt(sum(V1.mat(1:3,1:3).^2)); % Voxel resolution
-smth = 8./pxs;
-spm_smooth(B1map_norm,smB1map_norm,smth);
+smB1map_norm = smoothB1(V1,B1map_norm,b1map_params.b1proc.B1FWHM);
 
 % masking
 % B1map = B1map.*Mask;
@@ -231,7 +224,7 @@ sname = spm_file(V1.fname,'basename');
 % save output images
 VB1 = V1;
 VB1.pinfo(1) = max(smB1map_norm(:))/spm_type(VB1.dt(1),'maxval');
-VB1.descrip = 'B1+ map - smoothed and normalised (p.u.) - DAM protocol';
+VB1.descrip = ['B1+ map - smoothed ( ' sprintf('%d ',b1map_params.b1proc.B1FWHM) 'mm ) and normalised (p.u.) - DAM protocol'];
 VB1.fname = fullfile(outpath, [sname '_B1map.nii']);
 spm_write_vol(VB1,smB1map_norm);
 
@@ -545,10 +538,7 @@ alphanom = get_metadata_val(P,'FlipAngle'); % nominal flip angle of tfl_b1map
 B1map_norm = abs(Vol1)*10/alphanom;
 
 % smoothed map
-smB1map_norm = zeros(size(B1map_norm));
-pxs = sqrt(sum(V1.mat(1:3,1:3).^2)); % Voxel resolution
-smth = 8./pxs;
-spm_smooth(B1map_norm,smB1map_norm,smth);
+smB1map_norm = smoothB1(V1,B1map_norm,b1map_params.b1proc.B1FWHM);
 
 % Save everything in OUTPUT dir
 %-----------------------------------------------------------------------
@@ -561,7 +551,7 @@ sname = spm_file(V1.fname,'basename');
 VB1 = V1;
 VB1.pinfo(1) = max(smB1map_norm(:))/spm_type(VB1.dt(1),'maxval');
 VB1.fname = fullfile(outpath, [sname '_B1map.nii']);
-VB1.descrip = 'Smoothed & normalised (p.u.) B1 bias map - TFL B1map protocol';
+VB1.descrip = ['B1+ map - smoothed ( ' sprintf('%d ',b1map_params.b1proc.B1FWHM) 'mm ) and normalised (p.u.) - TFL B1map protocol'];
 spm_write_vol(VB1,smB1map_norm);
 
 % set and write metadata
@@ -604,10 +594,7 @@ B1map_norm = (abs(Vol1)-2048)*180*100/(alphanom*2048); % *100/alpha to get p.u.
 % the formula (abs(Vol1)-2048)*180/2048 would result in an absolute FA map
 
 % smoothed map
-smB1map_norm = zeros(size(B1map_norm));
-pxs = sqrt(sum(V1.mat(1:3,1:3).^2)); % Voxel resolution
-smth = 8./pxs;
-spm_smooth(B1map_norm,smB1map_norm,smth);
+smB1map_norm = smoothB1(V1,B1map_norm,b1map_params.b1proc.B1FWHM);
 
 % Save everything in OUTPUT dir
 %-----------------------------------------------------------------------
@@ -620,7 +607,7 @@ sname = spm_file(V1.fname,'basename');
 VB1 = V1;
 VB1.pinfo(1) = max(smB1map_norm(:))/spm_type(VB1.dt(1),'maxval');
 VB1.fname = fullfile(outpath, [sname '_B1map.nii']);
-VB1.descrip = 'Smoothed & normalised (p.u.) B1 bias map - TFL B1map protocol';
+VB1.descrip = ['B1+ map - smoothed ( ' sprintf('%d ',b1map_params.b1proc.B1FWHM) 'mm ) and normalised (p.u.) - Siemens rf_map protocol'];
 spm_write_vol(VB1,smB1map_norm);
 
 % set and write metadata
@@ -865,6 +852,7 @@ switch b1_protocol
                     'Default acquisition and processing parameters will be used.']),b1map_params.defflags);
             end
         end
+        
     case 'i3D_AFI'
         if ~isempty(b1map_params.b1input)
             hmri_log(sprintf('AFI protocol selected ...'),b1map_params.nopuflags);
@@ -975,7 +963,7 @@ end
 
 %=========================================================================%
 % To print a structure into text - assumes simple structure (no
-% sub-structure in it at this point)
+% sub-structure in it at this point).
 %=========================================================================%
 function s = printstruct(struc)
 
@@ -984,4 +972,23 @@ fntmp = fieldnames(struc);
 for cf = 1:length(fntmp)
     s = sprintf('%s %16s: %s\n', s, fntmp{cf}, num2str(struc.(fntmp{cf})));
 end
+end
+
+%=========================================================================%
+% To smooth B1 map calculation output.
+%=========================================================================%
+function smB1map_norm=smoothB1(V,B1map_norm,B1FWHM)
+
+assert(numel(B1FWHM)==1||numel(B1FWHM)==3,...
+    ['FWHM of B1 smoothing kernel (B1FWHM) must have either one element ' ...
+    '(isotropic smoothing) or three elements (3d anisotropic smoothing)']);
+
+assert(all(B1FWHM(:)>=0),['FWHM of B1 smoothing kernel (B1FWHM) cannot be ' ...
+    'negative! Check the b1 defaults file.'])
+
+smB1map_norm = zeros(size(B1map_norm));
+pxs = sqrt(sum(V.mat(1:3,1:3).^2)); % Voxel resolution
+smth = B1FWHM./pxs;
+spm_smooth(B1map_norm,smB1map_norm,smth);
+
 end

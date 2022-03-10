@@ -13,9 +13,9 @@ function hmri_quiqi_check(job)
 % 2021.04.01
 % Neuroimaging Research Laboratory, Lausanne University Hospital &
 % University of Lausanne, Lausanne, Switzerland
-% Nad?ge Corbin
+% Nadege Corbin
 % 2021.03.30
-% Centre de R?sonance Magn?tique des Syst?mes Biologiques, Bordeaux, France
+% Centre de Resonance Magnetique des Systemes Biologiques, Bordeaux, France
 %==========================================================================
 
 hmri_log(sprintf('\t--- Evaluate residuals and MDI relationship ---'));

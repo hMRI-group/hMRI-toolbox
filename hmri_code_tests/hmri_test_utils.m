@@ -103,10 +103,79 @@ classdef hmri_test_utils
             
             V.mat=transform;
             V.descrip='Synthetic phantom for testing components of the hMRI toolbox';
-                        
+            
             if exist('output','var')
                 V.fname=output;
                 spm_write_vol(V,P);
+            end
+            
+        end
+        
+        function [B1map,V]=makePhantom_B1(dims,B1lim,output)
+            % Synthetic (in silico) phantom for testing tools requiring B1
+            % maps in the hMRI toolbox. The "Doming" effect associated
+            % with scanning brains at high and ultra-high field is 
+            % represented by Gaussian decay of B1 away from the centre of 
+            % the volume.
+            %
+            % Params:
+            %  dims   - size of the phantom. Either a scalar (isotropic) or
+            %           3-element array (anisotropic).
+            %  B1lim  - B1 values at the edge (lower value) and centre 
+            %           (higher value) of the volume in p.u. The minimum B1
+            %           will be reached 10 mm away from the edge.
+            %  output - filename, must have .nii, e.g. "silico_phantom.nii"
+            %           Without a path the phantom is written to pwd. If
+            %           not provided, no file is written out.
+            %
+            % Outputs:
+            %  B1map - phantom B1 map in p.u. as an array
+            %  V     - SPM volume structure.
+            
+            if isscalar(dims)
+                dims=dims*[1,1,1];
+            end
+            
+            assert(numel(B1lim)==2,'B1lim must contain two values: a minimum B1 and a maximum B1')
+            
+            minB1=min(B1lim);
+            maxB1=max(B1lim);
+            
+            % Choose voxel size so that the size of the volume approximates that used
+            % for brain imaging
+            voxelsize=round(240/max(dims)); % mm
+            
+            % dim(1) and dim(2) swapped as this is what Matlab expects.
+            [X,Y,Z]=meshgrid(linspace(-1,1,dims(2)),linspace(-1,1,dims(1)),linspace(-1,1,dims(3)));
+            
+            % Set Gaussian parameter k so that minB1 is reached at a sensible point;
+            % here B1 = minB1 10 mm away from the volume edge
+            voxelsaway=10/voxelsize;
+            XYZat10mm=(1-voxelsaway*(2/min(dims)));
+            k=log(maxB1/minB1)/(XYZat10mm.^2);
+            
+            % Gaussian decay normalised to maxB1
+            B1map=maxB1*exp(-k*(X.^2+Y.^2+Z.^2));
+            
+            %% nifti header
+            V.descrip='Synthetic B1 phantom for testing components of the hMRI toolbox';
+            V.dim=dims;
+            
+            % Sets centre of coordinate system at centre of volume.
+            % Signs of terms chosen to match a real nifti volume.
+            rotscale=voxelsize*diag([-1,1,1]);
+            translation=0.5*voxelsize*[dims(1);-dims(2);-dims(3)];
+            V.mat=[[rotscale,translation];[0,0,0,1]];
+            
+            % Set magic numbers
+            byteSeq = typecast(uint32(1), 'uint8'); isBigEndian = (byteSeq(end) == 1);
+            V.dt=[spm_type('float32'),isBigEndian];
+            V.pinfo=[1;0;352]; % 352 means there is no extended header
+            
+            %% Save output in p.u.
+            if exist('output','var')&&~isempty(output)
+                V.fname=output;
+                spm_write_vol(V,B1map);
             end
             
         end

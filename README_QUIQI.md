@@ -31,7 +31,7 @@ The ‘QUIQI BUILD’ module lies between the usual ‘Factorial design’ and �
 - MDI powers: powers of the Motion Degradation Index used to compute the basis functions for the ReML estimation of the noise covariance matrix.
 - MDI type: type of the object that contains the values of the Motion Degradation Index. If ‘MDI matrix’ is selected, the MDI values may be pasted into the GUI from e.g. an Matlab variable or a table. The MDI values can also be read-in directly from a json file (‘MDIjsonfile).
 
-![QUIQI_build](figs\QUIQI_build.png)
+<img src="figs\QUIQI_build.png" alt="QUIQI_build" style="zoom:80%;" />
 
 ### 2. QUIQI CHECK
 QUIQI CHECK lies at the very end of image analysis (see below, left). While this module is not necessary to correct for motion degradation effects in the MRI data, it is useful to assess the degree of remaining motion degradation after correction. On the model of Lutti et al., this module plots a histogram of the distribution of the image residual samples against the results from the fitting of these residuals as a polynomial function of the MDI. A high R2 value highlights heteroscedasticity of the noise distribution (see example below, with and without the use of QUIQI). Note that when multiple sets of MDI values are used for QUIQI (i.e. for the analysis of MRI data computed across multiple raw image volumes) all sets of MDI values are used for the polynomial fitting. Also, the maximum power of the polynomial fit can be set from the user interface (field ‘Fit power’).

@@ -141,18 +141,22 @@ try copyfile([spm_str_manip(char(V1.fname),'r') '.json'],[spm_str_manip(B1ref,'r
 
 TR1 = 1; % only the ratio [TR2/TR1=n] matters
 TR2 = b1map_params.b1acq.TR2TR1ratio;
-alphanom = b1map_params.b1acq.alphanom;
+alphanom = b1map_params.b1acq.alphanom; % degrees
 
 % compute B1 map
-% TODO: warn if volumes seem to be in the wrong order
-B1map = acos((Y2./Y1*TR2/TR1-1)./(TR2/TR1*ones(size(Y1))-Y2./Y1))*180/pi;
-B1map_norm = abs(B1map)*100/alphanom;
+% Note: imaginary component is erroneous and should only appear in 
+% background voxels. Too many would be a sign of incorrect file order.
+% TODO: warn if too many imaginary values detected.
+r=Y2./Y1;
+n=b1map_params.b1acq.TR2TR1ratio;
+FAmap = acosd((r*n-1)./(n-r)); % flip angle map in degrees; Eq. (6) in Yarnykh, MRM (2007) 
+B1map_norm = real(FAmap)*100/alphanom;
 
-% masking
+% masking; mask is written out to folder of B1ref
 mask = maskB1(spm_vol(B1ref),b1map_params.b1mask);
 
 % smoothed map
-smB1map_norm = smoothB1(V1,mask.*B1map_norm,b1map_params.b1proc.B1FWHM,mask);
+smB1map_norm = smoothB1(V1,B1map_norm,b1map_params.b1proc.B1FWHM,mask);
 
 % save output images
 VB1 = V1;
@@ -206,8 +210,14 @@ alphanom = b1map_params.b1acq.alphanom;
 % Note: imaginary component is erroneous and should only appear in 
 % background voxels. Too many would be a sign of incorrect file order.
 % TODO: warn if too many imaginary values detected.
-B1map = (1/alphanom).*acosd(Y2./(2*Y1));
+B1map = acosd(Y2./(2*Y1))/alphanom;
 B1map_norm = real(B1map)*100;
+
+% masking; mask is written out to folder of B1ref
+mask = maskB1(spm_vol(B1ref),b1map_params.b1mask);
+
+% smoothed map
+smB1map_norm = smoothB1(V1,B1map_norm,b1map_params.b1proc.B1FWHM,mask);
 
 % save output images
 VB1 = V1;

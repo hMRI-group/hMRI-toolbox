@@ -144,16 +144,29 @@ TR2 = b1map_params.b1acq.TR2TR1ratio;
 alphanom = b1map_params.b1acq.alphanom; % degrees
 
 % compute B1 map
-% Note: imaginary component is erroneous and should only appear in 
-% background voxels. Too many would be a sign of incorrect file order.
-% TODO: warn if too many imaginary values detected.
+FAfun=@(r,n) acosd((r*n-1)./(n-r)); % Eq. (6) in Yarnykh, MRM (2007) 
 r=Y2./Y1;
 n=b1map_params.b1acq.TR2TR1ratio;
-FAmap = acosd((r*n-1)./(n-r)); % flip angle map in degrees; Eq. (6) in Yarnykh, MRM (2007) 
+FAmap = FAfun(r,n); % flip angle map in degrees 
+
+% print warning if images might have been input in the wrong order
+% This is determined by comparing the number of complex values in the B1
+% map to the number obtained with the images in reverse order.
+if nnz(imag(FAmap))>nnz(imag(FAfun(1./r,n)))
+    hmri_log(sprintf(...
+        ['WARNING: unusually many complex values detected in the AFI \n'...
+        'B1 map. Please perform a visual check of the output B1 map and \n'...
+        'carefully check the order of the input AFI images.']),b1map_params.defflags);
+end
+
+% normalise B1 map
+% Take the real part because the imaginary component is erroneous and 
+% should only appear in background voxels. Too many would be a sign of 
+% incorrect file order.
 B1map_norm = real(FAmap)*100/alphanom;
 
 % masking; mask is written out to folder of B1ref
-mask = maskB1(spm_vol(B1ref),b1map_params.b1mask);
+mask = mask_for_B1(spm_vol(B1ref),b1map_params.b1mask);
 
 % smoothed map
 smB1map_norm = smoothB1(V1,B1map_norm,b1map_params.b1proc.B1FWHM,mask);
@@ -211,10 +224,12 @@ alphanom = b1map_params.b1acq.alphanom;
 % background voxels. Too many would be a sign of incorrect file order.
 % TODO: warn if too many imaginary values detected.
 B1map = acosd(Y2./(2*Y1))/alphanom;
+
+% normalise B1 map
 B1map_norm = real(B1map)*100;
 
 % masking; mask is written out to folder of B1ref
-mask = maskB1(spm_vol(B1ref),b1map_params.b1mask);
+mask = mask_for_B1(spm_vol(B1ref),b1map_params.b1mask);
 
 % smoothed map
 smB1map_norm = smoothB1(V1,B1map_norm,b1map_params.b1proc.B1FWHM,mask);
@@ -873,10 +888,9 @@ switch b1_protocol
     case 'DAM'
         if ~isempty(b1map_params.b1input)
             hmri_log(sprintf('DAM protocol selected ...'),b1map_params.nopuflags);
-            b1hdr = get_metadata(b1map_params.b1input(1,:));
-            
             try
-                fa1 = get_metadata_val(b1hdr{2},'FlipAngle');
+                fa1 = get_metadata_val(b1map_params.b1input(2,:),'FlipAngle');
+                fa1=fa1{1};
                 if isempty(fa1)
                     hmri_log(sprintf('WARNING: using defaults values for flip angle\n(FA = %d deg) instead of metadata', ...
                         b1map_params.b1acq.alphanom),b1map_params.defflags);
@@ -884,13 +898,16 @@ switch b1_protocol
                     b1map_params.b1acq.alphanom = fa1;
                     
                     % Check whether flip angles match
-                    fa2 = get_metadata_val(b1hdr{1},'FlipAngle');
+                    fa2 = get_metadata_val(b1map_params.b1input(1,:),'FlipAngle');
+                    fa2=fa2{1};
                     if ~isempty(fa2)
                         if fa2~=(2*fa1)
-                            hmri_log(sprintf(['WARNING: detected flip angle from the metadata of the first DAM B1 volume (%d deg)\n'...
-                                'is not 2x the detected flip angle for the second DAM B1 volume (%d deg).\n'...
-                                'Please check the input data carefully.'], ...
-                                fa2,fa1),b1map_params.defflags);
+                            hmri_log(sprintf([...
+                                'WARNING: detected flip angle from the metadata of the \n' ...
+                                'first DAM B1 volume (%d deg) is not 2x the detected \n' ...
+                                'flip angle for the second DAM B1 volume (%d deg).\n'...
+                                'Please check the input data carefully.'],fa2,fa1),...
+                                b1map_params.defflags);
                         end
                     end
                 end
@@ -995,9 +1012,9 @@ end
 end
 
 %=========================================================================%
-% To mask B1 map before smoothing.
+% Mask for B1 map.
 %=========================================================================%
-function bmask = maskB1(Vanat,flags)
+function bmask = mask_for_B1(Vanat,flags)
 
 if flags.domask
     bmask=hmri_create_pm_brain_mask(Vanat,flags);    

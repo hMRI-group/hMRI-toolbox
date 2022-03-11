@@ -30,7 +30,7 @@ function [parValue, parLocation] = get_metadata_val_header(varargin)
           cRes = 1;
           parLocation{cRes} = 'NiftiDescriptionField';
           parValue{cRes} = p.fa;
-          fprintf(1,'Parameter available in NIFTI description field:\n\t%s = %5.2f ms\n', inParName, parValue{1});
+          fprintf(1,'Parameter available in NIFTI description field:\n\t%s = %5.2f deg\n', inParName, parValue{1});
             
         otherwise
           fprintf(1,'Not able to retrieve any value for parameter %s.\n', inParName);

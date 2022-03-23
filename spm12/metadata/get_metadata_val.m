@@ -101,13 +101,16 @@ if ~isstruct(mstruc)
   % and is likely to be empty). Still try a few tricks in case either
   % TR/TE/FA is the target field and available in the description field:
   [parValue, parLocation] = get_metadata_val_header(varargin{:});
-  return;
-end
-
-if isfield(mstruc, 'acqpar')
+elseif isfield(mstruc, 'acqpar')
   [parValue, parLocation] = get_metadata_val_classic(mstruc,inParName);
 else
   [parValue, parLocation] = get_metadata_val_bids(mstruc,inParName);
+end
+
+% returns cell array only if necessary (non-unique result)
+if (length(parValue) == 1) && iscell(parValue)
+    parValue = parValue{1};
+    parLocation = parLocation{1};
 end
 
 end

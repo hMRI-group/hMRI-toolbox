@@ -5,10 +5,12 @@ This changelog documents all notable changes to the hMRI-toolbox.
 Most recent version numbers *should* follow the [Semantic Versioning](https://semver.org/spec/v2.0.0.html) principles (e.g. bug fixes: x.x.1 > x.x.2, new feature with backward compatibility: x.2.x > x.3.0, major release affecting the way data are handled and processed: 1.x.x > 2.0.0).
 
 ## [unreleased]
+### Added
+- QUIQI 
+- quality control tool
 
-- QUIQI added
-- quality control tool added
-- Make cell processing code run for all paths of `get_metadata_val`
+### Fixed
+- Make cell processing code run for all paths of `get_metadata_val` so that TR, TE and FA can be read from the nifti description field if needed
 
 ## [v0.2.5]
 

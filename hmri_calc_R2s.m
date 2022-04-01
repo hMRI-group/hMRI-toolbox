@@ -1,4 +1,4 @@
-function [R2s,extrapolated]=hmri_calc_R2s(weighted_data,method)
+function [R2s,extrapolated,SError]=hmri_calc_R2s(weighted_data,method)
 % R2* estimation using an implementation of the ESTATICS
 % model (Weiskopf2014). Can utilise weighted least squares (WLS) instead of
 % the original ordinary least squares (OLS; Weiskopf2014) to account 
@@ -44,6 +44,8 @@ function [R2s,extrapolated]=hmri_calc_R2s(weighted_data,method)
 %       common R2* of the weightings.
 %   extrapolated: cell array containing data extrapolated to TE=0 in the
 %       same order as the input (e.g. matching contrast order).
+%   SError: RMS error of signal minus fitted signal. Will be used for error
+%   maps.
 %
 % Examples:
 %   OLS estimate of R2* from PD-weighted data array:
@@ -74,6 +76,14 @@ function [R2s,extrapolated]=hmri_calc_R2s(weighted_data,method)
 %   Edwards et al. Proc. Int. Soc. Magn. Reson. Med. (2022), "Robust and 
 %     efficient R2* estimation in human brain using log-linear weighted 
 %     least squares"
+% Mohammadi S, Streubel T, Klock L, Lutti A, Pine K, Weber S, Edwards L, 
+% Scheibe P, Ziegler G, Gallinat J, Kühn S, Callaghan MF, Weiskopf N, 
+% Tabelow K (2022) 
+% Error quantification in multi-parameter mapping facilitates robust 
+% estimation and enhanced group level sensitivity. :2022.01.11.475846 
+% Available at: https://www.biorxiv.org/content/10.1101/2022.01.11.475846v1 [Accessed March 5, 2022].
+
+
 
 assert(isstruct(weighted_data),'hmri:structError',['inputs must be structs; see help ' mfilename])
 
@@ -189,6 +199,25 @@ if nargout>1
     end
 end
 
+% residuals per contrast for error maps
+if nargout>2
+    SError=cell(size(weighted_data)+1); % cell element per contrast
+    beta(2:end,:)=log(beta(2:end,:));
+    Ydiff   = y - exp(D*beta);
+    for ccon = 1:Nweighted
+
+        nechoes(ccon) = length(weighted_data(ccon).TE);
+        Yechotmp = zeros(dims(1:end-1));
+        if(ccon>1)
+            Yechotmp(:) = rms(Ydiff(1+sum(nechoes(1:ccon-1)):sum(nechoes(1:ccon)),:),1);
+        else
+            Yechotmp(:) = rms(Ydiff(1:nechoes(ccon),:),1);
+        end            
+        SError{ccon} = reshape(Yechotmp(:),[dims(1:end-1),1]);
+    end
+    Yechotmp = rms(log(y) - D*beta,1);
+    SError{ccon+1} = reshape(Yechotmp(:),[dims(1:end-1),1]);
+end
 end
 
 %% Fitting methods

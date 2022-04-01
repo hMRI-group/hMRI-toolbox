@@ -1,4 +1,3 @@
-
 function Ni = hmri_create_nifti(Pout, VG, dt, txtdescrip)
 % This function creates a nifti file.
 % S. Mohammadi 06/09/2019

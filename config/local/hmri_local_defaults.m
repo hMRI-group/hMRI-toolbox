@@ -444,7 +444,7 @@ hmri_def.proc.nGauss = [2 2 2 3 4 2]; % originally in SPM [1 1 2 3 4 2]
 %==========================================================================
 % New feature: generate error maps
 %==========================================================================
-hmri_def.errormaps  = true;
+hmri_def.errormaps  = false;
 % errormap
 if hmri_def.errormaps
     hmri_def.qMRI_maps_thresh.dR1 = 1e-4;
@@ -456,7 +456,7 @@ if hmri_def.errormaps
     hmri_def.qMRI_maps_thresh.SMMT= 1e3;
 end
 
-hmri_def.wcomb = true;
+hmri_def.wcomb = false;
 if hmri_def.wcomb
     
     % weighted combination - see ... for details

@@ -40,6 +40,8 @@ function [dR1,AdR1] = hmri_make_dR1(SPD,ST1,dSPD,dST1,alpha_PD,alpha_T1,TRPD,TRT
 % AdR1          - error map for R1 in [1/s]
 
 dm = VG.dim;
+% TODO: include version without small angle approximation for R1
+% calculation
 if(~isempty(f_T))
     alpha_PD = alpha_PD.*f_T;
     alpha_T1 = alpha_T1.*f_T;

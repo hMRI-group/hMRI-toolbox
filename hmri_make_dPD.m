@@ -1,4 +1,4 @@
-function [dPD,Atmp] = hmri_make_dPD(SPD,ST1,dSPD,dST1,alpha_PD,alpha_T1,TRPD,TRT1,A_forMT,VG,f_T,threshall)
+function [dPD,Atmp] = hmri_make_dPD(SPD,ST1,dSPD,dST1,alpha_PD,alpha_T1,TRPD,TRT1,A,VG,f_T,threshall)
 % Calculate propagation of uncertainty for PD map
 % (https://en.wikipedia.org/wiki/Propagation_of_uncertainty). 
 % Here the code for generating the derivatives of Eq. A7 in Tabelow et al., NI, 2019:
@@ -51,6 +51,8 @@ function [dPD,Atmp] = hmri_make_dPD(SPD,ST1,dSPD,dST1,alpha_PD,alpha_T1,TRPD,TRT
 % AdPD          - error map for A in [a.u.]
 
 dm = VG.dim;
+% TODO: include version without small angle approximation for PD
+% calculation
 if(~isempty(f_T))
     alpha_PD = alpha_PD.*f_T;
     alpha_T1 = alpha_T1.*f_T;
@@ -62,5 +64,7 @@ dPDSR1 = @(SPD,ST1,alpha_PD,alpha_T1,TRPD,TRT1) - (SPD.*((TRPD.*alpha_T1)./alpha
 dPD = sqrt(dPDSPD(SPD,ST1,alpha_PD,alpha_T1,TRPD,TRT1).^2.*dSPD.^2+dPDSR1(SPD,ST1,alpha_PD,alpha_T1,TRPD,TRT1).^2.*dST1.^2);
 Atmp     = zeros(dm(1:2));
 tmp1    = dPD;
-A_forMT = max(min(tmp1,threshall.A),-threshall.A);
-Atmp(A_forMT>threshall.dPD)     = tmp1(A_forMT>threshall.dPD);
+
+% TODO: input argument "A" is unused
+A = max(min(tmp1,threshall.A),-threshall.A);
+Atmp(A>threshall.dPD)     = tmp1(A>threshall.dPD);

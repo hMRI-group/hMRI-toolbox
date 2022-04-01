@@ -1,7 +1,7 @@
 function [R2s,extrapolated,SError]=hmri_calc_R2s(weighted_data,method)
 % R2* estimation using an implementation of the ESTATICS
 % model (Weiskopf2014). Can utilise weighted least squares (WLS) instead of
-% the original ordinary least squares (OLS; Weiskopf2014) to account 
+% the original ordinary least squares (OLS; Weiskopf2014) to account
 % for the heteroscedasticity of log transformed data (Edwards2022).
 %
 % Input:
@@ -22,20 +22,20 @@ function [R2s,extrapolated,SError]=hmri_calc_R2s(weighted_data,method)
 %   method:
 %     string stating which log-linear estimation method to use.
 %     -Options are: 'OLS'    (log-linear ordinary least squares estimate),
-%                   'WLS[N]' (log-linear weighted least squares estimate 
-%                             with '[N]' iterations, where '[N]' is 1, 2 , 
-%                             or 3; uses OLS signal estimates for initial 
+%                   'WLS[N]' (log-linear weighted least squares estimate
+%                             with '[N]' iterations, where '[N]' is 1, 2 ,
+%                             or 3; uses OLS signal estimates for initial
 %                             weights),
 %                   'NLLS_[METHOD]' (non-linear least squares estimate,
 %                                    where [METHOD] is the method to be
 %                                    used for the initial guess of the
-%                                    parameters, e.g. 'ols' or 'wls1'; note 
-%                                    that while this is expected to be 
+%                                    parameters, e.g. 'ols' or 'wls1'; note
+%                                    that while this is expected to be
 %                                    accurate, this method is very slow!)
 %     -The weights in the WLS case depend on the unknown true signal
 %      intensities. These weights can be iteratively updated using the
 %      estimated signal intensities. However the benefit of
-%      iteratively updating the weights has been found to be relatively 
+%      iteratively updating the weights has been found to be relatively
 %      small for typical MPM data, and so 'wls1' seems to be sufficient
 %      to improve R2* map quality over OLS (Edwards2022).
 %
@@ -54,7 +54,7 @@ function [R2s,extrapolated,SError]=hmri_calc_R2s(weighted_data,method)
 %   WLS estimate of R2* from PD-weighted data with 3 iterations:
 %       R2s = hmri_calc_R2s(struct('data',PDw,'TE',PDwTE),'WLS3');
 %
-%   NLLS estimate of R2* from PD-weighted data using OLS for initial 
+%   NLLS estimate of R2* from PD-weighted data using OLS for initial
 %   parameters:
 %       R2s = hmri_calc_R2s(struct('data',PDw,'TE',PDwTE),'NLLS_OLS');
 %
@@ -73,14 +73,14 @@ function [R2s,extrapolated,SError]=hmri_calc_R2s(weighted_data,method)
 %     transverse relaxation time (R2*) from images with different contrasts
 %     (ESTATICS) reduces motion artifacts",
 %     https://doi.org/10.3389/fnins.2014.00278
-%   Edwards et al. Proc. Int. Soc. Magn. Reson. Med. (2022), "Robust and 
-%     efficient R2* estimation in human brain using log-linear weighted 
+%   Edwards et al. Proc. Int. Soc. Magn. Reson. Med. (2022), "Robust and
+%     efficient R2* estimation in human brain using log-linear weighted
 %     least squares"
-% Mohammadi S, Streubel T, Klock L, Lutti A, Pine K, Weber S, Edwards L, 
-% Scheibe P, Ziegler G, Gallinat J, Kühn S, Callaghan MF, Weiskopf N, 
-% Tabelow K (2022) 
-% Error quantification in multi-parameter mapping facilitates robust 
-% estimation and enhanced group level sensitivity. :2022.01.11.475846 
+% Mohammadi S, Streubel T, Klock L, Lutti A, Pine K, Weber S, Edwards L,
+% Scheibe P, Ziegler G, Gallinat J, Kühn S, Callaghan MF, Weiskopf N,
+% Tabelow K (2022)
+% Error quantification in multi-parameter mapping facilitates robust
+% estimation and enhanced group level sensitivity. :2022.01.11.475846
 % Available at: https://www.biorxiv.org/content/10.1101/2022.01.11.475846v1 [Accessed March 5, 2022].
 
 
@@ -114,7 +114,7 @@ for w=1:Nweighted
     
     rData=reshape(weighted_data(w).data,Nvoxels,nTEs);
     
-    % log(0) is not defined, so warn the user about zeroes in their data 
+    % log(0) is not defined, so warn the user about zeroes in their data
     % for methods involving a log transform.
     % The warning can be disabled with "warning('off','hmri:zerosInInput')"
     if any(rData(:)==0)&&~contains(lower(method),'nlls')
@@ -157,8 +157,9 @@ switch lower(method)
         beta(2:end,:)=exp(beta(2:end,:));
         
     case {'nlls_ols','nlls_wls1','nlls_wls2','nlls_wls3'}
-        % Check for NLLS case, where specification of the log-linear 
-        % initialisation method is in the method string following a hyphen
+        % Check for NLLS case, where specification of the log-linear
+        % initialisation method is in the method string following an
+        % underscore
         r=regexp(lower(method),'^nlls_(.*)$','tokens');
         initmethod=r{1}{1};
         
@@ -199,24 +200,45 @@ if nargout>1
     end
 end
 
-% residuals per contrast for error maps
-if nargout>2
-    SError=cell(size(weighted_data)+1); % cell element per contrast
-    beta(2:end,:)=log(beta(2:end,:));
-    Ydiff   = y - exp(D*beta);
-    for ccon = 1:Nweighted
-
-        nechoes(ccon) = length(weighted_data(ccon).TE);
-        Yechotmp = zeros(dims(1:end-1));
-        if(ccon>1)
-            Yechotmp(:) = rms(Ydiff(1+sum(nechoes(1:ccon-1)):sum(nechoes(1:ccon)),:),1);
-        else
-            Yechotmp(:) = rms(Ydiff(1:nechoes(ccon),:),1);
-        end            
-        SError{ccon} = reshape(Yechotmp(:),[dims(1:end-1),1]);
+if 1 % LJE implementation
+    % residuals per contrast for error maps
+    if nargout>2
+        
+        % output is cell with element per contrast + total residual
+        SError=cell(size(weighted_data)+1);
+        SError{end}=zeros([dims(1:end-1),1]);
+        for w = 1:Nweighted
+            dims=size(weighted_data(w).data);
+            TEs=reshape(weighted_data(w).TE,[ones(1,length(dims)-1),dims(end)]);
+            
+            % per contrast residual
+            Ydiff=weighted_data(w).data-extrapolated{w}.*exp(-R2s.*TEs);
+            SError{w} = rms(Ydiff,length(dims)); % rms along last dimension
+            
+            % total residual over all contrasts
+            SError{end}=sqrt(SError{end}.^2+SError{w}.^2);
+        end
     end
-    Yechotmp = rms(log(y) - D*beta,1);
-    SError{ccon+1} = reshape(Yechotmp(:),[dims(1:end-1),1]);
+else % SM implementation
+    % residuals per contrast for error maps
+    if nargout>2
+        SError=cell(size(weighted_data)+1); % cell element per contrast
+        beta(2:end,:)=log(beta(2:end,:));
+        Ydiff   = y - exp(D*beta);
+        for w = 1:Nweighted
+            
+            nechoes(w) = length(weighted_data(w).TE);
+            Yechotmp = zeros(dims(1:end-1));
+            if(w>1)
+                Yechotmp(:) = rms(Ydiff(1+sum(nechoes(1:w-1)):sum(nechoes(1:w)),:),1);
+            else
+                Yechotmp(:) = rms(Ydiff(1:nechoes(w),:),1);
+            end
+            SError{w} = reshape(Yechotmp(:),[dims(1:end-1),1]);
+        end
+        Yechotmp = rms(log(y) - D*beta,1);
+        SError{w+1} = reshape(Yechotmp(:),[dims(1:end-1),1]);
+    end
 end
 end
 

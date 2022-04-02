@@ -443,7 +443,7 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
 
         PR2s_OLS_SM    = fullfile(calcpath,[outbasename '_' 'R2s_SM' '.nii']);
         Ni      = hmri_create_nifti(PR2s_OLS_SM,V_pdw(1),dt,'Standarized map for R2s contrast');
-        %NSMmap = Ni;
+        NSMmap = Ni;
     end
 
     fR2s_OLS    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qR2s).suffix '_' mpm_params.R2s_fit_method '.nii']);
@@ -496,10 +496,10 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
                     Nmap(ccon).dat(:,:,p) = intercepts{ccon};
                 end
                 if mpm_params.errormaps
-                    NEmap(ccon).dat(:,:,p) = SError{ccon};
+                    NEmap(ccon).dat(:,:,p) = SError.weighted{ccon};
                 end
             end
-            NEmap(ccon+1).dat(:,:,p) = SError{ccon+1};
+            NEmap(ccon+1).dat(:,:,p) = SError.R2s;
         end
 
                   
@@ -649,6 +649,7 @@ for p = 1:dm(3)
         tmp(isnan(tmp)) = 0;
         Nmap(mpm_params.qR1).dat(:,:,p) = min(max(tmp,-threshall.R1),threshall.R1)*1e-3; % truncating images
         
+        % TODO: apply imperfect spoiling correction to errormaps!
         if mpm_params.errormaps
             Edata.PDw  = spm_slice_vol(Verror(PDwidx),Verror(PDwidx).mat\M,dm(1:2),mpm_params.interp);
             Edata.T1w  = spm_slice_vol(Verror(T1widx),Verror(T1widx).mat\M,dm(1:2),mpm_params.interp);
@@ -1726,9 +1727,18 @@ else
 end
 
 % Get error map parameters
-% TODO: check these are sensible (e.g. no error maps are possible if
-% insufficient data to compute R2* map!)
 mpm_params.errormaps = hmri_get_defaults('errormaps');
+if mpm_params.errormaps % check we don't try to compute error maps without the necessary prerequisites
+    if ~mpm_params.fullOLS
+        hmri_log('WARNING: Error map creation has been disabled because full OLS correction is disabled (fullOLS=false).',mpm_params.defflags);
+        mpm_params.errormaps=false;
+    elseif ~all(mpm_params.estaticsR2s)
+        hmri_log('WARNING: Error map creation has been disabled because not all contrasts have sufficient data for R2* estimation.',mpm_params.defflags);
+        mpm_params.errormaps=false;
+    else
+        hmri_log('Error maps will be created.',mpm_params.defflags);
+    end
+end
 
 
 % Summary of the output generated:

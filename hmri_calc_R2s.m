@@ -83,8 +83,6 @@ function [R2s,extrapolated,SError]=hmri_calc_R2s(weighted_data,method)
 % estimation and enhanced group level sensitivity. :2022.01.11.475846
 % Available at: https://www.biorxiv.org/content/10.1101/2022.01.11.475846v1 [Accessed March 5, 2022].
 
-
-
 assert(isstruct(weighted_data),'hmri:structError',['inputs must be structs; see help ' mfilename])
 
 dims=size(weighted_data(1).data);
@@ -200,46 +198,30 @@ if nargout>1
     end
 end
 
-if 1 % LJE implementation
-    % residuals per contrast for error maps
-    if nargout>2
+% residuals per contrast for error maps
+if nargout>2
+    
+    % output is cell with element per contrast + total residual
+    SError.weighted=cell(size(weighted_data));
+    SError.R2s=zeros([dims(1:end-1),1]);
+    for w = 1:Nweighted
+        dims=size(weighted_data(w).data);
+        TEs=reshape(weighted_data(w).TE,[ones(1,length(dims)-1),dims(end)]);
         
-        % output is cell with element per contrast + total residual
-        SError=cell(size(weighted_data)+1);
-        SError{end}=zeros([dims(1:end-1),1]);
-        for w = 1:Nweighted
-            dims=size(weighted_data(w).data);
-            TEs=reshape(weighted_data(w).TE,[ones(1,length(dims)-1),dims(end)]);
-            
-            % per contrast residual
-            Ydiff=weighted_data(w).data-extrapolated{w}.*exp(-R2s.*TEs);
-            SError{w} = rms(Ydiff,length(dims)); % rms along last dimension
-            
-            % total residual over all contrasts
-            SError{end}=sqrt(SError{end}.^2+SError{w}.^2);
-        end
+        % per contrast residual
+        Ydiff=weighted_data(w).data-extrapolated{w}.*exp(-R2s.*TEs);
+        SError.weighted{w} = rms(Ydiff,length(dims)); % rms along last dimension
+        
+        % total residual over all contrasts
+        % LJE implementation
+        %SError.R2s=sqrt(SError.total.^2+SError.weighted{w}.^2);
     end
-else % SM implementation
-    % residuals per contrast for error maps
-    if nargout>2
-        SError=cell(size(weighted_data)+1); % cell element per contrast
-        beta(2:end,:)=log(beta(2:end,:));
-        Ydiff   = y - exp(D*beta);
-        for w = 1:Nweighted
-            
-            nechoes(w) = length(weighted_data(w).TE);
-            Yechotmp = zeros(dims(1:end-1));
-            if(w>1)
-                Yechotmp(:) = rms(Ydiff(1+sum(nechoes(1:w-1)):sum(nechoes(1:w)),:),1);
-            else
-                Yechotmp(:) = rms(Ydiff(1:nechoes(w),:),1);
-            end
-            SError{w} = reshape(Yechotmp(:),[dims(1:end-1),1]);
-        end
-        Yechotmp = rms(log(y) - D*beta,1);
-        SError{w+1} = reshape(Yechotmp(:),[dims(1:end-1),1]);
-    end
+    
+    % SM implementation
+    Yechotmp = rms(log(y) - D*[beta(1,:);log(beta(2:end,:))],1);
+    SError.R2s = reshape(Yechotmp(:),[dims(1:end-1),1]);
 end
+
 end
 
 %% Fitting methods

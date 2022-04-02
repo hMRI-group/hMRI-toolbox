@@ -606,17 +606,6 @@ for p = 1:dm(3)
     % PDw images are always available, so this bit is always loaded:
     PDw = spm_slice_vol(Vavg(PDwidx),Vavg(PDwidx).mat\M,dm(1:2),mpm_params.interp);
     
-    if mpm_params.errormaps        
-        Edata = struct('PDw',[],'T1w',[],'MTw',[]);        
-        Edata.PDw  = spm_slice_vol(Verror(PDwidx),Verror(PDwidx).mat\M,dm(1:2),mpm_params.interp);
-        if MTwidx
-            Edata.MTw  = spm_slice_vol(Verror(MTwidx),Verror(MTwidx).mat\M,dm(1:2),mpm_params.interp);
-        end
-        if T1widx
-            Edata.T1w  = spm_slice_vol(Verror(T1widx),Verror(T1widx).mat\M,dm(1:2),mpm_params.interp);
-        end
-    end
-    
     if ~isempty(V_trans)
         f_T = spm_slice_vol(V_trans(2,:),V_trans(2,:).mat\M,dm(1:2),mpm_params.interp)/100; % divide by 100, since p.u. maps
     else
@@ -659,7 +648,11 @@ for p = 1:dm(3)
         tmp      = R1;
         tmp(isnan(tmp)) = 0;
         Nmap(mpm_params.qR1).dat(:,:,p) = min(max(tmp,-threshall.R1),threshall.R1)*1e-3; % truncating images
-        if mpm_params.errormaps && T1widx
+        
+        if mpm_params.errormaps
+            Edata.PDw  = spm_slice_vol(Verror(PDwidx),Verror(PDwidx).mat\M,dm(1:2),mpm_params.interp);
+            Edata.T1w  = spm_slice_vol(Verror(T1widx),Verror(T1widx).mat\M,dm(1:2),mpm_params.interp);
+            
             [~,Atmp]  = hmri_make_dR1(PDw,T1w,Edata.PDw,Edata.T1w,fa_pdw_rad,fa_t1w_rad,TR_pdw,TR_t1w,f_T,R1,threshall,mpm_params.small_angle_approx);
             Atmp(Atmp<0)  = 0; 
             Atmp         = min(max(Atmp,-threshall.R1),threshall.R1); % truncating error maps
@@ -701,16 +694,6 @@ spm_progress_bar('Init',dm(3),'Calculating maps (continued)','planes completed')
 for p = 1:dm(3)
     M = M0*spm_matrix([0 0 p]);
 
-    if mpm_params.errormaps        
-        Edata = struct('PDw',[],'T1w',[],'MTw',[]);        
-        Edata.PDw  = spm_slice_vol(Verror(PDwidx),Verror(PDwidx).mat\M,dm(1:2),mpm_params.interp);
-        if MTwidx
-            Edata.MTw  = spm_slice_vol(Verror(MTwidx),Verror(MTwidx).mat\M,dm(1:2),mpm_params.interp);
-        end
-        if T1widx
-            Edata.T1w  = spm_slice_vol(Verror(T1widx),Verror(T1widx).mat\M,dm(1:2),mpm_params.interp);
-        end
-    end
     if ~isempty(V_trans)
         f_T = spm_slice_vol(V_trans(2,:),V_trans(2,:).mat\M,dm(1:2),mpm_params.interp)/100; % divide by 100, since p.u. maps
     elseif ~isempty(V_trans_unicort)
@@ -725,7 +708,7 @@ for p = 1:dm(3)
     % T1 map and A/PD maps can only be calculated if T1w images are
     % available:
     if T1widx
-
+        
         T1w = spm_slice_vol(Vavg(T1widx),Vavg(T1widx).mat\M,dm(1:2),mpm_params.interp);
         
         % if "fullOLS" option enabled, use the OLS fit at TE=0 as
@@ -762,6 +745,8 @@ for p = 1:dm(3)
         % dynamic range increased to 10^5 to accommodate phased-array coils and symmetrical for noise distribution
 
         if mpm_params.errormaps
+            Edata.PDw  = spm_slice_vol(Verror(PDwidx),Verror(PDwidx).mat\M,dm(1:2),mpm_params.interp);
+            Edata.T1w  = spm_slice_vol(Verror(T1widx),Verror(T1widx).mat\M,dm(1:2),mpm_params.interp);
             
             [~,AdPD] = hmri_make_dPD(PDw,T1w,Edata.PDw,Edata.T1w,fa_pdw_rad,fa_t1w_rad,TR_pdw,TR_t1w,A,f_T,threshall,mpm_params.small_angle_approx);
             
@@ -776,6 +761,7 @@ for p = 1:dm(3)
             tmp1(abs(tmp1)==threshall.SMPD) = 0;
             NSMpara(PDwidx).dat(:,:,p) = tmp1; % has to become a default
         end
+        
         % for MT maps calculation, one needs MTw images on top of the T1w
         % and PDw ones...
         if MTwidx
@@ -792,16 +778,6 @@ for p = 1:dm(3)
             % MT in [p.u.]; offset by - famt * famt / 2 * 100 where MT_w = 0 (outside mask)
             MT  = ( (A_forMT * fa_mtw_rad - MTw) ./ (MTw+eps) .* R1_forMT*TR_mtw - fa_mtw_rad^2 / 2 ) * 100;
             
-            if mpm_params.errormaps
-                [~,AdMT] = hmri_make_dMT(PDw,T1w,MTw,Edata.PDw,Edata.T1w,Edata.MTw,fa_pdw_rad,fa_t1w_rad,fa_mtw_rad,TR_pdw,TR_t1w,TR_mtw,threshall,mpm_params.small_angle_approx);
-                if (~isempty(f_T))&&(~mpm_params.UNICORT.R1 || mpm_params.UNICORT.MT)
-                    AdMT = AdMT .* (1 - 0.4) ./ (1 - 0.4 * f_T);
-                end
-                % truncate MT error maps
-                AdMT = max(min(AdMT,threshall.MT),-threshall.MT);
-                NEpara(MTwidx).dat(:,:,p) = AdMT*100;  
-            end
-            
             % f_T correction is applied either if:
             % - f_T has been provided as separate B1 mapping measurement (not
             % UNICORT!) or
@@ -816,7 +792,19 @@ for p = 1:dm(3)
             tmp = max(min(tmp,threshall.MT),-threshall.MT);
             Nmap(mpm_params.qMT).dat(:,:,p) = tmp;
             
-            if mpm_params.errormaps && MTwidx && T1widx
+            if mpm_params.errormaps
+                Edata.MTw  = spm_slice_vol(Verror(MTwidx),Verror(MTwidx).mat\M,dm(1:2),mpm_params.interp);
+                
+                [~,AdMT] = hmri_make_dMT(PDw,T1w,MTw,Edata.PDw,Edata.T1w,Edata.MTw,fa_pdw_rad,fa_t1w_rad,fa_mtw_rad,TR_pdw,TR_t1w,TR_mtw,threshall,mpm_params.small_angle_approx);
+                
+                if (~isempty(f_T))&&(~mpm_params.UNICORT.R1 || mpm_params.UNICORT.MT)
+                    AdMT = AdMT .* (1 - 0.4) ./ (1 - 0.4 * f_T);
+                end
+                
+                % truncate MT error maps
+                AdMT = max(min(AdMT,threshall.MT),-threshall.MT);
+                NEpara(MTwidx).dat(:,:,p) = AdMT*100;  
+                
                 tmp1 = tmp./(AdMT*100).*(AdMT*100>1e-4);
                 % truncate standarized MT maps
                 tmp1 = max(min(tmp1,threshall.SMMT),-threshall.SMMT);
@@ -1154,20 +1142,21 @@ output_list = spm_preproc_run(job_bfcorr);
 BFfnam = output_list.channel.biasfield{1};
 BF = double(spm_read_vols(spm_vol(BFfnam)));
 Y = BF.*spm_read_vols(spm_vol(fA));    
-if(mpm_params.errormaps)
-    PDerror = BF.*PDerror;
-end
 
 % Calibration of flattened A map to % water content using typical white
 % matter value from the litterature (69%)
 A_WM = WMmask.*Y;
 Y = Y/mean(A_WM(A_WM~=0))*69;
-if(mpm_params.errormaps)
-    PDerror = PDerror/mean(A_WM(A_WM~=0))*69;
-end
 hmri_log(sprintf(['INFO (PD calculation):\n\tmean White Matter intensity: %.1f\n' ...
     '\tSD White Matter intensity %.1f\n'],mean(A_WM(A_WM~=0)),std(A_WM(A_WM~=0))), mpm_params.defflags);
 Y(Y>200) = 0;
+
+% Rescale error maps to match PD scaling
+if mpm_params.errormaps 
+    PDerror = BF.*PDerror;
+    PDerror = PDerror/mean(A_WM(A_WM~=0))*69;
+end
+
 % MFC: Estimating Error for data set to catch bias field issues:
 errorEstimate = std(A_WM(A_WM > 0))./mean(A_WM(A_WM > 0));
 Vsave = spm_vol(fA);

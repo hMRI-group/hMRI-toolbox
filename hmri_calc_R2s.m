@@ -44,8 +44,9 @@ function [R2s,extrapolated,SError]=hmri_calc_R2s(weighted_data,method)
 %       common R2* of the weightings.
 %   extrapolated: cell array containing data extrapolated to TE=0 in the
 %       same order as the input (e.g. matching contrast order).
-%   SError: RMS error of signal minus fitted signal. Will be used for error
-%   maps.
+%   SError.weighted: Per contrast root mean square error of signal minus 
+%       fitted signal. Will be used for error maps.
+%   SError.R2s: Root mean square residual of R2* fit.
 %
 % Examples:
 %   OLS estimate of R2* from PD-weighted data array:
@@ -201,7 +202,7 @@ end
 % residuals per contrast for error maps
 if nargout>2
     
-    % output is cell with element per contrast + total residual
+    % output is cell with element per contrast
     SError.weighted=cell(size(weighted_data));
     SError.R2s=zeros([dims(1:end-1),1]);
     for w = 1:Nweighted
@@ -210,16 +211,16 @@ if nargout>2
         
         % per contrast residual
         Ydiff=weighted_data(w).data-extrapolated{w}.*exp(-R2s.*TEs);
-        SError.weighted{w} = rms(Ydiff,length(dims)); % rms along last dimension
+        SError.weighted{w} = rms(Ydiff,length(dims)); % rms along TE dimension
         
         % total residual over all contrasts
-        % LJE implementation
+        % Alternative implementation of R2* error
         %SError.R2s=sqrt(SError.total.^2+SError.weighted{w}.^2);
     end
     
-    % SM implementation
-    Yechotmp = rms(log(y) - D*[beta(1,:);log(beta(2:end,:))],1);
-    SError.R2s = reshape(Yechotmp(:),[dims(1:end-1),1]);
+    % Original implementation of R2* error
+    SError.R2s = rms(log(y) - D*[beta(1,:);log(beta(2:end,:))],1);
+    SError.R2s = reshape(SError.R2s,[dims(1:end-1),1]);
 end
 
 end

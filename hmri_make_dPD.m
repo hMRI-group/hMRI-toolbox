@@ -59,18 +59,15 @@ if(~isempty(f_T))
     end
 end
 
-%dPDSPD = @(SPD,ST1,alpha_PD,alpha_T1,TRPD,TRT1) (SPD.*ST1.*TRPD.*alpha_PD.*((TRPD.*alpha_T1)./alpha_PD - (TRT1.*alpha_PD)./alpha_T1))./(SPD.*TRPD.*alpha_PD - ST1.*TRT1.*alpha_T1).^2 - (ST1.*((TRPD.*alpha_T1)./alpha_PD - (TRT1.*alpha_PD)./alpha_T1))./(SPD.*TRPD.*alpha_PD - ST1.*TRT1.*alpha_T1);
-%dPDST1 = @(SPD,ST1,alpha_PD,alpha_T1,TRPD,TRT1) - (SPD.*((TRPD.*alpha_T1)./alpha_PD - (TRT1*alpha_PD)./alpha_T1))./(SPD.*TRPD.*alpha_PD - ST1.*TRT1.*alpha_T1) - (SPD.*ST1.*TRT1.*alpha_T1.*((TRPD*alpha_T1)./alpha_PD - (TRT1.*alpha_PD)./alpha_T1))./(SPD.*TRPD.*alpha_PD - ST1.*TRT1.*alpha_T1).^2;
-%dPD = sqrt(dPDSPD(SPD,ST1,alpha_PD,alpha_T1,TRPD,TRT1).^2.*dSPD.^2+dPDST1(SPD,ST1,alpha_PD,alpha_T1,TRPD,TRT1).^2.*dST1.^2);
-
-% R1 calculation is symmetric with respect to the two weighted contrasts
-%dPDSw = @(S1,S2,alpha1,alpha2,TR1,TR2) (S1.*S2.*TR1.*alpha1.*((TR1.*alpha2)./alpha1 - (TR2.*alpha1)./alpha2))./(S1.*TR1.*alpha1 - S2.*TR2.*alpha2).^2 - (S2.*((TR1.*alpha2)./alpha1 - (TR2.*alpha1)./alpha2))./(S1.*TR1.*alpha1 - S2.*TR2.*alpha2);
-dPD = sqrt(dPD_by_dS1(SPD,ST1,alpha_PD,alpha_T1,TRPD,TRT1).^2.*dSPD.^2+dPD_by_dS1(ST1,SPD,alpha_T1,alpha_PD,TRT1,TRPD).^2.*dST1.^2);
+% dPD calculation is symmetric with respect to the two weighted contrasts
+dPD = sqrt( dPD_by_dS1(SPD,ST1,alpha_PD,alpha_T1,TRPD,TRT1).^2.*dSPD.^2 ...
+    +dPD_by_dS1(ST1,SPD,alpha_T1,alpha_PD,TRT1,TRPD).^2.*dST1.^2 );
 
 AdPD     = zeros(size(SPD));
 tmp1    = dPD;
 
 % TODO: input argument "A" is unused
+% TODO: handle thresholding outside of this function
 A = max(min(tmp1,threshall.A),-threshall.A);
 AdPD(A>threshall.dPD) = tmp1(A>threshall.dPD);
 

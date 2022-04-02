@@ -48,14 +48,11 @@ if(~isempty(f_T))
     end
 end
 
-% R1 calculation is symmetric with respect to the two weighted contrasts
-%dR1dSw = @(S1,S2,alpha1,alpha2,TR1,TR2) ((S1.*alpha1)./(2*TR1) - (S2.*alpha2)./(2*TR2))./(alpha1.*(S1./alpha1 - S2./alpha2).^2) - alpha1./(2*TR1*(S1./alpha1 - S2./alpha2));
-dR1 = sqrt(dR1_by_dS1(SPD,ST1,alpha_PD,alpha_T1,TRPD,TRT1).^2.*dSPD.^2+dR1_by_dS1(ST1,SPD,alpha_T1,alpha_PD,TRT1,TRPD).^2.*dST1.^2);
+% dR1 calculation is symmetric with respect to the two weighted contrasts
+dR1 = sqrt( dR1_by_dS1(SPD,ST1,alpha_PD,alpha_T1,TRPD,TRT1).^2.*dSPD.^2 ...
+    +dR1_by_dS1(ST1,SPD,alpha_T1,alpha_PD,TRT1,TRPD).^2.*dST1.^2 );
 
-%dR1dSPD = @(SPD,ST1,alpha_PD,alpha_T1,TRPD,TRT1) ((SPD.*alpha_PD)./(2*TRPD) - (ST1.*alpha_T1)./(2*TRT1))./(alpha_PD.*(SPD./alpha_PD - ST1./alpha_T1).^2) - alpha_PD./(2*TRPD*(SPD./alpha_PD - ST1./alpha_T1));
-%dR1dST1 = @(SPD,ST1,alpha_PD,alpha_T1,TRPD,TRT1) alpha_T1./(2*TRT1.*(SPD./alpha_PD - ST1./alpha_T1)) - ((SPD.*alpha_PD)./(2*TRPD) - (ST1.*alpha_T1)./(2*TRT1))./(alpha_T1.*(SPD./alpha_PD - ST1./alpha_T1).^2);
-%dR1 = sqrt(dR1dSPD(SPD,ST1,alpha_PD,alpha_T1,TRPD,TRT1).^2.*dSPD.^2+dR1dST1(SPD,ST1,alpha_PD,alpha_T1,TRPD,TRT1).^2.*dST1.^2);
-
+% TODO: handle thresholding outside of this function
 tmp     = zeros(size(SPD));
 tmp1    = dR1*1e3;
 tmp1 = max(min(tmp1,threshall.R1),-threshall.R1);

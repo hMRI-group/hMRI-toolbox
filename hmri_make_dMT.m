@@ -86,6 +86,7 @@ dMTdSMT = @(SPD,ST1,SMT,alpha_PD,alpha_T1,alpha_MT,TRPD,TRT1,TRMT) -(SPD.*ST1.*T
 
 dMT = sqrt( dMTdSPD(SPD,ST1,SMT,alpha_PD,alpha_T1,alpha_MT,TRPD,TRT1,TRMT).^2 .* dSPD.^2 + dMTdST1(SPD,ST1,SMT,alpha_PD,alpha_T1,alpha_MT,TRPD,TRT1,TRMT).^2 .* dST1.^2 + dMTdSMT(SPD,ST1,SMT,alpha_PD,alpha_T1,alpha_MT,TRPD,TRT1,TRMT).^2 .* dSMT.^2);
 
+% TODO: handle thresholding outside of this function
 AdMT     = zeros(size(SPD));
 tmp1    = dMT;
 tmp1 = max(min(tmp1,threshall.MT),-threshall.MT);

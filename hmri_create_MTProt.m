@@ -638,10 +638,9 @@ for p = 1:dm(3)
         if ISC.enabled&&~isempty(f_T)
             % MFC: We do have P2_a and P2_b parameters for this sequence
             % => T1 = A(B1) + B(B1)*T1app (see Preibisch 2009)
-            R1 = R1./(...
-                +(ISC.P2_a(1)*f_T.^2 + ISC.P2_a(2)*f_T + ISC.P2_a(3)).*R1 ...
-                +(ISC.P2_b(1)*f_T.^2 + ISC.P2_b(2)*f_T + ISC.P2_b(3)) ...
-                );
+            A_ISC=ISC.P2_a(1)*f_T.^2 + ISC.P2_a(2)*f_T + ISC.P2_a(3);
+            B_ISC=ISC.P2_b(1)*f_T.^2 + ISC.P2_b(2)*f_T + ISC.P2_b(3);
+            R1 = R1./(A_ISC.*R1+B_ISC);
         end
         
         R1 = R1*1e6;
@@ -655,10 +654,20 @@ for p = 1:dm(3)
             Edata.T1w  = spm_slice_vol(Verror(T1widx),Verror(T1widx).mat\M,dm(1:2),mpm_params.interp);
             
             [~,Atmp]  = hmri_make_dR1(PDw,T1w,Edata.PDw,Edata.T1w,fa_pdw_rad,fa_t1w_rad,TR_pdw,TR_t1w,f_T,R1,threshall,mpm_params.small_angle_approx);
-            Atmp(Atmp<0)  = 0; 
+            
+            if ISC.enabled&&~isempty(f_T)
+                % MFC: We do have P2_a and P2_b parameters for this sequence
+                % => T1 = A(B1) + B(B1)*T1app (see Preibisch 2009)
+                % Use chain rule to include the imperfect spoiling correction;
+                % R1 error map multiplied by derivative of correction
+                % factor with respect to R1
+                Atmp = Atmp.*abs(1./(A_ISC.*R1+B_ISC)-R1.*A_ISC./(A_ISC.*R1+B_ISC).^2);
+            end
+            
+            Atmp(Atmp<0)  = 0;
             Atmp         = min(max(Atmp,-threshall.R1),threshall.R1); % truncating error maps
             NEpara(T1widx).dat(:,:,p) = Atmp;
-            
+        
             % standardized maps
             tmp1 = tmp./Atmp.*(Atmp>threshall.dR1);            
             tmp1 = max(min(tmp1,threshall.SMT1),-threshall.SMT1);

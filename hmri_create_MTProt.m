@@ -443,7 +443,7 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
 
         PR2s_OLS_SM    = fullfile(calcpath,[outbasename '_' 'R2s_SM' '.nii']);
         Ni      = hmri_create_nifti(PR2s_OLS_SM,V_pdw(1),dt,'Standarized map for R2s contrast');
-        NSMmap = Ni;
+        %NSMmap = Ni;
     end
 
     fR2s_OLS    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qR2s).suffix '_' mpm_params.R2s_fit_method '.nii']);
@@ -660,7 +660,7 @@ for p = 1:dm(3)
         tmp(isnan(tmp)) = 0;
         Nmap(mpm_params.qR1).dat(:,:,p) = min(max(tmp,-threshall.R1),threshall.R1)*1e-3; % truncating images
         if mpm_params.errormaps && T1widx
-            [dR1,Atmp]  = hmri_make_dR1(PDw,T1w,Edata.PDw,Edata.T1w,fa_pdw_rad,fa_t1w_rad,TR_pdw,TR_t1w,f_T,R1,V_pdw(1),threshall);
+            [~,Atmp]  = hmri_make_dR1(PDw,T1w,Edata.PDw,Edata.T1w,fa_pdw_rad,fa_t1w_rad,TR_pdw,TR_t1w,f_T,R1,threshall,mpm_params.small_angle_approx);
             Atmp(Atmp<0)  = 0; 
             Atmp         = min(max(Atmp,-threshall.R1),threshall.R1); % truncating error maps
             NEpara(T1widx).dat(:,:,p) = Atmp;
@@ -692,7 +692,6 @@ if (mpm_params.UNICORT.R1)
     Output_hdr{1}.history.output.imtype = mpm_params.output(mpm_params.qR1).descrip;
     set_metadata(fR1,Output_hdr{1},mpm_params.json);
 end
-V_R1 = spm_vol(fR1);
 
 hmri_log(sprintf('\t-------- Map calculation continued (MT, A/PD) --------'), mpm_params.nopuflags);
 
@@ -764,7 +763,7 @@ for p = 1:dm(3)
 
         if mpm_params.errormaps
             
-            [dPD,AdPD] = hmri_make_dPD(PDw,T1w,Edata.PDw,Edata.T1w,fa_pdw_rad,fa_t1w_rad,TR_pdw,TR_t1w,A,V_pdw(1),f_T,threshall);
+            [~,AdPD] = hmri_make_dPD(PDw,T1w,Edata.PDw,Edata.T1w,fa_pdw_rad,fa_t1w_rad,TR_pdw,TR_t1w,A,f_T,threshall,mpm_params.small_angle_approx);
             
             % truncate PD error maps
             AdPD(isinf(AdPD)) = 0;
@@ -794,7 +793,7 @@ for p = 1:dm(3)
             MT  = ( (A_forMT * fa_mtw_rad - MTw) ./ (MTw+eps) .* R1_forMT*TR_mtw - fa_mtw_rad^2 / 2 ) * 100;
             
             if mpm_params.errormaps
-                [dMT,AdMT] = hmri_make_dMT(PDw,T1w,MTw,Edata.PDw,Edata.T1w,Edata.MTw,fa_pdw_rad,fa_t1w_rad,fa_mtw_rad,TR_pdw,TR_t1w,TR_mtw,V_pdw(1),threshall);
+                [~,AdMT] = hmri_make_dMT(PDw,T1w,MTw,Edata.PDw,Edata.T1w,Edata.MTw,fa_pdw_rad,fa_t1w_rad,fa_mtw_rad,TR_pdw,TR_t1w,TR_mtw,threshall,mpm_params.small_angle_approx);
                 if (~isempty(f_T))&&(~mpm_params.UNICORT.R1 || mpm_params.UNICORT.MT)
                     AdMT = AdMT .* (1 - 0.4) ./ (1 - 0.4 * f_T);
                 end

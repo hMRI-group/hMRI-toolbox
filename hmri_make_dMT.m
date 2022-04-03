@@ -74,8 +74,8 @@ function [dMT,AdMT] = hmri_make_dMT(SPD,ST1,SMT,dSPD,dST1,dSMT,alpha_PD,alpha_T1
 % alpha_MT, which is always assumed to be small enough to use the small
 % angle approximation.
 if ~small_angle_approximation
-    alpha_PD=2*tan(alpha_PD);
-    alpha_T1=2*tan(alpha_T1);
+    alpha_PD=2*tan(alpha_PD/2);
+    alpha_T1=2*tan(alpha_T1/2);
 end
 
 dMTdSPD = @(SPD,ST1,SMT,alpha_PD,alpha_T1,alpha_MT,TRPD,TRT1,TRMT) (ST1.*TRMT.*alpha_PD.*(TRPD.*alpha_T1.^2 - TRT1.*alpha_PD.^2).*(alpha_MT.*SPD.^2.*ST1.*TRPD.^2.*alpha_T1.^2 - alpha_MT.*SPD.^2.*ST1.*TRPD.*TRT1.*alpha_PD.^2 - alpha_MT.*SPD.^2.*ST1.*TRT1.^2.*alpha_T1.^2 + SMT.*SPD.^2.*TRPD.^2.*alpha_T1.*alpha_PD.^2 + 2.*alpha_MT.*SPD.*ST1.^2.*TRT1.^2.*alpha_T1.*alpha_PD - 2.*SMT.*SPD.*ST1.*TRPD.*TRT1.*alpha_T1.^2.*alpha_PD - alpha_MT.*ST1.^3.*TRPD.*TRT1.*alpha_T1.^2 + SMT.*ST1.^2.*TRT1.^2.*alpha_T1.^3))./(2.*SMT.*TRPD.*TRT1.*(SPD.*TRPD.*alpha_PD - ST1.*TRT1.*alpha_T1).^2.*(SPD.*alpha_T1 - ST1.*alpha_PD).^2);

@@ -539,8 +539,7 @@ if mpm_params.errormaps
     for ccon = 1:mpm_params.ncon
         Verror(ccon) = spm_vol(PR2s_OLS_error{ccon});
     end
-end
-        
+end        
 
 %% =======================================================================%
 % Prepare output for R1, PD and MT maps
@@ -568,6 +567,44 @@ if (PDwidx && T1widx)
     end        
 end
 
+if mpm_params.errormaps
+    % set metadata are missing
+    if (PDwidx && T1widx)
+        % R1 error maps
+        PR2s_param_error.R1    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qR1).suffix 'param_error.nii']);
+        Ni = hmri_create_nifti(PR2s_param_error.R1,V_pdw(1),dt,['Error map for ' mpm_params.output(mpm_params.qR1).suffix 'param']);
+        NEpara.R1 = nifti;
+        NEpara.R1 = Ni;
+        
+        P_SMscore.R1    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qR1).suffix '_SM.nii']);
+        Ni = hmri_create_nifti(P_SMscore.R1,V_pdw(1),dt,['Standardized ' mpm_params.output(mpm_params.qR1).suffix 'map']);
+        NSMpara.R1 = nifti;
+        NSMpara.R1 = Ni;
+        
+        % PD error maps
+        PR2s_param_error.PD    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qPD).suffix 'param_error.nii']);
+        Ni = hmri_create_nifti(PR2s_param_error.PD,V_pdw(1),dt,['Error map for ' mpm_params.output(mpm_params.qPD).suffix 'param']);
+        NEpara.PD = nifti;
+        NEpara.PD = Ni;
+        
+        P_SMscore.PD    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qPD).suffix '_SM.nii']);
+        Ni = hmri_create_nifti(P_SMscore.PD,V_pdw(1),dt,['Standardized ' mpm_params.output(mpm_params.qPD).suffix 'map']);
+        NSMpara.PD = nifti;
+        NSMpara.PD = Ni;
+        if MTwidx
+            % MT error maps
+            PR2s_param_error.MT    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qMT).suffix 'param_error.nii']);
+            Ni = hmri_create_nifti(PR2s_param_error.MT,V_pdw(1),dt,['Error map for ' mpm_params.output(mpm_params.qMT).suffix 'param']);
+            NEpara.MT = nifti;
+            NEpara.MT = Ni;
+            
+            P_SMscore.MT    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qMT).suffix '_SM.nii']);
+            Ni = hmri_create_nifti(P_SMscore.MT,V_pdw(1),dt,['Standardized ' mpm_params.output(mpm_params.qMT).suffix 'map']);
+            NSMpara.MT = nifti;
+            NSMpara.MT = Ni;
+        end
+    end
+end
 
 %% =======================================================================%
 % Map calculation continued (R1, PD, MT) 
@@ -581,23 +618,6 @@ if MTwidx; fa_mtw_rad = fa_mtw * pi / 180; end
 if T1widx; fa_t1w_rad = fa_t1w * pi / 180; end
 
 spm_progress_bar('Init',dm(3),'Calculating maps','planes completed');
-
-if mpm_params.errormaps
-    % set metadata are missing
-    NEpara    = nifti;
-    NSMpara    = nifti;
-    for ccon = 1:mpm_params.ncon
-        PR2s_param_error{ccon}    = fullfile(calcpath,[outbasename '_' mpm_params.input(ccon).tag 'param_error.nii']);
-        Ni = hmri_create_nifti(PR2s_param_error{ccon},V_pdw(1),dt,['Error map for ' mpm_params.input(ccon).tag 'param']);
-        NEpara(ccon) = Ni;
-
-        P_SMscore{ccon}    = fullfile(calcpath,[outbasename '_' mpm_params.input(ccon).tag '_SM.nii']);
-        Ni = hmri_create_nifti(P_SMscore{ccon},V_pdw(1),dt,['Standardized ' mpm_params.input(ccon).tag 'map']);
-        NSMpara(ccon) = Ni;
-
-    end
-end
-
 
 % First calculate R1 & MTR
 for p = 1:dm(3)
@@ -663,13 +683,13 @@ for p = 1:dm(3)
             
             AdR1(AdR1<0)  = 0;
             AdR1         = min(max(AdR1,-threshall.R1),threshall.R1); % truncating error maps
-            NEpara(T1widx).dat(:,:,p) = AdR1;
+            NEpara.R1.dat(:,:,p) = AdR1;
         
             % standardized maps
-            tmp1 = tmp./Atmp.*(Atmp>threshall.dR1);            
+            tmp1 = tmp./AdR1.*(AdR1>threshall.dR1);            
             tmp1 = max(min(tmp1,threshall.SMT1),-threshall.SMT1);
             tmp1(abs(tmp1)==threshall.SMT1) = 0;
-            NSMpara(T1widx).dat(:,:,p) = tmp1; 
+            NSMpara.R1.dat(:,:,p) = tmp1; 
         end
     end
     spm_progress_bar('Set',p);
@@ -760,13 +780,13 @@ for p = 1:dm(3)
             % truncate PD error maps
             AdPD(isinf(AdPD)) = 0;
             AdPD             = max(min(AdPD,threshall.A),-threshall.A);
-            NEpara(PDwidx).dat(:,:,p) = AdPD;
+            NEpara.PD.dat(:,:,p) = AdPD;
             
             % truncate standarized PD maps
             tmp1 = tmp./AdPD.*(AdPD>1e-2);
             tmp1 = max(min(tmp1,threshall.SMPD),-threshall.SMPD);
             tmp1(abs(tmp1)==threshall.SMPD) = 0;
-            NSMpara(PDwidx).dat(:,:,p) = tmp1; % has to become a default
+            NSMpara.PD.dat(:,:,p) = tmp1; % has to become a default
         end
         
         % for MT maps calculation, one needs MTw images on top of the T1w
@@ -810,13 +830,13 @@ for p = 1:dm(3)
                 
                 % truncate MT error maps
                 AdMT = max(min(AdMT,threshall.MT),-threshall.MT);
-                NEpara(MTwidx).dat(:,:,p) = AdMT*100;  
+                NEpara.MT.dat(:,:,p) = AdMT*100;  
                 
                 tmp1 = tmp./(AdMT*100).*(AdMT*100>1e-4);
                 % truncate standarized MT maps
                 tmp1 = max(min(tmp1,threshall.SMMT),-threshall.SMMT);
                 tmp1(abs(tmp1)==threshall.SMMT) = 0;
-                NSMpara(MTwidx).dat(:,:,p) = tmp1; % has to become a default
+                NSMpara.MT.dat(:,:,p) = tmp1; % has to become a default
             end
         end
     
@@ -1030,22 +1050,23 @@ if mpm_params.proc.R2sOLS && ~isempty(fR2s_OLS)
     % the hmri_create_MTProt fR2s output in now the R2s_OLS map
     fR2s = fR2s_OLS_final;
 end
+
+% move error maps to Results/Supplementary
 if mpm_params.errormaps
-    for ccon = 1:mpm_params.ncon
-        % move error maps to Results/Supplementary
-        movefile(PR2s_param_error{ccon}, fullfile(supplpath, spm_file(PR2s_param_error{ccon},'filename')));
-        try movefile([spm_str_manip(PR2s_OLS_error{ccon},'r') '.json'],fullfile(supplpath, [spm_file(PR2s_OLS_error{ccon},'basename') '.json'])); end
-        movefile(PR2s_OLS_error{ccon}, fullfile(supplpath, spm_file(PR2s_OLS_error{ccon},'filename')));
-        try movefile([spm_str_manip(PR2s_param_error{ccon},'r') '.json'],fullfile(supplpath, [spm_file(PR2s_param_error{ccon},'basename') '.json'])); end
-        movefile(P_SMscore{ccon}, fullfile(supplpath, spm_file(P_SMscore{ccon},'filename')));
-        try movefile([spm_str_manip(P_SMscore{ccon},'r') '.json'],fullfile(supplpath, [spm_file(P_SMscore{ccon},'basename') '.json'])); end
+    % R1, PD, MT error maps
+    outfields=fieldnames(PR2s_param_error)';
+    for ccon = 1:length(outfields)
+        copyfile(PR2s_param_error.(outfields{ccon}), fullfile(supplpath, spm_file(PR2s_param_error.(outfields{ccon}),'filename')));
+        try copyfile([spm_str_manip(PR2s_param_error.(outfields{ccon}),'r') '.json'],fullfile(supplpath, [spm_file(PR2s_param_error.(outfields{ccon}),'basename') '.json'])); end
+        copyfile(P_SMscore.(outfields{ccon}), fullfile(supplpath, spm_file(P_SMscore.(outfields{ccon}),'filename')));
+        try copyfile([spm_str_manip(P_SMscore.(outfields{ccon}),'r') '.json'],fullfile(supplpath, [spm_file(P_SMscore.(outfields{ccon}),'basename') '.json'])); end
     end
-    ccon = ccon + 1;
-    movefile(PR2s_OLS_error{ccon}, fullfile(supplpath, spm_file(PR2s_OLS_error{ccon},'filename')));
-    try movefile([spm_str_manip(PR2s_param_error{ccon},'r') '.json'],fullfile(supplpath, [spm_file(PR2s_param_error{ccon},'basename') '.json'])); end
-    movefile(PR2s_OLS_SM, fullfile(supplpath, spm_file(PR2s_OLS_SM,'filename')));
-    try movefile([spm_str_manip(PR2s_OLS_SM,'r') '.json'],fullfile(supplpath, [spm_file(PR2s_OLS_SM,'basename') '.json'])); end
     
+    % R2s error map and single contrast residuals
+    for ccon = 1:length(PR2s_OLS_error)
+        try copyfile([spm_str_manip(PR2s_OLS_error{ccon},'r') '.json'],fullfile(supplpath, [spm_file(PR2s_OLS_error{ccon},'basename') '.json'])); end
+        copyfile(PR2s_OLS_error{ccon}, fullfile(supplpath, spm_file(PR2s_OLS_error{ccon},'filename')));
+    end
 end
 
 if ~isempty(fMT)

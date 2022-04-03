@@ -1147,8 +1147,9 @@ spm_write_vol(V_maskedA,maskedA);
 
 if(mpm_params.errormaps)
     outbasename = spm_file(mpm_params.input(mpm_params.PDwidx).fnam(1,:),'basename'); % for all output files
-
-    PPD_error   = fullfile(calcpath,[outbasename '_' mpm_params.input(mpm_params.PDwidx).tag 'param_error.nii']);
+    
+    % TODO: pass this filename to this function rather than generating it
+    PPD_error   = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qPD).suffix 'param_error.nii']);
     PDerror     = spm_read_vols(spm_vol(PPD_error));
 end
 % Bias-field correction of masked A map

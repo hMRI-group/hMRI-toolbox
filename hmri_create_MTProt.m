@@ -663,10 +663,12 @@ for p = 1:dm(3)
             R1 = R1./(A_ISC.*R1+B_ISC);
         end
         
-        R1 = R1*1e6;
+        R1scalingPrethresh = 1e6; 
+        R1scalingPostthresh = 1e-3;
+        R1 = R1*R1scalingPrethresh;
         tmp      = R1;
         tmp(isnan(tmp)) = 0;
-        Nmap(mpm_params.qR1).dat(:,:,p) = min(max(tmp,-threshall.R1),threshall.R1)*1e-3; % truncating images
+        Nmap(mpm_params.qR1).dat(:,:,p) = min(max(tmp,-threshall.R1),threshall.R1)*R1scalingPostthresh; % truncating images
         
         if mpm_params.errormaps
             Edata.PDw  = spm_slice_vol(Verror(PDwidx),Verror(PDwidx).mat\M,dm(1:2),mpm_params.interp);
@@ -678,9 +680,12 @@ for p = 1:dm(3)
                 % Use chain rule to include the imperfect spoiling 
                 % correction: R1 error map multiplied by derivative of 
                 % correction factor with respect to R1
-                AdR1 = AdR1.*abs(1./(A_ISC.*R1+B_ISC)-R1.*A_ISC./(A_ISC.*R1+B_ISC).^2);
+                % Note that A and B parameters are in original units (i.e.
+                % pre-threholding units) not scaled units!
+                AdR1 = AdR1.*abs(1./(A_ISC.*R1/R1scalingPrethresh+B_ISC)-R1/R1scalingPrethresh.*A_ISC./(A_ISC.*R1/R1scalingPrethresh+B_ISC).^2);
             end
             
+            % TODO: why do we use the R1 threshold here?
             AdR1(AdR1<0)  = 0;
             AdR1         = min(max(AdR1,-threshall.R1),threshall.R1); % truncating error maps
             NEpara.R1.dat(:,:,p) = AdR1;

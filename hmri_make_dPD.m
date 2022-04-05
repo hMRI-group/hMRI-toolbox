@@ -54,8 +54,8 @@ if(~isempty(f_T))
     alpha_PD = alpha_PD.*f_T;
     alpha_T1 = alpha_T1.*f_T;
     if ~small_angle_approximation
-        alpha_PD=2*tau(alpha_PD/2);
-        alpha_T1=2*tau(alpha_T1/2);
+        alpha_PD=2*tan(alpha_PD/2);
+        alpha_T1=2*tan(alpha_T1/2);
     end
 end
 

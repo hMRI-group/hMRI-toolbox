@@ -23,48 +23,6 @@ function [dMT,AdMT] = hmri_make_dMT(SPD,ST1,SMT,dSPD,dST1,dSMT,alpha_PD,alpha_T1
 % Out:
 % dMT           - error for MT in [a.u.]
 % Atmp          - error map for MT in [a.u.]
-% syms SPD ST1 alpha_PD alpha_T1 alpha_MT TRPD TRT1 TRMT SMT
-% R1 = @(SPD,ST1,alpha_PD,alpha_T1,TRPD,TRT1) 0.5*(SPD.* alpha_PD/TRPD - ST1.* alpha_T1/TRT1)./(ST1./alpha_T1 - SPD./alpha_PD);
-% Astar = @(SPD,ST1,alpha_PD,alpha_T1,TRPD,TRT1) ST1.*SPD.*(TRT1*alpha_PD/alpha_T1-TRPD*alpha_T1/alpha_PD)./(TRPD*SPD*alpha_PD-TRT1*ST1*alpha_T1);
-% MT = @(SPD,ST1,SMT,alpha_PD,alpha_T1,alpha_MT,TRPD,TRT1,TRMT) (Astar(SPD,ST1,alpha_PD,alpha_T1,TRPD,TRT1)*alpha_MT/SMT - 1)*R1(SPD,ST1,alpha_PD,alpha_T1,TRPD,TRT1)*TRMT - alpha_MT^2/2;
-%
-% pretty(simplify(diff(MT,SPD)))
-%
-% (ST1 TRMT alpha_PD (TRPD alpha_T1  - TRT1 alpha_PD ) (alpha_MT SPD  ST1 TRPD  alpha_T1  - alpha_MT SPD  ST1 TRPD TRT1
-%
-%            2               2         2         2          2     2                  2                   2     2
-%    alpha_PD  - alpha_MT SPD  ST1 TRT1  alpha_T1  + SMT SPD  TRPD  alpha_T1 alpha_PD  + alpha_MT SPD ST1  TRT1  alpha_T1
-%
-%                                                 2                        3                   2
-%    alpha_PD 2 - 2 SMT SPD ST1 TRPD TRT1 alpha_T1  alpha_PD - alpha_MT ST1  TRPD TRT1 alpha_T1
-%
-%             2     2         3                                                           2                              2
-%    + SMT ST1  TRT1  alpha_T1 ))/(2 SMT TRPD TRT1 (SPD TRPD alpha_PD - ST1 TRT1 alpha_T1)  (SPD alpha_T1 - ST1 alpha_PD) )
-%
-%
-% pretty(simplify(diff(MT,ST1)))
-%
-% -(SPD TRMT alpha_T1 (TRPD alpha_T1  - TRT1 alpha_PD ) (- alpha_MT SPD  TRPD TRT1 alpha_PD
-%
-%                  2         2                              2     2         3                   2     2         2
-%    + alpha_MT SPD  ST1 TRPD  alpha_T1 alpha_PD 2 + SMT SPD  TRPD  alpha_PD  - alpha_MT SPD ST1  TRPD  alpha_PD
-%
-%                      2                   2                   2     2         2
-%    - alpha_MT SPD ST1  TRPD TRT1 alpha_T1  + alpha_MT SPD ST1  TRT1  alpha_PD  - 2 SMT SPD ST1 TRPD TRT1 alpha_T1
-%
-%            2          2     2         2                                                                    2
-%    alpha_PD  + SMT ST1  TRT1  alpha_T1  alpha_PD))/(2 SMT TRPD TRT1 (SPD TRPD alpha_PD - ST1 TRT1 alpha_T1)
-%
-%                                 2
-%    (SPD alpha_T1 - ST1 alpha_PD) )
-%
-%
-%  pretty(simplify(diff(MT,SMT)))
-%
-%   SPD ST1 TRMT alpha_MT (SPD TRT1 alpha_PD - ST1 TRPD alpha_T1) (TRPD alpha_T1  - TRT1 alpha_PD )
-% - -----------------------------------------------------------------------------------------------
-%             2
-%        2 SMT  TRPD TRT1 (SPD TRPD alpha_PD - ST1 TRT1 alpha_T1) (SPD alpha_T1 - ST1 alpha_PD)
 
 % We do not scale the flip angles by fT, because that would be inconsistent
 % with what is used for MT calculation in the toolbox.
@@ -78,18 +36,50 @@ if ~small_angle_approximation
     alpha_T1=2*tan(alpha_T1/2);
 end
 
-dMTdSPD = @(SPD,ST1,SMT,alpha_PD,alpha_T1,alpha_MT,TRPD,TRT1,TRMT) (ST1.*TRMT.*alpha_PD.*(TRPD.*alpha_T1.^2 - TRT1.*alpha_PD.^2).*(alpha_MT.*SPD.^2.*ST1.*TRPD.^2.*alpha_T1.^2 - alpha_MT.*SPD.^2.*ST1.*TRPD.*TRT1.*alpha_PD.^2 - alpha_MT.*SPD.^2.*ST1.*TRT1.^2.*alpha_T1.^2 + SMT.*SPD.^2.*TRPD.^2.*alpha_T1.*alpha_PD.^2 + 2.*alpha_MT.*SPD.*ST1.^2.*TRT1.^2.*alpha_T1.*alpha_PD - 2.*SMT.*SPD.*ST1.*TRPD.*TRT1.*alpha_T1.^2.*alpha_PD - alpha_MT.*ST1.^3.*TRPD.*TRT1.*alpha_T1.^2 + SMT.*ST1.^2.*TRT1.^2.*alpha_T1.^3))./(2.*SMT.*TRPD.*TRT1.*(SPD.*TRPD.*alpha_PD - ST1.*TRT1.*alpha_T1).^2.*(SPD.*alpha_T1 - ST1.*alpha_PD).^2);
+dMTdSPD = dMT_by_dS1(SPD,ST1,SMT,alpha_PD,alpha_T1,alpha_MT,TRPD,TRT1,TRMT);
+dMTdST1 = dMT_by_dS1(ST1,SPD,SMT,alpha_T1,alpha_PD,alpha_MT,TRT1,TRPD,TRMT);
+dMTdSMT = dMT_by_dSMT(SPD,ST1,SMT,alpha_PD,alpha_T1,alpha_MT,TRPD,TRT1,TRMT);
 
-dMTdST1 = @(SPD,ST1,SMT,alpha_PD,alpha_T1,alpha_MT,TRPD,TRT1,TRMT) -(SPD.*TRMT.*alpha_T1.*(TRPD.*alpha_T1.^2 - TRT1.*alpha_PD.^2).*(- alpha_MT.*SPD.^3.*TRPD.*TRT1.*alpha_PD.^2 + 2.*alpha_MT.*SPD.^2.*ST1.*TRPD.^2.*alpha_T1.*alpha_PD + SMT.*SPD.^2.*TRPD.^2.*alpha_PD.^3 - alpha_MT.*SPD.*ST1.^2.*TRPD.^2.*alpha_PD.^2 - alpha_MT.*SPD.*ST1.^2.*TRPD.*TRT1.*alpha_T1.^2 + alpha_MT.*SPD.*ST1.^2.*TRT1.^2.*alpha_PD.^2 - 2.*SMT.*SPD.*ST1.*TRPD.*TRT1.*alpha_T1.*alpha_PD.^2 + SMT.*ST1.^2.*TRT1.^2.*alpha_T1.^2.*alpha_PD))./(2.*SMT.*TRPD.*TRT1.*(SPD.*TRPD.*alpha_PD - ST1.*TRT1.*alpha_T1).^2.*(SPD.*alpha_T1 - ST1.*alpha_PD).^2);
-
-dMTdSMT = @(SPD,ST1,SMT,alpha_PD,alpha_T1,alpha_MT,TRPD,TRT1,TRMT) -(SPD.*ST1.*TRMT.*alpha_MT.*(SPD.*TRT1.*alpha_PD - ST1.*TRPD.*alpha_T1).*(TRPD.*alpha_T1.^2 - TRT1.*alpha_PD.^2))./(2.*SMT.^2.*TRPD.*TRT1.*(SPD.*TRPD.*alpha_PD - ST1.*TRT1.*alpha_T1).*(SPD.*alpha_T1 - ST1.*alpha_PD));
-
-dMT = sqrt( dMTdSPD(SPD,ST1,SMT,alpha_PD,alpha_T1,alpha_MT,TRPD,TRT1,TRMT).^2 .* dSPD.^2 + dMTdST1(SPD,ST1,SMT,alpha_PD,alpha_T1,alpha_MT,TRPD,TRT1,TRMT).^2 .* dST1.^2 + dMTdSMT(SPD,ST1,SMT,alpha_PD,alpha_T1,alpha_MT,TRPD,TRT1,TRMT).^2 .* dSMT.^2);
+dMT = sqrt( dMTdSPD.^2 .* dSPD.^2 + dMTdST1.^2 .* dST1.^2 + dMTdSMT.^2 .* dSMT.^2);
 
 % TODO: handle thresholding outside of this function
 AdMT     = zeros(size(SPD));
 tmp1    = dMT;
 tmp1 = max(min(tmp1,threshall.MT),-threshall.MT);
 AdMT(dMT>threshall.dMT)     = tmp1(dMT>threshall.dMT);
+
+end
+
+function d = dMT_by_dS1(S1,S2,SMT,alpha1,alpha2,alphaMT,TR1,TR2,TRMT)
+% Derivative of dual flip-angle A (PD) estimate with respect to first 
+% weighted signal (S1). Because of symmetry in the R1 and A calculations, 
+% the derivative with respect to the second weighted signal can be computed 
+% by permuting labels.
+%
+% Can be derived using: 
+%   syms S1 alpha1 S2 alpha2 SMT alphaMT
+%   syms TR1 TR2 TRMT positive
+%   A = hmri_calc_A(struct('data',S1,'fa',alpha1,'TR',TR1,'B1',1),struct('data',S2,'fa',alpha2,'TR',TR2,'B1',1),true);
+%   R1 = hmri_calc_R1(struct('data',S1,'fa',alpha1,'TR',TR1,'B1',1),struct('data',S2,'fa',alpha2,'TR',TR2,'B1',1),true);
+%   MT = (A*alphaMT/SMT-1)*R1*TRMT-alphaMT^2/2;
+%   diff(MT,S1)
+
+d = S2.*TRMT.*alpha1.*(TR2.*alpha1.^2 - TR1.*alpha2.^2).*(S2.*alphaMT - SMT.*alpha2)./(2.*SMT.*TR1.*TR2.*(S1.*alpha2 - S2.*alpha1).^2);
+
+end
+
+function d = dMT_by_dSMT(S1,S2,SMT,alpha1,alpha2,alphaMT,TR1,TR2,TRMT)
+% Derivative of dual flip-angle A (PD) estimate with respect to MT 
+% weighted signal (SMT).
+%
+% Can be derived using: 
+%   syms S1 alpha1 S2 alpha2 SMT alphaMT
+%   syms TR1 TR2 TRMT positive
+%   A = hmri_calc_A(struct('data',S1,'fa',alpha1,'TR',TR1,'B1',1),struct('data',S2,'fa',alpha2,'TR',TR2,'B1',1),true);
+%   R1 = hmri_calc_R1(struct('data',S1,'fa',alpha1,'TR',TR1,'B1',1),struct('data',S2,'fa',alpha2,'TR',TR2,'B1',1),true);
+%   MT = (A*alphaMT/SMT-1)*R1*TRMT-alphaMT^2/2;
+%   diff(MT,SMT)
+
+d = S1.*S2.*TRMT.*alphaMT*(TR2.*alpha1.^2 - TR1.*alpha2.^2)./(2*SMT.^2.*TR1.*TR2.*(S1.*alpha2 - S2.*alpha1));
 
 end

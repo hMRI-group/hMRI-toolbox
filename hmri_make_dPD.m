@@ -1,36 +1,6 @@
 function [dPD,AdPD] = hmri_make_dPD(SPD,ST1,dSPD,dST1,alpha_PD,alpha_T1,TRPD,TRT1,A,f_T,threshall,small_angle_approximation)
 % Calculate propagation of uncertainty for PD map
 % (https://en.wikipedia.org/wiki/Propagation_of_uncertainty).
-% Here the code for generating the derivatives of Eq. A7 in Tabelow et al., NI, 2019:
-% syms PD SPD ST1 alpha_PD alpha_T1 TRPD TRT1
-% PD = @(SPD,ST1,alpha_PD,alpha_T1,TRPD,TRT1) ST1.*SPD.*(TRT1*alpha_PD/alpha_T1-TRPD*alpha_T1/alpha_PD)./(TRPD*SPD*alpha_PD-TRT1*ST1*alpha_T1);
-% diff(PD,SPD)
-%                       / TRPD alpha_T1   TRT1 alpha_PD \
-% SPD ST1 TRPD alpha_PD | ------------- - ------------- |
-%                       \    alpha_PD        alpha_T1   /
-% -------------------------------------------------------
-%                                                2
-%         (SPD TRPD alpha_PD - ST1 TRT1 alpha_T1)
-%
-%          / TRPD alpha_T1   TRT1 alpha_PD \
-%      ST1 | ------------- - ------------- |
-%          \    alpha_PD        alpha_T1   /
-%    - -------------------------------------
-%      SPD TRPD alpha_PD - ST1 TRT1 alpha_T1
-% diff(PD,ST1)
-%       / TRPD alpha_T1   TRT1 alpha_PD \
-%   SPD | ------------- - ------------- |
-%       \    alpha_PD        alpha_T1   /
-% - -------------------------------------
-%   SPD TRPD alpha_PD - ST1 TRT1 alpha_T1
-%
-%                            / TRPD alpha_T1   TRT1 alpha_PD \
-%      SPD ST1 TRT1 alpha_T1 | ------------- - ------------- |
-%                            \    alpha_PD        alpha_T1   /
-%    - -------------------------------------------------------
-%                                                     2
-%              (SPD TRPD alpha_PD - ST1 TRT1 alpha_T1)
-%
 % % S.Mohammadi 06.09.2019
 %
 % In:
@@ -74,6 +44,17 @@ AdPD(A>threshall.dPD) = tmp1(A>threshall.dPD);
 end
 
 function d = dPD_by_dS1(S1,S2,alpha1,alpha2,TR1,TR2)
-d = S1.*S2.*TR1.*alpha1.*(TR1.*alpha2./alpha1 - TR2.*alpha1./alpha2) ./ (S1.*TR1.*alpha1 - S2.*TR2.*alpha2).^2 ...
-    - S2.*(TR1.*alpha2./alpha1 - TR2.*alpha1./alpha2)./(S1.*TR1.*alpha1 - S2.*TR2.*alpha2);
+% Derivative of dual flip-angle A (PD) estimate with respect to first 
+% weighted signal (S1). Because of symmetry in the R1 calculation, the 
+% derivative with respect to the second weighted signal can be computed by 
+% permuting labels.
+%
+% Can be derived using: 
+%   syms S1 alpha1 S2 alpha2
+%   syms TR1 TR2 positive
+%   diff(hmri_calc_A(struct('data',S1,'fa',alpha1,'TR',TR1,'B1',1),struct('data',S2,'fa',alpha2,'TR',TR2,'B1',1),true),S1)
+
+d = S1.*S2.*TR2.*alpha1.*(TR1.*alpha2./alpha1 - TR2.*alpha1./alpha2) ./ (S1.*TR2.*alpha1 - S2.*TR1.*alpha2).^2 ...
+    - S2.*(TR1.*alpha2./alpha1 - TR2.*alpha1./alpha2)./(S1.*TR2.*alpha1 - S2.*TR1.*alpha2);
+
 end

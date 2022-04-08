@@ -1,5 +1,6 @@
-# Matlab *.asv files
+# ignore Matlab and linux temporary files
 *.asv
+*~
 
 # ignore *.odt version of the manual (keep PDF only)
 *.odt

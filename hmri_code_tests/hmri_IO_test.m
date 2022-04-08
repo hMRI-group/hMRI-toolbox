@@ -1,6 +1,4 @@
-% Unit tests based on input/output:
-%   hmri_read_vols - to do
-%
+% Unit tests based on input/output
 
 classdef hmri_IO_test < matlab.unittest.TestCase
     properties (TestParameter)

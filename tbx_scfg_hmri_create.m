@@ -125,7 +125,10 @@ b1_type.help={b1_type.help{1},[' - UNICORT: Use this option when B1 maps not ava
 sraws3MT          = cfg_files;
 sraws3MT.tag      = 'raw_sens_MT';
 sraws3MT.name     = 'RF sensitivity maps for MTw images';
-sraws3MT.help     = {'Select low resolution RF sensitivity maps acquired with the head and body coils respectively, in that order.'};
+sraws3MT.help     = {'Select low resolution calibration images.  ' ...
+    'The first image should have been acquired immediately prior to the MTw acquisition.' ...
+    'The second image is the reference, e.g. acquired with the body coil (see Papp et al. MRM 2016) immediately prior to the MTw acquisition, ' ...
+    'or use the array coil image for a particular contrast (the same in each entry) as the reference (see Balbastre et al. MRM 2022).'};
 sraws3MT.filter   = 'image';
 sraws3MT.ufilter  = '.*';
 % sraws3MT.num      = [2 2];
@@ -137,7 +140,10 @@ sraws3MT.val       = {''};
 sraws3PD          = cfg_files;
 sraws3PD.tag      = 'raw_sens_PD';
 sraws3PD.name     = 'RF sensitivity maps for PDw images';
-sraws3PD.help     = {'Select low resolution RF sensitivity maps acquired with the head and body coils respectively, in that order.'};
+sraws3PD.help     = {'Select low resolution calibration images.  ' ...
+    'The first image should have been acquired immediately prior to the PDw acquisition.' ...
+    'The second image is the reference, e.g. acquired with the body coil (see Papp et al. MRM 2016) immediately prior to the PDw acquisition, ' ...
+    'or use the array coil image for a particular contrast (the same in each entry) as the reference (see Balbastre et al. MRM 2022).'};
 sraws3PD.filter   = 'image';
 sraws3PD.ufilter  = '.*';
 % sraws3PD.num      = [2 2];
@@ -149,7 +155,10 @@ sraws3PD.val       = {''};
 sraws3T1          = cfg_files;
 sraws3T1.tag      = 'raw_sens_T1';
 sraws3T1.name     = 'RF sensitivity maps for T1w images';
-sraws3T1.help     = {'Select low resolution RF sensitivity maps acquired with the head and body coils respectively, in that order.'};
+sraws3T1.help     = {'Select low resolution calibration images.  ' ...
+    'The first image should have been acquired immediately prior to the T1w acquisition.' ...
+    'The second image is the reference, e.g. acquired with the body coil (see Papp et al. MRM 2016) immediately prior to the T1w acquisition, ' ...
+    'or use the array coil image for a particular contrast (the same in each entry) as the reference (see Balbastre et al. MRM 2022).'};
 sraws3T1.filter   = 'image';
 sraws3T1.ufilter  = '.*';
 % sraws3T1.num      = [2 2];

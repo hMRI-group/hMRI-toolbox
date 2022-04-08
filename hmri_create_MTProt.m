@@ -499,7 +499,9 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
                     NEmap(ccon).dat(:,:,p) = SError.weighted{ccon};
                 end
             end
-            NEmap(ccon+1).dat(:,:,p) = SError.R2s;
+            if mpm_params.errormaps
+                NEmap(ccon+1).dat(:,:,p) = SError.R2s;
+            end
         end
 
                   

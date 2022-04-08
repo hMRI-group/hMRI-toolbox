@@ -13,7 +13,7 @@ function hmri_wcomb_2mpms(PIn1,PIn2,Pw1,Pw2,PVG,PMSK)
 
 wcombparams = hmri_get_defaults('wcombparams');
 res         = wcombparams.res;
-kt          = wcombparams.kt;
+kt          = wcombparams.kt/100;
 dummy_am    = wcombparams.dummy_am;
 smthk       = wcombparams.smthk;
 dim         = wcombparams.dim;
@@ -55,16 +55,16 @@ end
 
 for inx = 1:size(VIn1,1)
     % define output volume
-    Pout = spm_file(VIn1(inx).fname,'prefix','wa_');
+    Pout = spm_file(VIn1(inx).fname,'suffix',['_RO_k' num2str(kt)]);
     
-    Ntmp = hmri_create_nifti(Pout,VG,dt,deblank([VIn1(inx).descrip  ' - weighted combination']));
+    Ntmp = hmri_create_nifti(Pout,VG,dt,deblank([VIn1(inx).descrip  ' - robust combination']));
     if dummy_error==true
-        Pout = spm_file(Vw1(inx).fname,'prefix','wa_');
-        Ntmperror = hmri_create_nifti(Pout,VG,dt,deblank([VIn1(inx).descrip  ' - weighted combination error maps']));
+        Pout = spm_file(Vw1(inx).fname,'suffix',['_RO_k' num2str(kt)]);
+        Ntmperror = hmri_create_nifti(Pout,VG,dt,deblank([VIn1(inx).descrip  ' - robust combination error maps']));
     end
     if dummy_am==true
-        Pout = spm_file(VIn1(inx).fname,'prefix','am_');
-        Ntmpam = hmri_create_nifti(Pout,VG,dt,deblank([VIn1(inx).descrip  ' - arithmetic combination']));
+        Pout = spm_file(VIn1(inx).fname,'suffix','_AM');
+        Ntmpam = hmri_create_nifti(Pout,VG,dt,deblank([VIn1(inx).descrip  ' - arithmetic mean']));
     end
     spm_progress_bar('Init',VG.dim(3),Ntmp.descrip,'planes completed');
 

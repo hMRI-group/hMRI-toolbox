@@ -460,7 +460,7 @@ hmri_def.wcomb = false;
 if hmri_def.wcomb
     
     % weighted combination - see ... for details
-    hmri_def.wcombparams.kt         = 0.1;
+    hmri_def.wcombparams.kt         = 10; % in percentage
     hmri_def.wcombparams.res        = -4;
     hmri_def.wcombparams.smthk      = 0;
     hmri_def.wcombparams.dim        = 3;

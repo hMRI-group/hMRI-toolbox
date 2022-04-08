@@ -1,5 +1,0 @@
-RepetitionTimes
-EchoTimes
-AllDiffusionDirections
-AllBValues
-B1mapNominalFAValues

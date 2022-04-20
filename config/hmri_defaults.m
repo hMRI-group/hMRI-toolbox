@@ -169,7 +169,20 @@ hmri_def.small_angle_approx = true;
 % ADVANCED USER ONLY.
 hmri_def.R2sOLS = 1; 
 
-% Options are 'OLS','WLS1','WLS2','WLS3','NLLS_OLS','NLLS_WLS1'
+% Choose method of R2* fitting; this is a trade-off between speed and
+% accuracy.
+% - 'OLS' (classic ESTATICS ordinary least squares model; fast but not as 
+%         accurate as WLS1)
+% - 'WLS1' (weighted least squares with one iteration; slower than OLS but 
+%          significantly more accurate. Uses parallelization over voxels to 
+%          speed up calculation)
+% - 'WLS2', 'WLS3' (weighted least squares with 2 or 3 iterations; did not
+%                   show great improvement over WLS1 in test data)
+% - 'NLLS_OLS', 'NLLS_WLS1' (nonlinear least squares using either OLS or
+%                            WLS1 to provide the initial parameter
+%                            estimates; very slow, even with
+%                            parallelization over voxels. Recommend WLS1
+%                            instead)
 hmri_def.R2s_fit_method = 'OLS';
 
 % Minimum number of echoes to calculate R2s map. Strictly speaking, the

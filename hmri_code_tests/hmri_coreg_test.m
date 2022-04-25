@@ -6,20 +6,24 @@ classdef hmri_coreg_test < matlab.unittest.TestCase
     properties (TestParameter)
         % Augment TestParameter with parameters over which tests will run,
         % as well as parameters needed by the test functions.
-        coregTol = {0.001}
 
     end
     properties
         % Parameters independent of TestParameter
+        ref_file
+        ref
         src_file
         src
-        ref
+        coregTol = 0.005
     end
     
     methods (Test)
         
         %% Test Functions
-        function test_hmri_coreg(testCase,coregTol)
+        function test_hmri_coreg(testCase)
+            
+            % Test that coregistration works on sample data.
+            % Low resolution data used to speed up the test.
             
             % Create transformation matrix and inverse:
             x = [10 8 5 0.02 0.01 0.008];
@@ -34,7 +38,7 @@ classdef hmri_coreg_test < matlab.unittest.TestCase
             
             % Test equivalence after coregistration:
             x_app = spm_imatrix(M);
-            assertEqual(testCase,x_est,x_app(1:length(x_est)),'RelTol',coregTol)
+            assertEqual(testCase,x_est,x_app(1:length(x_est)),'RelTol',testCase.coregTol)
             
         end
             
@@ -48,11 +52,25 @@ classdef hmri_coreg_test < matlab.unittest.TestCase
         
         function getData(testCase)
             % These methods are run when instantiating the class
+            
+            % Use low resolution brain image
             ut_data_dir = [fileparts(which('hmri_test_utils')) filesep 'example_data'];
-            ref_file = [ut_data_dir filesep 'field_map_1.nii'];
-            testCase.src_file = [ut_data_dir filesep 'field_map_1_copy.nii'];
-            testCase.ref = spm_vol(ref_file);
-            copyfile(ref_file, testCase.src_file);
+            field_map_1 = [ut_data_dir filesep 'field_map_1.nii'];
+            assert(exist(field_map_1,'file'),'%s not found; please run hmri_get_ut_data to download the data',field_map_1)
+            
+            % Use temporary directory which is deleted after tests have run
+            import matlab.unittest.fixtures.TemporaryFolderFixture
+            tempFixture = testCase.applyFixture(TemporaryFolderFixture);
+            
+            % Copy brain image to temporary directory; source and reference
+            % images (for coregistration) are initially identical
+            testCase.ref_file = [tempFixture.Folder filesep 'field_map_1.nii'];
+            testCase.src_file = [tempFixture.Folder filesep 'field_map_1_copy.nii'];
+            
+            copyfile(field_map_1, testCase.ref_file);
+            copyfile(field_map_1, testCase.src_file);
+            
+            testCase.ref = spm_vol(testCase.ref_file);
             testCase.src = spm_vol(testCase.src_file);
         end
         
@@ -66,12 +84,6 @@ classdef hmri_coreg_test < matlab.unittest.TestCase
     
     methods(TestMethodTeardown)
         
-        function deleteTempData(testCase)
-            % Destructor 
-            delete(testCase.src_file)
-            
-            % Should also delete ps coreg output created by spm
-        end
     end
     
     methods(TestClassTeardown)

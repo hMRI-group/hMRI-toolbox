@@ -17,6 +17,8 @@ classdef hmri_IO_test < matlab.unittest.TestCase
         %% Test Functions
         function test_hmri_create_nifti(testCase)
             
+            % Test that hmri_create_nifti writes out the same data it is given
+            
             dt = [spm_type('int32'),spm_platform('bigend')]; % for nifti output
             Ni = hmri_create_nifti([tempname '.nii'], testCase.phantomStruct, dt, 'test_hmri_create_nifti');
             Ni.dat(:,:,:) = testCase.phantomData;
@@ -29,6 +31,9 @@ classdef hmri_IO_test < matlab.unittest.TestCase
         
         function test_hmri_read_vols(testCase)
             
+            % Test that hmri_read_vols correctly reads in data when no 
+            % transformation of the header is needed
+            
             V=testCase.phantomStruct;
             data=zeros(V.dim);
             for p=1:V.dim(end)
@@ -40,6 +45,10 @@ classdef hmri_IO_test < matlab.unittest.TestCase
         end
         
         function test_hmri_read_vols_hdr_shift(testCase)
+            
+            % Test that hmri_read_vols reads in data correctly after the
+            % transformation in the header has been altered by a known
+            % amount
             
             VG=testCase.phantomStruct;
             
@@ -64,6 +73,9 @@ classdef hmri_IO_test < matlab.unittest.TestCase
         end
         
         function test_hmri_read_vols_NonStructInput(testCase)
+            
+            % Test that hmri_read_vols fails in the expected way when it is
+            % given the wrong type of input
             
             % Minimal inputs just for testing
             V = struct;

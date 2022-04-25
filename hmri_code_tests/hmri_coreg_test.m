@@ -22,6 +22,9 @@ classdef hmri_coreg_test < matlab.unittest.TestCase
         %% Test Functions
         function test_hmri_coreg(testCase)
             
+            % Test that coregistration works on sample data.
+            % Low resolution data used to speed up the test.
+            
             % Create transformation matrix and inverse:
             x = [10 8 5 0.02 0.01 0.008];
             M = pinv(spm_matrix(x));

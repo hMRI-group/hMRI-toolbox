@@ -839,15 +839,23 @@ end
 if (mpm_params.QA.enable||(PDproc.calibr)) && (PDwidx && T1widx)
     if ~isempty(fMT); 
         Vsave = spm_vol(fMT);
+        threshMT=threshall.MT;
     else % ~isempty(fR1); 
         Vsave = spm_vol(fR1); 
+        threshMT=threshall.R1*1e3;
     end
     MTtemp = spm_read_vols(Vsave);
+    
     % The 5 outer voxels in all directions are nulled in order to remove
     % artefactual effects from the MT map on segmentation: 
     MTtemp(1:5,:,:)=0; MTtemp(end-5:end,:,:)=0;
     MTtemp(:,1:5,:)=0; MTtemp(:,end-5:end,:)=0;
     MTtemp(:,:,1:5)=0; MTtemp(:,:,end-5:end)=0;
+    
+    % Null very bright and negative voxels
+    %MTtemp(MTtemp==threshMT)=0;
+    %MTtemp(MTtemp<0)=0;
+    
     Vsave.fname = spm_file(Vsave.fname,'suffix','_outer_suppressed');
     spm_write_vol(Vsave,MTtemp);
     

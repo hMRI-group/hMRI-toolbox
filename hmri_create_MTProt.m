@@ -853,8 +853,10 @@ if (mpm_params.QA.enable||(PDproc.calibr)) && (PDwidx && T1widx)
     MTtemp(:,:,1:5)=0; MTtemp(:,:,end-5:end)=0;
     
     % Null very bright and negative voxels
-    %MTtemp(MTtemp==threshMT)=0;
-    %MTtemp(MTtemp<0)=0;
+    MTtemp(abs(MTtemp)==threshMT)=0;
+    MTtemp(isinf(MTtemp))=0;
+    MTtemp(isnan(MTtemp))=0;
+    MTtemp(MTtemp<0)=0;
     
     Vsave.fname = spm_file(Vsave.fname,'suffix','_outer_suppressed');
     spm_write_vol(Vsave,MTtemp);
@@ -1086,9 +1088,10 @@ WMmask(squeeze(TPMs(:,:,:,2))>=PDproc.WMMaskTh) = 1;
 V_maskedA = spm_vol(fA);
 V_maskedA.fname = fullfile(calcpath,['masked_' spm_str_manip(V_maskedA.fname,'t')]);
 maskedA = spm_read_vols(spm_vol(fA)).*WBmask;
-maskedA(maskedA==Inf) = 0;
+maskedA(isinf(maskedA)) = 0;
 maskedA(isnan(maskedA)) = 0;
 maskedA(maskedA==threshA) = 0;
+maskedA(maskedA<0) = 0;
 spm_write_vol(V_maskedA,maskedA);
 
 % Bias-field correction of masked A map

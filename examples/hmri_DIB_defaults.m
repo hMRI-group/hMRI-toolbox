@@ -40,6 +40,10 @@ function hmri_DIB_defaults
 % Global hmri_def variable used across the whole toolbox
 global hmri_def
 
+% Specify the research centre & scanner. Not mandatory.
+hmri_def.centre = 'fil' ;
+hmri_def.scanner = 'prisma' ;
+
 %==========================================================================
 % Common processing parameters 
 %==========================================================================

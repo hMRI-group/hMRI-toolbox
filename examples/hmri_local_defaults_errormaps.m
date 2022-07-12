@@ -1,0 +1,67 @@
+function hmri_local_defaults_errormaps
+% PURPOSE
+% To set user-defined (site- or protocol-specific) defaults parameters
+% which are used by the hMRI toolbox. Customized processing parameters can
+% be defined, overwriting defaults from hmri_defaults. Acquisition
+% protocols can be specified here as a fallback solution when no metadata
+% are available. Note that the use of metadata is strongly recommended. 
+%
+% RECOMMENDATIONS
+% Parameters defined in this file are identical, initially, to the ones
+% defined in hmri_defaults.m. It is recommended, when modifying this file,
+% to remove all unchanged entries and save the file with a meaningful name.
+% This will help you identifying the appropriate defaults to be used for
+% each protocol, and will improve the readability of the file by pointing
+% to the modified parameters only.
+%
+% WARNING
+% Modification of the defaults parameters may impair the integrity of the
+% toolbox, leading to unexpected behaviour. ONLY RECOMMENDED FOR ADVANCED
+% USERS - i.e. who have a good knowledge of the underlying algorithms and
+% implementation. The SAME SET OF DEFAULT PARAMETERS must be used to
+% process uniformly all the data from a given study. 
+%
+% HOW DOES IT WORK?
+% The modified defaults file can be selected using the "Configure toolbox"
+% branch of the hMRI-Toolbox. For customization of B1 processing
+% parameters, type "help hmri_b1_standard_defaults.m". 
+%
+% DOCUMENTATION
+% A brief description of each parameter is provided together with
+% guidelines and recommendations to modify these parameters. With few
+% exceptions, parameters should ONLY be MODIFIED and customized BY ADVANCED
+% USERS, having a good knowledge of the underlying algorithms and
+% implementation. 
+% Please refer to the documentation in the github WIKI for more details. 
+%__________________________________________________________________________
+% This is an example defaults file for the error map calculation.
+% S.Mohammadi 12/07/2022
+
+% Global hmri_def variable used across the whole toolbox
+global hmri_def
+
+
+%==========================================================================
+% New feature: generate error maps
+%==========================================================================
+hmri_def.errormaps  = true;
+% errormap
+if hmri_def.errormaps
+    hmri_def.qMRI_maps_thresh.dR1 = 1e-4;
+    hmri_def.qMRI_maps_thresh.dPD = 1e-2;
+    hmri_def.qMRI_maps_thresh.dMT = 1e-4;
+    hmri_def.qMRI_maps_thresh.dR2s= 1e-6;
+    hmri_def.qMRI_maps_thresh.SMT1= 1e3;
+    hmri_def.qMRI_maps_thresh.SMPD= 1e3;
+    hmri_def.qMRI_maps_thresh.SMMT= 1e3;
+end
+
+% weighted combination - see ... for details
+hmri_def.wcombparams.kt         = 10; % in percent
+hmri_def.wcombparams.res        = -4;
+hmri_def.wcombparams.smthk      = 0;
+hmri_def.wcombparams.dim        = 3;
+hmri_def.wcombparams.dummy_am   = true;
+hmri_def.wcombparams.dummy_error= true;
+
+end

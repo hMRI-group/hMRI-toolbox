@@ -469,16 +469,13 @@ if hmri_def.errormaps
     hmri_def.qMRI_maps_thresh.SMMT= 1e3;
 end
 
-hmri_def.wcomb = false;
-if hmri_def.wcomb
-    
-    % weighted combination - see ... for details
-    hmri_def.wcombparams.kt         = 10; % in percentage
-    hmri_def.wcombparams.res        = -4;
-    hmri_def.wcombparams.smthk      = 0;
-    hmri_def.wcombparams.dim        = 3;
-    hmri_def.wcombparams.dummy_am   = true;
-    hmri_def.wcombparams.dummy_error= true;
-end
+
+% weighted combination - see Mohammadi et al., 2022 (bioRxiv) for details
+hmri_def.wcombparams.kt         = 10; % in percentage
+hmri_def.wcombparams.res        = -4;
+hmri_def.wcombparams.smthk      = 0;
+hmri_def.wcombparams.dim        = 3;
+hmri_def.wcombparams.dummy_am   = true;
+hmri_def.wcombparams.dummy_error= true;
 
 end

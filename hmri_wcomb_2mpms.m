@@ -46,8 +46,9 @@ end
 if exist('PMSK','var') && ~isempty(PMSK)
     VMSK = spm_vol(PMSK);
     
+    AMSK = zeros(VG.dim);
     for p = 1:VG.dim(dim)
-        AMSK = hmri_read_vols(VMSK,VG,p,res);
+        AMSK(:,:,p) = hmri_read_vols(VMSK,VG,p,res);
     end
 else
     AMSK = ones(VG.dim);

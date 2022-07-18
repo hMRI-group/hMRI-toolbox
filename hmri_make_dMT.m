@@ -80,6 +80,6 @@ function d = dMT_by_dSMT(S1,S2,SMT,alpha1,alpha2,alphaMT,TR1,TR2,TRMT)
 %   MT = (A*alphaMT/SMT-1)*R1*TRMT-alphaMT^2/2;
 %   diff(MT,SMT)
 
-d = S1.*S2.*TRMT.*alphaMT*(TR2.*alpha1.^2 - TR1.*alpha2.^2)./(2*SMT.^2.*TR1.*TR2.*(S1.*alpha2 - S2.*alpha1));
+d = S1.*S2.*TRMT.*alphaMT.*(TR2.*alpha1.^2 - TR1.*alpha2.^2)./(2*SMT.^2.*TR1.*TR2.*(S1.*alpha2 - S2.*alpha1));
 
 end

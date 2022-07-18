@@ -78,7 +78,7 @@ function [R2s,extrapolated,SError]=hmri_calc_R2s(weighted_data,method)
 %     efficient R2* estimation in human brain using log-linear weighted
 %     least squares"
 % Mohammadi S, Streubel T, Klock L, Lutti A, Pine K, Weber S, Edwards L,
-% Scheibe P, Ziegler G, Gallinat J, Kühn S, Callaghan MF, Weiskopf N,
+% Scheibe P, Ziegler G, Gallinat J, KÃ¼hn S, Callaghan MF, Weiskopf N,
 % Tabelow K (2022)
 % Error quantification in multi-parameter mapping facilitates robust
 % estimation and enhanced group level sensitivity. :2022.01.11.475846
@@ -212,10 +212,6 @@ if nargout>2
         % per contrast residual
         Ydiff=weighted_data(w).data-extrapolated{w}.*exp(-R2s.*TEs);
         SError.weighted{w} = rms(Ydiff,length(dims)); % rms along TE dimension
-        
-        % total residual over all contrasts
-        % Alternative implementation of R2* error
-        %SError.R2s=sqrt(SError.total.^2+SError.weighted{w}.^2);
     end
     
     % Original implementation of R2* error

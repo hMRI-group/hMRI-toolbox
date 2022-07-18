@@ -693,7 +693,7 @@ for p = 1:dm(3)
             NEpara.R1.dat(:,:,p) = AdR1;
         
             % standardized maps
-            tmp1 = (tmp*R1scalingPostthresh)./AdR1.*(AdR1>threshall.dR1);      % @luke: was here a bug?      
+            tmp1 = (tmp*R1scalingPostthresh)./AdR1.*(AdR1>threshall.dR1);
             tmp1 = max(min(tmp1,threshall.SMT1),-threshall.SMT1);
             tmp1(abs(tmp1)==threshall.SMT1) = 0;
             NSMpara.R1.dat(:,:,p) = tmp1; 

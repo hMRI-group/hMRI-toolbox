@@ -10,6 +10,8 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 - weighted least squares R2* fitting
 - cleaner input/output functions
 - several unit tests
+- parameter error maps
+- weighted combination
 
 ## [v0.3.0]
 

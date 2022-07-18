@@ -66,7 +66,7 @@ hmri_def.json = struct('extended',false,'separate',true,'anonym','none',...
 % provides a series of tissue probability maps. These TPMs could be
 % replaced by other TPMs, to better match the population studied. 
 % ADVANCED USER ONLY.
-hmri_def.TPM = fullfile(fileparts(fileparts(fileparts(mfilename('fullpath')))),'etpm','eTPM.nii');
+hmri_def.TPM = fullfile(fileparts(fileparts(which('hmri_defaults.m'))),'etpm','eTPM.nii');
 % default template for auto-reorientation. The template can be selected
 % within the Auto-reorient module. The following is the default suggested
 % for T1w images. Please refer to the Auto-reorient documentation for an
@@ -166,10 +166,26 @@ hmri_def.small_angle_approx = true;
 %--------------------------------------------------------------------------
 % Ordinary Least Squares & fit at TE=0
 %--------------------------------------------------------------------------
-% create an Ordinary Least Squares R2* map. The ESTATICS model is applied
-% to calculate R2* map from all available contrasts. 
+% Create a Least Squares R2* map. The ESTATICS model is applied
+% to calculate a common R2* map from all available contrasts. 
 % ADVANCED USER ONLY.
-hmri_def.R2sOLS = 1; 
+hmri_def.R2sOLS = true; 
+
+% Choose method of R2* fitting; this is a trade-off between speed and
+% accuracy.
+% - 'OLS' (classic ESTATICS ordinary least squares model; fast but not as 
+%         accurate as WLS1)
+% - 'WLS1' (weighted least squares with one iteration; slower than OLS but 
+%          significantly more accurate. Uses parallelization over voxels to 
+%          speed up calculation)
+% - 'WLS2', 'WLS3' (weighted least squares with 2 or 3 iterations; did not
+%                   show great improvement over WLS1 in test data)
+% - 'NLLS_OLS', 'NLLS_WLS1' (nonlinear least squares using either OLS or
+%                            WLS1 to provide the initial parameter
+%                            estimates; very slow, even with
+%                            parallelization over voxels. Recommend WLS1
+%                            instead)
+hmri_def.R2s_fit_method = 'OLS';
 
 % Minimum number of echoes to calculate R2s map. Strictly speaking, the
 % minimum is 2. For a robust estimation, the minimum number of echoes

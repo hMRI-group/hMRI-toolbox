@@ -1,7 +1,4 @@
-function [dMT,AdMT] = hmri_make_dMT(SPD,ST1,SMT,dSPD,dST1,dSMT,alpha_PD,alpha_T1,alpha_MT,TRPD,TRT1,TRMT,threshall,small_angle_approximation)
-% old version: hmri_make_dMT(SMT,PD,R1,dSMT,dPD,dR1,alpha_MT,TRMT)
-% old version: function [dMT,Atmp] = hmri_make_dMT(SMT,A_forMT,R1,MT,dSMT,dPD,dR1,alpha_MT,TRMT,VG)
-
+function dMT = hmri_make_dMT(SPD,ST1,SMT,dSPD,dST1,dSMT,alpha_PD,alpha_T1,alpha_MT,TRPD,TRT1,TRMT,small_angle_approximation)
 % Calculate propagation of uncertainty for MT map
 % (https://en.wikipedia.org/wiki/Propagation_of_uncertainty).
 % Taking the total differential from Eq. A9 in Tabelow et al., NI, 2019
@@ -18,12 +15,10 @@ function [dMT,AdMT] = hmri_make_dMT(SPD,ST1,SMT,dSPD,dST1,dSMT,alpha_PD,alpha_T1
 % dST1          - residual of mono-exponential fit of T1w signal
 % alpha_MT      - flip angle of MTw signal
 % TRMT          - repitition time of MTDw signal
-% VG            - target structure of
 %
 % Out:
 % dMT           - error for MT in [a.u.]
-% Atmp          - error map for MT in [a.u.]
-
+%
 % We do not scale the flip angles by fT, because that would be inconsistent
 % with what is used for MT calculation in the toolbox.
 
@@ -41,12 +36,6 @@ dMTdST1 = dMT_by_dS1(ST1,SPD,SMT,alpha_T1,alpha_PD,alpha_MT,TRT1,TRPD,TRMT);
 dMTdSMT = dMT_by_dSMT(SPD,ST1,SMT,alpha_PD,alpha_T1,alpha_MT,TRPD,TRT1,TRMT);
 
 dMT = sqrt( dMTdSPD.^2 .* dSPD.^2 + dMTdST1.^2 .* dST1.^2 + dMTdSMT.^2 .* dSMT.^2);
-
-% TODO: handle thresholding outside of this function
-AdMT     = zeros(size(SPD));
-tmp1    = dMT;
-tmp1 = max(min(tmp1,threshall.MT),-threshall.MT);
-AdMT(dMT>threshall.dMT)     = tmp1(dMT>threshall.dMT);
 
 end
 

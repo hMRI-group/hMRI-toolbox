@@ -1,4 +1,4 @@
-function [dPD,AdPD] = hmri_make_dPD(SPD,ST1,dSPD,dST1,alpha_PD,alpha_T1,TRPD,TRT1,A,f_T,threshall,small_angle_approximation)
+function dPD = hmri_make_dPD(SPD,ST1,dSPD,dST1,alpha_PD,alpha_T1,TRPD,TRT1,f_T,small_angle_approximation)
 % Calculate propagation of uncertainty for PD map
 % (https://en.wikipedia.org/wiki/Propagation_of_uncertainty).
 % % S.Mohammadi 06.09.2019
@@ -10,15 +10,12 @@ function [dPD,AdPD] = hmri_make_dPD(SPD,ST1,dSPD,dST1,alpha_PD,alpha_T1,TRPD,TRT
 % dST1          - residual of mono-exponential fit of T1w signal
 % alpha_PD      - flip angle of PDw signal
 % alpha_T1w     - flip angle of T1w signal
-% TRPD          - repitition time of PDw signal
-% TRT1          - repitition time of T1w signal
-% A_forMT       - apparent proton density in arbritrary units
+% TRPD          - repetition time of PDw signal
+% TRT1          - repetition time of T1w signal
 % f_T           - map of transmit field
-% VG            - target structure of
 %
 % Out:
 % dPD           - error for A in [a.u.]
-% AdPD          - error map for A in [a.u.]
 
 if(~isempty(f_T))
     alpha_PD = alpha_PD.*f_T;
@@ -32,14 +29,6 @@ end
 % dPD calculation is symmetric with respect to the two weighted contrasts
 dPD = sqrt( dPD_by_dS1(SPD,ST1,alpha_PD,alpha_T1,TRPD,TRT1).^2.*dSPD.^2 ...
     +dPD_by_dS1(ST1,SPD,alpha_T1,alpha_PD,TRT1,TRPD).^2.*dST1.^2 );
-
-AdPD     = zeros(size(SPD));
-tmp1    = dPD;
-
-% TODO: input argument "A" is unused
-% TODO: handle thresholding outside of this function
-A = max(min(tmp1,threshall.A),-threshall.A);
-AdPD(A>threshall.dPD) = tmp1(A>threshall.dPD);
 
 end
 

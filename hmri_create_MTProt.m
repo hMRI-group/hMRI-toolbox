@@ -440,9 +440,10 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
         PR2s_OLS_error{ccon}    = fullfile(calcpath,[outbasename '_' 'R2s_errorESTATICS' '.nii']);
         Ni = hmri_create_nifti(PR2s_OLS_error{ccon},V_pdw(1),dt,'Error map for R2s contrast');
         NEmap(ccon) = Ni;
-
-        PR2s_OLS_SM    = fullfile(calcpath,[outbasename '_' 'R2s_SM' '.nii']);
-        Ni      = hmri_create_nifti(PR2s_OLS_SM,V_pdw(1),dt,'Standarized map for R2s contrast');
+        
+        % this is unused
+        PR2s_OLS_mSNR    = fullfile(calcpath,[outbasename '_' 'R2s_mSNR' '.nii']);
+        Ni      = hmri_create_nifti(PR2s_OLS_mSNR,V_pdw(1),dt,'Standarized map for R2s contrast');
         NSMmap = Ni;
     end
 
@@ -578,8 +579,8 @@ if mpm_params.errormaps
         NEpara.R1 = nifti;
         NEpara.R1 = Ni;
         
-        P_SMscore.R1    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qR1).suffix '_SM.nii']);
-        Ni = hmri_create_nifti(P_SMscore.R1,V_pdw(1),dt,['Standardized ' mpm_params.output(mpm_params.qR1).suffix 'map']);
+        P_mSNRscore.R1    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qR1).suffix '_mSNR.nii']);
+        Ni = hmri_create_nifti(P_mSNRscore.R1,V_pdw(1),dt,['mSNR map ' mpm_params.output(mpm_params.qR1).suffix 'map']);
         NSMpara.R1 = nifti;
         NSMpara.R1 = Ni;
         
@@ -589,8 +590,8 @@ if mpm_params.errormaps
         NEpara.PD = nifti;
         NEpara.PD = Ni;
         
-        P_SMscore.PD    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qPD).suffix '_SM.nii']);
-        Ni = hmri_create_nifti(P_SMscore.PD,V_pdw(1),dt,['Standardized ' mpm_params.output(mpm_params.qPD).suffix 'map']);
+        P_mSNRscore.PD    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qPD).suffix '_mSNR.nii']);
+        Ni = hmri_create_nifti(P_mSNRscore.PD,V_pdw(1),dt,['mSNR map ' mpm_params.output(mpm_params.qPD).suffix 'map']);
         NSMpara.PD = nifti;
         NSMpara.PD = Ni;
         if MTwidx
@@ -600,8 +601,8 @@ if mpm_params.errormaps
             NEpara.MT = nifti;
             NEpara.MT = Ni;
             
-            P_SMscore.MT    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qMT).suffix '_SM.nii']);
-            Ni = hmri_create_nifti(P_SMscore.MT,V_pdw(1),dt,['Standardized ' mpm_params.output(mpm_params.qMT).suffix 'map']);
+            P_mSNRscore.MT    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qMT).suffix '_mSNR.nii']);
+            Ni = hmri_create_nifti(P_mSNRscore.MT,V_pdw(1),dt,['mSNR map ' mpm_params.output(mpm_params.qMT).suffix 'map']);
             NSMpara.MT = nifti;
             NSMpara.MT = Ni;
         end
@@ -1065,8 +1066,8 @@ if mpm_params.errormaps
     for ccon = 1:length(outfields)
         copyfile(PR2s_param_error.(outfields{ccon}), fullfile(supplpath, spm_file(PR2s_param_error.(outfields{ccon}),'filename')));
         try copyfile([spm_str_manip(PR2s_param_error.(outfields{ccon}),'r') '.json'],fullfile(supplpath, [spm_file(PR2s_param_error.(outfields{ccon}),'basename') '.json'])); end
-        copyfile(P_SMscore.(outfields{ccon}), fullfile(supplpath, spm_file(P_SMscore.(outfields{ccon}),'filename')));
-        try copyfile([spm_str_manip(P_SMscore.(outfields{ccon}),'r') '.json'],fullfile(supplpath, [spm_file(P_SMscore.(outfields{ccon}),'basename') '.json'])); end
+        copyfile(P_mSNRscore.(outfields{ccon}), fullfile(supplpath, spm_file(P_mSNRscore.(outfields{ccon}),'filename')));
+        try copyfile([spm_str_manip(P_mSNRscore.(outfields{ccon}),'r') '.json'],fullfile(supplpath, [spm_file(P_mSNRscore.(outfields{ccon}),'basename') '.json'])); end
     end
     
     % R2s error map and single contrast residuals

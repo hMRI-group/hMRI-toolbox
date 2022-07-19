@@ -654,7 +654,7 @@ for p = 1:dm(3)
         T1w = spm_slice_vol(Vavg(T1widx),Vavg(T1widx).mat\M,dm(1:2),mpm_params.interp);
         
         % Transmit bias corrected quantitative T1 values; if f_T empty then semi-quantitative
-        R1=hmri_calc_R1(struct('data',PDw,'fa',fa_pdw_rad,'TR',TR_pdw,'B1',f_T),...
+        R1_unc=hmri_calc_R1(struct('data',PDw,'fa',fa_pdw_rad,'TR',TR_pdw,'B1',f_T),...
             struct('data',T1w,'fa',fa_t1w_rad,'TR',TR_t1w,'B1',f_T),...
             mpm_params.small_angle_approx);
             
@@ -663,41 +663,41 @@ for p = 1:dm(3)
             % => T1 = A(B1) + B(B1)*T1app (see Preibisch 2009)
             A_ISC=ISC.P2_a(1)*f_T.^2 + ISC.P2_a(2)*f_T + ISC.P2_a(3);
             B_ISC=ISC.P2_b(1)*f_T.^2 + ISC.P2_b(2)*f_T + ISC.P2_b(3);
-            R1 = R1./(A_ISC.*R1+B_ISC);
+            R1 = R1_unc./(A_ISC.*R1_unc+B_ISC);
+        else
+            R1 = R1_unc;
         end
         
-        R1scalingPrethresh = 1e6; % thresholds are in 10^3 / s
-        R1scalingPostthresh = 1e-3; % output should be in / s
-        tmp = R1*R1scalingPrethresh;
-        tmp(isnan(tmp)) = 0;
-        Nmap(mpm_params.qR1).dat(:,:,p) = min(max(tmp,-threshall.R1),threshall.R1)*R1scalingPostthresh; % truncating images
+        R1(isnan(R1)) = 0;
+        scaleR1prethresh  = 1e6;  % thresholds are in 10^3 / s
+        scaleR1postthresh = 1e-3; % output should be in / s
+        R1 = min(max(R1*scaleR1prethresh,-threshall.R1),threshall.R1)*scaleR1postthresh;
+        Nmap(mpm_params.qR1).dat(:,:,p) = R1; % truncating images
         
         if mpm_params.errormaps
             Edata.PDw  = spm_slice_vol(Verror(PDwidx),Verror(PDwidx).mat\M,dm(1:2),mpm_params.interp);
             Edata.T1w  = spm_slice_vol(Verror(T1widx),Verror(T1widx).mat\M,dm(1:2),mpm_params.interp);
             
-            dR1  = hmri_make_dR1(PDw,T1w,Edata.PDw,Edata.T1w,fa_pdw_rad,fa_t1w_rad,TR_pdw,TR_t1w,f_T,mpm_params.small_angle_approx);
+            dR1 = hmri_make_dR1(PDw,T1w,Edata.PDw,Edata.T1w,fa_pdw_rad,fa_t1w_rad,TR_pdw,TR_t1w,f_T,mpm_params.small_angle_approx);
             
             if ISC.enabled&&~isempty(f_T)
                 % Use chain rule to include the imperfect spoiling 
                 % correction: R1 error map multiplied by derivative of 
-                % correction factor with respect to R1
-                dR1 = dR1.*abs(1./(A_ISC.*R1+B_ISC)-R1.*A_ISC./(A_ISC.*R1+B_ISC).^2);
+                % correction factor with respect to uncorrected R1
+                dR1 = dR1.*abs(B_ISC./(A_ISC.*R1_unc+B_ISC).^2);
             end
             
-            % threshold dR1 based on R1 values
+            % truncate R1 error maps
             dR1(dR1<0) = 0;
-            dR1(isinf(dR1)) = 0;
             dR1(isnan(dR1)) = 0;
-            dR1 = min(max(dR1*R1scalingPrethresh,-threshall.R1),threshall.R1)*R1scalingPostthresh;
+            dR1 = min(max(dR1*scaleR1prethresh,-threshall.R1),threshall.R1)*scaleR1postthresh;
             NEpara.R1.dat(:,:,p) = dR1;
         
             % standardized maps
-            tmp = (R1./dR1)*R1scalingPrethresh*R1scalingPostthresh;
-            tmp(dR1/R1scalingPostthresh<=threshall.dR1) = 0;
-            tmp = max(min(tmp,threshall.SMT1),-threshall.SMT1);
-            tmp(abs(tmp)==threshall.SMT1) = 0;
-            tmp(isinf(tmp)) = 0;
+            tmp = (R1./dR1);
+            tmp(dR1<=threshall.dR1) = 0;
+            tmp = max(min(tmp,threshall.SMR1),-threshall.SMR1);
+            tmp(abs(tmp)==threshall.SMR1) = 0;
             tmp(isnan(tmp)) = 0;
             NSMpara.R1.dat(:,:,p) = tmp; 
         end
@@ -776,7 +776,6 @@ for p = 1:dm(3)
         
         % truncate PD maps
         tmp      = A;
-        tmp(isinf(tmp)) = 0;
         tmp(isnan(tmp)) = 0;
         Nmap(mpm_params.qPD).dat(:,:,p) = max(min(tmp,threshall.A),-threshall.A);
         % dynamic range increased to 10^5 to accommodate phased-array coils and symmetrical for noise distribution
@@ -788,7 +787,6 @@ for p = 1:dm(3)
             dPD = hmri_make_dPD(PDw,T1w,Edata.PDw,Edata.T1w,fa_pdw_rad,fa_t1w_rad,TR_pdw,TR_t1w,f_T,mpm_params.small_angle_approx);
             
             % truncate PD error maps
-            dPD = max(min(dPD,threshall.A),-threshall.A);
             dPD(isinf(dPD)) = 0;
             dPD(isnan(dPD)) = 0;
             dPD = max(min(dPD,threshall.A),-threshall.A);
@@ -797,7 +795,6 @@ for p = 1:dm(3)
             % truncate standarized PD maps
             tmp = A./dPD;
             tmp(dPD<=threshall.dPD) = 0;
-            tmp(isinf(tmp)) = 0;
             tmp(isnan(tmp)) = 0;
             tmp = max(min(tmp,threshall.SMPD),-threshall.SMPD);
             tmp(abs(tmp)==threshall.SMPD) = 0;
@@ -844,13 +841,13 @@ for p = 1:dm(3)
                 end
                 
                 % truncate MT error maps
+                dMT(isnan(dMT)) = 0;
                 dMT = max(min(dMT,threshall.MT),-threshall.MT);
                 NEpara.MT.dat(:,:,p) = dMT;  
                 
                 % truncate standarized MT maps
                 tmp = MT./(dMT);
                 tmp(dMT<=threshall.dMT) = 0;
-                tmp(isinf(tmp)) = 0;
                 tmp(isnan(tmp)) = 0;
                 tmp = max(min(tmp,threshall.SMMT),-threshall.SMMT);
                 tmp(abs(tmp)==threshall.SMMT) = 0;

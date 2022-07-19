@@ -299,14 +299,25 @@ assert(n == 2 * numel(b1map_params.b1acq.beta), ...
     n/2, numel(b1map_params.b1acq.beta));
 
 % splitting images into SE and STE volumes
-% TODO: check that correct data selected (compare echo times?)
+% assume conventional hMRI toolbox order as default...
 V_SE = V(1:2:end);
 V_STE = V(2:2:end);
+
+% ...but check this order when echo times are defined
+EchoTimes=b1map_params.b1acq.EchoTimes;
+if ~isempty(EchoTimes) % check echo times defined
+    if ~all(EchoTimes==EchoTimes(1)) % check echo times meaningful
+        if issorted(b1map_params.b1acq.EchoTimes) % assume BIDS order
+            V_SE = V(1:end/2);
+            V_STE = V(end/2+1:end);
+        end
+    end
+end
 
 % calc_SESTE_b1map expects fa in decreasing order
 [b1map_params.b1acq.beta, fa_order] = sort(b1map_params.b1acq.beta, 'descend');
 
-% rearranging volumes in decreasing fa
+% rearrange volumes in decreasing fa
 V_SE = V_SE(fa_order);
 V_STE = V_STE(fa_order);
 
@@ -746,6 +757,18 @@ switch b1_protocol
                         sprintf('%d ',b1map_params.b1acq.beta)),b1map_params.defflags);
                 else
                     b1map_params.b1acq.beta = tmp;
+                end
+                
+                % Echo times for input validation
+                tmp = get_metadata_val(b1hdr{1},'EchoTime');
+                if isempty(tmp)
+                    hmri_log(sprintf('WARNING: no echo times found for SE/STE input;\ninput validation based on echo time will not be performed'),b1map_params.defflags);
+                    b1map_params.b1acq.EchoTimes=[];
+                else
+                    b1map_params.b1acq.EchoTimes=zeros(1,size(b1map_params.b1input,1));
+                    for n=1:size(b1map_params.b1input,1)
+                        b1map_params.b1acq.EchoTimes(n) = get_metadata_val(b1map_params.b1input(n,:),'EchoTime');
+                    end
                 end
                 
                 tmp = get_metadata_val(b1hdr{1},'B1mapMixingTime');

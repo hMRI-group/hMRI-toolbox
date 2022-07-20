@@ -299,26 +299,53 @@ assert(n == 2 * numel(b1map_params.b1acq.beta), ...
     n/2, numel(b1map_params.b1acq.beta));
 
 % splitting images into SE and STE volumes
-% assume conventional hMRI toolbox order as default...
-V_SE = V(1:2:end);
-V_STE = V(2:2:end);
-
-% ...but check this order when echo times are defined
+% assumes conventional hMRI toolbox order as default but checks this order 
+% when echo times are defined
 EchoTimes=b1map_params.b1acq.EchoTimes;
 if ~isempty(EchoTimes) % check echo times defined
-    if ~all(EchoTimes==EchoTimes(1)) % check echo times meaningful
-        if issorted(b1map_params.b1acq.EchoTimes) % assume BIDS order
-            V_SE = V(1:end/2);
-            V_STE = V(end/2+1:end);
-        end
+    uEchoTimes=unique(EchoTimes);
+    switch length(uEchoTimes)
+        case 2
+            % shorter TE assumed to be SE, longer STE.
+            % flip angle pairs are assumed to be in the order given in
+            % b1map_params.b1acq.beta
+            V_SE  = V(b1map_params.b1acq.EchoTimes == min(uEchoTimes));
+            V_STE = V(b1map_params.b1acq.EchoTimes == max(uEchoTimes));
+        case 1 % assume conventional hMRI toolbox order but warn
+            hmri_log(sprintf(...
+                ['WARNING: expected 2 different echo times (corresponding to\n' ...
+                'spin echo and stimulated echo) in 3D EPI input data, but\n' ...
+                'all data have the same echo time. Standard input order will\n' ...
+                'be assumed, but it is recommended to check this is correct.']),...
+                b1map_params.defflags);
+            V_SE  = V(1:2:end);
+            V_STE = V(2:2:end);
+        otherwise % assume conventional hMRI toolbox order but warn
+            hmri_log(sprintf(...
+                ['WARNING: expected 2 different echo times (corresponding to\n' ...
+                'spin echo and stimulated echo) in 3D EPI input data, but\n' ...
+                'there are %i different echo times. Standard input order will\n' ...
+                'be assumed, but it is recommended to check this is correct.'],...
+                length(uEchoTimes)),b1map_params.defflags);
+            V_SE  = V(1:2:end);
+            V_STE = V(2:2:end);
     end
+else
+    % assume conventional hMRI toolbox order as default in absence of other
+    % information
+    V_SE  = V(1:2:end);
+    V_STE = V(2:2:end);
 end
+
+assert(length(V_SE) == length(V_STE), ...
+    ['Number of spin echo volumes (%d) does not match the number of' ...
+    'stimulated echo volumes (%d)!'], length(V_SE), length(V_STE));
 
 % calc_SESTE_b1map expects fa in decreasing order
 [b1map_params.b1acq.beta, fa_order] = sort(b1map_params.b1acq.beta, 'descend');
 
 % rearrange volumes in decreasing fa
-V_SE = V_SE(fa_order);
+V_SE  = V_SE(fa_order);
 V_STE = V_STE(fa_order);
 
 % TODO: Keeping SE and STE separated might be easier to read

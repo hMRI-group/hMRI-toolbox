@@ -40,6 +40,10 @@ function hmri_DIB_defaults
 % Global hmri_def variable used across the whole toolbox
 global hmri_def
 
+% Specify the research centre & scanner. Not mandatory.
+hmri_def.centre = 'fil' ;
+hmri_def.scanner = 'prisma' ;
+
 %==========================================================================
 % Common processing parameters 
 %==========================================================================
@@ -50,6 +54,20 @@ global hmri_def
 % ADVANCED USER ONLY.
 hmri_def.TPM = fullfile(fileparts(fileparts(which('hmri_defaults.m'))),'etpm','eTPM.nii');
 
+%==========================================================================
+% Default parameters for segmentation
+% ADVANCED USERS ONLY!
+% hmri_def.segment is effectively the job to be handed to spm_preproc_run
+% By default, parameters are set to
+% - create tissue class images (c*) in the native space of the source image
+%   (tissue(*).native = [1 0]) for tissue classes 1-5
+% - save both BiasField and BiasCorrected volume (channel.write = [1 1])
+% - recommended values from SPM12 (October 2017)
+%==========================================================================
+% Make clean up less aggressive due to defacing causing edges near the edge
+% of the brain
+hmri_def.segment.warp.mrf = 0.5; % 1;
+hmri_def.segment.warp.cleanup = 1;
 
 %--------------------------------------------------------------------------
 % MPM acquisition parameters and RF spoiling correction parameters

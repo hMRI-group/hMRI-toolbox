@@ -8,10 +8,11 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 
 ### Added
 - weighted least squares R2* fitting
-- cleaner input/output functions
+- cleaner input/output functions for map creation
 - several unit tests
 - parameter error maps
 - weighted combination
+- nulling of bright voxels during unified segmentation to improve segmentation of anonymised data
 
 ## [v0.3.0]
 

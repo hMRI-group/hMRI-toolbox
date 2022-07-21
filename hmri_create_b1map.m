@@ -92,8 +92,8 @@ end
 
 if ~isempty(P_trans)
     P_trans = spm_file(P_trans,'number','');
-    P_trans_copy{1} = fullfile(jobsubj.path.supplpath, spm_file(P_trans(1,:), 'filename'));
-    P_trans_copy{2} = fullfile(jobsubj.path.supplpath, spm_file(P_trans(2,:), 'filename'));    
+    P_trans_copy{1} = fullfile(jobsubj.path.b1respath, spm_file(P_trans(1,:), 'filename'));
+    P_trans_copy{2} = fullfile(jobsubj.path.b1respath, spm_file(P_trans(2,:), 'filename'));
     copyfile(deblank(P_trans(1,:)), P_trans_copy{1});
     try copyfile([spm_str_manip(P_trans(1,:),'r') '.json'],[spm_str_manip(P_trans_copy{1},'r') '.json']); end %#ok<*TRYNC>
     copyfile(deblank(P_trans(2,:)), P_trans_copy{2});
@@ -150,7 +150,7 @@ spm_smooth(B1map_norm,smB1map_norm,smth);
 % B1map_norm = B1map_norm.*Mask;
 % smB1map_norm = smB1map_norm.*Mask;
 
-sname = spm_file(V1.fname,'filename');
+sname = spm_file(V1.fname,'basename');
 
 % save output images
 VB1 = V1;
@@ -158,9 +158,10 @@ VB1 = V1;
 % VB1.fname = fullfile(outpath, [sname '_B1map.nii']);
 % spm_write_vol(VB1,B1map);
 
-% VB1.pinfo = [max(B1map_norm(:))/16384;0;0];
-% VB1.fname = fullfile(outpath, [sname '_B1map_norm.nii']);
-% spm_write_vol(VB1,B1map_norm);
+VB1.pinfo = [max(B1map_norm(:))/16384;0;0];
+VB1.descrip = 'B1+ map - normalised (p.u.) - AFI protocol';
+VB1.fname = fullfile(outpath, [sname '_unsmoothed_B1map.nii']);
+spm_write_vol(VB1,B1map_norm);
 
 VB1.pinfo = [max(smB1map_norm(:))/16384;0;0];
 VB1.descrip = 'B1+ map - smoothed and normalised (p.u.) - AFI protocol';
@@ -222,6 +223,34 @@ Q    = b1map_params.b0input; % B0 data - 3 volumes
 
 V = spm_vol(P);
 n = numel(V);
+
+assert(rem(n,2)==0, ...
+   ['B1 mapping image volumes must be a set of SE, STE pairs ' ...
+   'thus the number of input volumes (currently %d) must be even.'], n);
+
+assert(n == 2 * numel(b1map_params.b1acq.beta), ...
+   ['Number of B1 mapping image pairs (%d) does not match ' ...
+    'the number of nominal flip angles (%d)!'], ...
+    n/2, numel(b1map_params.b1acq.beta));
+
+% splitting images into SE and STE volumes
+% TODO: check that correct data selected (compare echo times?)
+V_SE = V(1:2:end);
+V_STE = V(2:2:end);
+
+% calc_SESTE_b1map expects fa in decreasing order
+[b1map_params.b1acq.beta, fa_order] = sort(b1map_params.b1acq.beta, 'descend');
+
+% rearranging volumes in decreasing fa
+V_SE = V_SE(fa_order);
+V_STE = V_STE(fa_order);
+
+% TODO: Keeping SE and STE separated might be easier to read
+% but requires a lot of code changes below, so merging into
+% original list with corrected order
+V(1:2:end) = V_SE;
+V(2:2:end) = V_STE;
+
 Y_tmptmp = zeros([V(1).dim(1:2) n]);
 Y_ab = zeros(V(1).dim(1:3));
 Y_cd = zeros(V(1).dim(1:3));

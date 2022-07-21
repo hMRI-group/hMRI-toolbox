@@ -75,76 +75,16 @@ raws.name       = 'Multiparameter input images';
 raws.help       = {'Input all the MT/PD/T1-weighted images.'};
 raws.val        = {raws1 raws2 raws3};
 
-
-%--------------------------------------------------------------------------
-% B1 acq/proc defaults file
-%--------------------------------------------------------------------------
-b1defaults         = cfg_files;
-b1defaults.tag     = 'b1defaults';
-b1defaults.name    = 'Customised B1 defaults file';
-b1defaults.help    = {['Select the [hmri_b1_local_defaults_*.m] file containing ' ...
-    'the parameters to process the B1 map data. By default, parameters will be ' ...
-    'collected from metadata when available. Defaults parameters are provided as ' ...
-    'fallback solution when metadata are not available and/or uncomplete.'], ...
-    ['Please make sure that the parameters defined in the defaults file ' ...
-    'are correct for your data. To create your own customised defaults file, ' ...
-    'edit the distributed version and save it with a meaningful name such as ' ...
-    '[hmri_b1_local_defaults_*myprotocol*.m].']};
-b1defaults.filter  = 'm';
-b1defaults.dir     = fullfile(fileparts(mfilename('fullpath')),'config','local');
-b1defaults.ufilter = '^hmri_.*\.m$';
-b1defaults.num     = [1 1];
+% ---------------------------------------------------------------------
+% menu b1_type
+% ---------------------------------------------------------------------
+[b1_type,b1parameters] = tbx_scfg_hmri_B1_menu;
 
 % ---------------------------------------------------------------------
-% Use metadata or standard defaults (no customization)
+% New B1 mapping methods should be added to tbx_scfg_hmri_B1_menu.m
+% Only B1 mapping methods which cannot be run independently of the rest of 
+% the hMRI toolbox should be added here!
 % ---------------------------------------------------------------------
-b1metadata           = cfg_entry;
-b1metadata.tag       = 'b1metadata';
-b1metadata.name      = 'Use metadata or standard defaults';
-b1metadata.help      = {''};
-b1metadata.strtype = 's';
-b1metadata.num     = [1 Inf];
-b1metadata.val     = {'yes'};
-
-%--------------------------------------------------------------------------
-% B1 processing parameters
-%--------------------------------------------------------------------------
-b1parameters         = cfg_choice;
-b1parameters.tag     = 'b1parameters';
-b1parameters.name    = 'Processing parameters';
-b1parameters.help    = {['You can either stick with metadata and standard ' ...
-    'defaults parameters (recommended) or select your own customised defaults file ' ...
-    '(fallback for situations where no metadata are available).']};
-b1parameters.values  = {b1metadata b1defaults};
-b1parameters.val     = {b1metadata};
-
-
-% ---------------------------------------------------------------------
-% B1 input images 
-% ---------------------------------------------------------------------
-b1raw          = cfg_files;
-b1raw.tag      = 'b1input';
-b1raw.name     = 'B1 input';
-b1raw.help     = {'Select B1 input images according to the type of B1 bias correction.'};
-b1raw.filter   = 'image';
-b1raw.ufilter  = '.*';
-b1raw.num      = [2 30];
-% b1raw.val      = {''};
-
-% ---------------------------------------------------------------------
-% B0 input images
-% ---------------------------------------------------------------------
-b0raw          = cfg_files;
-b0raw.tag      = 'b0input';
-b0raw.name     = 'B0 input';
-b0raw.help     = {'Select B0 field map input images.' ...
-    'Only required for distortion correction of EPI-based B1 maps.' ...
-    'Select both magnitude images and the presubtracted phase image, in that order.'};
-b0raw.filter   = 'image';
-b0raw.ufilter  = '.*';
-b0raw.num      = [3 3];
-% b0raw.num      = [0 3];
-% b0raw.val      = {''};
 
 % ---------------------------------------------------------------------
 % UNICORT B1 bias correction
@@ -157,7 +97,6 @@ b1_input_UNICORT.help      = {'UNICORT will be applied for B1 bias correction.'
     ['Customized processing parameters may be introduced by loading ' ...
     'customized defaults from a selected [hmri_b1_local_defaults_*.m] file.']};
 b1_input_UNICORT.val       = {b1parameters};
-
 % ---------------------------------------------------------------------
 % No B1 bias correction
 % ---------------------------------------------------------------------
@@ -170,119 +109,15 @@ b1_input_noB1.help      = {'No B1 bias correction will be applied.'
 b1_input_noB1.strtype = 's';
 b1_input_noB1.num     = [1 Inf];
 b1_input_noB1.val     = {'noB1'};
-
 % ---------------------------------------------------------------------
-% pre-calculated B1 map - including potential rescaling factor
+% Add extra B1 mapping methods which cannot be run independently of the
+% MPM map creation to the menu
 % ---------------------------------------------------------------------
-scafac         = cfg_entry;
-scafac.tag     = 'scafac';
-scafac.name    = 'Scaling factor';
-scafac.help    = {'The values in the input B1 map will be multiplied by the provided factor.', ...
-    ['If the input B1 map is already in percent units (p.u.) of the nominal flip angle ' ...
-    'no need to apply any extra scaling factor (ScaFac = 1). If the input B1 map is a multiplication factor ' ...
-    'of the nominal flip angle (i.e. value of 1 corresponds to the nominal flip angle), a ' ...
-    'scaling factor ScaFac = 100 is required to produce a B1 map in p.u. of the ' ...
-    'nominal flip angle.']};
-scafac.strtype = 'r';
-scafac.num     = [1 1];
-scafac.val     = {1};
-
-b1_input_preproc           = cfg_branch;
-b1_input_preproc.tag       = 'pre_processed_B1';
-b1_input_preproc.name      = 'pre-processed B1';
-b1_input_preproc.help      = {'Input pre-calculated B1 bias map.'
-    ['Please select one unprocessed magnitude image ' ...
-    'from the B1map data set (for coregistration with the multiparameter maps) ' ...
-    'and the preprocessed B1map, in that order.']
-    ['The B1 map is expected to be in ' ...
-    'percent units (p.u.) of the nominal flip angle. If this is not the case, ' ...
-    'a scaling factor can be introduced (see Scaling factor description for more details).']};
-b1_input_preproc.val       = {b1raw scafac};
-
-
-% ---------------------------------------------------------------------
-% RF_MAP B1 protocol
-% ---------------------------------------------------------------------
-b1_input_rfmap           = cfg_branch;
-b1_input_rfmap.tag       = 'rf_map';
-b1_input_rfmap.name      = 'rf_map';
-b1_input_rfmap.help      = {'Input B1 images for rf_map B1 map protocol.' ...
-    'As B1 input, please select the pair of anatomical and precalculated B1 map, in that order.'};
-b1_input_rfmap.val       = {b1raw};
-
-
-% ---------------------------------------------------------------------
-% TFL_B1_MAP B1 protocol
-% ---------------------------------------------------------------------
-b1_input_tfl           = cfg_branch;
-b1_input_tfl.tag       = 'tfl_b1_map';
-b1_input_tfl.name      = 'tfl_b1_map';
-b1_input_tfl.help      = {'Input B1 images for TFL B1 map protocol.' ...
-    'As B1 input, please select the pair of anatomical and precalculated B1 map, in that order.'};
-b1_input_tfl.val       = {b1raw};
-
-
-% ---------------------------------------------------------------------
-% i3D_AFI B1 protocol
-% ---------------------------------------------------------------------
-b1_input_3DAFI           = cfg_branch;
-b1_input_3DAFI.tag       = 'i3D_AFI';
-b1_input_3DAFI.name      = '3D AFI';
-b1_input_3DAFI.help      = {'3D Actual Flip Angle Imaging (AFI) protocol.', ...
-    'As B1 input, please select a TR2/TR1 pair of magnitude images.', ...
-    ['Regarding processing parameters, you can either stick with metadata and standard ' ...
-    'defaults parameters (recommended) or select your own [hmri_b1_local_defaults_*.m] customised defaults file ' ...
-    '(fallback for situations where no metadata are available).']};
-b1_input_3DAFI.val       = {b1raw b1parameters};
-
-
-% ---------------------------------------------------------------------
-% i3D_EPI B1 protocol
-% ---------------------------------------------------------------------
-b1_input_3DEPI           = cfg_branch;
-b1_input_3DEPI.tag       = 'i3D_EPI';
-b1_input_3DEPI.name      = '3D EPI';
-b1_input_3DEPI.help      = {'Input B0/B1 data for 3D EPI protocol'
-    'As B1 input, please select all pairs of SE/STE 3D EPI images.'
-    ['For this EPI protocol, it is recommended to acquire B0 field map data ' ...
-    'for distortion correction. If no B0 map available, the script will proceed ' ...
-    'with distorted images.']
-    ['Please enter the two magnitude images and the presubtracted phase image ' ...
-    'from the B0 mapping acquisition, in that order.']
-    ['Regarding processing parameters, you can either stick with metadata and standard ' ...
-    'defaults parameters (recommended) or select your own [hmri_b1_local_defaults_*.m] customised defaults file ' ...
-    '(fallback for situations where no metadata are available).']};
-b1_input_3DEPI.val       = {b1raw b0raw b1parameters};
-
-
-% ---------------------------------------------------------------------
-% menu type_b1
-% ---------------------------------------------------------------------
-b1_type         = cfg_choice;
-b1_type.tag     = 'b1_type';
-b1_type.name    = 'B1 bias correction';
-b1_type.help    = {'Choose the methods for B1 bias correction.'
-    ['Various types of B1 mapping protocols can be handled by the hMRI ' ...
-    'toolbox when creating the multiparameter maps. See list below for a ' ...
-    'brief description of each type. Note that all types may not be ' ...
-    'available at your site.']
-    [' - 3D EPI: B1map obtained from spin echo (SE) and stimulated echo ' ...
-    '(STE) images recorded with a 3D EPI scheme [Lutti A et al., ' ...
-    'PLoS One 2012;7(3):e32379].']
-    [' - 3D AFI: 3D actual flip angle imaging (AFI) method based on [Yarnykh VL, ' ...
-    'Magn Reson Med 2007;57:192-200].']
-    [' - tfl_b1_map: Siemens product sequence for B1 mapping based on turbo FLASH.']
-    [' - rf_map: Siemens product sequence for B1 mapping based on SE/STE.']
-    [' - no B1 correction: if selected no B1 bias correction will be applied.']
-    [' - pre-processed B1: B1 map pre-calculated outside the hMRI toolbox, must ' ...
-    'be expressed in percent units of the nominal flip angle value (percent bias).']
-    [' - UNICORT: Use this option when B1 maps not available. ' ...
+b1_type.values  = [b1_type.values {b1_input_UNICORT, b1_input_noB1}];
+b1_type.help={b1_type.help{1},[' - UNICORT: Use this option when B1 maps not available. ' ...
     'Bias field estimation and correction will be performed ' ...
     'using the approach described in [Weiskopf et al., NeuroImage 2011; 54:2116-2124]. ' ...
-    'WARNING: the correction only applies to R1 maps.']
-    }; %#ok<*NBRAK>
-b1_type.values  = {b1_input_3DEPI b1_input_3DAFI b1_input_tfl b1_input_rfmap b1_input_preproc b1_input_UNICORT b1_input_noB1};
-b1_type.val     = {b1_input_3DEPI};
+    'WARNING: the correction only applies to R1 maps.']};
 
 % ---------------------------------------------------------------------
 % Input images for RF sensitivity - RF sensitivity maps for MTw images
@@ -290,7 +125,10 @@ b1_type.val     = {b1_input_3DEPI};
 sraws3MT          = cfg_files;
 sraws3MT.tag      = 'raw_sens_MT';
 sraws3MT.name     = 'RF sensitivity maps for MTw images';
-sraws3MT.help     = {'Select low resolution RF sensitivity maps acquired with the head and body coils respectively, in that order.'};
+sraws3MT.help     = {'Select low resolution calibration images.  ' ...
+    'The first image should have been acquired immediately prior to the MTw acquisition.' ...
+    'The second image is the reference, e.g. acquired with the body coil (see Papp et al. MRM 2016) immediately prior to the MTw acquisition, ' ...
+    'or use the array coil image for a particular contrast (the same in each entry) as the reference (see Balbastre et al. MRM 2022).'};
 sraws3MT.filter   = 'image';
 sraws3MT.ufilter  = '.*';
 % sraws3MT.num      = [2 2];
@@ -302,7 +140,10 @@ sraws3MT.val       = {''};
 sraws3PD          = cfg_files;
 sraws3PD.tag      = 'raw_sens_PD';
 sraws3PD.name     = 'RF sensitivity maps for PDw images';
-sraws3PD.help     = {'Select low resolution RF sensitivity maps acquired with the head and body coils respectively, in that order.'};
+sraws3PD.help     = {'Select low resolution calibration images.  ' ...
+    'The first image should have been acquired immediately prior to the PDw acquisition.' ...
+    'The second image is the reference, e.g. acquired with the body coil (see Papp et al. MRM 2016) immediately prior to the PDw acquisition, ' ...
+    'or use the array coil image for a particular contrast (the same in each entry) as the reference (see Balbastre et al. MRM 2022).'};
 sraws3PD.filter   = 'image';
 sraws3PD.ufilter  = '.*';
 % sraws3PD.num      = [2 2];
@@ -314,7 +155,10 @@ sraws3PD.val       = {''};
 sraws3T1          = cfg_files;
 sraws3T1.tag      = 'raw_sens_T1';
 sraws3T1.name     = 'RF sensitivity maps for T1w images';
-sraws3T1.help     = {'Select low resolution RF sensitivity maps acquired with the head and body coils respectively, in that order.'};
+sraws3T1.help     = {'Select low resolution calibration images.  ' ...
+    'The first image should have been acquired immediately prior to the T1w acquisition.' ...
+    'The second image is the reference, e.g. acquired with the body coil (see Papp et al. MRM 2016) immediately prior to the T1w acquisition, ' ...
+    'or use the array coil image for a particular contrast (the same in each entry) as the reference (see Balbastre et al. MRM 2022).'};
 sraws3T1.filter   = 'image';
 sraws3T1.ufilter  = '.*';
 % sraws3T1.num      = [2 2];

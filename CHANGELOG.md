@@ -4,7 +4,7 @@ This changelog documents all notable changes to the hMRI-toolbox.
 
 Most recent version numbers *should* follow the [Semantic Versioning](https://semver.org/spec/v2.0.0.html) principles (e.g. bug fixes: x.x.1 > x.x.2, new feature with backward compatibility: x.2.x > x.3.0, major release affecting the way data are handled and processed: 1.x.x > 2.0.0).
 
-## [unreleased]
+## [v0.4.0]
 
 ### Added
 - weighted least squares R2* fitting

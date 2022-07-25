@@ -56,7 +56,7 @@ classdef hmri_coreg_test < matlab.unittest.TestCase
             % Use low resolution brain image
             ut_data_dir = [fileparts(which('hmri_test_utils')) filesep 'example_data'];
             field_map_1 = [ut_data_dir filesep 'field_map_1.nii'];
-            assert(exist(field_map_1,'file'),'%s not found; please run hmri_get_ut_data to download the data',field_map_1)
+            assert(logical(exist(field_map_1,'file')),'Could not find\n\t%s.\nPlease run "hmri_get_ut_data" to download the data',field_map_1)
             
             % Use temporary directory which is deleted after tests have run
             import matlab.unittest.fixtures.TemporaryFolderFixture

@@ -10,9 +10,10 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 - double angle mapping (DAM) B1 mapping option
 - various B1 input checking
 
-### Fixes
-- issue #42
-- issue #46
+### Fixed
+- issue #42 (Non-matching filename length can cause AFI B1 calculation crash)
+- issue #46 (Toolbox expects SE/STE input sorted by echo and flip angle whereas BIDS sorts by flip angle then echo)
+- issue #26 (Possible bug in calculation of B1 maps with SE/STE EPI)
 
 ## [v0.4.0]
 

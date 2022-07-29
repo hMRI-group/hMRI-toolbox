@@ -373,21 +373,25 @@ spm_progress_bar('Init',V(1).dim(3),'B1 map fit','planes completed');
 
 %-Loop over planes computing result Y
 %-----------------------------------------------------------------------
-clear Temp_mat;
 corr_fact = exp(b1map_params.b1acq.TM/b1map_params.b1proc.T1);
+interp = 0;  % nearest neighbor interpolation
 for p = 1:V(1).dim(3) %loop over the partition dimension of the data set
-    B = spm_matrix([0 0 -p 0 0 0 1 1 1]);
+    SE_intensities = zeros([V(1).dim(1:2),n/2]);
     for i = 1:n/2
-        M = inv(B*inv(V(1).mat)*V(1).mat); %#ok<*MINV>
-        Y_tmptmp(:,:,((i-1)*2+1))  = real( ...
-            acos(corr_fact*spm_slice_vol(V((i-1)*2+2),M,V(1).dim(1:2),0) ./ ...
-            (spm_slice_vol(V((i-1)*2+1),M,V(1).dim(1:2),0)+b1map_params.b1proc.eps))/pi*180/b1map_params.b1acq.beta(i) ...
-            ); % nearest neighbor interpolation
+        % SE image intensities to determine which estimates to trust
+        SE_intensities(:,:,i) = hmri_read_vols(V((i-1)*2+1),V(1),p,interp);
+        
+        % B1 estimates
+        Y_tmptmp(:,:,((i-1)*2+1)) = real(acosd(corr_fact * ...
+            hmri_read_vols(V((i-1)*2+2),V(1),p,interp) ./ ...
+            (SE_intensities(:,:,i)+b1map_params.b1proc.eps)) / ...
+            b1map_params.b1acq.beta(i));
+            
+        % alternative B1 estimates due to pi/2 ambiguity of magnitude images
         Y_tmptmp(:,:,((i-1)*2+2))  = 180/b1map_params.b1acq.beta(i) - Y_tmptmp(:,:,((i-1)*2+1));
-        Temp_mat(:,:,i) = spm_slice_vol(V((i-1)*2+1),M,V(1).dim(1:2),0); %#ok<*AGROW>
     end
     
-    [~,indexes] = sort(Temp_mat,3);
+    [~,indexes] = sort(SE_intensities,3);
     for x_nr = 1:V(1).dim(1)
         for y_nr = 1:V(1).dim(2)
             for k=1:b1map_params.b1proc.Nonominalvalues

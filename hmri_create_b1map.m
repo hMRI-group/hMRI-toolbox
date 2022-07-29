@@ -354,11 +354,21 @@ V_STE = V_STE(fa_order);
 V(1:2:end) = V_SE;
 V(2:2:end) = V_STE;
 
-Y_tmptmp = zeros([V(1).dim(1:2) n]);
-Y_ab = zeros(V(1).dim(1:3));
-Y_cd = zeros(V(1).dim(1:3));
-Index_Matrix = zeros([V(1).dim(1:3) b1map_params.b1proc.Nonominalvalues]);
-real_Y_tmp = zeros([V(1).dim(1:2) 2*b1map_params.b1proc.Nonominalvalues]);
+% Because we use magnitude images and trigonometric functions are periodic,
+% there is ambiguity in the calculated angles. The number of ambiguous
+% angles to try is determined by how high the actual flip angle is; if less
+% than 90°, only one angle would be needed, less than 180°, 2, and greater
+% than 180°, 3. Note that the number of permutations to test will scale
+% combinatorically with the number of ambiguous angles to test!
+nAmbiguousAngles=b1map_params.b1proc.nAmbiguousAngles;
+if nAmbiguousAngles<2 % Use at least as many as Lutti, et al. (MRM, 2010)
+    nAmbiguousAngles=2;
+end
+
+Y_tmptmp = zeros([V(1).dim(1:2) n/2 nAmbiguousAngles]);
+Y_mn_out = zeros(V(1).dim(1:3));
+Y_sd_out = zeros(V(1).dim(1:3));
+real_Y_tmp = zeros([V(1).dim(1:2) b1map_params.b1proc.Nonominalvalues nAmbiguousAngles]);
 
 Ssq_matrix = sqrt(sum(spm_read_vols(V(1:2:end)).^2,4));
 
@@ -382,39 +392,54 @@ for p = 1:V(1).dim(3) %loop over the partition dimension of the data set
         SE_intensities(:,:,i) = hmri_read_vols(V((i-1)*2+1),V(1),p,interp);
         
         % B1 estimates
-        Y_tmptmp(:,:,((i-1)*2+1)) = real(acosd(corr_fact * ...
+        Y_tmptmp(:,:,i,1) = real(acosd(corr_fact * ...
             hmri_read_vols(V((i-1)*2+2),V(1),p,interp) ./ ...
             (SE_intensities(:,:,i)+b1map_params.b1proc.eps)) / ...
             b1map_params.b1acq.beta(i));
             
-        % alternative B1 estimates due to pi/2 ambiguity of magnitude images
-        Y_tmptmp(:,:,((i-1)*2+2))  = 180/b1map_params.b1acq.beta(i) - Y_tmptmp(:,:,((i-1)*2+1));
+        % Alternative B1 estimates due to pi/2 ambiguity of acos for magnitude images
+        Y_tmptmp(:,:,i,2) = 180/b1map_params.b1acq.beta(i) - Y_tmptmp(:,:,i,1);
+        
+        % We can keep adding pi to the angles, reflecting ambiguity in acos for larger actual flip angles
+        for j=3:nAmbiguousAngles 
+            Y_tmptmp(:,:,i,j) = 180/b1map_params.b1acq.beta(i) + Y_tmptmp(:,:,i,j-2);
+        end
+
     end
     
-    [~,indexes] = sort(SE_intensities,3);
+    % We trust values with highest SE intensity
+    [~,indexes] = sort(SE_intensities,3,'descend');
     for x_nr = 1:V(1).dim(1)
-        for y_nr = 1:V(1).dim(2)
-            for k=1:b1map_params.b1proc.Nonominalvalues
-                real_Y_tmp(x_nr,y_nr,2*k-1) = Y_tmptmp(x_nr,y_nr,2*indexes(x_nr,y_nr,n/2-k+1)-1);
-                real_Y_tmp(x_nr,y_nr,2*k)   = Y_tmptmp(x_nr,y_nr,2*indexes(x_nr,y_nr,n/2-k+1));
-                Index_Matrix(x_nr,y_nr,p,k) = indexes(x_nr,y_nr,indexes(x_nr,y_nr,n/2-k+1));
-            end
+        for y_nr = 1:V(1).dim(2)         
+            real_Y_tmp(x_nr,y_nr,:,:) = Y_tmptmp(x_nr,y_nr,indexes(x_nr,y_nr,1:b1map_params.b1proc.Nonominalvalues),:);
         end
     end
     
-    Y_tmp = sort(real(real_Y_tmp), 3); % take the real value due to noise problems
-    Y_sd  = zeros([V(1).dim(1:2) (b1map_params.b1proc.Nonominalvalues+1)]);
-    Y_mn  = zeros([V(1).dim(1:2) (b1map_params.b1proc.Nonominalvalues+1)]);
-    for i = 1:(b1map_params.b1proc.Nonominalvalues+1)
-        Y_sd(:,:,i) = std(Y_tmp(:,:,i:(i + b1map_params.b1proc.Nonominalvalues-1)), [], 3);
-        Y_mn(:,:,i) = mean(Y_tmp(:,:,i:(i + b1map_params.b1proc.Nonominalvalues-1)), 3);
+    % Test all permutations of the different ambiguous-angle B1 estimates
+    % to find the combination with the lowest standard deviation
+    % The algorithm below treats the combinations as (nAmbiguousAngles)-ary 
+    % numbers from 00...0 to NN...N to index all possible combinations
+    Nperms=nAmbiguousAngles^b1map_params.b1proc.Nonominalvalues;
+    Y_sd  = zeros([V(1).dim(1:2) Nperms]);
+    Y_mn  = zeros([V(1).dim(1:2) Nperms]);
+    for i = 1:Nperms
+        perm=(dec2base(i-1, nAmbiguousAngles, b1map_params.b1proc.Nonominalvalues)-'0') + 1; % difference between char 'N' and char '0' is integer N
+        idxs=sub2ind([b1map_params.b1proc.Nonominalvalues,nAmbiguousAngles],1:b1map_params.b1proc.Nonominalvalues,perm);
+        Y_sd(:,:,i) = std(real(real_Y_tmp(:,:,idxs)),[],3); % real part chosen to mitigate noise problems
+        Y_mn(:,:,i) = mean(real(real_Y_tmp(:,:,idxs)),3);
     end
-    
+
     [~,min_index] = min(Y_sd,[],3); % !! min_index is a 2D array. Size given by resolution along read and phase directions
     for x_nr = 1:V(1).dim(1)
-        for y_nr = 1:V(1).dim(2)
-            Y_ab(x_nr,y_nr,p) = Y_mn(x_nr,y_nr, min_index(x_nr,y_nr)); % Y_ab is the relative flip angle value averaged over the n flip angles (determined by minizing the SD i.e. keeping the most uniform relative flip angle values)
-            Y_cd(x_nr,y_nr,p) = Y_sd(x_nr,y_nr, min_index(x_nr,y_nr)); % Y_cd is the corresponding standard deviation between the relative flip angle values
+        for y_nr = 1:V(1).dim(2) 
+            % Y_mn_out is the relative flip angle value averaged over the 
+            % Nonominalvalues flip angles (determined by minimising the SD,
+            % i.e. keeping the most uniform relative flip angle values)
+            Y_mn_out(x_nr,y_nr,p) = Y_mn(x_nr,y_nr, min_index(x_nr,y_nr));
+            
+            % Y_sd_out is the corresponding standard deviation between the 
+            % relative flip angle values
+            Y_sd_out(x_nr,y_nr,p) = Y_sd(x_nr,y_nr, min_index(x_nr,y_nr));
         end
     end
     spm_progress_bar('Set',p);
@@ -433,7 +458,7 @@ Output_hdr.history.output.units = 'p.u.';
 V_save = struct('fname',V(1).fname,'dim',V(1).dim,'mat',V(1).mat,'dt',V(1).dt,'descrip','B1 map [%]');
 [~,outname,e] = fileparts(V_save.fname);
 V_save.fname = fullfile(outpath,['B1map_' outname e]);
-V_save = spm_write_vol(V_save,Y_ab*100);
+V_save = spm_write_vol(V_save,Y_mn_out*100);
 set_metadata(V_save.fname,Output_hdr,json);
 
 % save SD map (still distorted and not smoothed)
@@ -441,7 +466,7 @@ Output_hdr.history.output.imtype = 'SE/STE B1 mapping - Distorted SD (error) map
 Output_hdr.history.output.units = 'p.u.';
 W_save = struct('fname',V(1).fname,'dim',V(1).dim,'mat',V(1).mat,'dt',V(1).dt,'descrip','SD [%]');
 W_save.fname = fullfile(outpath,['SDmap_' outname e]);
-W_save = spm_write_vol(W_save,Y_cd*100);
+W_save = spm_write_vol(W_save,Y_sd_out*100);
 set_metadata(W_save.fname,Output_hdr,json);
 
 % save SD map (still distorted and not smoothed)

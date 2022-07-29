@@ -100,6 +100,7 @@ hmri_def.b1map.i3D_EPI.procreq = true;
 hmri_def.b1map.i3D_EPI.b1proc.T1 = 1192; % ms, strictly valid only at 3T
 hmri_def.b1map.i3D_EPI.b1proc.eps = 0.0001;
 hmri_def.b1map.i3D_EPI.b1proc.Nonominalvalues = 5;
+hmri_def.b1map.i3D_EPI.b1proc.nAmbiguousAngles = 2; % how many [90*(n-1),90+90*(n-1)] degree ranges to test to overcome acos ambiguity. Minimum of 2, more than 3 probably not needed for reasonable SE/STE flip angle pairs.
 hmri_def.b1map.i3D_EPI.b1proc.HZTHRESH = 110;
 hmri_def.b1map.i3D_EPI.b1proc.SDTHRESH = 5;
 hmri_def.b1map.i3D_EPI.b1proc.ERODEB1 = 1;

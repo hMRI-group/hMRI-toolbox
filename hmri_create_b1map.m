@@ -23,7 +23,7 @@ flags.PopUp = false;
 hmri_log(sprintf('\t============ CREATE B1 MAP - %s.m (%s) ============', mfilename, datestr(now)),flags);
 
 % retrieve effective acquisition & processing parameters, alternatively
-% use defaults
+% use defaults 
 b1map_params = get_b1map_params(jobsubj);
 
 % save b1map_params as json-file
@@ -77,22 +77,22 @@ switch(b1map_params.b1type)
         end
         P_trans  = b1map_params.b1input(1:2,:);
         
-    otherwise
+    otherwise 
         hmri_log(sprintf('WARNING: unknown B1 type, no B1 map calculation performed.'),b1map_params.defflags);
-        
+       
 end
 
 % copy P_trans output to Results/Supplementary directory (nii & json!) and
 % make P_trans point to the copied files (so coregistration is applied to
 % them).
 %
-% NOTES:
+% NOTES: 
 %   - if "cleanup" set to true, the B1mapCalc directory is deleted when the
-%   Map Calculation completes...
+%   Map Calculation completes...  
 %   - just in case no json files have been saved with the output, the
 %   copyfile is called in "try" mode...
 %   - must strip the ',1' (at the end of the file extension '.nii,1')
-%   otherwise copyfile does not find the files!!
+%   otherwise copyfile does not find the files!! 
 
 if ~isempty(P_trans)
     P_trans = spm_file(P_trans,'number','');
@@ -264,7 +264,7 @@ function P_trans = calc_SESTE_b1map(jobsubj, b1map_params)
 % for B0 map calculation.
 % This macro calls the functions hmri_create_B1Map_unwarp and
 % hmri_create_B1Map_process for correction of image distortions, padding
-% and smoothing of the images.
+% and smoothing of the images. 
 % Output:
 %     - distorted B1 (B1map_*) and error (SDmap_*) maps
 %     - undistorted B1 (uB1map_*) and error (uSDmap_*) maps
@@ -276,7 +276,7 @@ function P_trans = calc_SESTE_b1map(jobsubj, b1map_params)
 % The sum of square image of all SE images is created (SumOfSq) and
 % undistorted (uSumOfSq) for coregistration of the B1 map to an anatomical
 % dataset.
-%
+% 
 % For coherence among B1 protocols, the fully processed B1 map (smuB1map_*)
 % is renamed *_B1map.nii, while the undistorted SoS image (uSumOfSq) is
 % renamed *_B1ref for anatomical reference.
@@ -422,7 +422,7 @@ end
 input_files = b1map_params.b1input;
 Output_hdr = init_b1_output_metadata(input_files, b1map_params);
 Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (EPI SE/STE protocol)'];
-
+ 
 % save B1 map (still distorted and not smoothed)
 Output_hdr.history.output.imtype = 'SE/STE B1 mapping - Distorted B1+ map';
 Output_hdr.history.output.units = 'p.u.';
@@ -461,7 +461,7 @@ for i=1:size(Q,1)
 end
 Q = char(Qtmp);
 
-% magnitude image
+% magnitude image 
 % NOTE: must strip the ',1' (at the end of the file extension '.nii,1')!!
 magfnam = spm_file(Q(1,:),'number','');
 % phase image
@@ -491,27 +491,27 @@ input_files = char(b1map_params.b1input,b1map_params.b0input);
 Output_hdr = init_b1_output_metadata(input_files, b1map_params);
 Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (EPI SE/STE protocol)'];
 
-% set metadata for unwarped B1 image
+% set metadata for unwarped B1 image 
 Output_hdr.history.output.imtype = 'SE/STE B1 mapping - Unwarped B1 map';
 Output_hdr.history.output.units = 'p.u.';
 set_metadata(ub1_img{1},Output_hdr,json);
 
-% set metadata for unwarped SD map
+% set metadata for unwarped SD map 
 Output_hdr.history.output.imtype = 'SE/STE B1 mapping - Unwarped SD (error) map';
 Output_hdr.history.output.units = 'p.u.';
 set_metadata(ustd_img{1},Output_hdr,json);
 
-% set metadata for unwarped SSQ map
+% set metadata for unwarped SSQ map 
 Output_hdr.history.output.imtype = 'SE/STE B1 mapping - Unwarped SSQ image for anatomical reference';
 Output_hdr.history.output.units = 'a.u.';
 set_metadata(uanat_img{1},Output_hdr,json);
 
-% set metadata for phase-unwrapped regularised field map (Hz) (fpm_* file)
+% set metadata for phase-unwrapped regularised field map (Hz) (fpm_* file) 
 Output_hdr.history.output.imtype = 'SE/STE B1 mapping - Phase-unwrapped regularised field map';
 Output_hdr.history.output.units = 'Hz';
 set_metadata(fmap_img{1}.fname,Output_hdr,json);
 
-% set metadata for Voxel Displacement Map (vdm5_* file)
+% set metadata for Voxel Displacement Map (vdm5_* file) 
 Output_hdr.history.output.imtype = 'SE/STE B1 mapping - Voxel displacement map';
 Output_hdr.history.output.units = 'Vx';
 set_metadata(fmap_img{2}.fname,Output_hdr,json);
@@ -547,7 +547,7 @@ end
 % set correct output for the current subfunction (unwrapped "anatomical"
 % image (SSQ) for coregistration and final B1 map). For coherence among B1
 % protocol, rename these files *_B1ref (for anatomical reference) and
-% *_B1map (for B1+ bias map in p.u.):
+% *_B1map (for B1+ bias map in p.u.):  
 B1map = fullfile(outpath,[outname '_B1map.nii']);
 copyfile(allub1_img{2}.fname, B1map);
 try copyfile([spm_str_manip(allub1_img{2}.fname,'r') '.json'],[spm_str_manip(B1map,'r') '.json']); end
@@ -616,7 +616,7 @@ end
 
 %% =======================================================================%
 % B1 map calculation - SIEMENS rf_map protocol
-% Written by Tobias Leutritz
+% Written by Tobias Leutritz 
 %=========================================================================%
 function P_trans = calc_rf_map(jobsubj, b1map_params)
 
@@ -675,12 +675,12 @@ end
 % be applied. If so, all the required parameters for b1map calculation are
 % retrieved, including b1map and b0map acquisition parameters and
 % processing parameters, if applicable. Check whether input data are
-% coherent with the processing type selected. Missing parameters will be
+% coherent with the processing type selected. Missing parameters will be 
 % retrieved from the hmri_get_defaults.
 %=========================================================================%
 function b1map_params = get_b1map_params(jobsubj)
 
-% retrieve b1 protocol from job
+% retrieve b1 protocol from job 
 % (can be different - a variation of - the b1 type)
 f = fieldnames(jobsubj.b1_type);
 b1_protocol = f{1};
@@ -697,7 +697,7 @@ if isfield(jobsubj.b1_type.(b1_protocol),'b1parameters')
     hmri_b1_standard_defaults;
     deffnam = fullfile(fileparts(mfilename('fullpath')),'config','hmri_b1_standard_defaults.m');
     custom_def = false;
-    
+
     % then, if customized defaults file available, run it to overwrite
     % standard defaults parameters.
     if isfield(jobsubj.b1_type.(b1_protocol).b1parameters,'b1defaults')
@@ -708,14 +708,14 @@ if isfield(jobsubj.b1_type.(b1_protocol),'b1parameters')
 end
 
 % load all B1 bias correction defaults parameters & add default file
-b1map_params = hmri_get_defaults(['b1map.' b1_protocol]);
+b1map_params = hmri_get_defaults(['b1map.' b1_protocol]); 
 b1map_params.defaults_file = deffnam;
 b1map_params.custom_defaults = custom_def;
 
 % flags for logging information and warnings
 b1map_params.defflags = jobsubj.log.flags; % default flags
 b1map_params.nopuflags = jobsubj.log.flags; % force no Pop-Up
-b1map_params.nopuflags.PopUp = false;
+b1map_params.nopuflags.PopUp = false; 
 
 hmri_log(sprintf('\t------------ B1 MAP CALCULATION (%s) %s ------------',b1_protocol, datestr(now)),b1map_params.nopuflags);
 
@@ -727,16 +727,16 @@ b1map_params.SPMver = sprintf('%s (%s)', v, r);
 % load B1 input images if any
 % (NB: if a 'b1input' field is present, it should NOT be empty)
 if isfield(jobsubj.b1_type.(b1_protocol),'b1input')
-    b1map_params.b1input = char(spm_file(jobsubj.b1_type.(b1_protocol).b1input,'number',''));
+    b1map_params.b1input = char(spm_file(jobsubj.b1_type.(b1_protocol).b1input,'number',''));        
     if isempty(b1map_params.b1input)
         hmri_log(sprintf(['WARNING: expected B1 input images missing. Switching to "no \n' ...
             '\tB1 correction" mode. If you meant to apply B1 bias correction, \n' ...
             '\tcheck your data and re-run the batch.']),b1map_params.defflags);
         b1_protocol = 'no_B1_correction';
-        b1map_params = hmri_get_defaults('b1map.no_B1_correction');
+        b1map_params = hmri_get_defaults('b1map.no_B1_correction'); 
     end
 end
-
+        
 % load B0 input images if any
 % (NB: if a 'b0input' field is present, it may be empty)
 if isfield(jobsubj.b1_type.(b1_protocol),'b0input')
@@ -744,13 +744,13 @@ if isfield(jobsubj.b1_type.(b1_protocol),'b0input')
     if isempty(b1map_params.b0input)
         % hmri_log(sprintf(['WARNING: expected B0 fieldmap not available for EPI undistortion.\n' ...
         %     '\tNo fieldmap correction will be applied.']),b1map_params.defflags);
-        % b1map_params.b0avail = false;
+        % b1map_params.b0avail = false; 
         hmri_log(sprintf(['WARNING: expected B0 fieldmap not available for EPI undistortion.\n' ...
             '\tThe current implementation does not allow you to apply EPI-based B1 bias \n' ...
             '\tcorrection without phase unwrapping. Switching to "no B1 correction" mode.\n' ...
             '\tIf you meant to apply B1 bias correction, check your data and re-run the batch.']),b1map_params.defflags);
         b1_protocol = 'no_B1_correction';
-        b1map_params = hmri_get_defaults('b1map.no_B1_correction');
+        b1map_params = hmri_get_defaults('b1map.no_B1_correction');        
     end
 end
 
@@ -758,7 +758,7 @@ end
 switch b1_protocol
     case 'UNICORT'
         hmri_log(sprintf('No B1 map available. UNICORT will be applied.'),b1map_params.nopuflags);
-        
+
     case 'no_B1_correction'
         hmri_log(sprintf('No B1 map available. No B1 correction applied (semi-quantitative maps only)'),b1map_params.nopuflags);
         
@@ -771,7 +771,7 @@ switch b1_protocol
                 hmri_log(sprintf('Preprocessed B1 map available. \nScaling factor provided: %f. Assuming B1 map will be expressed \nin p.u. of the nominal flip angle after rescaling.', b1map_params.scafac),b1map_params.defflags);
             end
         end
-        
+
     case 'i3D_EPI'
         if ~isempty(b1map_params.b1input)
             hmri_log(sprintf('SE/STE EPI protocol selected ...'),b1map_params.nopuflags);
@@ -863,7 +863,7 @@ switch b1_protocol
                                 '\n\nIf the value was set differently on purpose, just ignore this message.'], ...
                                 tmp, expectedT1, b1map_params.b1proc.T1, char(spm_file(deffnam,'filename'))), b1map_params.defflags);
                         elseif ~matchT1fieldstrength && ~custom_def
-                            hmri_log(sprintf(['WARNING: the assumed T1 value for B1 map calculation ' ...
+                             hmri_log(sprintf(['WARNING: the assumed T1 value for B1 map calculation ' ...
                                 '\nhas been set to match the used field strength: ' ...
                                 '\n    B0 = %.0fT, T1 = %d ms.' ...
                                 '\n\nPlease consider to properly set the T1 value uing a local ' ...
@@ -879,7 +879,7 @@ switch b1_protocol
                     b1map_params.b1proc.matchT1fieldstrength = matchT1fieldstrength;
                     b1map_params.b1proc.expectedT1 = expectedT1;
                 end
-                
+                    
                 
                 if ~isempty(b1map_params.b0input)
                     % note that the current implementation assumes that
@@ -973,7 +973,7 @@ switch b1_protocol
         if ~isempty(b1map_params.b1input)
             hmri_log(sprintf('SIEMENS tfl_b1map protocol selected ...'),b1map_params.nopuflags);
         end
-        
+                        
     case 'rf_map'
         if ~isempty(b1map_params.b1input)
             hmri_log(sprintf('SIEMENS rf_map protocol selected ...'),b1map_params.nopuflags);

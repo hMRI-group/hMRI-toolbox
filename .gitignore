@@ -1,5 +1,9 @@
-# Matlab *.asv files
+# ignore Matlab and linux temporary files
 *.asv
+*~
 
 # ignore *.odt version of the manual (keep PDF only)
 *.odt
+
+# ignore the test data and do not commit to the repo
+hmri_code_tests/example_data/

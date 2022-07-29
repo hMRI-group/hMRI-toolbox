@@ -941,11 +941,6 @@ if ~nFieldFound
     parLocation = [];
 end
 
-% returns cell array only if necessary (non-unique result)
-if (length(parValue) == 1) && iscell(parValue)
-    parValue = parValue{1};
-    parLocation = parLocation{1};
-end
 end
 
 

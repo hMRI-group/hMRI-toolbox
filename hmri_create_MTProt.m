@@ -1789,6 +1789,9 @@ if mpm_params.errormaps % check we don't try to compute error maps without the n
     elseif ~all(mpm_params.estaticsR2s)
         hmri_log('WARNING: Error map creation has been disabled because not all contrasts have sufficient data for R2* estimation.',mpm_params.defflags);
         mpm_params.errormaps=false;
+    elseif numel(mpm_params.estaticsR2s)==1
+        hmri_log('WARNING: Error map creation has been disabled because only PDw volumes have been provided.',mpm_params.defflags);
+        mpm_params.errormaps=false;
     else
         hmri_log('Error maps will be created.',mpm_params.defflags);
     end

@@ -17,6 +17,9 @@ function hmri_quiqi_build(job)
 % Nad?ge Corbin
 % 2021.03.30
 % Centre de R?sonance Magn?tique des Syst?mes Biologiques, Bordeaux, France
+% 
+% REFERENCE
+% Lutti A. et al, Restoring statistical validity in group analyses of motion-corrupted MRI data, Human Brain Mapping 2022
 %==========================================================================
 
 hmri_log(sprintf('\t--- Build dictionary of covariance matrices based on the MDI ---'));

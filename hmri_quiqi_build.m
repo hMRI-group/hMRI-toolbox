@@ -2,7 +2,7 @@ function hmri_quiqi_build(job)
 %==========================================================================
 %
 % PURPOSE: Compute dictionaries of covariance matrices from the motion
-% degradation index.The disctionary  will be used by spm_reml.m or
+% degradation index.The dictionary  will be used by spm_reml.m or
 % spm_reml_sc.m to account for heteroscedasticity of the data.
 % See " reference to the paper " for more details
 %
@@ -14,9 +14,9 @@ function hmri_quiqi_build(job)
 % 2021.04.01
 % Neuroimaging Research Laboratory, Lausanne University Hospital &
 % University of Lausanne, Lausanne, Switzerland
-% Nad?ge Corbin
+% Nadege Corbin
 % 2021.03.30
-% Centre de R?sonance Magn?tique des Syst?mes Biologiques, Bordeaux, France
+% Centre de Resonance Magnetique des Systemes Biologiques, Bordeaux, France
 % 
 % REFERENCE
 % Lutti A. et al, Restoring statistical validity in group analyses of motion-corrupted MRI data, Human Brain Mapping 2022

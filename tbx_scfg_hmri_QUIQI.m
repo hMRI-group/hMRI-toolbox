@@ -2,7 +2,7 @@ function quiqi = tbx_scfg_hmri_QUIQI
 % 
 % 1./
 % PURPOSE: Compute dictionaries of covariance matrices from the motion 
-% degradation index.The disctionary  will be used by spm_reml.m or 
+% degradation index.The dictionary  will be used by spm_reml.m or 
 % spm_reml_sc.m to account for heteroscedasticity of the data.
 % See " reference to the paper " for more details
 % 
@@ -20,15 +20,15 @@ function quiqi = tbx_scfg_hmri_QUIQI
 %
 %
 %_______________________________________________________________________
-% Nad?ge Corbin
+% Nadege Corbin
 % 2021.03.30
-% Centre de R?sonance Magn?tique des Syst?mes Biologiques, Bordeaux, France
+% Centre de Resonance Magnetique des Systemes Biologiques, Bordeaux, France
 
 quiqi        = cfg_choice;
 quiqi.tag     = 'quiqi';
 quiqi.name    = 'QUIQI';
 quiqi.help    = {'Compute dictionaries of covariance matrices from the motion',... 
-' degradation index.The disctionary  will be used by spm_reml.m or',... 
+' degradation index. The dictionary will be used by spm_reml.m or',... 
 ' spm_reml_sc.m to account for heteroscedasticity of the data.'
     }'; 
 quiqi.values  = {tbx_scfg_hmri_QUIQI_build tbx_scfg_hmri_QUIQI_check};

@@ -995,7 +995,7 @@ job_bfcorr.channel.biasreg = PDproc.biasreg;
 job_bfcorr.channel.biasfwhm = PDproc.biasfwhm;
 job_bfcorr.channel.write = [1 0]; % need the BiasField, obviously!
 for ctis=1:length(job_bfcorr.tissue)
-    job_bfcorr.tissue(ctis).native = [0 0]; % no need to write c* volumes
+    job_bfcorr.tissue(ctis).native = [1 0]; % no need to write c* volumes % siya testing
 end
 output_list = spm_preproc_run(job_bfcorr);
 

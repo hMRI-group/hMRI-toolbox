@@ -108,6 +108,8 @@ hmri_def.b1map.i3D_EPI.b1proc.PADB1 = 3 ;
 hmri_def.b1map.i3D_EPI.b1proc.B1FWHM = 8; % For smoothing. FWHM in mm - i.e. it is divided by voxel resolution to get FWHM in voxels
 hmri_def.b1map.i3D_EPI.b1proc.match_vdm = 1;
 hmri_def.b1map.i3D_EPI.b1proc.b0maskbrain = 1;
+% b1-validation
+hmri_def.b1map.i3D_EPI.b1validation.checkTEs = false; % input validation using image TEs. Assumes SE has shorter TE than STE in metadata (qMRI-BIDS assumption). Disabled by default as this assumption is not valid for the metadata in the DICOMs from some sequences.
 % b1-acquisition
 hmri_def.b1map.i3D_EPI.b1acq.beta = 115:-5:65;
 hmri_def.b1map.i3D_EPI.b1acq.TM = 31.2;

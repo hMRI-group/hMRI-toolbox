@@ -300,9 +300,9 @@ assert(n == 2 * numel(b1map_params.b1acq.beta), ...
 
 % splitting images into SE and STE volumes
 % assumes conventional hMRI toolbox order as default but checks this order 
-% when echo times are defined
+% when echo times are defined and b1validation.checkTEs is true
 EchoTimes=b1map_params.b1acq.EchoTimes;
-if ~isempty(EchoTimes) % check echo times defined
+if b1map_params.b1validation.checkTEs && ~isempty(EchoTimes) % check echo times defined
     uEchoTimes=unique(EchoTimes);
     switch length(uEchoTimes)
         case 2
@@ -332,7 +332,7 @@ if ~isempty(EchoTimes) % check echo times defined
     end
 else
     % assume conventional hMRI toolbox order as default in absence of other
-    % information
+    % information or when TE check is disabled
     V_SE  = V(1:2:end);
     V_STE = V(2:2:end);
 end
@@ -817,13 +817,16 @@ switch b1_protocol
                 
                 % Echo times for input validation
                 tmp = get_metadata_val(b1hdr{1},'EchoTime');
-                if isempty(tmp)
-                    hmri_log(sprintf('WARNING: no echo times found for SE/STE input;\ninput validation based on echo time will not be performed'),b1map_params.defflags);
-                    b1map_params.b1acq.EchoTimes=[];
-                else
-                    b1map_params.b1acq.EchoTimes=zeros(1,size(b1map_params.b1input,1));
-                    for n=1:size(b1map_params.b1input,1)
-                        b1map_params.b1acq.EchoTimes(n) = get_metadata_val(b1map_params.b1input(n,:),'EchoTime');
+                b1map_params.b1acq.EchoTimes=[];
+                if b1map_params.b1validation.checkTEs
+                    if isempty(tmp)
+                        hmri_log(sprintf('WARNING: no echo times found for SE/STE input;\ninput validation based on echo time will not be performed'),b1map_params.defflags);
+                        b1map_params.b1validation.checkTEs = false;
+                    else
+                        b1map_params.b1acq.EchoTimes=zeros(1,size(b1map_params.b1input,1));
+                        for n=1:size(b1map_params.b1input,1)
+                            b1map_params.b1acq.EchoTimes(n) = get_metadata_val(b1map_params.b1input(n,:),'EchoTime');
+                        end
                     end
                 end
                 

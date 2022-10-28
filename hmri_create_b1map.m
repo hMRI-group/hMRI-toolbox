@@ -602,23 +602,31 @@ Q = b1map_params.b1input(1,:); % anatomical image
 % read header information and volumes
 V1 = spm_vol(P); % image volume information
 V2 = spm_vol(Q);
+input_files = cat(1,{V2.fname},{V1.fname}); % for metadata
 Vol1 = spm_read_vols(V1);
+
+% determine output directory path
+outpath = jobsubj.path.b1path;
+b1map_params.outpath = outpath;
+
+% copy anatomical image to outpath to prevent modification of original data
+anat_fname = fullfile(outpath, [spm_file(V2.fname, 'basename') '_B1ref.nii']);
+copyfile(V2.fname, anat_fname);
+try copyfile([spm_str_manip(V2.fname,'r') '.json'],[spm_str_manip(anat_fname,'r') '.json']); end %#ok<*TRYNC>
+V2 = spm_vol(anat_fname);
 
 % generating the map
 B1map_norm = (abs(Vol1)+offset)*scaling;
 
-% masking; mask is written out to folder of B1ref
+% masking; mask is written out to folder of the anatomical image 
+% (this should be outpath due to copying the anatomical file above)
 mask = mask_for_B1(V2,b1map_params.b1mask);
 
 % smoothed map
 smB1map_norm = smoothB1(V1,B1map_norm,b1map_params.b1proc.B1FWHM,mask);
 
-% Save everything in OUTPUT dir
+% Save B1map in OUTPUT dir
 %-----------------------------------------------------------------------
-% determine output directory path
-outpath = jobsubj.path.b1path;
-b1map_params.outpath = outpath;
-
 sname = spm_file(V1.fname,'basename');
 
 VB1 = V1;
@@ -628,15 +636,9 @@ VB1.descrip = ['B1+ map - smoothed ( ' sprintf('%d ',b1map_params.b1proc.B1FWHM)
 spm_write_vol(VB1,smB1map_norm);
 
 % set and write metadata
-input_files = cat(1,{V2.fname},{V1.fname});
 Output_hdr = init_b1_output_metadata(input_files, b1map_params);
 Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (' descrip ')'];
 set_metadata(VB1.fname,Output_hdr,json);
-
-% copy also anatomical image to outpath to prevent modification of original data
-anat_fname = fullfile(outpath, [spm_file(V2.fname, 'basename') '_B1ref.nii']);
-copyfile(V2.fname, anat_fname);
-try copyfile([spm_str_manip(V2.fname,'r') '.json'],[spm_str_manip(anat_fname,'r') '.json']); end %#ok<*TRYNC>
 
 % requires anatomical image + map
 P_trans  = char(char(anat_fname),char(VB1.fname));

@@ -47,35 +47,37 @@ switch(b1map_params.b1type)
         % processing B1 map from SE/STE EPI data
         P_trans  = calc_SESTE_b1map(jobsubj, b1map_params);
         
-    case 'tfl_b1_map'
-        % processing B1 map from tfl_b1map data
-        P_trans  = calc_tfl_b1map(jobsubj, b1map_params);
-        
-    case 'rf_map'
-        % processing B1 map from rf_map data
-        P_trans  = calc_rf_map(jobsubj, b1map_params);
-        
     case 'DAM'
         % processing B1 map from DAM data
         P_trans  = calc_DAM_b1map(jobsubj, b1map_params);
+
+    case 'tfl_b1_map'
+        % processing B1 map from tfl_b1map data
+        P = b1map_params.b1input(2,:); % scaled FA map from tfl_b1map sequence
+
+        alphanom = get_metadata_val(P,'FlipAngle');
+        scaling = 10/alphanom;
+        offset = 0;
+
+        descrip = 'SIEMENS tfl_b1map protocol';
+
+        P_trans  = calc_scaled_b1map(jobsubj, b1map_params, offset, scaling, descrip);
         
+    case 'rf_map'
+        % processing B1 map from rf_map data        
+        P = b1map_params.b1input(2,:); % scaled FA map from rf_map sequence
+
+        % the formula (abs(Vol1)-2048)*180/2048 would result in an absolute FA map
+        alphanom = get_metadata_val(P,'FlipAngle');
+        scaling = 180*100/(alphanom*2048); % *100/alpha to get p.u.
+        offset = -2048;
+
+        descrip = 'SIEMENS rf_map protocol';
+
+        P_trans  = calc_scaled_b1map(jobsubj, b1map_params, offset, scaling, descrip);
+                
     case 'pre_processed_B1'
-        if b1map_params.scafac ~= 1
-            % rescale if scaling factor other than 1 is provided
-            rescaled_fnam = fullfile(jobsubj.path.b1path, spm_file(spm_file(b1map_params.b1input(2,:),'suffix','_rescaled'),'filename'));
-            calcflags.descrip = sprintf('Pre-processed B1 map rescaled with factor %f', b1map_params.scafac);
-            outcalc = spm_imcalc(b1map_params.b1input(2,:),rescaled_fnam,sprintf('%f*i1',b1map_params.scafac),calcflags);
-            % set and write metadata
-            json = hmri_get_defaults('json');
-            input_files = b1map_params.b1input(2,:);
-            Output_hdr = init_b1_output_metadata(input_files, b1map_params);
-            Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (Rescaling)'];
-            Output_hdr.history.output.imtype = sprintf('Pre-processed B1 map rescaled with factor %f', b1map_params.scafac);
-            set_metadata(rescaled_fnam,Output_hdr,json);
-            % replace original B1 map by the rescaled one
-            b1map_params.b1input = char(b1map_params.b1input(1,:), rescaled_fnam);
-        end
-        P_trans  = b1map_params.b1input(1:2,:);
+        P_trans  = calc_scaled_b1map(jobsubj, b1map_params, 0, b1map_params.scafac, sprintf('Pre-processed B1 map rescaled with factor %f', b1map_params.scafac));
         
     otherwise 
         hmri_log(sprintf('WARNING: unknown B1 type, no B1 map calculation performed.'),b1map_params.defflags);
@@ -222,7 +224,6 @@ alphanom = b1map_params.b1acq.alphanom;
 % compute B1 map
 % Note: imaginary component is erroneous and should only appear in 
 % background voxels. Too many would be a sign of incorrect file order.
-% TODO: warn if too many imaginary values detected.
 B1map = acosd(Y2./(2*Y1))/alphanom;
 
 % normalise B1 map
@@ -588,29 +589,29 @@ P_trans  = char(B1ref, B1map);
 end
 
 %% =======================================================================%
-% B1 map calculation - SIEMENS tfl_b1map protocol
-% Written by Tobias Leutritz (based on calc_AFI_b1map by TL)
+% B1 map scaling
+% Written by Tobias Leutritz; adapted by Luke Edwards
 %=========================================================================%
-function P_trans = calc_tfl_b1map(jobsubj, b1map_params)
+function P_trans = calc_scaled_b1map(jobsubj, b1map_params, offset, scaling, descrip)
 
 json = hmri_get_defaults('json');
 
-P = b1map_params.b1input(2,:); % scaled FA map from tfl_b1map sequence
-Q = b1map_params.b1input(1,:); % anatomical image from tfl_b1map sequence
+P = b1map_params.b1input(2,:); % scaled FA map
+Q = b1map_params.b1input(1,:); % anatomical image
 
 % read header information and volumes
 V1 = spm_vol(P); % image volume information
 V2 = spm_vol(Q);
 Vol1 = spm_read_vols(V1);
-Vol2 = spm_read_vols(V2);
-
-alphanom = get_metadata_val(P,'FlipAngle'); % nominal flip angle of tfl_b1map
 
 % generating the map
-B1map_norm = abs(Vol1)*10/alphanom;
+B1map_norm = (abs(Vol1)+offset)*scaling;
+
+% masking; mask is written out to folder of B1ref
+mask = mask_for_B1(V2,b1map_params.b1mask);
 
 % smoothed map
-smB1map_norm = smoothB1(V1,B1map_norm,b1map_params.b1proc.B1FWHM);
+smB1map_norm = smoothB1(V1,B1map_norm,b1map_params.b1proc.B1FWHM,mask);
 
 % Save everything in OUTPUT dir
 %-----------------------------------------------------------------------
@@ -623,14 +624,13 @@ sname = spm_file(V1.fname,'basename');
 VB1 = V1;
 VB1.pinfo(1) = max(smB1map_norm(:))/spm_type(VB1.dt(1),'maxval');
 VB1.fname = fullfile(outpath, [sname '_B1map.nii']);
-VB1.descrip = ['B1+ map - smoothed ( ' sprintf('%d ',b1map_params.b1proc.B1FWHM) 'mm ) and normalised (p.u.) - TFL B1map protocol'];
+VB1.descrip = ['B1+ map - smoothed ( ' sprintf('%d ',b1map_params.b1proc.B1FWHM) 'mm ) and normalised (p.u.) - ' descrip];
 spm_write_vol(VB1,smB1map_norm);
 
 % set and write metadata
 input_files = cat(1,{V2.fname},{V1.fname});
 Output_hdr = init_b1_output_metadata(input_files, b1map_params);
-Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (SIEMENS tfl_b1map protocol)'];
-
+Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (' descrip ')'];
 set_metadata(VB1.fname,Output_hdr,json);
 
 % copy also anatomical image to outpath to prevent modification of original data
@@ -638,62 +638,7 @@ anat_fname = fullfile(outpath, [spm_file(V2.fname, 'basename') '_B1ref.nii']);
 copyfile(V2.fname, anat_fname);
 try copyfile([spm_str_manip(V2.fname,'r') '.json'],[spm_str_manip(anat_fname,'r') '.json']); end %#ok<*TRYNC>
 
-% requires anatomic image + map
-P_trans  = char(char(anat_fname),char(VB1.fname));
-
-end
-
-%% =======================================================================%
-% B1 map calculation - SIEMENS rf_map protocol
-% Written by Tobias Leutritz 
-%=========================================================================%
-function P_trans = calc_rf_map(jobsubj, b1map_params)
-
-json = hmri_get_defaults('json');
-
-P = b1map_params.b1input(2,:); % scaled FA map from rf_map sequence
-Q = b1map_params.b1input(1,:); % anatomical image from rf_map sequence
-
-% read header information and volumes
-V1 = spm_vol(P); % image volume information
-V2 = spm_vol(Q);
-Vol1 = spm_read_vols(V1);
-Vol2 = spm_read_vols(V2);
-alphanom = get_metadata_val(P,'FlipAngle'); % nominal flip angle of rf_map
-
-% generating the map
-B1map_norm = (abs(Vol1)-2048)*180*100/(alphanom*2048); % *100/alpha to get p.u.
-% the formula (abs(Vol1)-2048)*180/2048 would result in an absolute FA map
-
-% smoothed map
-smB1map_norm = smoothB1(V1,B1map_norm,b1map_params.b1proc.B1FWHM);
-
-% Save everything in OUTPUT dir
-%-----------------------------------------------------------------------
-% determine output directory path
-outpath = jobsubj.path.b1path;
-b1map_params.outpath = outpath;
-
-sname = spm_file(V1.fname,'basename');
-
-VB1 = V1;
-VB1.pinfo(1) = max(smB1map_norm(:))/spm_type(VB1.dt(1),'maxval');
-VB1.fname = fullfile(outpath, [sname '_B1map.nii']);
-VB1.descrip = ['B1+ map - smoothed ( ' sprintf('%d ',b1map_params.b1proc.B1FWHM) 'mm ) and normalised (p.u.) - Siemens rf_map protocol'];
-spm_write_vol(VB1,smB1map_norm);
-
-% set and write metadata
-input_files = cat(1,{V2.fname},{V1.fname});
-Output_hdr = init_b1_output_metadata(input_files, b1map_params);
-Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (SIEMENS rf_map protocol)'];
-set_metadata(VB1.fname,Output_hdr,json);
-
-% copy also anatomical image to outpath to prevent modification of original data
-anat_fname = fullfile(outpath, [spm_file(V2.fname, 'basename') '_B1ref.nii']);
-copyfile(V2.fname, anat_fname);
-try copyfile([spm_str_manip(V2.fname,'r') '.json'],[spm_str_manip(anat_fname,'r') '.json']); end %#ok<*TRYNC>
-
-% requires anatomic image + map
+% requires anatomical image + map
 P_trans  = char(char(anat_fname),char(VB1.fname));
 
 end
@@ -912,7 +857,6 @@ switch b1_protocol
                     b1map_params.b1proc.expectedT1 = expectedT1;
                 end
                     
-                
                 if ~isempty(b1map_params.b0input)
                     % note that the current implementation assumes that
                     % b0 input images = 2 magnitude images (1st and 2nd
@@ -993,8 +937,7 @@ switch b1_protocol
                         end
                     end
                 end
-                
-                
+                                
             catch
                 hmri_log(sprintf(['WARNING: possibly no metadata associated to the input images. \n' ...
                     'Default acquisition and processing parameters will be used.']),b1map_params.defflags);
@@ -1079,16 +1022,20 @@ assert(numel(B1FWHM)==1||numel(B1FWHM)==3,...
 assert(all(B1FWHM(:)>=0),['FWHM of B1 smoothing kernel (B1FWHM) cannot be ' ...
     'negative! Check the b1 defaults file.'])
 
-smB1map_norm = zeros(size(B1map_norm));
-pxs = sqrt(sum(V.mat(1:3,1:3).^2)); % Voxel resolution
-smth = B1FWHM./pxs;
-spm_smooth(mask.*B1map_norm,smB1map_norm,smth);
+if any(B1FWHM>0)
+    smB1map_norm = zeros(size(B1map_norm));
+    pxs = sqrt(sum(V.mat(1:3,1:3).^2)); % Voxel resolution
+    smth = B1FWHM./pxs;
+    spm_smooth(mask.*B1map_norm,smB1map_norm,smth);
 
-% Renormalise so that we are not biased by zeroed background voxels
-if numel(mask)>1 % i.e. mask is not a scalar
-    norm_factor = zeros(size(B1map_norm));
-    spm_smooth(double(mask),norm_factor,smth);
-    smB1map_norm(norm_factor~=0)=smB1map_norm(norm_factor~=0)./norm_factor(norm_factor~=0);
+    % Renormalise so that we are not biased by zeroed background voxels
+    if numel(mask)>1 % i.e. mask is not a scalar
+        norm_factor = zeros(size(B1map_norm));
+        spm_smooth(double(mask),norm_factor,smth);
+        smB1map_norm(norm_factor~=0)=smB1map_norm(norm_factor~=0)./norm_factor(norm_factor~=0);
+    end
+else % skip calculation if kernel width is zero
+    smB1map_norm = B1map_norm;
 end
 
 end

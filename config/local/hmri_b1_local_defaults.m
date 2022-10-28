@@ -76,18 +76,24 @@ hmri_def.b1map.DAM.b1proc.B1FWHM = 8; % For smoothing. FWHM in mm; set to 0 to d
 
 % 'pre_processed_B1'
 hmri_def.b1map.pre_processed_B1.b1type = 'pre_processed_B1'; 
-hmri_def.b1map.pre_processed_B1.b1avail   = true;
+hmri_def.b1map.pre_processed_B1.b1avail = true;
 hmri_def.b1map.pre_processed_B1.procreq = false;
+hmri_def.b1map.pre_processed_B1.b1mask.domask = false; % whether to mask using hmri_create_pm_brain_mask.m
+hmri_def.b1map.pre_processed_B1.b1mask.fwhm = 5; % options for hmri_create_pm_brain_mask.m
+hmri_def.b1map.pre_processed_B1.b1mask.nerode = 2;
+hmri_def.b1map.pre_processed_B1.b1mask.ndilate = 4;
+hmri_def.b1map.pre_processed_B1.b1mask.thresh = 0.5;
+hmri_def.b1map.pre_processed_B1.b1proc.B1FWHM = 0; % For smoothing of B1 map. FWHM in mm; set to 0 to disable smoothing
 
 % 'no_B1_correction'
 hmri_def.b1map.no_B1_correction.b1type = 'no_B1_correction'; 
-hmri_def.b1map.no_B1_correction.b1avail   = false;
+hmri_def.b1map.no_B1_correction.b1avail = false;
 hmri_def.b1map.no_B1_correction.procreq = false;
 
 % UNICORT
 hmri_def.b1map.UNICORT.b1type = 'UNICORT'; 
 hmri_def.b1map.UNICORT.procreq = true;
-hmri_def.b1map.UNICORT.b1avail   = false;
+hmri_def.b1map.UNICORT.b1avail = false;
 hmri_def.b1map.UNICORT.procpar.reg = 10^-3;
 hmri_def.b1map.UNICORT.procpar.FWHM = 60;
 hmri_def.b1map.UNICORT.procpar.thr = 5;
@@ -122,14 +128,24 @@ hmri_def.b1map.i3D_EPI.b0acq.iformat = 'PM'; % ms
 
 % 'tfl_b1_map'
 hmri_def.b1map.tfl_b1_map.b1type = 'tfl_b1_map'; 
-hmri_def.b1map.tfl_b1_map.b1avail   = true; 
+hmri_def.b1map.tfl_b1_map.b1avail = true; 
 hmri_def.b1map.tfl_b1_map.procreq = true; 
+hmri_def.b1map.tfl_b1_map.b1mask.domask = false; % whether to mask using hmri_create_pm_brain_mask.m
+hmri_def.b1map.tfl_b1_map.b1mask.fwhm = 5; % options for hmri_create_pm_brain_mask.m
+hmri_def.b1map.tfl_b1_map.b1mask.nerode = 2;
+hmri_def.b1map.tfl_b1_map.b1mask.ndilate = 4;
+hmri_def.b1map.tfl_b1_map.b1mask.thresh = 0.5;
 hmri_def.b1map.tfl_b1_map.b1proc.B1FWHM = 8; % For smoothing. FWHM in mm; set to 0 to disable smoothing
 
 % 'rf_map'
 hmri_def.b1map.rf_map.b1type = 'rf_map'; 
-hmri_def.b1map.rf_map.b1avail   = true; 
+hmri_def.b1map.rf_map.b1avail = true; 
 hmri_def.b1map.rf_map.procreq = true; 
+hmri_def.b1map.rf_map.b1mask.domask = false; % whether to mask using hmri_create_pm_brain_mask.m
+hmri_def.b1map.rf_map.b1mask.fwhm = 5; % options for hmri_create_pm_brain_mask.m
+hmri_def.b1map.rf_map.b1mask.nerode = 2;
+hmri_def.b1map.rf_map.b1mask.ndilate = 4;
+hmri_def.b1map.rf_map.b1mask.thresh = 0.5;
 hmri_def.b1map.rf_map.b1proc.B1FWHM = 8; % For smoothing. FWHM in mm; set to 0 to disable smoothing
 
 end

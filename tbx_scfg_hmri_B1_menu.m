@@ -110,7 +110,7 @@ b1_input_preproc.help      = {'Input pre-calculated B1 bias map.'
     ['The B1 map is expected to be in ' ...
     'percent units (p.u.) of the nominal flip angle. If this is not the case, ' ...
     'a scaling factor can be introduced (see Scaling factor description for more details).']};
-b1_input_preproc.val       = {b1raw scafac};
+b1_input_preproc.val       = {b1raw scafac b1parameters};
 
 
 % ---------------------------------------------------------------------
@@ -121,7 +121,7 @@ b1_input_rfmap.tag       = 'rf_map';
 b1_input_rfmap.name      = 'rf_map';
 b1_input_rfmap.help      = {'Input B1 images for rf_map B1 map protocol.' ...
     'As B1 input, please select the pair of anatomical and precalculated B1 map, in that order.'};
-b1_input_rfmap.val       = {b1raw};
+b1_input_rfmap.val       = {b1raw b1parameters};
 
 
 % ---------------------------------------------------------------------
@@ -132,7 +132,7 @@ b1_input_tfl.tag       = 'tfl_b1_map';
 b1_input_tfl.name      = 'tfl_b1_map';
 b1_input_tfl.help      = {'Input B1 images for TFL B1 map protocol.' ...
     'As B1 input, please select the pair of anatomical and precalculated B1 map, in that order.'};
-b1_input_tfl.val       = {b1raw};
+b1_input_tfl.val       = {b1raw b1parameters};
 
 
 % ---------------------------------------------------------------------

@@ -349,12 +349,6 @@ assert(length(V_SE) == length(V_STE), ...
 V_SE  = V_SE(fa_order);
 V_STE = V_STE(fa_order);
 
-% TODO: Keeping SE and STE separated might be easier to read
-% but requires a lot of code changes below, so merging into
-% original list with corrected order
-V(1:2:end) = V_SE;
-V(2:2:end) = V_STE;
-
 % Because we use magnitude images and trigonometric functions are periodic,
 % there is ambiguity in the calculated angles. The number of ambiguous
 % angles to try is determined by how high the actual flip angle is; if less
@@ -366,12 +360,12 @@ if nAmbiguousAngles<2 % Use at least as many as Lutti, et al. (MRM, 2010)
     nAmbiguousAngles=2;
 end
 
-Y_tmptmp = zeros([V(1).dim(1:2) n/2 nAmbiguousAngles]);
-Y_mn_out = zeros(V(1).dim(1:3));
-Y_sd_out = zeros(V(1).dim(1:3));
-real_Y_tmp = zeros([V(1).dim(1:2) b1map_params.b1proc.Nonominalvalues nAmbiguousAngles]);
+Y_tmptmp = zeros([V_SE(1).dim(1:2) n/2 nAmbiguousAngles]);
+Y_mn_out = zeros(V_SE(1).dim(1:3));
+Y_sd_out = zeros(V_SE(1).dim(1:3));
+real_Y_tmp = zeros([V_SE(1).dim(1:2) b1map_params.b1proc.Nonominalvalues nAmbiguousAngles]);
 
-Ssq_matrix = sqrt(sum(spm_read_vols(V(1:2:end)).^2,4));
+Ssq_matrix = sqrt(sum(spm_read_vols(V_SE).^2,4));
 
 %-Define output directory
 %-----------------------------------------------------------------------
@@ -380,21 +374,21 @@ b1map_params.outpath = outpath;
 
 %-Start progress plot
 %-----------------------------------------------------------------------
-spm_progress_bar('Init',V(1).dim(3),'B1 map fit','planes completed');
+spm_progress_bar('Init',V_SE(1).dim(3),'B1 map fit','planes completed');
 
 %-Loop over planes computing result Y
 %-----------------------------------------------------------------------
 corr_fact = exp(b1map_params.b1acq.TM/b1map_params.b1proc.T1);
 interp = 0;  % nearest neighbor interpolation
-for p = 1:V(1).dim(3) %loop over the partition dimension of the data set
-    SE_intensities = zeros([V(1).dim(1:2),n/2]);
+for p = 1:V_SE(1).dim(3) %loop over the partition dimension of the data set
+    SE_intensities = zeros([V_SE(1).dim(1:2),n/2]);
     for i = 1:n/2
         % SE image intensities to determine which estimates to trust
-        SE_intensities(:,:,i) = hmri_read_vols(V((i-1)*2+1),V(1),p,interp);
+        SE_intensities(:,:,i) = hmri_read_vols(V_SE(i),V_SE(1),p,interp);
         
         % B1 estimates
         Y_tmptmp(:,:,i,1) = real(acosd(corr_fact * ...
-            hmri_read_vols(V((i-1)*2+2),V(1),p,interp) ./ ...
+            hmri_read_vols(V_STE(i),V_SE(1),p,interp) ./ ...
             (SE_intensities(:,:,i)+b1map_params.b1proc.eps)) / ...
             b1map_params.b1acq.beta(i));
             
@@ -410,8 +404,8 @@ for p = 1:V(1).dim(3) %loop over the partition dimension of the data set
     
     % We trust values with highest SE intensity
     [~,indexes] = sort(SE_intensities,3,'descend');
-    for x_nr = 1:V(1).dim(1)
-        for y_nr = 1:V(1).dim(2)         
+    for x_nr = 1:V_SE(1).dim(1)
+        for y_nr = 1:V_SE(1).dim(2)         
             real_Y_tmp(x_nr,y_nr,:,:) = Y_tmptmp(x_nr,y_nr,indexes(x_nr,y_nr,1:b1map_params.b1proc.Nonominalvalues),:);
         end
     end
@@ -421,8 +415,8 @@ for p = 1:V(1).dim(3) %loop over the partition dimension of the data set
     % The algorithm below treats the combinations as (nAmbiguousAngles)-ary 
     % numbers from 00...0 to NN...N to index all possible combinations
     Nperms=nAmbiguousAngles^b1map_params.b1proc.Nonominalvalues;
-    Y_sd  = zeros([V(1).dim(1:2) Nperms]);
-    Y_mn  = zeros([V(1).dim(1:2) Nperms]);
+    Y_sd  = zeros([V_SE(1).dim(1:2) Nperms]);
+    Y_mn  = zeros([V_SE(1).dim(1:2) Nperms]);
     for i = 1:Nperms
         perm=(dec2base(i-1, nAmbiguousAngles, b1map_params.b1proc.Nonominalvalues)-'0') + 1; % difference between char 'N' and char '0' is integer N
         idxs=sub2ind([b1map_params.b1proc.Nonominalvalues,nAmbiguousAngles],1:b1map_params.b1proc.Nonominalvalues,perm);
@@ -431,8 +425,8 @@ for p = 1:V(1).dim(3) %loop over the partition dimension of the data set
     end
 
     [~,min_index] = min(Y_sd,[],3); % !! min_index is a 2D array. Size given by resolution along read and phase directions
-    for x_nr = 1:V(1).dim(1)
-        for y_nr = 1:V(1).dim(2) 
+    for x_nr = 1:V_SE(1).dim(1)
+        for y_nr = 1:V_SE(1).dim(2) 
             % Y_mn_out is the relative flip angle value averaged over the 
             % Nonominalvalues flip angles (determined by minimising the SD,
             % i.e. keeping the most uniform relative flip angle values)
@@ -456,7 +450,7 @@ Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (EP
 % save B1 map (still distorted and not smoothed)
 Output_hdr.history.output.imtype = 'SE/STE B1 mapping - Distorted B1+ map';
 Output_hdr.history.output.units = 'p.u.';
-V_save = struct('fname',V(1).fname,'dim',V(1).dim,'mat',V(1).mat,'dt',V(1).dt,'descrip','B1 map [%]');
+V_save = struct('fname',V_SE(1).fname,'dim',V_SE(1).dim,'mat',V_SE(1).mat,'dt',V_SE(1).dt,'descrip','B1 map [%]');
 [~,outname,e] = fileparts(V_save.fname);
 V_save.fname = fullfile(outpath,['B1map_' outname e]);
 V_save = spm_write_vol(V_save,Y_mn_out*100);
@@ -465,7 +459,7 @@ set_metadata(V_save.fname,Output_hdr,json);
 % save SD map (still distorted and not smoothed)
 Output_hdr.history.output.imtype = 'SE/STE B1 mapping - Distorted SD (error) map';
 Output_hdr.history.output.units = 'p.u.';
-W_save = struct('fname',V(1).fname,'dim',V(1).dim,'mat',V(1).mat,'dt',V(1).dt,'descrip','SD [%]');
+W_save = struct('fname',V_SE(1).fname,'dim',V_SE(1).dim,'mat',V_SE(1).mat,'dt',V_SE(1).dt,'descrip','SD [%]');
 W_save.fname = fullfile(outpath,['SDmap_' outname e]);
 W_save = spm_write_vol(W_save,Y_sd_out*100);
 set_metadata(W_save.fname,Output_hdr,json);
@@ -473,7 +467,7 @@ set_metadata(W_save.fname,Output_hdr,json);
 % save SD map (still distorted and not smoothed)
 Output_hdr.history.output.imtype = 'SE/STE B1 mapping - SSQ image';
 Output_hdr.history.output.units = 'a.u.';
-X_save = struct('fname',V(1).fname,'dim',V(1).dim,'mat',V(1).mat,'dt',V(1).dt,'descrip','SE SSQ matrix');
+X_save = struct('fname',V_SE(1).fname,'dim',V_SE(1).dim,'mat',V_SE(1).mat,'dt',V_SE(1).dt,'descrip','SE SSQ matrix');
 X_save.fname = fullfile(outpath,['SumOfSq' outname e]);
 X_save = spm_write_vol(X_save,Ssq_matrix); %#ok<*NASGU>
 set_metadata(X_save.fname,Output_hdr,json);

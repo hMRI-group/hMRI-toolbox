@@ -12,7 +12,7 @@ function [fn_maskTC,fn_meanTC] = hmri_proc_crtMask(fn_smwTC, opts)
 %             cell array) of the modulated warped tissue classes, 
 %             ex. the mwc1/2*.nii filenames in the 1st and 2nd cell.
 % - opts    : option structure
-%   .minTCp : minimal posterior probability value to be considerd [.2, def]
+%   .minTCp : minimal posterior probability value to be considered [.2, def]
 %   .noOvl  : avoid overlap by assigning to tissue class with maximum
 %             posterior probability [1, def]
 %   .outPth : path to output folder, use that of the 1st image if it is 

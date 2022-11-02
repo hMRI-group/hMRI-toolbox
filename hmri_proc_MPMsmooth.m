@@ -118,11 +118,11 @@ for ii=1:nMPM
     
     % Smooth TC -> m-images, generate at 1st run
     if ii==1
-    m = cell(nTC,1);
-    for jj=1:nTC
-        m{jj} = spm_file(fn_mwTC(jj,:),'prefix','s','number','');
-        spm_smooth(fn_mwTC(jj,:),m{jj},fwhm); % smooth mwc(jj)
-    end
+        m = cell(nTC,1);
+        for jj=1:nTC
+            m{jj} = spm_file(fn_mwTC(jj,:),'prefix','s','number','');
+            spm_smooth(fn_mwTC(jj,:),m{jj},fwhm); % smooth mwc(jj)
+        end
     end
     
     % Smooth weighted MPM (p) -> n-images

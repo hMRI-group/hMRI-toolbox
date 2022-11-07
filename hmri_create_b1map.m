@@ -761,12 +761,12 @@ switch b1_protocol
 
             if b1map_params.b1validation.useBidsFlipAngleField
                 tmp = get_metadata_val(b1hdr{1},'FlipAngle');
-                FA_SE = zeros(size(V_SE));
+                FA_SE = zeros(1,length(V_SE));
                 FA_STE = FA_SE;
                 if ~isempty(tmp)&&tmp~=0
                     for n = 1:length(V_SE)
-                        FA_SE(n)  = get_metadata_val(V_SE(n), 'FlipAngle');
-                        FA_STE(n) = get_metadata_val(V_STE(n),'FlipAngle');
+                        FA_SE(n)  = get_metadata_val(V_SE(n).fname, 'FlipAngle');
+                        FA_STE(n) = get_metadata_val(V_STE(n).fname, 'FlipAngle');
                     end
                 else
                     hmri_log('WARNING: "useBidsFlipAngleField" is true but FlipAngle is empty or zero', ...

@@ -89,7 +89,7 @@ if nargin<5 || numel(l_TC)~=nTC
 end
 
 % Flags for image calculation
-ic_flag = struct(...%    'dtype', 16, ... % keep things in floats
+ic_flag = struct(... % type is set below based on that of input image
     'interp', -4);   % 4th order spline interpolation
 
 %% Do the job

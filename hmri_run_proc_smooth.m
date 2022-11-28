@@ -4,7 +4,7 @@ function out = hmri_run_proc_smooth(job)
 % Data are selected in a 'many subject' style, i.e. all the images of one
 % type are selected from many subjects at once!
 % 
-% The 'out' structure is organized as a structure with 2 fileds
+% The 'out' structure is organized as a structure with 2 fields
 % .tc   : cell-array of size {n_TCs x n_pams}. Each element tc{ii,jj} is a 
 %         cell array {n_subj x 1} with each subject's smoothed data for
 %         the ii^th TC and jj^th MPM

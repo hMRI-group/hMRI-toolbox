@@ -156,7 +156,7 @@ job_smooth.fwhm = job.fwhm;
 % Run the *_proc_smooth
 fprintf('\nhMRI-pipeline: running the weighted-average (smoothing) module.\n')
 out_wa = hmri_run_proc_smooth(job_smooth);
-% The 'out_wa' structure is organized as a structure with 2 fileds
+% The 'out_wa' structure is organized as a structure with 2 fields
 % .tc   : cell-array of size {n_TCs x n_pams}. Each element tc{ii,jj} is a 
 %         cell array {n_subj x 1} with each subject's smoothed data for
 %         the ii^th TC and jj^th MPM

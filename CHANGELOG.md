@@ -10,6 +10,7 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 - double angle mapping (DAM) B1 mapping option
 - option to test ambiguous angle ranges beyond [0,90] and [90,180] degrees for SE/STE B1 mapping (nAmbiguousAngles b1 defaults parameter)
 - various B1 input checking
+- smoothing and masking options for all appropriate B1 mapping methods
 
 ### Fixed
 - issue #42 (Non-matching filename length can cause AFI B1 calculation crash)

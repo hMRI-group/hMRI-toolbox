@@ -33,7 +33,7 @@ function [fn_maskTC,fn_meanTC] = hmri_proc_crtMask(fn_smwTC, opts)
 % > analyzed in only one subspace and that non-brain tissue was excluded.
 % 
 % The function is relatively flexible as
-% - nTC differe tissue class images can be introduced. if only one is
+% - nTC different tissue class images can be introduced. If only one is
 %   provided, then only the minimal probability thresholding can be
 %   applied.
 % - this minimal probability threshold, by default 20%, can be changed;

@@ -32,7 +32,7 @@ proc_modul.tag     = 'proc_modul';
 proc_modul.name    = 'Proc. hMRI -> Individual modules';
 proc_modul.help    = {
     ['Parameter maps are spatially processed and brought into standard space',...
-    'for furhter statistical analysis.']
+    'for further statistical analysis.']
     ['This include 4 main processing steps:']
     ['- Unified Segmentation (US) -> produces individual tissue maps' ...
     '+ warping into MNI space']

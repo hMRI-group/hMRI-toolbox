@@ -472,7 +472,7 @@ hmri_def.qMRI_maps_thresh.SMMT= 1e3;
 
 % weighted combination - see Mohammadi et al., NeuroImage, 2022 for details
 hmri_def.wcombparams.kt         = 10; % in percent
-hmri_def.wcombparams.res        = -4;
+hmri_def.wcombparams.res        = -4; % interpolation option as defined in SPM
 hmri_def.wcombparams.smthk      = 0;
 hmri_def.wcombparams.dim        = 3;
 hmri_def.wcombparams.dummy_am   = true;

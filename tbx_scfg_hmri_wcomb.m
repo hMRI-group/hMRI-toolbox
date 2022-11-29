@@ -62,7 +62,7 @@ in_msk.val     = {''};
 %% call local wcomb function
 tbx_wcomb_out         = cfg_exbranch;
 tbx_wcomb_out.tag     = 'tbx_scfg_hmri_wcomb';
-tbx_wcomb_out.name    = 'Combine two successsive hMRI datasets';
+tbx_wcomb_out.name    = 'Combine two successive MPM datasets';
 tbx_wcomb_out.val     = {in_vols1 in_vols2 in_weights1 in_weights2 in_ref in_msk};
 tbx_wcomb_out.help    = {
                     'Weighted-combination of two hMRI maps from successive runs using error maps. This approach requires the acquisition of two successive runs of the MPM protocol. The proposed method and an example protocol is described in ....'

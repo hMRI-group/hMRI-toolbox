@@ -470,7 +470,7 @@ hmri_def.qMRI_maps_thresh.SMR1= 1e3;
 hmri_def.qMRI_maps_thresh.SMPD= 1e3;
 hmri_def.qMRI_maps_thresh.SMMT= 1e3;
 
-% weighted combination - see Mohammadi et al., 2022 (bioRxiv) for details
+% weighted combination - see Mohammadi et al., NeuroImage, 2022 for details
 hmri_def.wcombparams.kt         = 10; % in percent
 hmri_def.wcombparams.res        = -4;
 hmri_def.wcombparams.smthk      = 0;

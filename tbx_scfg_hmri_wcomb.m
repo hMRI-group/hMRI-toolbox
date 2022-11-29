@@ -65,7 +65,7 @@ tbx_wcomb_out.tag     = 'tbx_scfg_hmri_wcomb';
 tbx_wcomb_out.name    = 'Combine two successive MPM datasets';
 tbx_wcomb_out.val     = {in_vols1 in_vols2 in_weights1 in_weights2 in_ref in_msk};
 tbx_wcomb_out.help    = {
-                    'Weighted-combination of two hMRI maps from successive runs using error maps. This approach requires the acquisition of two successive runs of the MPM protocol. The proposed method and an example protocol is described in ....'
+                    'Weighted-combination of two MPMs from successive runs using error maps. This approach requires the acquisition of two successive runs of the MPM protocol. The proposed method and an example protocol is described in Mohammadi et al. 2022, NeuroImage'
 };
 tbx_wcomb_out.prog = @local_hmri_wcomb;
 tbx_wcomb_out.vout = @out_hmri_wcomb;

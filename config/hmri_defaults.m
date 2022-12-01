@@ -472,9 +472,10 @@ hmri_def.qMRI_maps_thresh.SMMT= 1e3;
 
 % weighted combination - see Mohammadi et al., NeuroImage, 2022 for details
 % might have to be adjusted for different dataset
-hmri_def.wcombparams.kt         = 10;   % This parameter is relevant and might have to be adjusted per protocol (defined in percent)
-hmri_def.wcombparams.res        = -4;   % resampling interpolation option as defined in SPM
-hmri_def.wcombparams.smthk      = 0;    % If larger than zero, the error maps will be smoothed 
+hmri_def.wcombparams.kt         = 10;   % This parameter is relevant and might have to be adjusted per protocol (defined in percent). 
+% Examples can be found in Mohammadi et al., NeuroImage, 2022, Supplementary Materials: S1: Efficiency of robust combination and the Fermi function
+hmri_def.wcombparams.res        = -4;   % Rresampling factor, determines interpolation method (details can be found in spm_slice_vol.m)
+hmri_def.wcombparams.smthk      = 0;    % If larger than zero, the error maps will be spatially smoothed with the a Gaussian kernel of FWHM = smthk
 hmri_def.wcombparams.dim        = 3;    % Defines dimention along which slices along which weightes will be determined
 hmri_def.wcombparams.dummy_am   = true; % True: arithmetic mean is written out, in addition to robust combination
 hmri_def.wcombparams.dummy_error= true; % True: robust combination of error maps is generated and written out

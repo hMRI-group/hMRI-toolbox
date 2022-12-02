@@ -501,7 +501,7 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
                 end
             end
             if mpm_params.errormaps
-                NEmap(ccon+1).dat(:,:,p) = SError.R2s;
+                NEmap(mpm_params.ncon+1).dat(:,:,p) = SError.R2s;
             end
         end
 

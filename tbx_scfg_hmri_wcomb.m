@@ -71,76 +71,14 @@ tbx_wcomb_out.prog = @local_hmri_wcomb;
 tbx_wcomb_out.vout = @out_hmri_wcomb;
 %% dependencies
 function out = local_hmri_wcomb(job)
-hmri_wcomb_2mpms(char(job.in_vols1), char(job.in_vols2), char(job.in_weights1), char(job.in_weights2), char(job.in_ref), char(job.in_msk));
+Pout = hmri_wcomb_2mpms(char(job.in_vols1), char(job.in_vols2), char(job.in_weights1), char(job.in_weights2), char(job.in_ref), char(job.in_msk));
 
-prefix = 'am';
-out.amfiles = my_spm_file(char(job.in_vols1),'prefix',prefix,'format','.nii');
-
-prefix = 'wa';
-out.wafiles = my_spm_file(char(job.in_vols1),'prefix',prefix,'format','.nii');
+extentwa = '_wa';
+out.wafiles = spm_file(Pout, 'suffix', extentwa);
 
 function dep = out_hmri_wcomb(job)
 kk = 1;
-dep(1)            = cfg_dep;
-dep(1).sname      = 'Arithmetic Mean';
-dep(1).src_output = substruct('.','amfiles');
-dep(1).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
-kk = kk + 1;
 dep(kk)            = cfg_dep;
 dep(kk).sname      = 'Weighted Average';
 dep(kk).src_output = substruct('.','wafiles');
 dep(kk).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
-
-
-%---extra function
-function varout = my_spm_file(varargin)
-if(nargin>=1)
-    filename=char(varargin{1});
-    for i=1:size(filename,1)
-        if(nargin>=3)
-            options=varargin{2};
-            prename=varargin{3};
-            if(strcmp('prefix',options))
-                [p,n,e] = spm_fileparts(filename(i,:));
-                varout{i}  = fullfile(p,[prename, n, e]);
-                if(nargin>=4 && nargin<=5)            
-                    options=varargin{4};
-                    endname=varargin{5};
-                    if(strcmp('format',options))
-                        [p,n,e]=spm_fileparts(filename(i,:));
-                        varout{i}  = fullfile(p,[prename,n, endname]);
-                    elseif(strcmp('ending',options))
-                        varout{i}  = fullfile(p,[prename,n, endname, e]);
-                    end
-                elseif(nargin>=7)
-                    options=varargin{4};
-                    endname=varargin{5};
-                    options2=varargin{6};
-                    endname2=varargin{7};
-                    if(strcmp('ending',options))
-                        if(strcmp('format',options2))
-                            varout{i}  = fullfile(p,[prename,n, endname, endname2]);
-                        else
-                            error('Error in assigning dependencies');
-                        end
-                    else
-                        error('Error in assigning dependencies');
-                    end
-                end
-            elseif(strcmp('ending',options))
-                [p,n,e]=spm_fileparts(filename(i,:));
-                varout{i}  = fullfile(p,[n prename e]);                
-                if(nargin>=5)            
-                    options=varargin{4};
-                    endname=varargin{5};
-                    if(strcmp('format',options))
-                        [p,n,e]=spm_fileparts(filename(i,:));
-                        varout{i}  = fullfile(p,[n prename endname]);
-                    end
-                end
-            end    
-        else
-            varout  = varargin{1};            
-        end
-    end
-end

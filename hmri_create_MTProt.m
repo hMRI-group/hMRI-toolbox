@@ -583,8 +583,8 @@ if mpm_params.errormaps
         
         P_mSNRscore.R1    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qR1).suffix '_mSNR.nii']);
         Ni = hmri_create_nifti(P_mSNRscore.R1,V_pdw(1),dt,['mSNR map ' mpm_params.output(mpm_params.qR1).suffix 'map']);
-        NSMpara.R1 = nifti;
-        NSMpara.R1 = Ni;
+        NSNRpara.R1 = nifti;
+        NSNRpara.R1 = Ni;
         
         % PD error maps
         PR2s_param_error.PD    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qPD).suffix 'param_error.nii']);
@@ -594,8 +594,8 @@ if mpm_params.errormaps
         
         P_mSNRscore.PD    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qPD).suffix '_mSNR.nii']);
         Ni = hmri_create_nifti(P_mSNRscore.PD,V_pdw(1),dt,['mSNR map ' mpm_params.output(mpm_params.qPD).suffix 'map']);
-        NSMpara.PD = nifti;
-        NSMpara.PD = Ni;
+        NSNRpara.PD = nifti;
+        NSNRpara.PD = Ni;
         if MTwidx
             % MT error maps
             PR2s_param_error.MT    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qMT).suffix 'param_error.nii']);
@@ -605,8 +605,8 @@ if mpm_params.errormaps
             
             P_mSNRscore.MT    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qMT).suffix '_mSNR.nii']);
             Ni = hmri_create_nifti(P_mSNRscore.MT,V_pdw(1),dt,['mSNR map ' mpm_params.output(mpm_params.qMT).suffix 'map']);
-            NSMpara.MT = nifti;
-            NSMpara.MT = Ni;
+            NSNRpara.MT = nifti;
+            NSNRpara.MT = Ni;
         end
     end
 end
@@ -701,7 +701,7 @@ for p = 1:dm(3)
             tmp = max(min(tmp,threshall.SNR_R1),-threshall.SNR_R1);
             tmp(abs(tmp)==threshall.SNR_R1) = 0;
             tmp(isnan(tmp)) = 0;
-            NSMpara.R1.dat(:,:,p) = tmp; 
+            NSNRpara.R1.dat(:,:,p) = tmp; 
         end
     end
     spm_progress_bar('Set',p);
@@ -800,7 +800,7 @@ for p = 1:dm(3)
             tmp(isnan(tmp)) = 0;
             tmp = max(min(tmp,threshall.SNR_PD),-threshall.SNR_PD);
             tmp(abs(tmp)==threshall.SNR_PD) = 0;
-            NSMpara.PD.dat(:,:,p) = tmp; % has to become a default
+            NSNRpara.PD.dat(:,:,p) = tmp; % has to become a default
         end
         
         % for MT maps calculation, one needs MTw images on top of the T1w
@@ -853,7 +853,7 @@ for p = 1:dm(3)
                 tmp(isnan(tmp)) = 0;
                 tmp = max(min(tmp,threshall.SNR_MT),-threshall.SNR_MT);
                 tmp(abs(tmp)==threshall.SNR_MT) = 0;
-                NSMpara.MT.dat(:,:,p) = tmp; % has to become a default
+                NSNRpara.MT.dat(:,:,p) = tmp; % has to become a default
             end
         end
     

@@ -77,12 +77,12 @@ function [R2s,extrapolated,SError]=hmri_calc_R2s(weighted_data,method)
 %   Edwards et al. Proc. Int. Soc. Magn. Reson. Med. (2022), "Robust and
 %     efficient R2* estimation in human brain using log-linear weighted
 %     least squares"
-% Mohammadi S, Streubel T, Klock L, Lutti A, Pine K, Weber S, Edwards L,
-% Scheibe P, Ziegler G, Gallinat J, Kühn S, Callaghan MF, Weiskopf N,
-% Tabelow K (2022)
-% Error quantification in multi-parameter mapping facilitates robust
-% estimation and enhanced group level sensitivity. :2022.01.11.475846
-% Available at: https://www.biorxiv.org/content/10.1101/2022.01.11.475846v1 [Accessed March 5, 2022].
+%   Mohammadi et al. NeuroImage (2022), "Error quantification in 
+%     multi-parameter mapping facilitates robust estimation and enhanced 
+%     group level sensitivity." 
+%     https://doi.org/10.1016/j.neuroimage.2022.119529
+
+
 
 assert(isstruct(weighted_data),'hmri:structError',['inputs must be structs; see help ' mfilename])
 

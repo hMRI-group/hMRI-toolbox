@@ -436,7 +436,7 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
     end % init nifti objects for fullOLS case
 
     if mpm_params.errormaps
-        ccon = ccon + 1;
+        ccon = mpm_params.ncon+ 1;
         PR2s_OLS_error{ccon}    = fullfile(calcpath,[outbasename '_' 'R2s_errorESTATICS' '.nii']);
         Ni = hmri_create_nifti(PR2s_OLS_error{ccon},V_pdw(1),dt,'Error map for R2s contrast');
         NEmap(ccon) = Ni;

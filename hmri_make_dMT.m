@@ -22,6 +22,12 @@ function dMT = hmri_make_dMT(SPD,ST1,SMT,dSPD,dST1,dSMT,alpha_PD,alpha_T1,alpha_
 % Out:
 % dMT           - error for MT in [a.u.]
 %
+% References:
+%   Mohammadi et al. NeuroImage (2022), "Error quantification in 
+%     multi-parameter mapping facilitates robust estimation and enhanced 
+%     group level sensitivity." 
+%     https://doi.org/10.1016/j.neuroimage.2022.119529
+
 % We do not scale the flip angles by fT, because that would be inconsistent
 % with what is used for MT calculation in the toolbox.
 

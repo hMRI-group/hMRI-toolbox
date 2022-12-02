@@ -6,16 +6,19 @@ function dMT = hmri_make_dMT(SPD,ST1,SMT,dSPD,dST1,dSMT,alpha_PD,alpha_T1,alpha_
 % S.Mohammadi 06.09.2019
 %
 % In:
+% SPD           - PDw signal at TE=0
+% ST1           - T1w signal at TE=0
 % SMT           - MTw signal at TE=0
-% A_forMT       - apparent proton density in arbritrary units
-% R1            - relaxation rate in 1/ms(?)
-% MT            - magnetization transfer saturation rate
-% dSMT          - residual of mono-exponential fit of MTw signal
 % dSPD          - residual of mono-exponential fit of PDw signal
 % dST1          - residual of mono-exponential fit of T1w signal
+% dSMT          - residual of mono-exponential fit of MTw signal
+% alpha_PD      - flip angle of T1w signal
 % alpha_MT      - flip angle of MTw signal
-% TRMT          - repitition time of MTDw signal
-%
+% TRPD          - repitition time of PDw signal
+% TRT1          - repitition time of T1w signal
+% TRMT          - repitition time of MTw signal
+% small_angle_approximation - Switch to turn off small-angle approximation
+% 
 % Out:
 % dMT           - error for MT in [a.u.]
 %

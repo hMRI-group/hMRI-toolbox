@@ -837,7 +837,7 @@ for p = 1:dm(3)
                 dMT = hmri_make_dMT(PDw,T1w,MTw,Edata.PDw,Edata.T1w,Edata.MTw,fa_pdw_rad,fa_t1w_rad,fa_mtw_rad,TR_pdw,TR_t1w,TR_mtw,mpm_params.small_angle_approx) * 100;
                 
                 if (~isempty(f_T))&&(~mpm_params.UNICORT.R1 || mpm_params.UNICORT.MT)
-                    dMT = dMT .* (1 - 0.4) ./ (1 - 0.4 * f_T);
+                    dMT = dMT .* abs((1 - 0.4) ./ (1 - 0.4 * f_T));
                 end
                 
                 % truncate MT error maps

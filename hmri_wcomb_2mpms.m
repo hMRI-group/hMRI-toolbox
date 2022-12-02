@@ -1,23 +1,30 @@
-function hmri_wcomb_2mpms(PIn1,PIn2,Pw1,Pw2,PVG,PMSK)
+function Pout = hmri_wcomb_2mpms(PIn1,PIn2,Pw1,Pw2,PVG,PMSK)
 % This function combines two input images (PIn1 and PIn2) using two weight 
 % images (Pw1 and Pw2) for each input image, respectively. PVG is used as
 % reference (space defining image). If PVG is unspecified, it will
 % automatically use PIn1.
 % S. Mohammadi 18/10/2019
 % In:
-% PIn           - Filepath & name of two input images
-% Pw            - Filepath & name of two weight images
-% 
+% PIn1           - Filepath & name of first input image
+% PIn2           - Filepath & name of second input image
+% Pw1            - Filepath & name of first weight image
+% Pw2            - Filepath & name of second weight image
+% PVG            - Filepath & name of reference image (Image to which all
+%                  will be resliced
+% PMSK           - Filepath & name of brain mask image
+
 % Out:
-% 
+% Pout          - Robust combination           - 
 
 wcombparams = hmri_get_defaults('wcombparams');
-res         = wcombparams.res;
+dummy_am    = wcombparams.am;
+dummy_error = wcombparams.errormaps;
+% Examples can be found in Mohammadi et al., NeuroImage, 2022, Supplementary Materials: S1: Efficiency of robust combination and the Fermi function
 kt          = wcombparams.kt/100;
-dummy_am    = wcombparams.dummy_am;
+% The following parameters are for experts only.
 smthk       = wcombparams.smthk;
 dim         = wcombparams.dim;
-dummy_error = wcombparams.dummy_error;
+res         = wcombparams.res;
 
 
 dt = [spm_type('float32'),spm_platform('bigend')]; % for nifti output
@@ -56,9 +63,9 @@ end
 
 for inx = 1:size(VIn1,1)
     % define output volume
-    Pout = spm_file(VIn1(inx).fname,'suffix',['_RO_k' num2str(kt)]);
+    PoutRO = spm_file(VIn1(inx).fname,'suffix',['_RO_k' num2str(kt)]);
     
-    Ntmp = hmri_create_nifti(Pout,VG,dt,deblank([VIn1(inx).descrip  ' - robust combination']));
+    Ntmp = hmri_create_nifti(PoutRO,VG,dt,deblank([VIn1(inx).descrip  ' - robust combination']));
     if dummy_error==true
         Pout = spm_file(Vw1(inx).fname,'suffix',['_RO_k' num2str(kt)]);
         Ntmperror = hmri_create_nifti(Pout,VG,dt,deblank([VIn1(inx).descrip  ' - robust combination error maps']));

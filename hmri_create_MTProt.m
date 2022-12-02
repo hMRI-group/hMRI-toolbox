@@ -433,19 +433,21 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
                 end
             end
         end
-    end % init nifti objects for fullOLS case
 
-    if mpm_params.errormaps
-        ccon = ccon + 1;
-        PR2s_OLS_error{ccon}    = fullfile(calcpath,[outbasename '_' 'R2s_errorESTATICS' '.nii']);
-        Ni = hmri_create_nifti(PR2s_OLS_error{ccon},V_pdw(1),dt,'Error map for R2s contrast');
-        NEmap(ccon) = Ni;
-        
-        % this is unused
-        PR2s_OLS_mSNR    = fullfile(calcpath,[outbasename '_' 'R2s_mSNR' '.nii']);
-        Ni      = hmri_create_nifti(PR2s_OLS_mSNR,V_pdw(1),dt,'Standarized map for R2s contrast');
-        NSMmap = Ni;
-    end
+        % Since the error maps has been introduced for the "fullOLS" case,
+        % they are only available if fullOLS = TRUE.
+        if mpm_params.errormaps
+            ccon = ccon + 1;
+            PR2s_OLS_error{ccon}    = fullfile(calcpath,[outbasename '_' 'R2s_errorESTATICS' '.nii']);
+            Ni = hmri_create_nifti(PR2s_OLS_error{ccon},V_pdw(1),dt,'Error map for R2s contrast');
+            NEmap(ccon) = Ni;
+            
+            % this is unused
+            PR2s_OLS_mSNR    = fullfile(calcpath,[outbasename '_' 'R2s_mSNR' '.nii']);
+            Ni      = hmri_create_nifti(PR2s_OLS_mSNR,V_pdw(1),dt,'Standarized map for R2s contrast');
+            NSMmap = Ni;
+        end
+    end % init nifti objects for fullOLS case
 
     fR2s_OLS    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qR2s).suffix '_' mpm_params.R2s_fit_method '.nii']);
     Ni = hmri_create_nifti(fR2s_OLS, V_pdw(1), dt, ...

@@ -696,8 +696,8 @@ for p = 1:dm(3)
             % standardized maps
             tmp = (R1./dR1);
             tmp(dR1<=threshall.dR1) = 0;
-            tmp = max(min(tmp,threshall.SMR1),-threshall.SMR1);
-            tmp(abs(tmp)==threshall.SMR1) = 0;
+            tmp = max(min(tmp,threshall.SNR_R1),-threshall.SNR_R1);
+            tmp(abs(tmp)==threshall.SNR_R1) = 0;
             tmp(isnan(tmp)) = 0;
             NSMpara.R1.dat(:,:,p) = tmp; 
         end
@@ -796,8 +796,8 @@ for p = 1:dm(3)
             tmp = A./dPD;
             tmp(dPD<=threshall.dPD) = 0;
             tmp(isnan(tmp)) = 0;
-            tmp = max(min(tmp,threshall.SMPD),-threshall.SMPD);
-            tmp(abs(tmp)==threshall.SMPD) = 0;
+            tmp = max(min(tmp,threshall.SNR_PD),-threshall.SNR_PD);
+            tmp(abs(tmp)==threshall.SNR_PD) = 0;
             NSMpara.PD.dat(:,:,p) = tmp; % has to become a default
         end
         
@@ -849,8 +849,8 @@ for p = 1:dm(3)
                 tmp = MT./(dMT);
                 tmp(dMT<=threshall.dMT) = 0;
                 tmp(isnan(tmp)) = 0;
-                tmp = max(min(tmp,threshall.SMMT),-threshall.SMMT);
-                tmp(abs(tmp)==threshall.SMMT) = 0;
+                tmp = max(min(tmp,threshall.SNR_MT),-threshall.SNR_MT);
+                tmp(abs(tmp)==threshall.SNR_MT) = 0;
                 NSMpara.MT.dat(:,:,p) = tmp; % has to become a default
             end
         end

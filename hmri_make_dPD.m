@@ -13,6 +13,8 @@ function dPD = hmri_make_dPD(SPD,ST1,dSPD,dST1,alpha_PD,alpha_T1,TRPD,TRT1,f_T,s
 % TRPD          - repetition time of PDw signal
 % TRT1          - repetition time of T1w signal
 % f_T           - map of transmit field
+% small_angle_approximation - Switch to turn off small-angle approximation
+% 
 %
 % Out:
 % dPD           - error for A in [a.u.]

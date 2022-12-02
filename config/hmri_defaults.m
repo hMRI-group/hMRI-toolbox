@@ -466,9 +466,9 @@ hmri_def.qMRI_maps_thresh.dPD = 1e-2;
 hmri_def.qMRI_maps_thresh.dMT = 1e-4;
 
 % upper bounds on SNR maps dR1/R1, dPD/PD and dMTsat/MTsat
-hmri_def.qMRI_maps_thresh.SMR1= 1e3;
-hmri_def.qMRI_maps_thresh.SMPD= 1e3;
-hmri_def.qMRI_maps_thresh.SMMT= 1e3;
+hmri_def.qMRI_maps_thresh.SNR_R1= 1e3;
+hmri_def.qMRI_maps_thresh.SNR_PD= 1e3;
+hmri_def.qMRI_maps_thresh.SNR_MT= 1e3;
 
 % weighted combination - see Mohammadi et al., NeuroImage, 2022 for details
 % might have to be adjusted for different dataset

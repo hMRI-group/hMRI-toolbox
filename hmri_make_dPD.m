@@ -16,6 +16,7 @@ function dPD = hmri_make_dPD(SPD,ST1,dSPD,dST1,alpha_PD,alpha_T1,TRPD,TRT1,f_T,s
 %
 % Out:
 % dPD           - error for A in [a.u.]
+% 
 % Reference:
 %   Mohammadi et al. NeuroImage (2022), "Error quantification in 
 %     multi-parameter mapping facilitates robust estimation and enhanced 

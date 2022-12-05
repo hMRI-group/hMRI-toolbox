@@ -65,8 +65,8 @@ for inx = 1:size(VIn1,1)
     % define output volume
     PoutRO = spm_file(VIn1(inx).fname,'suffix',['_RO_k' num2str(kt)]);
     
-    Ntmp = hmri_create_nifti(PoutRO,VG,dt,deblank([VIn1(inx).descrip  ' - robust combination']));
-    if dummy_error==true
+    Ntmp = hmri_create_nifti(Pout,VG,dt,deblank([VIn1(inx).descrip  ' - robust combination']));
+    if dummy_error
         Pout = spm_file(Vw1(inx).fname,'suffix',['_RO_k' num2str(kt)]);
         Ntmperror = hmri_create_nifti(Pout,VG,dt,deblank([VIn1(inx).descrip  ' - robust combination error maps']));
     end

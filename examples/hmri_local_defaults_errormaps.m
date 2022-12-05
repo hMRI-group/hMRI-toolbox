@@ -41,7 +41,7 @@ function hmri_local_defaults_errormaps
 global hmri_def
 
 %==========================================================================
-% New feature: generate error maps
+% Generation of error maps
 %==========================================================================
 % errormaps
 hmri_def.errormaps  = true;

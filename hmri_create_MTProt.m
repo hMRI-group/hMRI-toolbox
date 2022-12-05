@@ -449,6 +449,7 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
         end
     end % init nifti objects for fullOLS case
 
+
     fR2s_OLS    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qR2s).suffix '_' mpm_params.R2s_fit_method '.nii']);
     Ni = hmri_create_nifti(fR2s_OLS, V_pdw(1), dt, ...
         [mpm_params.R2s_fit_method ' R2* map [s-1]']);
@@ -503,7 +504,7 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
                 end
             end
             if mpm_params.errormaps
-                NEmap(ccon+1).dat(:,:,p) = SError.R2s;
+                NEmap(mpm_params.ncon+1).dat(:,:,p) = SError.R2s;
             end
         end
 
@@ -839,7 +840,7 @@ for p = 1:dm(3)
                 dMT = hmri_make_dMT(PDw,T1w,MTw,Edata.PDw,Edata.T1w,Edata.MTw,fa_pdw_rad,fa_t1w_rad,fa_mtw_rad,TR_pdw,TR_t1w,TR_mtw,mpm_params.small_angle_approx) * 100;
                 
                 if (~isempty(f_T))&&(~mpm_params.UNICORT.R1 || mpm_params.UNICORT.MT)
-                    dMT = dMT .* (1 - 0.4) ./ (1 - 0.4 * f_T);
+                    dMT = dMT .* abs((1 - 0.4) ./ (1 - 0.4 * f_T));
                 end
                 
                 % truncate MT error maps

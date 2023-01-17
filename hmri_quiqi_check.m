@@ -38,7 +38,7 @@ pow      =   job.power;
 ResFiles=cellstr(spm_select('FPList',pn,'^Res_'));
 
 if length(ResFiles{1})==0
-    error('No residual files could be found in the folder of the SPM.mat file')
+    error('No residual files could be found in the folder of the SPM.mat file. Please ensure to save the image residuals when estimating the model. ')
 end
 
 

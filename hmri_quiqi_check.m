@@ -38,7 +38,7 @@ pow      =   job.power;
 ResFiles=cellstr(spm_select('FPList',pn,'^Res_'));
 
 if length(ResFiles{1})==0
-    error('No residual files could be found in the folder of the SPM.mat file')
+    error('No residual files could be found in the folder of the SPM.mat file. Please ensure to save the image residuals when estimating the model. ')
 end
 
 
@@ -129,10 +129,8 @@ function plotResFit(Y,yfit,Rsq,Nbins,SavePath)
 % function of the MDI
 
 figure
-[N1, c] = hist3(cat(2,Y,yfit),{linspace(min(min(Y),min(yfit)),max(max(Y),max(yfit)),Nbins) linspace(min(min(Y),min(yfit)),max(max(Y),max(yfit)),Nbins) },'CdataMode','auto');
-h=pcolor(c{1}, c{2}, N1');set(h, 'EdgeColor', 'none');
-colorbar;view(2)
 hold on
+plot(Y,yfit,'*')
 plot(Y,Y,'r','Linewidth',2)%for reference
 title(['R^2 = ' num2str(round(Rsq*1e2)/1e2)])
 ylabel('Residual fit');xlabel('Residuals');

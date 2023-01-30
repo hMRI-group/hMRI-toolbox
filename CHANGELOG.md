@@ -7,7 +7,8 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 ## [unreleased]
 
 ### Fixed
-- QUIQI check dependence on stats toolbox
+- QUIQI check: dependence on stats toolbox
+- issue #14 (Spatial processing: Inverse deformation field moved along with forward deformation field to requested folder)
 
 ## [v0.5.0]
 

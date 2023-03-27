@@ -4,6 +4,26 @@ This changelog documents all notable changes to the hMRI-toolbox.
 
 Most recent version numbers *should* follow the [Semantic Versioning](https://semver.org/spec/v2.0.0.html) principles (e.g. bug fixes: x.x.1 > x.x.2, new feature with backward compatibility: x.2.x > x.3.0, major release affecting the way data are handled and processed: 1.x.x > 2.0.0).
 
+## [unreleased]
+### Fixed
+- QUIQI check: dependence on stats toolbox
+- issue #14 (Spatial processing: Inverse deformation field moved along with forward deformation field to requested folder)
+- issue #59: both the [qform and the sform](https://nifti.nimh.nih.gov/nifti-1/documentation/nifti1fields/nifti1fields_pages/qsform.html) of the first PD-weighted image are now propagated to the quantitative maps, rather than just the sform
+
+## [v0.5.0]
+
+### Added
+- double angle mapping (DAM) B1 mapping option
+- option to test ambiguous angle ranges beyond [0,90] and [90,180] degrees for SE/STE B1 mapping (nAmbiguousAngles b1 defaults parameter)
+- various B1 input checking
+- smoothing and masking options for all appropriate B1 mapping methods
+
+### Fixed
+- issue #42 (Non-matching filename length can cause AFI B1 calculation crash)
+- issue #46 (Toolbox expects SE/STE input sorted by echo and flip angle whereas BIDS sorts by flip angle then echo)
+- issue #26 (Possible bug in calculation of B1 maps with SE/STE EPI)
+- SE/STE B1 mapping calculation can now no longer select both ambiguous angles for a given SE/STE pair
+
 ## [v0.4.0]
 
 ### Added

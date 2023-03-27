@@ -1,8 +1,8 @@
-classdef webdav
+classdef hmri_webdav
     %WebDav access to public ownCloud instances.
     %   Creation:
-    %   d = webdav(<server_url>,<ownCloud token>)
-    %   eg: dv=webdav('https://owncloud.gwdg.de','iv2TOQwGy4FGDDZ')
+    %   dv = hmri_webdav(<server_url>,<ownCloud token>)
+    %   eg: dv=hmri_webdav('https://owncloud.gwdg.de','iv2TOQwGy4FGDDZ')
     %   for https://owncloud.gwdg.de/s/iv2TOQwGy4FGDDZ
     %   
     %   listing: 
@@ -32,7 +32,7 @@ classdef webdav
     end
     
     methods
-        function obj = webdav(SERVER_URI,token)
+        function obj = hmri_webdav(SERVER_URI,token)
             obj.SERVER_URI = string(SERVER_URI);
             obj.token = string(token);
         end

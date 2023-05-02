@@ -1,43 +1,55 @@
 classdef hmri_osf
-    %Reading access to osf storage nodes.
-    %   Creation:
-    %   hmri_osf(<node_id>,<access_token>)
-    %   eg: osf = hmri_osf("k4bs5","")
-    %   for https://osf.io/k4bs5/
-    %   
-    %   listing: 
-    %   osf.ls() will return associative list of directory entries (files or 
-    %   sudirectories) and structs with information to those entries.
-    %   
+    % HMRI_OSF Reading access to osf storage nodes.
+    %   This class provides an interface to interact with osf storage nodes
+    %   for listing and downloading files and directories.
     %
-    %   downloading:
-    %   osf.download(<path to file/directory>)
-    %   Will download the given file or directory recursively.
-    %   Files that already exist, and are not older than the source will
-    %   not be downloaded again.
-    %   eg: osf.download('ds-mp2rage/sub-1/anat') will create a diretory 
-    %   'ds-mp2rage/sub-1/anat' and fill that with the content of the
-    %   respective directory on osf.
+    %   Creation:
+    %       % Access the hMRI Toolbox example data at https://osf.io/k4bs5/
+    %       osf = hmri_osf()
+    %       % Set output folder for downloaded content
+    %       osf.target_root = "/tmp" % Set output folder
+    %   
+    %   Listing:
+    %       % Get directory content as map of files and subdirectories.
+    %       % Values of the map are structs with information about entries
+    %       content = osf.ls()
+    %       % Get all names of entries inside the "ds-mp2rage" directory
+    %       content("ds-mp2rage").files.keys
+    %
+    %   Downloading:
+    %       osf.download("<path to file/directory>")
+    %       % Will download the given file or directory recursively.
+    %       % Files that already exist, and are not older than the source
+    %       % will not be downloaded again.
+    %       osf.download('ds-mp2rage/sub-1/anat')
+    %       % will create a diretory 'ds-mp2rage/sub-1/anat' and fill that
+    %       % with the content of the respective directory on osf.
     %   
     %   Tested with Matlab 2019b-2023a 
     %   (2019a failes because of missing certs)
 
     
     properties
-        API_URL = "https://api.osf.io/v2";
-        target_root = string(pwd);
-        root_node;
-        token;
+        root_node = "k4bs5";       % Root node ID of the OSF project
+        token = "";                % Access token for the OSF project
+        target_root = string(pwd); % Target root directory for downloads
     end
-   
+
+    properties (Access=private)
+        API_URL = "https://api.osf.io/v2"; % % Base URL for OSF API
+    end
+
+
     methods (Access = private)
         function check_makedir(obj,target)
+            % Check if the target directory exists and create it if not
             if(isfolder(target)==0)
                 mkdir(target)
             end
         end
 
         function req=gen_request(obj)
+            % % Generate an HTTP request with appropriate headers
             if strlength(obj.token)
                 hdr=[matlab.net.http.HeaderField("Authorization", "Bearer " + string(obj.token))];
             else
@@ -47,11 +59,13 @@ classdef hmri_osf
         end
 
         function json = get_json(obj, url)
+            % Get JSON data from a given URL
             result = send(obj.gen_request(),url);
             json = jsondecode(string(result.Body));
         end
         
         function files = node_ls(obj,node)
+            % List all files and folders within a given node
             files = containers.Map;
             files_url = node.relationships.files.links.related.href;
             data = obj.get_json(files_url).data;
@@ -74,8 +88,11 @@ classdef hmri_osf
         end
         
         function download_entry(obj,entry,target)
+            % Download a single entry (file or directory) to the specified target
+            fprintf("Ping 1")
             import matlab.net.*
             import matlab.net.http.*
+            fprintf("Ping 2")
             if(entry.isfile)
                 if(isfile(target{1}))
                     file = dir(target{1});
@@ -95,6 +112,7 @@ classdef hmri_osf
         end
         
         function download_r(obj, files, lh, rh)
+            % Recursive download function
             target_dir = join([obj.target_root,lh],'/');
             obj.check_makedir(target_dir);
             if(numel(rh)==1) %leaf
@@ -112,20 +130,18 @@ classdef hmri_osf
         end
         
     end
-    methods
 
+    methods
         function files = ls(obj)
+            % List files and directories of the root node
             node = obj.get_json(join([obj.API_URL,"nodes",obj.root_node,"files"],"/")).data;
             files=obj.node_ls(node);
         end
-        function obj = hmri_osf(root_node,token)
-            obj.root_node = string(root_node);
-            obj.token = token;
-        end
+
         function download(obj,filename)
+            % Download the specified file or directory
             obj.download_r(obj.ls(),[],split(string(filename),"/"));
         end
-
     end
 end
 

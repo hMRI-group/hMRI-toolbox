@@ -2,20 +2,20 @@ classdef hmri_osf
     %Reading access to osf storage nodes.
     %   Creation:
     %   hmri_osf(<node_id>,<access_token>)
-    %   eg: o = hmri_osf("k4bs5","")
+    %   eg: osf = hmri_osf("k4bs5","")
     %   for https://osf.io/k4bs5/
     %   
     %   listing: 
-    %   dv.ls() will return associative list of directory entries (files or 
+    %   osf.ls() will return associative list of directory entries (files or 
     %   sudirectories) and structs with information to those entries.
     %   
     %
     %   downloading:
-    %   obj.download(<path to file/directory>)
+    %   osf.download(<path to file/directory>)
     %   Will download the given file or directory recursivly.
     %   Files that already exist, and are not older than the source will
     %   not be downloaded again.
-    %   eg: o.download('ds-mp2rage/sub-1/anat') will create a diretory 
+    %   eg: osf.download('ds-mp2rage/sub-1/anat') will create a diretory 
     %   'ds-mp2rage/sub-1/anat' and fill that with the content of the
     %   respective directory on osf.
     %   

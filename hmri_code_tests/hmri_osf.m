@@ -12,7 +12,7 @@ classdef hmri_osf
     %
     %   downloading:
     %   osf.download(<path to file/directory>)
-    %   Will download the given file or directory recursivly.
+    %   Will download the given file or directory recursively.
     %   Files that already exist, and are not older than the source will
     %   not be downloaded again.
     %   eg: osf.download('ds-mp2rage/sub-1/anat') will create a diretory 

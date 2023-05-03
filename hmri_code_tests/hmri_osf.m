@@ -13,6 +13,8 @@ classdef hmri_osf
     %       % Get directory content as map of files and subdirectories.
     %       % Values of the map are structs with information about entries
     %       content = osf.ls()
+    %       % Get a tree view of all files and directories
+    %       osf.print_tree()
     %       % Get all names of entries inside the "ds-mp2rage" directory
     %       content("ds-mp2rage").files.keys
     %
@@ -41,7 +43,7 @@ classdef hmri_osf
 
 
     methods (Access = private)
-        function check_makedir(obj,target)
+        function check_makedir(~,target)
             % Check if the target directory exists and create it if not
             if(isfolder(target)==0)
                 mkdir(target)
@@ -89,10 +91,8 @@ classdef hmri_osf
         
         function download_entry(obj,entry,target)
             % Download a single entry (file or directory) to the specified target
-            fprintf("Ping 1")
             import matlab.net.*
             import matlab.net.http.*
-            fprintf("Ping 2")
             if(entry.isfile)
                 if(isfile(target{1}))
                     file = dir(target{1});
@@ -128,14 +128,71 @@ classdef hmri_osf
                 end
             end
         end
-        
+
+        function indent = dash_indent(~, x)
+            % Helper method
+            pipe = char(9474);
+            if x == 1
+                indent = strcat(pipe, "   ");
+            else
+                indent = "    ";
+            end
+        end
+
+        function tree_helper(obj, files, indents)
+            % Visits files recursively and prints the file tree
+
+            % Characters we need for beautiful output
+            pipe_dash = char(9500);
+            pipe_end = char(9492);
+            dash = char(9472);
+
+            % Each line starts with a certain indent the represents the
+            % current depth of the entry in the filesystem. Also, we have
+            % vertical pipes at specific places that indicate the parent
+            % directory
+            if isempty(indents)
+                line_start = "";
+            else
+                line_start = join(arrayfun(@(x) obj.dash_indent(x), indents), "");
+            end
+
+            % Loop through each entry and print the file/directory with the
+            % correct indent and line marks. For each directory, the
+            % tree_helper function is called recursively.
+            keys = files.keys();
+            for i = 1:length(keys)
+                entry = files(keys{i});
+                if i == length(keys)
+                    next_indent = 0;
+                    entry_dash = strcat(pipe_end, dash);
+                else
+                    next_indent = 1;
+                    entry_dash = strcat(pipe_dash, dash);
+                end
+                if entry.isfile == 1
+                    fprintf("%s %s", strcat(line_start, entry_dash), keys{i});
+                    fprintf(" (%s)\n", entry.download);
+                else
+                    fprintf("%s %s\n", strcat(line_start, entry_dash), keys{i});
+                    tree_helper(obj, entry.files, [indents, next_indent]);
+                end
+            end
+        end
+
     end
+
 
     methods
         function files = ls(obj)
             % List files and directories of the root node
             node = obj.get_json(join([obj.API_URL,"nodes",obj.root_node,"files"],"/")).data;
             files=obj.node_ls(node);
+        end
+
+        function print_tree(obj)
+            % Prints out the directory structure like the Unix tree command
+            tree_helper(obj, obj.ls(), [])
         end
 
         function download(obj,filename)

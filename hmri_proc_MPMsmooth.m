@@ -148,14 +148,8 @@ for ii=1:nMPM
     % Set 0's to NaN for the types that have NaN representation
     % -> proper implicit masking during SPM analysis
     if NaNrep
-        for jj=1:nTC
-            spm_imcalc(q{jj}, q{jj}, ... % same input and output
-            'i1.*(i1./i1)',ic_flag);
-            % use the fact that 0/0 -> NaN while any other value -> 1
-            % example:
-            % i1 = [1 2 0 4 0]; i1.*(i1./i1) 
-            % -> [1 2 NaN 4 NaN]
-        end
+        % simply call the ad hoc function
+        hmri_proc_zero2nan(q{jj})
     end
     
     fn_out{ii} = char(q); % saved as char array

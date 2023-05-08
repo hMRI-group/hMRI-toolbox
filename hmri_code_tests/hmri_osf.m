@@ -70,22 +70,26 @@ classdef hmri_osf
             % List all files and folders within a given node
             files = containers.Map;
             files_url = node.relationships.files.links.related.href;
-            data = obj.get_json(files_url).data;
-            for f = 1:length(data)
-                kind = string(data(f).attributes.kind);
-                if kind == "file"
-                    entry.fullpath = string(data(f).attributes.materialized_path);
-                    entry.date = datetime(data(f).attributes.date_modified,'InputFormat',"yyyy-MM-dd'T'HH:mm:ss.SSSSSS");
-                    entry.size = data(f).attributes.size;
-                    entry.download = data(f).links.download;
-                    entry.isfile = true;
-                    files(string(data(f).attributes.name)) = entry;
-                else
-                    entry.fullpath = string(data(f).attributes.materialized_path);
-                    entry.isfile = false;
-                    entry.files = obj.node_ls(data(f));
-                    files(string(data(f).attributes.name)) = entry;
+            while(files_url)
+                result = obj.get_json(files_url);
+                data = result.data;
+                for f = 1:length(data)
+                    kind = string(data(f).attributes.kind);
+                    if kind == "file"
+                        entry.fullpath = string(data(f).attributes.materialized_path);
+                        entry.date = datetime(data(f).attributes.date_modified,'InputFormat',"yyyy-MM-dd'T'HH:mm:ss.SSSSSS");
+                        entry.size = data(f).attributes.size;
+                        entry.download = data(f).links.download;
+                        entry.isfile = true;
+                        files(string(data(f).attributes.name)) = entry;
+                    else
+                        entry.fullpath = string(data(f).attributes.materialized_path);
+                        entry.isfile = false;
+                        entry.files = obj.node_ls(data(f));
+                        files(string(data(f).attributes.name)) = entry;
+                    end
                 end
+                files_url=result.links.next;
             end
         end
         

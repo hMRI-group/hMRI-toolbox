@@ -151,7 +151,11 @@ tissue_params            = cfg_branch;
 tissue_params.tag        = 'tissue_params';
 tissue_params.name       = 'Tissue parameters';
 tissue_params.help       = {'Input all the tissue parameters.'};
-tissue_params.val        = {T1range T2 D};
+tissue_params.val        = {T1range T2};
+
+tissue_params_diff      = tissue_params;
+tissue_params_diff.tag = 'tissue_params_diff';
+tissue_params_diff.val  = [tissue_params.val, {D}];
 
 % ---------------------------------------------------------------------
 % All sequence parameters
@@ -160,7 +164,28 @@ seq_params            = cfg_branch;
 seq_params.tag        = 'seq_params';
 seq_params.name       = 'Sequence parameters';
 seq_params.help       = {'Input all the sequence parameters.'};
-seq_params.val        = {FA TR Phi0 B1range Gdur Gamp};
+seq_params.val        = {FA TR Phi0 B1range};
+
+seq_params_diff      = seq_params;
+seq_params_diff.tag  = 'seq_params_diff';
+seq_params_diff.val  = [seq_params.val, {Gdur Gamp}];
+
+params_diff      = cfg_branch;
+params_diff.tag  = 'params_diff';
+params_diff.name = 'With diffusion spoiling';
+params_diff.val  = {seq_params_diff, tissue_params_diff};
+
+params_nodiff      = cfg_branch;
+params_nodiff.tag  = 'params_nodiff';
+params_nodiff.name = 'Without diffusion spoiling';
+params_nodiff.val  = {seq_params, tissue_params};
+
+all_params         = cfg_choice;
+all_params.tag     = 'all_params';
+all_params.name    = 'Parameter switch (diffusion spoiling?)';
+all_params.help    = {'You can either include diffusion spoiling or not.'};
+all_params.values  = {params_diff params_nodiff};
+all_params.val     = {params_diff};
 
 % ---------------------------------------------------------------------
 % Approximation parameters
@@ -180,7 +205,7 @@ small_angle_approx.val    = { true };
 imperf_spoil         = cfg_exbranch;
 imperf_spoil.tag     = 'imperf_spoil';
 imperf_spoil.name    = 'Imperfect Spoiling Calc.';
-imperf_spoil.val     = { outdir prot_name seq_params tissue_params small_angle_approx };
+imperf_spoil.val     = { outdir prot_name all_params small_angle_approx };
 imperf_spoil.help    = {'Given input info about the sequence settings and expected tissue properties, ' ...
     'this module computes coefficients required to correct for imperfect spoiling in the FLASH volumes ' ...
     'using the method proposed by Preibisch & Deichmann, MRM 2009, 61(1):125'};

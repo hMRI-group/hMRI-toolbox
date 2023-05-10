@@ -15,28 +15,28 @@ function hmri_corr_imperf_spoil(job)
 
 hmri_log(sprintf('\t--- Calculating Imperfect Spoiling Correction Coefficients ---'));
 
-if isfield(job.all_params,'params_diff')
-    seq_params    = job.all_params.params_diff.seq_params_diff;
-    tissue_params = job.all_params.params_diff.tissue_params_diff;
-
-    %% Build structure "diff" to account for diffusion effect
-    diff        = struct;
-    diff.D      = tissue_params.D_um2_per_ms*1e-9;
-    diff.G      = seq_params.Gamp_mT_per_m;
-    diff.tau    = seq_params.Gdur_ms;
-
-    assert(length(diff.G)== length(diff.tau),'The vectors of gradient durations and amplitudes must have the same length!')
-    
+if isfield(job.params,'params_diff')
+    hmri_log(sprintf('\t......with diffusion spoiling'));
     diff_flag = true;
 
-    hmri_log(sprintf('\t......using diffusion spoiling'));
-elseif isfield(job.all_params,'params_nodiff')
-    seq_params    = job.all_params.params_nodiff.seq_params;
-    tissue_params = job.all_params.params_nodiff.tissue_params;
+    seq_params    = job.params.params_diff.seq_params_diff;
+    tissue_params = job.params.params_diff.tissue_params_diff;
 
+    %% Build structure "diff" to account for diffusion spoiling
+    diff     = struct;
+    diff.D   = tissue_params.D_um2_per_ms*1e-9;
+    diff.G   = seq_params.Gamp_mT_per_m;
+    diff.tau = seq_params.Gdur_ms;
+
+    assert(length(diff.G) == length(diff.tau), 'The vectors of gradient durations and amplitudes must have the same length!')
+    
+
+elseif isfield(job.params,'params_nodiff')
+    hmri_log(sprintf('\t......without diffusion spoiling'));
     diff_flag = false;
 
-    hmri_log(sprintf('\t......without diffusion spoiling'));
+    seq_params    = job.params.params_nodiff.seq_params;
+    tissue_params = job.params.params_nodiff.tissue_params;
 
 else
     error('something went wrong!')
@@ -47,14 +47,14 @@ end
 %*************************************************%%
 %%
 % Get sequence parameters
-FA      =   seq_params.FA_deg;              % Flip angles [deg]
-TR      =   seq_params.TR_ms;               % [ms]
-Phi0    =   seq_params.Phi0_deg;            % [deg]
-B1range =   seq_params.B1range_percent/100; % convert such that 100% = 1
+FA      = seq_params.FA_deg;              % Flip angles [deg]
+TR      = seq_params.TR_ms;               % [ms]
+Phi0    = seq_params.Phi0_deg;            % [deg]
+B1range = seq_params.B1range_percent/100; % convert such that 100% = 1
 
 %% Get tissue parameters
-T1range     = tissue_params.T1range_ms;     %[ms]
-T2range     = tissue_params.T2range_ms;     % [ms]
+T1range = tissue_params.T1range_ms;     %[ms]
+T2range = tissue_params.T2range_ms;     % [ms]
 
 
 %% Run EPG simulation

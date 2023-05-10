@@ -1,4 +1,4 @@
-classdef hmri_osf
+classdef hmri_osf < handle
     % HMRI_OSF Reading access to osf storage nodes.
     %   This class provides an interface to interact with osf storage nodes
     %   for listing and downloading files and directories.
@@ -35,10 +35,12 @@ classdef hmri_osf
         root_node = "k4bs5";       % Root node ID of the OSF project
         token = "";                % Access token for the OSF project
         target_root = string(pwd); % Target root directory for downloads
+        tree_cache = [];
     end
 
     properties (Access=private)
         API_URL = "https://api.osf.io/v2"; % % Base URL for OSF API
+        
     end
 
 
@@ -62,8 +64,16 @@ classdef hmri_osf
 
         function json = get_json(obj, url)
             % Get JSON data from a given URL
-            result = send(obj.gen_request(),url);
-            json = jsondecode(string(result.Body));
+            try
+                result = send(obj.gen_request(),url);
+            catch ME
+                error("Error accessing %s: %s",url,ME.message);
+            end
+            if result.StatusCode == matlab.net.http.StatusCode.OK
+                json = jsondecode(string(result.Body));
+            else
+                error("Accessing %s resulted in %s",url,result.StatusCode);
+            end
         end
         
         function files = node_ls(obj,node)
@@ -188,10 +198,19 @@ classdef hmri_osf
 
 
     methods
-        function files = ls(obj)
+        function files = ls(obj, force_update)
             % List files and directories of the root node
-            node = obj.get_json(join([obj.API_URL,"nodes",obj.root_node,"files"],"/")).data;
-            files=obj.node_ls(node);
+            if ~exist('force_update','var')
+                force_update = false;
+            end
+
+            % Download the tree only if it is not cached or we want to
+            % enforce a redownload
+            if force_update || isempty(obj.tree_cache)  
+                node = obj.get_json(join([obj.API_URL,"nodes",obj.root_node,"files"],"/")).data;
+                obj.tree_cache=obj.node_ls(node);
+            end
+            files=obj.tree_cache;
         end
 
         function print_tree(obj)

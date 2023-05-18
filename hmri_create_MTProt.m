@@ -677,17 +677,17 @@ for p = 1:dm(3)
             B1_mtw=1;
             
             % MT in [p.u.]; offset by - famt * famt / 2 * 100 where MT_w = 0 (outside mask)
-            MT = hmri_calc_MTsat(struct('data',MTw,'fa',fa_mtw_rad,'TR',TR_mtw,'B1',B1_mtw),...
-                A_forMT,R1_forMT);
+            MT = hmri_calc_MTsat(struct('data',MTw,'fa',fa_mtw_rad,'TR',TR_mtw,'B1',B1_mtw), A_forMT, R1_forMT);
             % f_T correction is applied either if:
             % - f_T has been provided as separate B1 mapping measurement (not
             % UNICORT!) or
             % - f_T has been calculated using UNICORT *AND* the UNICORT.MT flag
             % is enabled (advanced user only! method not validated yet!)
             if (~isempty(f_T))&&(~mpm_params.UNICORT.R1 || mpm_params.UNICORT.MT)
-                MT = hmri_correct_MTsat(MT,f_T);
+                MT = hmri_correct_MTsat(MT,f_T,'helms',0.4);
             end
-            
+
+            MT(isnan(MT))=0;
             Nmap(mpm_params.qMT).dat(:,:,p) = max(min(MT,threshall.MT),-threshall.MT);
         end
     

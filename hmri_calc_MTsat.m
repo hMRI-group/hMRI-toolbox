@@ -1,4 +1,4 @@
-function MTsat=hmri_calc_MTsat(MTw,A,R1)
+function MTsat = hmri_calc_MTsat(MTw, A, R1)
 %hmri_calc_MTsat Calculate MTsat from MTw data.
 % 
 % Input:
@@ -13,12 +13,12 @@ function MTsat=hmri_calc_MTsat(MTw,A,R1)
 %   MTsat (in percent units [p.u.])
 %
 % Examples:
-%   % Procedure from Helms (2008) correcting for B1 to second order within the small flip angle regime by setting B1 = 1
-%   A_for_MTsat = hmri_calc_A(struct('data',data_pdw,'fa',fa_pdw,'TR',tr_pdw,'B1',1),...
-%                             struct('data',data_t1w,'fa',fa_t1w,'TR',tr_t1w,'B1',1), true);
-%   R1_for_MTsat = hmri_calc_R1(struct('data',data_pdw,'fa',fa_pdw,'TR',tr_pdw,'B1',1),...
+%   Procedure from Helms (2008) correcting for B1 to second order within the small flip angle regime by setting B1 = 1:
+%     A_for_MTsat = hmri_calc_A(struct('data',data_pdw,'fa',fa_pdw,'TR',tr_pdw,'B1',1),...
 %                               struct('data',data_t1w,'fa',fa_t1w,'TR',tr_t1w,'B1',1), true);
-%   MTsat = hmri_calc_MTsat(struct('data',data_mtw,'fa',fa_mtw,'TR',tr_mtw,'B1',1), A_for_MTsat, R1_for_MTsat);
+%     R1_for_MTsat = hmri_calc_R1(struct('data',data_pdw,'fa',fa_pdw,'TR',tr_pdw,'B1',1),...
+%                                 struct('data',data_t1w,'fa',fa_t1w,'TR',tr_t1w,'B1',1), true);
+%     MTsat = hmri_calc_MTsat(struct('data',data_mtw,'fa',fa_mtw,'TR',tr_mtw,'B1',1), A_for_MTsat, R1_for_MTsat);
 %
 % References:
 %   Helms, et al. (2008), "High-resolution maps of magnetization transfer with inherent correction for RF inhomogeneity 

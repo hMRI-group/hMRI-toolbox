@@ -10,6 +10,19 @@ classdef hmri_test_utils
             S=sin(alpha).*(1-exp(-TR.*R1))./(1-cos(alpha).*exp(-TR.*R1));
             
         end
+
+        function S=HelmsMTwApprox(alpha,TR,R1,delta)
+            % Approximate steady state solution for dual flip angle GRE
+            % experiment where: 
+            %   1. the two pulses are approximately coincident
+            %   2. both flip angles alpha and beta are small, and 
+            %   3. beta is related to delta by delta = beta^2/2 ~ 1 - cos(beta).
+            % See Helms, et al. (MRM 2008 https://doi.org/10.1002/mrm.21732)
+            % for more details.
+            
+            S=(alpha.*TR.*R1)./(alpha.^2/2 + delta + TR.*R1);
+            
+        end
         
         % TODO: warn about activating legacy RNG
         function seedRandomNumberGenerator

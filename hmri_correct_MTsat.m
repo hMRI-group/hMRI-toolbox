@@ -45,8 +45,4 @@ switch model
         error('unknown MTsat correction model ''%s''. Allowed models are ''helms'' and ''lipp''',model)
 end
 
-% Make data points with missing data NaN
-nanmask=(MTsat==0)|(MTsat==0);
-MTsat(nanmask)=NaN;
-
 end

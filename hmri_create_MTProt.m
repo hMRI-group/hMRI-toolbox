@@ -669,27 +669,23 @@ for p = 1:dm(3)
             switch mpm_params.MTsatB1CorrectionModel
                 case 'helms' 
                     B1_mtw=1;
-                    R1_forMT = hmri_calc_R1(struct('data',PDw,'fa',fa_pdw_rad,'TR',TR_pdw,'B1',B1_mtw),...
-                        struct('data',T1w,'fa',fa_t1w_rad,'TR',TR_t1w,'B1',1),...
-                        mpm_params.small_angle_approx);
-                    R1_forMT(isnan(R1_forMT))=0;
-                    A_forMT = hmri_calc_A(struct('data',PDw,'fa',fa_pdw_rad,'TR',TR_pdw,'B1',B1_mtw),...
-                        struct('data',T1w_forA,'fa',fa_t1w_rad,'TR',TR_t1w,'B1',1),...
-                        mpm_params.small_angle_approx);
-                    A_forMT(isnan(A_forMT))=0;
                     if isempty(f_T)
                         hmri_log('WARNING: MTsat B1-correction using the Helms model was selected but no B1 map data was found. MTsat will only be corrected with the quadratic model from Helms, et al. (MRM 2008).', mpm_params.defflags)
                     end
                 case 'lipp'
                     B1_mtw=f_T;
-                    R1_forMT=R1*1e-6;
-                    A_forMT=A;
                     if isempty(f_T)
                         hmri_log('WARNING: MTsat B1-correction using the Lipp model was selected but no B1 map data was found. MTsat will not be B1 corrected.', mpm_params.defflags)
                     end
             end
-            
-            % MT in [p.u.]; offset by - famt * famt / 2 * 100 where MT_w = 0 (outside mask)
+
+            % MT in [p.u.]
+            A_forMT = hmri_calc_A(struct('data',PDw,'fa',fa_pdw_rad,'TR',TR_pdw,'B1',B1_mtw),...
+                struct('data',T1w_forA,'fa',fa_t1w_rad,'TR',TR_t1w,'B1',1),...
+                mpm_params.small_angle_approx);
+            R1_forMT = hmri_calc_R1(struct('data',PDw,'fa',fa_pdw_rad,'TR',TR_pdw,'B1',B1_mtw),...
+                struct('data',T1w,'fa',fa_t1w_rad,'TR',TR_t1w,'B1',1),...
+                mpm_params.small_angle_approx);
             MT = hmri_calc_MTsat(struct('data',MTw,'fa',fa_mtw_rad,'TR',TR_mtw,'B1',B1_mtw), A_forMT, R1_forMT);
 
             % f_T correction is applied either if:

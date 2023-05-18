@@ -665,26 +665,40 @@ for p = 1:dm(3)
         % and PDw ones...
         if MTwidx
             MTw = spm_slice_vol(Vavg(MTwidx),Vavg(MTwidx).mat\M,dm(1:2),3);
-            R1_forMT = hmri_calc_R1(struct('data',PDw,'fa',fa_pdw_rad,'TR',TR_pdw,'B1',1),...
-                struct('data',T1w,'fa',fa_t1w_rad,'TR',TR_t1w,'B1',1),...
-                mpm_params.small_angle_approx);
-            R1_forMT(isnan(R1_forMT))=0;
-            A_forMT = hmri_calc_A(struct('data',PDw,'fa',fa_pdw_rad,'TR',TR_pdw,'B1',1),...
-                struct('data',T1w_forA,'fa',fa_t1w_rad,'TR',TR_t1w,'B1',1),...
-                mpm_params.small_angle_approx);
-            A_forMT(isnan(A_forMT))=0;
-            
-            B1_mtw=1;
+
+            switch mpm_params.MTsatB1CorrectionModel
+                case 'helms' 
+                    B1_mtw=1;
+                    R1_forMT = hmri_calc_R1(struct('data',PDw,'fa',fa_pdw_rad,'TR',TR_pdw,'B1',B1_mtw),...
+                        struct('data',T1w,'fa',fa_t1w_rad,'TR',TR_t1w,'B1',1),...
+                        mpm_params.small_angle_approx);
+                    R1_forMT(isnan(R1_forMT))=0;
+                    A_forMT = hmri_calc_A(struct('data',PDw,'fa',fa_pdw_rad,'TR',TR_pdw,'B1',B1_mtw),...
+                        struct('data',T1w_forA,'fa',fa_t1w_rad,'TR',TR_t1w,'B1',1),...
+                        mpm_params.small_angle_approx);
+                    A_forMT(isnan(A_forMT))=0;
+                    if isempty(f_T)
+                        hmri_log('WARNING: MTsat B1-correction using the Helms model was selected but no B1 map data was found. MTsat will only be corrected with the quadratic model from Helms, et al. (MRM 2008).', mpm_params.defflags)
+                    end
+                case 'lipp'
+                    B1_mtw=f_T;
+                    R1_forMT=R1*1e-6;
+                    A_forMT=A;
+                    if isempty(f_T)
+                        hmri_log('WARNING: MTsat B1-correction using the Lipp model was selected but no B1 map data was found. MTsat will not be B1 corrected.', mpm_params.defflags)
+                    end
+            end
             
             % MT in [p.u.]; offset by - famt * famt / 2 * 100 where MT_w = 0 (outside mask)
             MT = hmri_calc_MTsat(struct('data',MTw,'fa',fa_mtw_rad,'TR',TR_mtw,'B1',B1_mtw), A_forMT, R1_forMT);
+
             % f_T correction is applied either if:
             % - f_T has been provided as separate B1 mapping measurement (not
             % UNICORT!) or
             % - f_T has been calculated using UNICORT *AND* the UNICORT.MT flag
             % is enabled (advanced user only! method not validated yet!)
             if (~isempty(f_T))&&(~mpm_params.UNICORT.R1 || mpm_params.UNICORT.MT)
-                MT = hmri_correct_MTsat(MT,f_T,'helms',0.4);
+                MT = hmri_correct_MTsat(MT,f_T,mpm_params.MTsatB1CorrectionModel,mpm_params.MTsatB1CorrectionC);
             end
 
             MT(isnan(MT))=0;
@@ -1536,7 +1550,19 @@ if (mpm_params.T1widx && mpm_params.PDwidx && mpm_params.MTwidx)
             mpm_params.output(coutput).descrip{end+1} = '- RF sensitivity bias correction based on a single sensitivity measurement';
         case 'RF_per_contrast'
             mpm_params.output(coutput).descrip{end+1} = '- RF sensitivity bias correction based on a per-contrast sensitivity measurement';
-    end     
+    end
+
+    % B1-correction method
+    mpm_params.MTsatB1CorrectionModel = hmri_get_defaults('MTsatB1CorrectionModel');
+    switch mpm_params.MTsatB1CorrectionModel
+        case 'helms'
+            mpm_params.MTsatB1CorrectionC = hmri_get_defaults('MTsatB1CorrectionHelmsC');
+        case 'lipp'
+            mpm_params.MTsatB1CorrectionC = hmri_get_defaults('MTsatB1CorrectionLippC');
+        otherwise
+            error('unknown MTsat B1 correction model %s. Allowed models are "helms" and "lipp"', mpm_params.MTsatB1CorrectionModel)
+    end
+    hmri_log(sprintf('INFO: Using MTsat B1 correction model %s with C = %g.', mpm_params.MTsatB1CorrectionModel, mpm_params.MTsatB1CorrectionC), mpm_params.defflags);
 else
     mpm_params.qMT = 0;
 end

@@ -37,16 +37,16 @@ function MTsat = hmri_correct_MTsat(MTsat, B1, model, C)
 %       Magn. Reson. Med. https://doi.org/10.1002/mrm.29524
 
 switch model
-    'helms'
+    case 'helms'
         MTsat = MTsat .* (1 - C) ./ (1 - C * B1);
-    'lipp'
+    case 'lipp'
         MTsat = MTsat ./ (1 + C * (B1 - 1));
     otherwise
-        error('unknown MTsat correction model %s. Allowed models are "helms" and "lipp"',model)
+        error('unknown MTsat correction model ''%s''. Allowed models are ''helms'' and ''lipp''',model)
 end
 
 % Make data points with missing data NaN
-nanmask=(MTsat.data==0)|(MTsat.data==0);
+nanmask=(MTsat==0)|(MTsat==0);
 MTsat(nanmask)=NaN;
 
 end

@@ -28,8 +28,8 @@ function MTsat = hmri_calc_MTsat(MTw, A, R1)
 
 if isempty(MTw.B1), MTw.B1=1; end
 
-assert(all(size(MTw.data)==size(A.data)),'hmri:inputArraySize','MTw.data and A must be the same size!')
-assert(all(size(MTw.data)==size(R1.data)),'hmri:inputArraySize','MTw.data and R1 must be the same size!')
+assert(all(size(MTw.data)==size(A)), 'hmri:inputArraySize','MTw.data and A must be the same size!')
+assert(all(size(MTw.data)==size(R1)),'hmri:inputArraySize','MTw.data and R1 must be the same size!')
 assert(MTw.TR>0,'hmri:TR','MTw.TR must be positive!')
 
 MTsat = ( (A .* (MTw.B1*MTw.fa) - MTw.data) ./ (MTw.data+eps) .* R1*MTw.TR - (MTw.B1*MTw.fa).^2 / 2 ) * 100;

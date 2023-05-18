@@ -1560,9 +1560,9 @@ if (mpm_params.T1widx && mpm_params.PDwidx && mpm_params.MTwidx)
         case 'lipp'
             mpm_params.MTsatB1CorrectionC = hmri_get_defaults('MTsatB1CorrectionLippC');
         otherwise
-            error('unknown MTsat B1 correction model %s. Allowed models are "helms" and "lipp"', mpm_params.MTsatB1CorrectionModel)
+            error('unknown MTsat B1 correction model ''%s''. Allowed models are ''helms'' and ''lipp''', mpm_params.MTsatB1CorrectionModel)
     end
-    hmri_log(sprintf('INFO: Using MTsat B1 correction model %s with C = %g.', mpm_params.MTsatB1CorrectionModel, mpm_params.MTsatB1CorrectionC), mpm_params.defflags);
+    hmri_log(sprintf('INFO: Using MTsat B1 correction model ''%s'' with C = %g.', mpm_params.MTsatB1CorrectionModel, mpm_params.MTsatB1CorrectionC), mpm_params.defflags);
 else
     mpm_params.qMT = 0;
 end

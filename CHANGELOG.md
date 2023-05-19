@@ -5,6 +5,9 @@ This changelog documents all notable changes to the hMRI-toolbox.
 Most recent version numbers *should* follow the [Semantic Versioning](https://semver.org/spec/v2.0.0.html) principles (e.g. bug fixes: x.x.1 > x.x.2, new feature with backward compatibility: x.2.x > x.3.0, major release affecting the way data are handled and processed: 1.x.x > 2.0.0).
 
 ## [unreleased]
+### Added
+- option to choose different models and parameters for B1-correction of MTsat
+
 ### Fixed
 - QUIQI check: dependence on stats toolbox
 - issue #14 (Spatial processing: Inverse deformation field moved along with forward deformation field to requested folder)

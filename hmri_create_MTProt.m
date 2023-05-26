@@ -780,15 +780,15 @@ if (mpm_params.QA.enable||(PDproc.calibr)) && (PDwidx && T1widx)
     
     % The 5 outer voxels in all directions are nulled in order to remove
     % artefactual effects from the MT map on segmentation: 
-    MTtemp(1:5,:,:)=0; MTtemp(end-5:end,:,:)=0;
-    MTtemp(:,1:5,:)=0; MTtemp(:,end-5:end,:)=0;
-    MTtemp(:,:,1:5)=0; MTtemp(:,:,end-5:end)=0;
+    MTtemp(1:5,:,:)=0; MTtemp(end-5:end,:,:)=nan;
+    MTtemp(:,1:5,:)=0; MTtemp(:,end-5:end,:)=nan;
+    MTtemp(:,:,1:5)=0; MTtemp(:,:,end-5:end)=nan;
     
     % Null very bright and negative voxels
-    MTtemp(abs(MTtemp)==threshMT)=0;
-    MTtemp(isinf(MTtemp))=0;
-    MTtemp(isnan(MTtemp))=0;
-    MTtemp(MTtemp<0)=0;
+    MTtemp(abs(MTtemp)==threshMT)=nan;
+    MTtemp(isinf(MTtemp))=nan;
+    MTtemp(isnan(MTtemp))=nan;
+    MTtemp(MTtemp<0)=nan;
     
     Vsave.fname = spm_file(Vsave.fname,'suffix','_outer_suppressed');
     spm_write_vol(Vsave,MTtemp);
@@ -980,10 +980,10 @@ WMmask(squeeze(TPMs(:,:,:,2))>=PDproc.WMMaskTh) = 1;
 V_maskedA = spm_vol(fA);
 V_maskedA.fname = fullfile(calcpath,['masked_' spm_str_manip(V_maskedA.fname,'t')]);
 maskedA = spm_read_vols(spm_vol(fA)).*WBmask;
-maskedA(isinf(maskedA)) = 0;
-maskedA(isnan(maskedA)) = 0;
-maskedA(maskedA==threshA) = 0;
-maskedA(maskedA<0) = 0;
+maskedA(isinf(maskedA)) = nan;
+maskedA(isnan(maskedA)) = nan;
+maskedA(maskedA==threshA) = nan;
+maskedA(maskedA<0) = nan;
 spm_write_vol(V_maskedA,maskedA);
 
 % Bias-field correction of masked A map

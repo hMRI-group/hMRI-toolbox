@@ -966,6 +966,10 @@ function PDcalculation(fA, fTPM, mpm_params)
 % fTMP is the list of TPMs generated from MT map
 hmri_log(sprintf('\t-------- Proton density map calculation --------'), mpm_params.nopuflags);
 
+% save copy of A map before bias correction
+fA_uncorr = spm_file(fA,'suffix','star');
+copyfile(fA,fA_uncorr);
+
 PDproc = mpm_params.proc.PD;
 threshA = mpm_params.proc.threshall.A;
 calcpath = mpm_params.calcpath;
@@ -993,14 +997,14 @@ job_bfcorr.channel.vols = {V_maskedA.fname};
 job_bfcorr.channel.biasreg = PDproc.biasreg;
 job_bfcorr.channel.biasfwhm = PDproc.biasfwhm;
 job_bfcorr.channel.write = [1 0]; % need the BiasField, obviously!
-if ~PDproc.saveseg % only write c* volumes if specifically requested by user
-    for ctis=1:length(job_bfcorr.tissue)
-        job_bfcorr.tissue(ctis).native = [0 0];
-    end
+% only write c* volumes if specifically requested by user
+if ~PDproc.saveseg
+    segmask = [0 0]; % do not write c* volumes
 else
-    for ctis=1:length(job_bfcorr.tissue)
-        job_bfcorr.tissue(ctis).native = [1 0];
-    end
+    segmask = [1 0]; % write c* volumes
+end
+for ctis=1:length(job_bfcorr.tissue)
+    job_bfcorr.tissue(ctis).native = segmask;
 end
 output_list = spm_preproc_run(job_bfcorr);
 

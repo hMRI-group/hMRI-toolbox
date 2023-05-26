@@ -993,8 +993,14 @@ job_bfcorr.channel.vols = {V_maskedA.fname};
 job_bfcorr.channel.biasreg = PDproc.biasreg;
 job_bfcorr.channel.biasfwhm = PDproc.biasfwhm;
 job_bfcorr.channel.write = [1 0]; % need the BiasField, obviously!
-for ctis=1:length(job_bfcorr.tissue)
-    job_bfcorr.tissue(ctis).native = [0 0]; % no need to write c* volumes
+if ~PDproc.saveseg % only write c* volumes if specifically requested by user
+    for ctis=1:length(job_bfcorr.tissue)
+        job_bfcorr.tissue(ctis).native = [0 0];
+    end
+else
+    for ctis=1:length(job_bfcorr.tissue)
+        job_bfcorr.tissue(ctis).native = [1 0];
+    end
 end
 output_list = spm_preproc_run(job_bfcorr);
 

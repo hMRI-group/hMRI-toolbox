@@ -22,26 +22,24 @@ classdef hmri_create_b1map_test < matlab.unittest.TestCase
 
             V=testCase.phantomStruct;
 
-            % Create synthetic AFI data from phantom B1 map
+            %% Create synthetic AFI data from phantom B1 map
             B1=spm_read_vols(V)/100;
             
-            %% Create noisy AFI data
-            SNR=1e2; % N.B. relative to equilibrium magnetization, not steady state
-            A=1e3;
-            sigma=0;%A/SNR;
-            
-            % different from defaults
+            % AFI acquisition parameters: different from defaults
+            alphanom=55;            
             TR2TR1ratio=10;
-            alphanom=55;
 
             TR1=30; % ms
             TR2=TR1*TR2TR1ratio;
+
+            % Tissue parameters
+            A=1e3;
             R1=1/1e3; % 1/ms
 
             bids.FlipAngle=alphanom;
-
             
-            S1=abs(hmri_test_utils.dualTRernstd(B1*alphanom,TR1,TR2,R1)+sigma*randn(size(B1))); 
+            % TR1
+            S1=abs(hmri_test_utils.dualTRernstd(B1*alphanom,TR1,TR2,R1)); 
             fname1=spm_file(testCase.phantomStruct.fname,'suffix','_AFI_TR1'); 
             V.fname=fname1;
             V.descrip=sprintf('Synthetic AFI data for hMRI toolbox testing TR=%dms/TE=%dms/FA=%ddeg',TR1,0,alphanom);
@@ -51,7 +49,8 @@ classdef hmri_create_b1map_test < matlab.unittest.TestCase
             fprintf(f,jsonencode(bids));
             fclose(f);
 
-            S2=abs(hmri_test_utils.dualTRernstd(B1*alphanom,TR2,TR1,R1)+sigma*randn(size(B1)));
+            % TR2
+            S2=abs(hmri_test_utils.dualTRernstd(B1*alphanom,TR2,TR1,R1));
             fname2=spm_file(testCase.phantomStruct.fname,'suffix','_AFI_TR2'); 
             V.fname=fname2;
             V.descrip=sprintf('Synthetic AFI data for hMRI toolbox testing TR=%dms/TE=%dms/FA=%ddeg',TR2,0,alphanom);
@@ -61,7 +60,7 @@ classdef hmri_create_b1map_test < matlab.unittest.TestCase
             fprintf(f,jsonencode(bids));
             fclose(f);
 
-            % Create SPM batch job to run
+            %% Create SPM batch job to run
             config=fullfile(fileparts(mfilename('fullpath')),'testconfig','hmri_b1_local_defaults_test_afi_bids.m');
 
             inputs{1} = {fname1; fname2}; % Create B1 map: B1 input - cfg_files
@@ -72,12 +71,12 @@ classdef hmri_create_b1map_test < matlab.unittest.TestCase
             matlabbatch{1}.spm.tools.hmri.create_B1.subj.b1_type.i3D_AFI.b1parameters.b1defaults = '<UNDEFINED>';
             matlabbatch{1}.spm.tools.hmri.create_B1.subj.popup = false;
             
-            % Run SPM batch job
+            %% Run SPM batch job
             spm('defaults', 'FMRI');
             out = spm_jobman('run', matlabbatch, inputs{:});
-            B1est = spm_read_vols(spm_vol(out{1}.subj.B1map{1}))/100;
             
-            % Evaluate result
+            %% Evaluate result
+            B1est = spm_read_vols(spm_vol(out{1}.subj.B1map{1}))/100;
             assertEqual(testCase, B1est, B1, 'RelTol', 1e-2)
         end
         
@@ -105,7 +104,7 @@ classdef hmri_create_b1map_test < matlab.unittest.TestCase
             tempFixture = testCase.applyFixture(TemporaryFolderFixture);
             
             [testCase.phantomData,testCase.phantomStruct]=...
-                hmri_test_utils.makePhantom_B1([60,60,60],[70,120],fullfile(tempFixture.Folder,'phantomB1.nii'));
+                hmri_test_utils.makePhantom_B1([30,30,30],[70,120],fullfile(tempFixture.Folder,'phantomB1.nii'));
         end
     end
     

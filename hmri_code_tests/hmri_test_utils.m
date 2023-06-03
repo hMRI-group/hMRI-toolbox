@@ -14,10 +14,11 @@ classdef hmri_test_utils
         end
 
         function S=dualTRernst(alpha,TR1,TR2,R1)
+            % Steady state solution for dual-TR spoiled acquisition
             % Eqs. (1)--(3) in Yarnykh, MRM (2007)
+            % The solution for the other TR can be obtained by reversing TR1 and TR2
             S=sin(alpha) .* (1 - exp(-TR2*R1) + (1-exp(-TR1*R1))*exp(-TR2*R1)*cos(alpha)) ...
                 ./ (1 - exp(-TR1*R1)*exp(-TR2*R1)*cos(alpha).^2);
-            
         end
 
         function S=dualTRernstd(alpha,TR1,TR2,R1)

@@ -6,9 +6,22 @@ classdef hmri_test_utils
         
         function S=ernst(alpha,TR,R1)
             % Ernst equation
+            S=sin(alpha).*(1-exp(-TR.*R1))./(1-cos(alpha).*exp(-TR.*R1));            
+        end
+
+        function S=ernstd(alpha,TR,R1)
+            S=hmri_test_utils.ernst(deg2rad(alpha),TR,R1);
+        end
+
+        function S=dualTRernst(alpha,TR1,TR2,R1)
+            % Eqs. (1)--(3) in Yarnykh, MRM (2007)
+            S=sin(alpha) .* (1 - exp(-TR2*R1) + (1-exp(-TR1*R1))*exp(-TR2*R1)*cos(alpha)) ...
+                ./ (1 - exp(-TR1*R1)*exp(-TR2*R1)*cos(alpha).^2);
             
-            S=sin(alpha).*(1-exp(-TR.*R1))./(1-cos(alpha).*exp(-TR.*R1));
-            
+        end
+
+        function S=dualTRernstd(alpha,TR1,TR2,R1)
+            S=hmri_test_utils.dualTRernst(deg2rad(alpha),TR1,TR2,R1);
         end
         
         % TODO: warn about activating legacy RNG

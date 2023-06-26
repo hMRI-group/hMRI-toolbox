@@ -6,6 +6,7 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 
 ## [unreleased]
 ### Fixed
+- issue #5: fixed version check for compiled toolbox
 - QUIQI check: dependence on stats toolbox
 - issue #14 (Spatial processing: Inverse deformation field moved along with forward deformation field to requested folder)
 - issue #59: both the [qform and the sform](https://nifti.nimh.nih.gov/nifti-1/documentation/nifti1fields/nifti1fields_pages/qsform.html) of the first PD-weighted image are now propagated to the quantitative maps, rather than just the sform

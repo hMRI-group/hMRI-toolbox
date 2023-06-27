@@ -10,6 +10,7 @@ classdef hmri_test_utils
         end
 
         function S=ernstd(alpha,TR,R1)
+            % Ernst equation with angle in degrees
             S=hmri_test_utils.ernst(deg2rad(alpha),TR,R1);
         end
 
@@ -22,6 +23,7 @@ classdef hmri_test_utils
         end
 
         function S=dualTRernstd(alpha,TR1,TR2,R1)
+            % Steady state solution for dual-TR spoiled acquisition with angle in degrees
             S=hmri_test_utils.dualTRernst(deg2rad(alpha),TR1,TR2,R1);
         end
         

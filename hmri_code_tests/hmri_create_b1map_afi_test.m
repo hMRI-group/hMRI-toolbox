@@ -1,6 +1,6 @@
-% Unit tests for B1 map creationg
+% Unit tests for AFI B1 map creation
 
-classdef hmri_create_b1map_test < matlab.unittest.TestCase
+classdef hmri_create_b1map_afi_test < matlab.unittest.TestCase
     properties (TestParameter)
         % Augment TestParameter with parameters over which tests will run,
         % as well as parameters needed by the test functions.
@@ -35,7 +35,6 @@ classdef hmri_create_b1map_test < matlab.unittest.TestCase
             % Tissue parameters
             A=1e3;
             R1=1/1e3; % 1/ms
-
             
             % TR1
             S1=abs(A*hmri_test_utils.dualTRernstd(B1*alphanom,TR1,TR2,R1)); 
@@ -83,6 +82,7 @@ classdef hmri_create_b1map_test < matlab.unittest.TestCase
 
             %% Run SPM batch job and evaluate result with hmri-like sidecar file
             hmri.acqpar.FlipAngle=alphanom;
+            hmri.acqpar.RepetitionTime=TR1; % same TR for both stored in DICOM
             hmri.acqpar.alTR=[TR1,TR2];
 
             f=fopen(spm_file(fname1,'ext','.json'),'w');

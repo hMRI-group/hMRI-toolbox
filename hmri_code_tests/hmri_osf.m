@@ -4,10 +4,10 @@ classdef hmri_osf < handle
     %   for listing and downloading files and directories.
     %
     %   Creation:
-    %       % Access the hMRI Toolbox example data at https://osf.io/k4bs5/
+    %       % Access the qMRI BIDS example data at https://osf.io/k4bs5/
     %       osf = hmri_osf()
     %       % Set output folder for downloaded content
-    %       osf.target_root = "/tmp" % Set output folder
+    %       osf.target_root = '/tmp' % Set output folder
     %   
     %   Listing:
     %       % Get directory content as map of files and subdirectories.
@@ -15,20 +15,20 @@ classdef hmri_osf < handle
     %       content = osf.ls()
     %       % Get a tree view of all files and directories
     %       osf.print_tree()
-    %       % Get all names of entries inside the "ds-mp2rage" directory
-    %       content("ds-mp2rage").files.keys
+    %       % Get all names of entries inside the 'ds-mp2rage' directory
+    %       content('ds-mp2rage').files.keys
     %
     %   Downloading:
-    %       osf.download("<path to file/directory>")
+    %       osf.download('<path to file/directory>')
     %       % Will download the given file or directory recursively.
     %       % Files that already exist, and are not older than the source
     %       % will not be downloaded again.
     %       osf.download('ds-mp2rage/sub-1/anat')
-    %       % will create a diretory 'ds-mp2rage/sub-1/anat' and fill that
+    %       % will create a directory 'ds-mp2rage/sub-1/anat' and fill that
     %       % with the content of the respective directory on osf.
     %   
     %   Tested with Matlab 2019b-2023a 
-    %   (2019a failes because of missing certs)
+    %   (2019a fails because of missing certs)
 
     
     properties

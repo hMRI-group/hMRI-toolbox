@@ -65,7 +65,9 @@ classdef hmri_osf < handle
         function json = get_json(obj, url)
             % Get JSON data from a given URL
             try
-                result = send(obj.gen_request(),url);
+                options = matlab.net.http.HTTPOptions;
+                options.CertificateFilename = ''; % disable certificate check as workaround for pre-R2019b
+                result = send(obj.gen_request(),url,options);
             catch ME
                 error("Error accessing %s: %s",url,ME.message);
             end

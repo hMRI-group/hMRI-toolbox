@@ -27,8 +27,7 @@ classdef hmri_osf < handle
     %       % will create a directory 'ds-mp2rage/sub-1/anat' and fill that
     %       % with the content of the respective directory on osf.
     %   
-    %   Tested with Matlab 2019b-2023a 
-    %   (2019a fails because of missing certs)
+    %   Tested with Matlab 2018a-2023a
 
     
     properties
@@ -55,7 +54,7 @@ classdef hmri_osf < handle
         function req=gen_request(obj)
             % % Generate an HTTP request with appropriate headers
             if strlength(obj.token)
-                hdr=[matlab.net.http.HeaderField("Authorization", "Bearer " + string(obj.token))];
+                hdr=matlab.net.http.HeaderField("Authorization", "Bearer " + string(obj.token));
             else
                 hdr=[];
             end
@@ -66,13 +65,13 @@ classdef hmri_osf < handle
             % Get JSON data from a given URL
             try
                 options = matlab.net.http.HTTPOptions;
-                options.CertificateFilename = ''; % disable certificate check as workaround for pre-R2019b
+                options.CertificateFilename = ''; % disable certificate check as workaround for older Matlab
                 result = send(obj.gen_request(),url,options);
             catch ME
                 error("Error accessing %s: %s",url,ME.message);
             end
             if result.StatusCode == matlab.net.http.StatusCode.OK
-                json = jsondecode(string(result.Body));
+                json = jsondecode(char(result.Body));
             else
                 error("Accessing %s resulted in %s",url,result.StatusCode);
             end
@@ -93,12 +92,12 @@ classdef hmri_osf < handle
                         entry.size = data(f).attributes.size;
                         entry.download = data(f).links.download;
                         entry.isfile = true;
-                        files(string(data(f).attributes.name)) = entry;
+                        files(char(data(f).attributes.name)) = entry;
                     else
                         entry.fullpath = string(data(f).attributes.materialized_path);
                         entry.isfile = false;
                         entry.files = obj.node_ls(data(f));
-                        files(string(data(f).attributes.name)) = entry;
+                        files(char(data(f).attributes.name)) = entry;
                     end
                 end
                 files_url=result.links.next;
@@ -118,27 +117,29 @@ classdef hmri_osf < handle
                     end
                 end
                 fprintf("Downloading %s from %s\n",target,entry.download);
-                send(obj.gen_request(),entry.download,[],io.FileConsumer(target{1}));
+                options = matlab.net.http.HTTPOptions;
+                options.CertificateFilename = ''; % disable certificate check as workaround for older Matlab
+                send(obj.gen_request(),entry.download,options,io.FileConsumer(target{1}));
             else
                 obj.check_makedir(target)
                 for k = string(entry.files.keys)
-                    obj.download_entry(entry.files(k),target+"/"+k)
+                    obj.download_entry(entry.files(char(k)),target+"/"+k)
                 end
             end
         end
         
         function download_r(obj, files, lh, rh)
             % Recursive download function
-            target_dir = join([obj.target_root,lh],'/');
+            target_dir = join([obj.target_root,lh],"/");
             obj.check_makedir(target_dir);
             if(numel(rh)==1) %leaf
-                target = join([target_dir,rh],'/');
-                obj.download_entry(files(rh(1)),target);
+                target = join([target_dir,rh],"/");
+                obj.download_entry(files(char(rh(1))),target);
             else % branch
                 new_lh = [lh,rh(1)];
                 new_rh = rh(2:end);
-                if(files.isKey(rh(1))==1)
-                    download_r(obj,files(rh(1)).files,new_lh,new_rh);
+                if(files.isKey(char(rh(1)))==1)
+                    download_r(obj,files(char(rh(1))).files,new_lh,new_rh);
                 else
                     error(join([lh,new_lh],"/")+" does not exist");
                 end

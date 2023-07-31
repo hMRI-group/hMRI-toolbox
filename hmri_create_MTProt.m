@@ -1249,7 +1249,9 @@ if mpm_params.PDwidx && mpm_params.T1widx && ISC
     ii = 0; mtch = false;
     while ~mtch && ii < nsets
         ii = ii+1;
-        if all(MPMacq_prot == MPMacq_sets.vals{ii})
+        % don't check exact equality, but equality to within certain amount
+        % of floating point error
+        if all(abs(MPMacq_prot - MPMacq_sets.vals{ii}) < 5*eps(MPMacq_prot))
             mtch  = true;
             prot_tag = MPMacq_sets.tags{ii};
             hmri_log(sprintf(['INFO: MPM acquisition protocol = %s.' ...

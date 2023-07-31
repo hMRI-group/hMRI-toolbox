@@ -1315,7 +1315,7 @@ mpm_params.proc.RFsenscorr = jobsubj.sensitivity;
 mpm_params.proc.threshall = hmri_get_defaults('qMRI_maps_thresh');
 % load PD maps processing parameters (including calibr (calibration
 % parameter) and T2scorr (T2s correction) fields)
-mpm_params.proc.PD = hmri_get_defaults('PDproc');
+mpm_params.proc.PD = hmri_get_defaults('PDproc'); %todo: check user supplied parameters.
 % if no RF sensitivity bias correction or no B1 transmit bias correction
 % applied, not worth trying any calibration:
 if (isfield(mpm_params.proc.RFsenscorr,'RF_none')||(isempty(jobsubj.b1_trans_input)&&~mpm_params.UNICORT.PD)) && mpm_params.proc.PD.calibr

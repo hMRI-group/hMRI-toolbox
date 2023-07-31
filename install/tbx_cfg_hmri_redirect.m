@@ -21,7 +21,7 @@ function hmri = tbx_cfg_hmri_redirect
 % Do not use it for clinical or diagnostic purposes.
 %
 %__________________________________________________________________________
-% Cyclotron Research Centre - University of Liège
+% Cyclotron Research Centre - University of LiÃ¨ge
 % Evelyne Balteau - April 2017
 %==========================================================================
 
@@ -40,7 +40,7 @@ catch %#ok<CTCH>
         'The directory containing the toolbox implementation should be ',...
         'in the Matlab path to be used in SPM. See installation ',...
         'instructions on the hMRI-Toolbox repository: ']
-        'https://github.molgen.mpg.de/VBQ-toolbox-group/hMRI-Toolbox/wiki.'
+        'https://github.com/hMRI-group/hMRI-toolbox/wiki/GetStarted#redirection-script'
         }';
     hmri.val  = {};
 end

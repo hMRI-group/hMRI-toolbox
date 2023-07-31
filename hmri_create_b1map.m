@@ -127,8 +127,8 @@ b1map_params.outpath = outpath;
 % magnitude images (first series) are used. Phase images (second series)
 % are not used. In each series, first image = TR2 (long TR) and second
 % image = TR1 (short TR).
-fileTR1 = b1map_params.b1input(2,:);
-fileTR2 = b1map_params.b1input(1,:);
+fileTR1 = b1map_params.b1input(1,:);
+fileTR2 = b1map_params.b1input(2,:);
 V1 = spm_vol(fileTR1);
 V2 = spm_vol(fileTR2);
 Y1 = spm_read_vols(V1);
@@ -155,10 +155,17 @@ FAmap = FAfun(r,n); % flip angle map in degrees
 % This is determined by comparing the number of complex values in the B1
 % map to the number obtained with the images in reverse order.
 if nnz(imag(FAmap))>nnz(imag(FAfun(1./r,n)))
-    hmri_log(sprintf(...
-        ['WARNING: unusually many complex values detected in the AFI \n'...
+    warn_message = sprintf(...
+        ['unusually many complex values detected in the AFI \n'...
         'B1 map. Please perform a visual check of the output B1 map and \n'...
-        'carefully check the order of the input AFI images.']),b1map_params.defflags);
+        'carefully check the order of the input AFI images.']);
+
+    % avoid printing both matlab warning and log message to command window
+    local_defflags = b1map_params.defflags;
+    local_defflags.ComWin = 0;    
+    hmri_log(['WARNING: ',warn_message],local_defflags);
+
+    warning('hmri:afiTooManyImag',warn_message) %#ok<SPWRN> 
 end
 
 % normalise B1 map
@@ -912,15 +919,24 @@ switch b1_protocol
     case 'i3D_AFI'
         if ~isempty(b1map_params.b1input)
             hmri_log(sprintf('AFI protocol selected ...'),b1map_params.nopuflags);
-            b1hdr = get_metadata(b1map_params.b1input(1,:));
+            b1hdr = get_metadata(b1map_params.b1input);
 
             try
-                tr = get_metadata_val(b1hdr{1},'RepetitionTimes');
-                if isempty(tr)
-                    hmri_log(sprintf('WARNING: using defaults values for TRs\n(TR ratio = %.1f) instead of metadata', ...
-                        b1map_params.b1acq.TR2TR1ratio),b1map_params.defflags);
-                else
-                    b1map_params.b1acq.TR2TR1ratio = tr(2)/tr(1);
+                tr1 = get_metadata_val(b1hdr{1},'RepetitionTime');
+                tr2 = get_metadata_val(b1hdr{2},'RepetitionTime');
+                if ~isempty(tr1) && ~isempty(tr2) && tr1~=tr2 % BIDS-like data
+                    b1map_params.b1acq.TR2TR1ratio = tr2/tr1;
+                else % Use Siemens-style metadata or b1-defaults file value
+                    hmri_log('WARNING: the two repetition times in the AFI B1-mapping metadata are missing or equal. Trying the RepetitionTimes (alTR) field...',b1map_params.defflags);
+                    trList = get_metadata_val(b1hdr{1},'RepetitionTimes');
+                    if isempty(trList) % Use b1-defaults file value
+                        assert(b1map_params.b1acq.TR2TR1ratio~=1,'The TR2TR1ratio is not allowed to be 1 in an AFI B1-mapping acquisition! Check the input configuration file.')
+                        hmri_log(sprintf('WARNING: using defaults values for\n(TR ratio = %.1f) instead of metadata', ...
+                            b1map_params.b1acq.TR2TR1ratio),b1map_params.defflags);
+                    else % Use Siemens-style metadata
+                        assert(trList(2)~=trList(1),'The two repetition times (TRs) are not allowed to be equal in an AFI B1-mapping acquisition! Check the input data.')
+                        b1map_params.b1acq.TR2TR1ratio = trList(2)/trList(1);
+                    end
                 end
 
                 tmp = get_metadata_val(b1hdr{1},'FlipAngle');
@@ -931,7 +947,7 @@ switch b1_protocol
                     b1map_params.b1acq.alphanom = tmp;
                 end
             catch
-                hmri_log(sprintf(['WARNING: possibly no metadata associated to the input images. \n' ...
+                hmri_log(sprintf(['WARNING: possibly no metadata associated with the input images. \n' ...
                     'Default acquisition and processing parameters will be used.']),b1map_params.defflags);
             end
         end

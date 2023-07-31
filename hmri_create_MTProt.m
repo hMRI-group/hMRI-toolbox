@@ -1008,9 +1008,9 @@ BF = double(spm_read_vols(spm_vol(BFfnam)));
 Y = BF.*spm_read_vols(spm_vol(fA));
 
 % Calibration of flattened A map to % water content using typical white
-% matter value from the litterature (69%)
-A_WM = WMmask.*Y;
-Y = Y/mean(A_WM(A_WM~=0))*69;
+% matter value from the hmri_defaults (see hmri_def.PDproc.WMval)
+A_WM = WMmask.*Y; 
+Y = Y/mean(A_WM(A_WM~=0))*PDproc.WMval;
 hmri_log(sprintf(['INFO (PD calculation):\n\tmean White Matter intensity: %.1f\n' ...
     '\tSD White Matter intensity %.1f\n'],mean(A_WM(A_WM~=0)),std(A_WM(A_WM~=0))), mpm_params.defflags);
 Y(Y>200) = 0;
@@ -1463,12 +1463,12 @@ if (mpm_params.T1widx && mpm_params.PDwidx)
             (~isempty(jobsubj.b1_trans_input)|| mpm_params.UNICORT.PD)
         mpm_params.output(coutput).suffix = 'PD';
         mpm_params.output(coutput).descrip{1} = 'PD map (water concentration) [p.u.]';
-        mpm_params.output(coutput).descrip{end+1} = '- WM calibration (69%)';
+        mpm_params.output(coutput).descrip{end+1} = sprintf('- WM calibration (%g%%)', mpm_params.proc.PD.WMval);
         mpm_params.output(coutput).units = 'p.u.';
     else
         mpm_params.output(coutput).suffix = 'A';
         mpm_params.output(coutput).descrip{1} = 'A map (signal amplitude) [a.u.]';
-        mpm_params.output(coutput).descrip{end+1} = '- no WM calibration (69%)';
+        mpm_params.output(coutput).descrip{end+1} = '- no WM calibration';
         mpm_params.output(coutput).units = 'a.u.';
     end
     switch B1transcorr{1}

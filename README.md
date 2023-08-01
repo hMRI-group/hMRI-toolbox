@@ -52,7 +52,7 @@ to view the message archive on the [list Home Page](https://www.jiscmail.ac.uk/c
 
 The development of the hMRI toolbox is an international collaborative effort including the following sites and developers: 
 
-- Luke J Edwards, Tobias Leutritz, Enrico Reimer, Nikolaus Weiskopf (Max Planck Institute for Human Cognitive and Brain Sciences, Leipzig, Germany) 
+- Luke J Edwards, Tobias Leutritz, Enrico Reimer, Baris Evren Ugurcan, Nikolaus Weiskopf (Max Planck Institute for Human Cognitive and Brain Sciences, Leipzig, Germany) 
 - Evelyne Balteau, Christophe Phillips ([University of Liege](https://www.giga.uliege.be), Liege, Belgium) 
 - Siawoosh Mohammadi (Medical Center Hamburg-Eppendorf, Hamburg, Germany) 
 - Martina F Callaghan, John Ashburner (University College London, London, United Kingdom)

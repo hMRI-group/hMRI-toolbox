@@ -547,8 +547,10 @@ for p = 1:dm(3)
     % only if trpd = trmt and fapd = famt and if PDw and MTw images are
     % available
     if (MTwidx && PDwidx)
+        % additional MTR image...
         MTw = spm_slice_vol(Vavg(MTwidx),Vavg(MTwidx).mat\M,dm(1:2),mpm_params.interp);
-        if (TR_mtw == TR_pdw) && (fa_mtw == fa_pdw) % additional MTR image...
+        % Floating point comparison of equality with small tolerance to allow for float imprecision
+        if (abs(TR_mtw - TR_pdw) < 5*eps(TR_pdw)) && (abs(fa_mtw - fa_pdw) < 5*eps(fa_pdw))
             MTR = (PDw-MTw)./(PDw+eps) * 100;
             % write MTR image
             Nmap(mpm_params.qMTR).dat(:,:,p) = max(min(MTR,threshall.MTR),-threshall.MTR);
@@ -786,7 +788,7 @@ if (mpm_params.QA.enable||(PDproc.calibr)) && (PDwidx && T1widx)
     MTtemp(:,:,1:5)=0; MTtemp(:,:,end-5:end)=0;
     
     % Null very bright and negative voxels
-    MTtemp(abs(MTtemp)==threshMT)=0;
+    MTtemp(abs(abs(MTtemp)-threshMT)<5*eps(threshMT))=0;
     MTtemp(isinf(MTtemp))=0;
     MTtemp(isnan(MTtemp))=0;
     MTtemp(MTtemp<0)=0;
@@ -1542,8 +1544,9 @@ else
 end
 
 if (mpm_params.PDwidx && mpm_params.MTwidx)
-    if (mpm_params.input(mpm_params.MTwidx).TR == mpm_params.input(mpm_params.PDwidx).TR) ...
-        && (mpm_params.input(mpm_params.MTwidx).fa == mpm_params.input(mpm_params.PDwidx).fa) % additional MTR image...
+    % Test equality with small tolerance to account for floating point precision
+    if abs(mpm_params.input(mpm_params.MTwidx).TR - mpm_params.input(mpm_params.PDwidx).TR) < 5*eps(mpm_params.input(mpm_params.PDwidx).TR) ...
+        && abs(mpm_params.input(mpm_params.MTwidx).fa - mpm_params.input(mpm_params.PDwidx).fa) < 5*eps(mpm_params.input(mpm_params.PDwidx).fa) % additional MTR image...
         coutput = coutput+1;
         mpm_params.qMTR = coutput;
         mpm_params.output(coutput).suffix = 'MTR';

@@ -779,20 +779,23 @@ switch b1_protocol
                     hmri_log('WARNING: "useBidsFlipAngleField" is true but FlipAngle is empty or zero', ...
                         b1map_params.defflags);
                 end
-                assert(all(sort(FA_SE)==sort(FA_STE)),'the set of SE and STE flip angles must be identical!')
-
+                
                 if any([FA_SE(:),FA_STE(:)]==0)
                     hmri_log('WARNING: zero flip angles detected in SE/STE metadata. This is probably not correct.', ...
                         b1map_params.defflags);
                 end
-
+                
                 % make sure that SE and STE volumes are in the correct
                 % order. Note that calc_SESTE_b1map expects fa in
                 % decreasing order
-                [b1map_params.b1acq.beta, fa_order] = sort(FA_SE, 'descend');
-                V_SE  = V_SE(fa_order);
-                [~, fa_order] = sort(FA_STE, 'descend');
-                V_STE = V_STE(fa_order);
+                [b1map_params.b1acq.beta, fa_order_se] = sort(FA_SE, 'descend');
+                V_SE  = V_SE(fa_order_se);
+                [~, fa_order_ste] = sort(FA_STE, 'descend');
+                V_STE = V_STE(fa_order_ste);
+                
+                % Check that nominal flip angles match between SE and STE metadata
+                % Equality test accounts for small floating point precision error
+                assert(all(abs(b1map_params.b1acq.beta - FA_STE(fa_order_ste)) < 5*eps(b1map_params.b1acq.beta)),'the set of SE and STE flip angles must be identical!')
             else
                 tmp = get_metadata_val(b1hdr{1},'B1mapNominalFAValues');
                 if isempty(tmp)
@@ -851,7 +854,7 @@ switch b1_protocol
                         supportedB0 = false;
                         expectedT1 = NaN;
                 end
-                if b1map_params.b1proc.T1 == expectedT1
+                if abs(b1map_params.b1proc.T1 - expectedT1) < 5*eps(expectedT1) % test equality allowing for small floating point precision error
                     matchT1fieldstrength = true;
                 end
                 if ~supportedB0

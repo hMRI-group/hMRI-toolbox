@@ -11,5 +11,11 @@ field_map_1 = '&files=anon_s2018-02-28_18-26-185100-00001-00001-1.nii';
 ut_data_dir = [fileparts(which('hmri_test_utils')) filesep 'example_data'];
 [~,~] = mkdir(ut_data_dir);
 
-% Download data for unit testing (if not already present locally)
-urlwrite([url_loc field_map_1], [ut_data_dir filesep 'field_map_1.nii']);
+% Download data for unit testing (overwriting any previous file)
+%urlwrite([url_loc field_map_1], [ut_data_dir filesep 'field_map_1.nii']);
+x=webread([url_loc field_map_1]);
+fid=fopen([ut_data_dir filesep 'field_map_1.nii'],'w');
+fwrite(fid,x);
+fclose(fid);
+
+end

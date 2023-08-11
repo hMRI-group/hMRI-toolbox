@@ -7,11 +7,43 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 ## [unreleased]
 
 ### Added
+- parameter error maps
+- weighted combination
+
+## [v0.6.0]
+### Added
+- support for reading RepetitionTime from individual file metadata for AFI B1-mapping data (i.e. support for [qMRI-BIDS formatted data](https://bids-specification.readthedocs.io/en/latest/appendices/qmri.html#field-maps))
+
+### Fixed
+- issue #5: fixed version check for compiled toolbox
+- QUIQI check: dependence on stats toolbox
+- issue #14 (Spatial processing: Inverse deformation field moved along with forward deformation field to requested folder)
+- issue #59: both the [qform and the sform](https://nifti.nimh.nih.gov/nifti-1/documentation/nifti1fields/nifti1fields_pages/qsform.html) of the first PD-weighted image are now propagated to the quantitative maps, rather than just the sform
+- Add OSF interface to download test files directly from the online storage
+
+### Breaking changes
+- AFI B1 mapping data must be entered in the opposite order to previously (for sequence programmers: the assumption is now made that the order of `alTR` strictly reflects the order of acquisition, rather than being sorted). A warning will be printed if the toolbox detects that the data might have been provided in the wrong order (see changes made in [#41](https://github.com/hMRI-group/hMRI-toolbox/pull/41)). Note that while this is a breaking change, it should make data sorting more logical.
+
+## [v0.5.0]
+
+### Added
+- double angle mapping (DAM) B1 mapping option
+- option to test ambiguous angle ranges beyond [0,90] and [90,180] degrees for SE/STE B1 mapping (nAmbiguousAngles b1 defaults parameter)
+- various B1 input checking
+- smoothing and masking options for all appropriate B1 mapping methods
+
+### Fixed
+- issue #42 (Non-matching filename length can cause AFI B1 calculation crash)
+- issue #46 (Toolbox expects SE/STE input sorted by echo and flip angle whereas BIDS sorts by flip angle then echo)
+- issue #26 (Possible bug in calculation of B1 maps with SE/STE EPI)
+- SE/STE B1 mapping calculation can now no longer select both ambiguous angles for a given SE/STE pair
+
+## [v0.4.0]
+
+### Added
 - weighted least squares R2* fitting
 - cleaner input/output functions for map creation
 - several unit tests
-- parameter error maps
-- weighted combination
 - nulling of bright voxels during unified segmentation to improve segmentation of anonymised data
 
 ## [v0.3.0]

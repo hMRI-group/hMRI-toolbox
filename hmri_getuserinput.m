@@ -1,4 +1,4 @@
-    function output = getuserinput(mainstr)
+    function output = hmri_getuserinput(mainstr)
 
 prompt = {'do you want to input customized parameters: type 0 OR 1' };
 dlgtitle = 'User customized variable?';

@@ -91,6 +91,9 @@ hmri_log(sprintf('\t============ MPM PROCESSING - %s.m (%s) ============', mfile
 % retrieves all required parameters for MPM processing
 mpm_params = get_mpm_params(jobsubj);
 
+% get user customized input
+mpm_params = hmri_getuserinput(mpm_params);
+
 % for convenience, define a few parameters to make formulae more readable
 % and avoid number of repetitions:
 

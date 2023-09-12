@@ -1,4 +1,10 @@
-    function output = hmri_getuserinput(mainstr)
+%12 Sep 2023, written by B.E.Ugurcan
+%aims to get interactive input from the user directly from the command
+%line, without running the configure toolbox module.
+
+
+
+function output = hmri_getuserinput(mainstr)
 
 prompt = {'do you want to input customized parameters: type 0 OR 1' };
 dlgtitle = 'User customized variable?';

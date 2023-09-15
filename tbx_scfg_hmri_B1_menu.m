@@ -64,8 +64,12 @@ b1raw.name     = 'B1 input';
 b1raw.help     = {'Select B1 input images according to the type of B1 bias correction.'};
 b1raw.filter   = 'image';
 b1raw.ufilter  = '.*';
-b1raw.num      = [2 30];
+b1raw.num      = [2 2];
 % b1raw.val      = {''};
+
+b1raw_3DEPI     = b1raw;
+b1raw_3DEPI.num = [2 30];
+% b1raw.val       = {''};
 
 % ---------------------------------------------------------------------
 % B0 input images
@@ -185,7 +189,7 @@ b1_input_3DEPI.help      = {'Input B0/B1 data for 3D EPI protocol'
     ['Regarding processing parameters, you can either stick with metadata and standard ' ...
     'defaults parameters (recommended) or select your own [hmri_b1_local_defaults_*.m] customised defaults file ' ...
     '(fallback for situations where no metadata are available).']};
-b1_input_3DEPI.val       = {b1raw b0raw b1parameters};
+b1_input_3DEPI.val       = {b1raw_3DEPI b0raw b1parameters};
 
 
 % ---------------------------------------------------------------------

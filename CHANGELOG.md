@@ -6,6 +6,9 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 
 ## [unreleased]
 
+### Fixed
+- batch interface now enforces the number of B1 input images correctly for B1 mapping methods which only need two images.
+
 ## [v0.6.0]
 ### Added
 - support for reading RepetitionTime from individual file metadata for AFI B1-mapping data (i.e. support for [qMRI-BIDS formatted data](https://bids-specification.readthedocs.io/en/latest/appendices/qmri.html#field-maps))

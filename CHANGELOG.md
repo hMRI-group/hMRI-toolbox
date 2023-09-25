@@ -6,7 +6,7 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 
 ## [unreleased]
 ### Fixed
--function-evaluate SPM-struct (preproc8.val) for SPM development version compatibility.
+- function-evaluate SPM-struct (preproc8.val) for SPM development version compatibility.
 
 ## [v0.6.0]
 ### Added

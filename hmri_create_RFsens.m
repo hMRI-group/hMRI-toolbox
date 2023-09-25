@@ -171,9 +171,9 @@ if isfield(jobsubj.sensitivity,'RF_once')
         tmprawfnam = spm_file(jobsubj.sensitivity.RF_once{i},'number','');
         %modify file name to prevent over-write
         if i ==1
-            filestring = 'head';
+            filestring = 'HC';
         else
-            filestring = 'body';
+            filestring = 'BC';
         end
         tmpmodfname = spm_file(tmprawfnam, 'path', '', 'suffix',['_' filestring]);
         tmpfnam{i} = fullfile(rfsens_params.calcpath,tmpmodfname);
@@ -202,9 +202,9 @@ elseif isfield(jobsubj.sensitivity,'RF_per_contrast')
             tmprawfnam = spm_file(raw_sens_input{csens},'number','');
             %modify file name to prevent over-write
             if csens ==1
-                filestring = 'head';
+                filestring = 'HC';
             else
-                filestring = 'body';
+                filestring = 'BC';
             end
             tmpmodfname = spm_file(tmprawfnam, 'path', '', 'suffix',['_' rfsens_params.input(ccon).tag 'w_' filestring]);
             tmpfnam{csens} = fullfile(rfsens_params.calcpath,tmpmodfname);

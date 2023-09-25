@@ -5,6 +5,8 @@ This changelog documents all notable changes to the hMRI-toolbox.
 Most recent version numbers *should* follow the [Semantic Versioning](https://semver.org/spec/v2.0.0.html) principles (e.g. bug fixes: x.x.1 > x.x.2, new feature with backward compatibility: x.2.x > x.3.0, major release affecting the way data are handled and processed: 1.x.x > 2.0.0).
 
 ## [unreleased]
+### Fixed
+- The local config files have been converted to scripts for compatibility with compiled version
 
 ## [v0.6.0]
 ### Added

@@ -169,6 +169,13 @@ clear tmpfnam;
 if isfield(jobsubj.sensitivity,'RF_once')
     for i=1:length(jobsubj.sensitivity.RF_once)
         tmprawfnam = spm_file(jobsubj.sensitivity.RF_once{i},'number','');
+        %modify file name to prevent over-write
+            if i ==1
+                filestring = 'array';
+            else
+                filestring = 'QBC';
+            end
+        tmpmodfname = [filestring '_' spm_file(tmprawfnam,'filename')];
         tmpfnam{i} = fullfile(rfsens_params.calcpath,spm_file(tmprawfnam,'filename'));
         copyfile(tmprawfnam, tmpfnam{i});
         try copyfile([spm_str_manip(tmprawfnam,'r') '.json'],[spm_str_manip(tmpfnam{i},'r') '.json']); end

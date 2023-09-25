@@ -8,6 +8,10 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 ### Fixed
 - function-evaluate SPM-struct (preproc8.val) for SPM development version compatibility.
 
+### Added
+- copy acquisition metadata to TE=0 volumes in Results/Supplementary folder after map creation so they can be used as input to the toolbox if needed
+
+
 ## [v0.6.0]
 ### Added
 - support for reading RepetitionTime from individual file metadata for AFI B1-mapping data (i.e. support for [qMRI-BIDS formatted data](https://bids-specification.readthedocs.io/en/latest/appendices/qmri.html#field-maps))

@@ -176,7 +176,7 @@ if isfield(jobsubj.sensitivity,'RF_once')
                 filestring = 'QBC';
             end
         tmpmodfname = [filestring '_' spm_file(tmprawfnam,'filename')];
-        tmpfnam{i} = fullfile(rfsens_params.calcpath,spm_file(tmprawfnam,'filename'));
+        tmpfnam{i} = fullfile(rfsens_params.calcpath,tmpmodfname);
         copyfile(tmprawfnam, tmpfnam{i});
         try copyfile([spm_str_manip(tmprawfnam,'r') '.json'],[spm_str_manip(tmpfnam{i},'r') '.json']); end
     end
@@ -200,7 +200,14 @@ elseif isfield(jobsubj.sensitivity,'RF_per_contrast')
         end
         for csens=1:length(raw_sens_input)
             tmprawfnam = spm_file(raw_sens_input{csens},'number','');
-            tmpfnam{csens} = fullfile(rfsens_params.calcpath,spm_file(tmprawfnam,'filename'));
+            %modify file name to prevent over-write
+            if csens ==1
+                filestring = 'array';
+            else
+                filestring = 'QBC';
+            end
+            tmpmodfname = [rfsens_params.input(ccon).tag '_' filestring '_' spm_file(tmprawfnam,'filename')];
+            tmpfnam{csens} = fullfile(rfsens_params.calcpath,tmpmodfname);
             copyfile(tmprawfnam, tmpfnam{csens});
             try copyfile([spm_str_manip(tmprawfnam,'r') '.json'],[spm_str_manip(tmpfnam{csens},'r') '.json']); end
         end

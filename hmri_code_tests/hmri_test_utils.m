@@ -34,7 +34,9 @@ classdef hmri_test_utils
             %   2. both flip angles alpha and beta are small, and 
             %   3. beta is related to delta by delta = beta^2/2 ~ 1 - cos(beta).
             % See Helms, et al. (MRM 2008 https://doi.org/10.1002/mrm.21732)
-            % for more details.
+            % for more details. Compared to Helms, et al., the amplitude of the 
+            % spoiled gradient echo under fully relaxed conditions, A, is here 
+            % implicitly 1.
             
             S=(alpha.*TR.*R1)./(alpha.^2/2 + delta + TR.*R1);
             

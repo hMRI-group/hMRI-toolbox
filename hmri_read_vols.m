@@ -4,15 +4,18 @@
 % read image volume
 %
 % Input:
-%   V      - structure containing image volume information of ith image
-%   VG     - structure containing image volume information of target image
+%   V      - structure containing image volume information of image to be
+%            read
+%   VG     - structure containing image volume information of image
+%            defining the target space
 %   p      - z position
-%   interp - interpolation for spm_vol. Values between -127 and 127
-%   x      - optional argument that is the output of spm_coreg.  For use 
-%            when an additional coregistration step
-%            is required between V and VG, e.g. taking echoes from native
-%            space but putting the output in an echo-averaged space that
-%            has already been coregisterd to V_pdw(1) giving x.
+%   interp - interpolation value for spm_vol. Values between -127 and 127
+%   x      - optional argument that is the output of spm_coreg. For use 
+%            when an additional transformation is required between V and 
+%            VG, e.g. when V is defined in native space but the transform
+%            from V space to VG space has been previously estimated using 
+%            another image V' (e.g. the average over echoes) in the same 
+%            space as V.
 %
 % ========================================================================
 % S.Mohammadi 18/10/2019

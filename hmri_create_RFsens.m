@@ -22,7 +22,7 @@ function jobsubj = hmri_create_RFsens(jobsubj)
 
 flags = jobsubj.log.flags;
 flags.PopUp = false;
-hmri_log(sprintf('\t============ RF SENSITIVITY CORRECTION - %s.m (%s) ============', mfilename, datestr(now)),flags);
+hmri_log(sprintf('\t============ RF SENSITIVITY CORRECTION - %s.m (%s) ============', mfilename, datetime('now')),flags);
 
 %==========================================================================
 % Define processing parameters, defaults, input files...
@@ -102,7 +102,7 @@ end
 % save RF sensitivity processing parameters
 spm_jsonwrite(fullfile(supplpath,'hMRI_map_creation_rfsens_params.json'),rfsens_params,struct('indent','\t'));
 
-hmri_log(sprintf('\t============ RF SENSITIVITY CORRECTION: completed (%s) ============', datestr(now)),rfsens_params.nopuflags);
+hmri_log(sprintf('\t============ RF SENSITIVITY CORRECTION: completed (%s) ============', datetime('now')),rfsens_params.nopuflags);
 
 end
 

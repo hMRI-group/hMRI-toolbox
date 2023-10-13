@@ -7,6 +7,7 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 ## [unreleased]
 ### Fixed
 - function-evaluate SPM-struct (preproc8.val) for SPM development version compatibility.
+- replace `datestr(now)` with `datetime('now')` in line with [MATLAB recommendation](https://mathworks.com/help/matlab/matlab_prog/replace-discouraged-instances-of-serial-date-numbers-and-date-strings.html)
 
 ### Added
 - copy acquisition metadata to TE=0 volumes in Results/Supplementary folder after map creation so they can be used as input to the toolbox if needed

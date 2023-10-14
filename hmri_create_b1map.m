@@ -702,7 +702,7 @@ switch b1_protocol
         if ~isempty(b1map_params.b1input)
             hmri_log(sprintf('SE/STE EPI protocol selected ...'),b1map_params.nopuflags);
             b1hdr = get_metadata(b1map_params.b1input(1,:));
-            if isempty(b1hdr) % no sidecar file with metadata
+            if isempty(b1hdr{1}) % no sidecar file with metadata
                 b1hdr{1} = b1map_params.b1input(1,:); 
             end 
 
@@ -923,7 +923,7 @@ switch b1_protocol
         if ~isempty(b1map_params.b1input)
             hmri_log(sprintf('AFI protocol selected ...'),b1map_params.nopuflags);
             b1hdr = get_metadata(b1map_params.b1input);
-            if isempty(b1hdr) % no sidecar file with metadata
+            if isempty(b1hdr{1}) % no sidecar file with metadata
                 b1hdr{1} = b1map_params.b1input(1,:);
                 b1hdr{2} = b1map_params.b1input(2,:);
             end

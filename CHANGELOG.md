@@ -7,6 +7,7 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 ## [unreleased]
 ### Fixed
 - function-evaluate SPM-struct (preproc8.val) for SPM development version compatibility.
+- make B1-map creation using 3DEPI SE/STE and AFI methods fall back to defaults without sidecar files, rather than crash
 
 ### Added
 - copy acquisition metadata to TE=0 volumes in Results/Supplementary folder after map creation so they can be used as input to the toolbox if needed

@@ -702,6 +702,9 @@ switch b1_protocol
         if ~isempty(b1map_params.b1input)
             hmri_log(sprintf('SE/STE EPI protocol selected ...'),b1map_params.nopuflags);
             b1hdr = get_metadata(b1map_params.b1input(1,:));
+            if isempty(b1hdr) % no sidecar file with metadata
+                b1hdr{1} = b1map_params.b1input(1,:); 
+            end 
 
             V = spm_vol(b1map_params.b1input);
 
@@ -713,7 +716,7 @@ switch b1_protocol
             % assumes conventional hMRI toolbox order as default but checks this order
             % when echo times are defined and b1validation.checkTEs is true
             % Echo times for input validation
-            tmp = get_metadata_val(b1hdr{1},'EchoTime');
+            tmp = get_metadata_val(b1map_params.b1input(1,:),'EchoTime');
             b1map_params.b1acq.EchoTimes=[];
             if b1map_params.b1validation.checkTEs
                 if isempty(tmp)
@@ -920,6 +923,10 @@ switch b1_protocol
         if ~isempty(b1map_params.b1input)
             hmri_log(sprintf('AFI protocol selected ...'),b1map_params.nopuflags);
             b1hdr = get_metadata(b1map_params.b1input);
+            if isempty(b1hdr) % no sidecar file with metadata
+                b1hdr{1} = b1map_params.b1input(1,:);
+                b1hdr{2} = b1map_params.b1input(2,:);
+            end
 
             try
                 tr1 = get_metadata_val(b1hdr{1},'RepetitionTime');

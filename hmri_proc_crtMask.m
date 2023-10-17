@@ -132,14 +132,14 @@ for ii=1:nTC
     fn_maskTC{ii} = fullfile(opts.outPth, ...
         ['mask_',spm_file(fn_smwTC{ii}(1,:),'basename'),'.nii']);
     % 1st thresholding
-    fn_in = fn_meanTC{ii};
+    fn_in = fn_meanTC{ii}; % picking the tissue class to deal with
     f_oper = 'i1>thrTC';
     % then max-ing, if needed
     if opts.noOvl
         % add images to input + add conditions to operations
         l_ind2add = 1:nTC; l_ind2add(ii) = [];
         for jj = 1:nTC-1
-            fn_in = char(fn_in,fn_meanTC{l_ind2add(jj)});
+            fn_in = char(fn_in,fn_meanTC{l_ind2add(jj)}); % picking other tissue classes
             f_oper = sprintf('%s & i1>i%d', f_oper, jj+1);
         end
     end

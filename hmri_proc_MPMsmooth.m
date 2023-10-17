@@ -108,7 +108,7 @@ for ii=1:nMPM
     % Get the TC-weighted MPM -> p-images
     p = cell(nTC,1);
     for jj=1:nTC
-        % MPM weighted with its own GM/WM/lesion, and a priori>.05
+        % MPM weighted with its own tissue classes, e.g. GM/WM/CSF maps, and mask with corresponding TPM >.05
         tmp = char(fn_wMPM_ii, fn_mwTC(jj,:), fn_TPM(jj,:)); % i1, i2, i3
         p_tmp = spm_imcalc( tmp, ...
             spm_file(fn_wMPM_ii,'prefix',['p',num2str(l_TC(jj)),'_']), ...

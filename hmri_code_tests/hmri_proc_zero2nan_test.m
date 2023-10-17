@@ -14,8 +14,7 @@ end
 % uint8
 function testFunction_uint8(testCase)
 % Temporaty folder with the temporary data files
-% pth_Dat = fullfile(tempdir,'hMRI_zero2nan_test');
-pth_Dat = fullfile(pwd,'hMRI_zero2nan_test');
+pth_Dat = fullfile(tempdir,'hMRI_zero2nan_test');
 
 % Pick the 2 files, original & expected results
 fn_Orig = fullfile(pth_Dat,'Dat_uint8.nii');
@@ -33,8 +32,7 @@ end
 % int16
 function testFunction_int16(testCase)
 % Temporaty folder with the temporary data files
-% pth_Dat = fullfile(tempdir,'hMRI_zero2nan_test');
-pth_Dat = fullfile(pwd,'hMRI_zero2nan_test');
+pth_Dat = fullfile(tempdir,'hMRI_zero2nan_test');
 
 % Pick the 2 files, original & expected results
 fn_Orig = fullfile(pth_Dat,'Dat_int16.nii');
@@ -52,8 +50,7 @@ end
 % int32
 function testFunction_int32(testCase)
 % Temporaty folder with the temporary data files
-% pth_Dat = fullfile(tempdir,'hMRI_zero2nan_test');
-pth_Dat = fullfile(pwd,'hMRI_zero2nan_test');
+pth_Dat = fullfile(tempdir,'hMRI_zero2nan_test');
 
 % Pick the 2 files, original & expected results
 fn_Orig = fullfile(pth_Dat,'Dat_int32.nii');
@@ -71,8 +68,7 @@ end
 % float32
 function testFunction_float32(testCase)
 % Temporaty folder with the temporary data files
-% pth_Dat = fullfile(tempdir,'hMRI_zero2nan_test');
-pth_Dat = fullfile(pwd,'hMRI_zero2nan_test');
+pth_Dat = fullfile(tempdir,'hMRI_zero2nan_test');
 
 % Pick the 2 files, original & expected results
 fn_Orig = fullfile(pth_Dat,'Dat_float32.nii');
@@ -90,8 +86,7 @@ end
 % float64
 function testFunction_float64(testCase)
 % Temporaty folder with the temporary data files
-% pth_Dat = fullfile(tempdir,'hMRI_zero2nan_test');
-pth_Dat = fullfile(pwd,'hMRI_zero2nan_test');
+pth_Dat = fullfile(tempdir,'hMRI_zero2nan_test');
 
 % Pick the 2 files, original & expected results
 fn_Orig = fullfile(pth_Dat,'Dat_float64.nii');
@@ -109,8 +104,7 @@ end
 % int8
 function testFunction_int8(testCase)
 % Temporaty folder with the temporary data files
-% pth_Dat = fullfile(tempdir,'hMRI_zero2nan_test');
-pth_Dat = fullfile(pwd,'hMRI_zero2nan_test');
+pth_Dat = fullfile(tempdir,'hMRI_zero2nan_test');
 
 % Pick the 2 files, original & expected results
 fn_Orig = fullfile(pth_Dat,'Dat_int8.nii');
@@ -128,8 +122,7 @@ end
 % uint16
 function testFunction_uint16(testCase)
 % Temporaty folder with the temporary data files
-% pth_Dat = fullfile(tempdir,'hMRI_zero2nan_test');
-pth_Dat = fullfile(pwd,'hMRI_zero2nan_test');
+pth_Dat = fullfile(tempdir,'hMRI_zero2nan_test');
 
 % Pick the 2 files, original & expected results
 fn_Orig = fullfile(pth_Dat,'Dat_uint16.nii');
@@ -147,8 +140,7 @@ end
 % uint32
 function testFunction_uint32(testCase)
 % Temporaty folder with the temporary data files
-% pth_Dat = fullfile(tempdir,'hMRI_zero2nan_test');
-pth_Dat = fullfile(pwd,'hMRI_zero2nan_test');
+pth_Dat = fullfile(tempdir,'hMRI_zero2nan_test');
 
 % Pick the 2 files, original & expected results
 fn_Orig = fullfile(pth_Dat,'Dat_uint32.nii');
@@ -173,8 +165,7 @@ function setupOnce(testCase)  %#ok<*INUSD> % do not change function name
 Dtypes = spm_type;
 
 % Temporaty folder to save the temporary data files
-% pth_Dat = fullfile(tempdir,'hMRI_zero2nan_test');
-pth_Dat = fullfile('C:\1_GitHub\Test_hMRI_processing','hMRI_zero2nan_test');
+pth_Dat = fullfile(tempdir,'hMRI_zero2nan_test');
 if ~exist(pth_Dat,'dir'), mkdir(pth_Dat), end % CP: Need this check ?
 
 % Then create some 3D synthetic images, z-axis is of size 3 such that
@@ -243,8 +234,7 @@ function teardownOnce(testCase)  % do not change function name
 % temporary files
 
 % Temporaty folder where the temporary data files are saved
-% pth_Dat = fullfile(tempdir,'hMRI_zero2nan_test');
-pth_Dat = fullfile('C:\1_GitHub\Test_hMRI_processing','hMRI_zero2nan_test');
+pth_Dat = fullfile(tempdir,'hMRI_zero2nan_test');
 if exist(pth_Dat,'dir')
     fn_2del = spm_select('FPlist',pth_Dat,'.*');
     for ii=1:size(fn_2del,1)

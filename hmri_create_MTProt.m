@@ -392,11 +392,18 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
                 Ni = hmri_create_nifti(Pte0{ccon}, V_pdw(1), dt, ...
                     sprintf('%s fit to TE=0 for %sw images - %d echoes', mpm_params.R2s_fit_method, mpm_params.input(ccon).tag, length(mpm_params.input(ccon).TE)));
                                 
-                % set metadata
+                % store processing history in metadata
                 input_files = mpm_params.input(ccon).fnam;
                 Output_hdr = init_mpm_output_metadata(input_files, mpm_params);
                 Output_hdr.history.output.imtype = Ni.descrip;
                 Output_hdr.history.output.units = 'a.u.';
+
+                % copy acquisition metadata so extrapolated data could be fed back into 
+                % the toolbox if needed
+                Output_hdr.acqpar = struct('RepetitionTime',mpm_params.input(ccon).TR, ...
+                    'EchoTime',0, ...
+                    'FlipAngle',mpm_params.input(ccon).fa);
+
                 set_metadata(Pte0{ccon},Output_hdr,mpm_params.json);
                 
                 % re-load the updated NIFTI file (in case extended header has

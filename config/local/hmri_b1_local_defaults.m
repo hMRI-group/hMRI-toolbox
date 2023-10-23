@@ -1,4 +1,3 @@
-function hmri_b1_local_defaults
 % Sets the defaults for B1 bias correction, part of the hMRI toolbox.
 % Consider this file as a template for local settings specifications. 
 % Please read below for details.
@@ -149,4 +148,4 @@ hmri_def.b1map.rf_map.b1mask.ndilate = 4;
 hmri_def.b1map.rf_map.b1mask.thresh = 0.5;
 hmri_def.b1map.rf_map.b1proc.B1FWHM = 8; % For smoothing. FWHM in mm; set to 0 to disable smoothing
 
-end
+

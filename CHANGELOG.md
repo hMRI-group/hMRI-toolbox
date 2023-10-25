@@ -6,11 +6,13 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 
 ## [unreleased]
 ### Added
-- copy acquisition metadata to TE=0 volumes in Results/Supplementary folder after map creation so they can be used as input to the toolbox if needed
 - option to choose different models and parameters for B1-correction of MTsat
 
+## [v0.6.1]
 ### Fixed
+- The local config files have been converted to scripts for compatibility with compiled version
 - function-evaluate SPM-struct (preproc8.val) for SPM development version compatibility.
+- copy acquisition metadata to TE=0 volumes in Results/Supplementary folder after map creation so they can be used as input to the toolbox if needed
 
 ## [v0.6.0]
 ### Added

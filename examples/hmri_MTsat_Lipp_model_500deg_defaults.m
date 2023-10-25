@@ -1,4 +1,3 @@
-function hmri_MTsat_Lipp_model_500deg_defaults
 % PURPOSE
 %   These are the suggested defaults for correcting MTsat for B1-inhomogeneity when using the standard Siemens MT-module
 % 
@@ -13,5 +12,3 @@ global hmri_def
 %--------------------------------------------------------------------------
 hmri_def.MTsatB1CorrectionModel = 'lipp'; % 'helms' or 'lipp'
 hmri_def.MTsatB1CorrectionLippC = 1.3; % value for 500° scaled from the 700° value in Lipp, et al. (MRM 2023) using Eq. (S.3) in the supplementary material to that paper
-
-end

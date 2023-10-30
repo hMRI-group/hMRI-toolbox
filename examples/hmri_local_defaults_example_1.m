@@ -1,4 +1,3 @@
-function hmri_local_defaults_example_1
 % These local settings have been defined for the hMRI toolbox for tutorial
 % purpose only. Please read carefully the comments in the code below before
 % reusing these parameters for your own processing.  
@@ -90,5 +89,3 @@ hmri_def.qMRI_maps.QA = 0;
 % % bias correction.
 % hmri_def.fullOLS = false;
 % hmri_def.PDproc.T2scorr = 1;  
-
-end

@@ -86,7 +86,7 @@ function [fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw]  = hmri_create_MTProt(jobsubj) %
 
 flags = jobsubj.log.flags;
 flags.PopUp = false;
-hmri_log(sprintf('\t============ MPM PROCESSING - %s.m (%s) ============', mfilename, datestr(now)),flags);
+hmri_log(sprintf('\t============ MPM PROCESSING - %s.m (%s) ============', mfilename, datetime('now')),flags);
 
 % retrieves all required parameters for MPM processing
 mpm_params = get_mpm_params(jobsubj);
@@ -959,7 +959,7 @@ spm_jsonwrite(fullfile(supplpath,'hMRI_map_creation_mpm_params.json'),mpm_params
 
 spm_progress_bar('Clear');
 
-hmri_log(sprintf('\t============ MPM PROCESSING: completed (%s) ============', datestr(now)),mpm_params.nopuflags);
+hmri_log(sprintf('\t============ MPM PROCESSING: completed (%s) ============', datetime('now')),mpm_params.nopuflags);
 
 
 end

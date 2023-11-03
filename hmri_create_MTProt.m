@@ -853,7 +853,6 @@ if PDproc.T2scorr && (~isempty(fR2s)||~isempty(fR2s_OLS))
         'R2* bias correction factor for A map (T2scorr option)');
    
     NiR2scorr4A.dat(:,:,:) = R2scorr4A;
-    
      
     % apply correction
     fAcorr = spm_file(fA,'suffix','_R2scorr');
@@ -872,6 +871,11 @@ if ~isempty(f_T) && ~isempty(fA) && exist('fTPM','var') && (mpm_params.UNICORT.P
     % if calibration enabled, do the Unified Segmentation bias correction
     % if required and calibrate the PD map
     if PDproc.calibr
+        if PDproc.saveA
+            % save copy of A map before bias correction
+            fA_uncorr = spm_file(fA,'suffix','star');
+            copyfile(fA,fullfile(supplpath,fA_uncorr));
+        end
         PDcalculation(fA,fTPM,mpm_params);
     end
 end
@@ -965,10 +969,6 @@ function PDcalculation(fA, fTPM, mpm_params)
 % (not yet properly quantitative PD map when it enters PDcalculation)
 % fTMP is the list of TPMs generated from MT map
 hmri_log(sprintf('\t-------- Proton density map calculation --------'), mpm_params.nopuflags);
-
-% save copy of A map before bias correction
-fA_uncorr = spm_file(fA,'suffix','star');
-copyfile(fA,fA_uncorr);
 
 PDproc = mpm_params.proc.PD;
 threshA = mpm_params.proc.threshall.A;

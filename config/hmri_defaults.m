@@ -223,12 +223,13 @@ hmri_def.UNICORT.MT = false;
 % PD maps processing parameters
 % ADVANCED USER ONLY.
 %--------------------------------------------------------------------------
-hmri_def.PDproc.calibr    = 1;   % Calibration of the PD map (if PDw, T1w, 
+hmri_def.PDproc.calibr   = 1;     % Calibration of the PD map (if PDw, T1w, 
     % B1map available and RF sensitivity bias correction applied somehow)
     % based on PD(WM) = 69% [Tofts 2003]. 
-hmri_def.PDproc.saveseg = false; % Whether to save tissue segmentations from calibration
-hmri_def.PDproc.WBMaskTh = 0.1;  % Threshold for calculation of whole-brain mask from TPMs
-hmri_def.PDproc.WMMaskTh = 0.95; % Threshold for calculation of white-matter mask from TPMs
+hmri_def.PDproc.saveseg  = false; % Whether to save tissue segmentations from calibration
+hmri_def.PDproc.saveA    = false; % Whether to save PD* before bias correction in Supplementary
+hmri_def.PDproc.WBMaskTh = 0.1;   % Threshold for calculation of whole-brain mask from TPMs
+hmri_def.PDproc.WMMaskTh = 0.95;  % Threshold for calculation of white-matter mask from TPMs
 hmri_def.PDproc.biasreg  = 10^(-5);
 hmri_def.PDproc.biasfwhm = 50;
 hmri_def.PDproc.nr_echoes_forA = 6; % NOTE: in order to minimize R2* bias 

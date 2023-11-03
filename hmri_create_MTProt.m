@@ -874,7 +874,7 @@ if ~isempty(f_T) && ~isempty(fA) && exist('fTPM','var') && (mpm_params.UNICORT.P
         if PDproc.saveA
             % save copy of A map before bias correction
             fA_uncorr = spm_file(fA,'suffix','star');
-            copyfile(fA,fullfile(supplpath,fA_uncorr));
+            copyfile(fA,fullfile(supplpath, spm_file(fA_uncorr,'filename')));
         end
         PDcalculation(fA,fTPM,mpm_params);
     end

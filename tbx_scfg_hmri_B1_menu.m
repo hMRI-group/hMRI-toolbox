@@ -58,6 +58,9 @@ b1parameters.val    = {b1metadata};
 % ---------------------------------------------------------------------
 % B1 input images 
 % ---------------------------------------------------------------------
+% b1raw is the default covering most used cases. 
+% If specific methods require changes to these defaults, please create 
+% a new field with a unique name and use that.
 b1raw         = cfg_files;
 b1raw.tag     = 'b1input';
 b1raw.name    = 'B1 input';
@@ -65,11 +68,10 @@ b1raw.help    = {'Select B1 input images according to the type of B1 bias correc
 b1raw.filter  = 'image';
 b1raw.ufilter = '.*';
 b1raw.num     = [2 2];
-% b1raw.val     = {''};
 
+% 3DEPI can have more than 2 input images
 b1raw_3DEPI     = b1raw;
 b1raw_3DEPI.num = [2 30];
-% b1raw.val       = {''};
 
 % ---------------------------------------------------------------------
 % B0 input images
@@ -83,7 +85,6 @@ b0raw.help    = {'Select B0 field map input images.' ...
 b0raw.filter  = 'image';
 b0raw.ufilter = '.*';
 b0raw.num     = [3 3];
-% b0raw.val     = {''};
 
 % ---------------------------------------------------------------------
 % pre-calculated B1 map - including potential rescaling factor

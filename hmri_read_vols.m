@@ -4,10 +4,10 @@
 % read image volume
 %
 % Input:
-%   V      - structure containing image volume information of image to be
-%            read
-%   VG     - structure containing image volume information of image
-%            defining the target space
+%   V      - structure from spm_vol containing image volume information 
+%            of image to be read
+%   VG     - structure from spm_vol or SPM nifti object containing image 
+%            volume information of image defining the target space
 %   p      - z position
 %   interp - interpolation value for spm_vol. Values between -127 and 127
 %   x      - optional argument that is the output of spm_coreg. For use 
@@ -22,8 +22,8 @@
 
 function dataOut = hmri_read_vols(V,VG,p,interp,x)
 
-assert(isstruct(V),'hmri:structError',['Input V must be struct; see help ' mfilename])
-assert(isstruct(VG),'hmri:structError',['Input VG must be struct; see help ' mfilename])
+assert(isstruct(V),'hmri:structError',['Input V must be struct from spm_vol; see help ' mfilename])
+assert(isstruct(VG)||isa(VG,'nifti'),'hmri:structError',['Input VG must be struct from spm_vol or SPM nifti object; see help ' mfilename])
 assert(isscalar(interp) && abs(interp) < 128,'hmri:inputError','Invalid interpolation setting; see help spm_slice_vol')
 assert(isnumeric(p),'hmri:typeError',['z position input must be numerical; see help ' mfilename])
 

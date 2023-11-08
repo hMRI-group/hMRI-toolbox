@@ -136,13 +136,11 @@ supplpath = mpm_params.supplpath;
 avg_nr = mpm_params.nr_echoes4avg; 
 
 % load PDw images
-% PDw images are the reference space for all results. Therefore, the matrix
-% dimension defined below (dm) is used across the whole script. It must not
-% been redefined.
 V_pdw = spm_vol(mpm_params.input(PDwidx).fnam);
 
-%set a reference space to be used for different contrasts
-%we set it to PDw
+% We set the PDw images as reference space for all results/different contrasts. 
+% Therefore, the matrix dimension defined below (dm) is used across the whole script. 
+% It should not be redefined.
 V_ref = V_pdw(1);
 dm = V_ref.dim;
 

@@ -170,14 +170,14 @@ if mpm_params.basicR2s
     
     % create nifti object for output R2* map
     fR2s = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qR2s).suffix '.nii']);
-    Ni = hmri_create_nifti(fR2s, V_pdw(1), dt, mpm_params.output(mpm_params.qR2s).descrip{1});
+    Ni = hmri_create_nifti(fR2s, V_ref, dt, mpm_params.output(mpm_params.qR2s).descrip{1});
        
     % Fit R2* decay
     for p = 1:dm(3)
         data = zeros([dm(1:2),numel(V_pdw)]);
         for cecho = 1:numel(V_pdw)
             % Allows for reslicing across TE
-            data(:,:,cecho) = hmri_read_vols(V_pdw(cecho),V_pdw(1),p,mpm_params.interp);
+            data(:,:,cecho) = hmri_read_vols(V_pdw(cecho),V_ref,p,mpm_params.interp);
         end
         % Don't want log of < 1 => assuming typical dynamic range of Dicom
         % data, e.g. 12bit @TODO
@@ -318,7 +318,7 @@ if mpm_params.QA.enable
         if mpm_params.estaticsR2s(ccon)
             
             fR2sQA{ccon} = fullfile(calcpath,[outbasename '_R2s_' mpm_params.input(ccon).tag 'w.nii']);
-            Ni = hmri_create_nifti(fR2sQA{ccon}, V_pdw(1), dt, ...
+            Ni = hmri_create_nifti(fR2sQA{ccon}, V_ref, dt, ...
                 'OLS R2* map [s-1]');
             
             Vcon = spm_vol(mpm_params.input(ccon).fnam);
@@ -333,7 +333,7 @@ if mpm_params.QA.enable
                 data = zeros([dm(1:2),numel(Vcon)]);
                 for cecho = 1:numel(mpm_params.input(ccon).TE)
                     % Allows for reslicing across TE
-                    data(:,:,cecho) = hmri_read_vols(Vcon(cecho),V_pdw(1),p,mpm_params.interp);
+                    data(:,:,cecho) = hmri_read_vols(Vcon(cecho),V_ref,p,mpm_params.interp);
                 end
                 % Don't want log of < 1 => assuming typical dynamic range of Dicom
                 % data, e.g. 12bit @TODO
@@ -388,7 +388,7 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
             % requires a minimum of neco4R2sfit echoes for a robust fit
             if mpm_params.estaticsR2s(ccon)
                 Pte0{ccon}  = fullfile(calcpath,[outbasename '_' mpm_params.input(ccon).tag 'w_' mpm_params.R2s_fit_method 'fit_TEzero.nii']);
-                Ni = hmri_create_nifti(Pte0{ccon}, V_pdw(1), dt, ...
+                Ni = hmri_create_nifti(Pte0{ccon}, V_ref, dt, ...
                     sprintf('%s fit to TE=0 for %sw images - %d echoes', mpm_params.R2s_fit_method, mpm_params.input(ccon).tag, length(mpm_params.input(ccon).TE)));
                                 
                 % store processing history in metadata
@@ -416,7 +416,7 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
     end % init nifti objects for fullOLS case
     
     fR2s_OLS    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qR2s).suffix '_' mpm_params.R2s_fit_method '.nii']);
-    Ni = hmri_create_nifti(fR2s_OLS, V_pdw(1), dt, ...
+    Ni = hmri_create_nifti(fR2s_OLS, V_ref, dt, ...
         [mpm_params.R2s_fit_method ' R2* map [s-1]']);
     
     % Combine the data and echo times:
@@ -443,7 +443,7 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
                     % want output (e.g. intercept) in Vavg space.
                     % Don't want log of < 1 => assuming typical dynamic range of Dicom
                     % data, e.g. 12bit @TODO
-                    data(:,:,cecho) = max(hmri_read_vols(Vcon(cecho),V_pdw(1),p,mpm_params.interp, contrastCoregParams(ccon,:)), 1);
+                    data(:,:,cecho) = max(hmri_read_vols(Vcon(cecho),V_ref,p,mpm_params.interp, contrastCoregParams(ccon,:)), 1);
                     
                 end
                 dataToFit(ccon).data = data;
@@ -506,7 +506,7 @@ for ii=1:length(mpm_params.output)-1*(~isempty(fR2s)||~isempty(fR2s_OLS)) % R2s 
     % define NIFTI objects for output images
     outputFn = fullfile(calcpath,[outbasename '_' mpm_params.output(ii).suffix '.nii']);
     
-    Nmap(ii) = hmri_create_nifti(outputFn, V_pdw(1), dt, ...
+    Nmap(ii) = hmri_create_nifti(outputFn, V_ref, dt, ...
         fullfile(calcpath,[outbasename '_' mpm_params.output(ii).suffix '.nii']));
     
 end
@@ -863,7 +863,7 @@ if PDproc.T2scorr && (~isempty(fR2s)||~isempty(fR2s_OLS))
     
     % save correction for inspection
     fR2scorr4A = spm_file(PR2s,'suffix','_corr4A');   
-    NiR2scorr4A = hmri_create_nifti(fR2scorr4A, V_pdw(1), dt, ...
+    NiR2scorr4A = hmri_create_nifti(fR2scorr4A, V_ref, dt, ...
         'R2* bias correction factor for A map (T2scorr option)');
    
     NiR2scorr4A.dat(:,:,:) = R2scorr4A;
@@ -871,7 +871,7 @@ if PDproc.T2scorr && (~isempty(fR2s)||~isempty(fR2s_OLS))
      
     % apply correction
     fAcorr = spm_file(fA,'suffix','_R2scorr');
-    NiAcorr = hmri_create_nifti(fAcorr, V_pdw(1), dt, ...
+    NiAcorr = hmri_create_nifti(fAcorr, V_ref, dt, ...
         'R2* bias corrected A map (T2scorr option)');
     
     tmp = spm_read_vols(spm_vol(fA))./(R2scorr4A+eps);

@@ -140,7 +140,11 @@ avg_nr = mpm_params.nr_echoes4avg;
 % dimension defined below (dm) is used across the whole script. It must not
 % been redefined.
 V_pdw = spm_vol(mpm_params.input(PDwidx).fnam);
-dm = V_pdw(1).dim;
+
+%set a reference space to be used for different contrasts
+%we set it to PDw
+V_ref = V_pdw(1);
+dm = V_ref.dim;
 
 %% =======================================================================%
 % Calculate R2* map from PDw echoes

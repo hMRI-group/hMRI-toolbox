@@ -623,12 +623,14 @@ for p = 1:dm(3)
     % T1 map and A/PD maps can only be calculated if T1w images are
     % available:
     if T1widx
+
+        T1w = hmri_read_vols(Vavg(T1widx),Ni,p,mpm_params.interp);
         
         % if "fullOLS" option enabled, use the OLS fit at TE=0 as
         % "T1w_forA"; otherwise use the average calculated earlier (by
         % default, corresponds to the first echo to reduce R2* bias)
         if mpm_params.fullOLS
-            T1w_forA = hmri_read_vols(Vavg(T1widx),Ni,p,mpm_params.interp);
+            T1w_forA = T1w;
         else
             T1w_forA = hmri_read_vols(VT1w_forA,Ni,p,mpm_params.interp);
         end

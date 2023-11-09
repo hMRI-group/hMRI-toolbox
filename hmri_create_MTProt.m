@@ -661,7 +661,7 @@ for p = 1:dm(3)
         % for MT maps calculation, one needs MTw images on top of the T1w
         % and PDw ones...
         if MTwidx
-            MTw = hmri_read_vols(Vavg(MTwidx),Ni,p,3);
+            MTw = hmri_read_vols(Vavg(MTwidx),Ni,p,mpm_params.interp);
 
             switch mpm_params.MTsatB1CorrectionModel
                 case 'helms' 

@@ -3,10 +3,19 @@
 This changelog documents all notable changes to the hMRI-toolbox.
 
 Most recent version numbers *should* follow the [Semantic Versioning](https://semver.org/spec/v2.0.0.html) principles (e.g. bug fixes: x.x.1 > x.x.2, new feature with backward compatibility: x.2.x > x.3.0, major release affecting the way data are handled and processed: 1.x.x > 2.0.0).
-
 ## [unreleased]
 ### Added
 -set default WM percent value in hmri_defaults.
+
+### Fixed
+- replace `datestr(now)` with `datetime('now')` in line with [MATLAB recommendation](https://mathworks.com/help/matlab/matlab_prog/replace-discouraged-instances-of-serial-date-numbers-and-date-strings.html)
+
+## [v0.6.1]
+### Fixed
+- The local config files have been converted to scripts for compatibility with compiled version
+- function-evaluate SPM-struct (preproc8.val) for SPM development version compatibility.
+- copy acquisition metadata to TE=0 volumes in Results/Supplementary folder after map creation so they can be used as input to the toolbox if needed
+
 
 ## [v0.6.0]
 ### Added
@@ -17,6 +26,7 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 - QUIQI check: dependence on stats toolbox
 - issue #14 (Spatial processing: Inverse deformation field moved along with forward deformation field to requested folder)
 - issue #59: both the [qform and the sform](https://nifti.nimh.nih.gov/nifti-1/documentation/nifti1fields/nifti1fields_pages/qsform.html) of the first PD-weighted image are now propagated to the quantitative maps, rather than just the sform
+- Add OSF interface to download test files directly from the online storage
 
 ### Breaking changes
 - AFI B1 mapping data must be entered in the opposite order to previously (for sequence programmers: the assumption is now made that the order of `alTR` strictly reflects the order of acquisition, rather than being sorted). A warning will be printed if the toolbox detects that the data might have been provided in the wrong order (see changes made in [#41](https://github.com/hMRI-group/hMRI-toolbox/pull/41)). Note that while this is a breaking change, it should make data sorting more logical.

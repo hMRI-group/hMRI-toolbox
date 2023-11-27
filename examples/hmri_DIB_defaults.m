@@ -1,4 +1,3 @@
-function hmri_DIB_defaults
 % PURPOSE
 % These are the recommended defaults for the example dataset 
 % (Callaghan, et al. 2019. Example dataset for the hMRI toolbox. Data in 
@@ -43,5 +42,3 @@ hmri_def.segment.warp.cleanup = 1;
 % coefficients retrieved in the list below are definitely calculated for
 % the protocol used!
 hmri_def.imperfectSpoilCorr.enabled = true;
-
-end

@@ -1,4 +1,3 @@
-function hmri_local_defaults
 % PURPOSE
 % To set user-defined (site- or protocol-specific) defaults parameters
 % which are used by the hMRI toolbox. Customized processing parameters can
@@ -454,4 +453,4 @@ hmri_def.proc.w_warped = [[1 1];[1 1];[1 1];[0 0];[0 0];[0 0]];
 % Number of Gaussians per tissue class
 hmri_def.proc.nGauss = [2 2 2 3 4 2]; % originally in SPM [1 1 2 3 4 2]
 
-end
+

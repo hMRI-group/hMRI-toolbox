@@ -53,14 +53,16 @@ classdef hmri_coreg_test < matlab.unittest.TestCase
         function getData(testCase)
             % These methods are run when instantiating the class
             
-            % Use low resolution brain image
-            ut_data_dir = [fileparts(which('hmri_test_utils')) filesep 'example_data'];
-            field_map_1 = [ut_data_dir filesep 'field_map_1.nii'];
-            assert(logical(exist(field_map_1,'file')),'Could not find\n\t%s.\nPlease run "hmri_get_ut_data" to download the data',field_map_1)
-            
             % Use temporary directory which is deleted after tests have run
             import matlab.unittest.fixtures.TemporaryFolderFixture
             tempFixture = testCase.applyFixture(TemporaryFolderFixture);
+            
+            % get example data
+            filename = "ds-mpm/sub-01/fmap/sub-01_magnitude1.nii";
+            osf=hmri_osf();
+            osf.target_root=tempFixture.Folder;
+            osf.download(filename);
+            field_map_1 = fullfile(osf.target_root,filename);
             
             % Copy brain image to temporary directory; source and reference
             % images (for coregistration) are initially identical

@@ -86,7 +86,7 @@ function [fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw]  = hmri_create_MTProt(jobsubj) %
 
 flags = jobsubj.log.flags;
 flags.PopUp = false;
-hmri_log(sprintf('\t============ MPM PROCESSING - %s.m (%s) ============', mfilename, datestr(now)),flags);
+hmri_log(sprintf('\t============ MPM PROCESSING - %s.m (%s) ============', mfilename, datetime('now')),flags);
 
 % retrieves all required parameters for MPM processing
 mpm_params = get_mpm_params(jobsubj);
@@ -961,7 +961,7 @@ spm_jsonwrite(fullfile(supplpath,'hMRI_map_creation_mpm_params.json'),mpm_params
 
 spm_progress_bar('Clear');
 
-hmri_log(sprintf('\t============ MPM PROCESSING: completed (%s) ============', datestr(now)),mpm_params.nopuflags);
+hmri_log(sprintf('\t============ MPM PROCESSING: completed (%s) ============', datetime('now')),mpm_params.nopuflags);
 
 
 end
@@ -1017,9 +1017,9 @@ BF = double(spm_read_vols(spm_vol(BFfnam)));
 Y = BF.*spm_read_vols(spm_vol(fA));
 
 % Calibration of flattened A map to % water content using typical white
-% matter value from the litterature (69%)
-A_WM = WMmask.*Y;
-Y = Y/mean(A_WM(A_WM~=0))*69;
+% matter value from the hmri_defaults (see hmri_def.PDproc.WMval)
+A_WM = WMmask.*Y; 
+Y = Y/mean(A_WM(A_WM~=0))*PDproc.WMval;
 hmri_log(sprintf(['INFO (PD calculation):\n\tmean White Matter intensity: %.1f\n' ...
     '\tSD White Matter intensity %.1f\n'],mean(A_WM(A_WM~=0)),std(A_WM(A_WM~=0))), mpm_params.defflags);
 Y(Y>200) = 0;
@@ -1324,7 +1324,7 @@ mpm_params.proc.RFsenscorr = jobsubj.sensitivity;
 mpm_params.proc.threshall = hmri_get_defaults('qMRI_maps_thresh');
 % load PD maps processing parameters (including calibr (calibration
 % parameter) and T2scorr (T2s correction) fields)
-mpm_params.proc.PD = hmri_get_defaults('PDproc');
+mpm_params.proc.PD = hmri_get_defaults('PDproc'); %todo: check user supplied parameters.
 % if no RF sensitivity bias correction or no B1 transmit bias correction
 % applied, not worth trying any calibration:
 if (isfield(mpm_params.proc.RFsenscorr,'RF_none')||(isempty(jobsubj.b1_trans_input)&&~mpm_params.UNICORT.PD)) && mpm_params.proc.PD.calibr
@@ -1472,12 +1472,12 @@ if (mpm_params.T1widx && mpm_params.PDwidx)
             (~isempty(jobsubj.b1_trans_input)|| mpm_params.UNICORT.PD)
         mpm_params.output(coutput).suffix = 'PD';
         mpm_params.output(coutput).descrip{1} = 'PD map (water concentration) [p.u.]';
-        mpm_params.output(coutput).descrip{end+1} = '- WM calibration (69%)';
+        mpm_params.output(coutput).descrip{end+1} = sprintf('- WM calibration (%g%%)', mpm_params.proc.PD.WMval);
         mpm_params.output(coutput).units = 'p.u.';
     else
         mpm_params.output(coutput).suffix = 'A';
         mpm_params.output(coutput).descrip{1} = 'A map (signal amplitude) [a.u.]';
-        mpm_params.output(coutput).descrip{end+1} = '- no WM calibration (69%)';
+        mpm_params.output(coutput).descrip{end+1} = '- no WM calibration';
         mpm_params.output(coutput).units = 'a.u.';
     end
     switch B1transcorr{1}

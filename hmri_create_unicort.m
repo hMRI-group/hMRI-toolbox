@@ -34,7 +34,7 @@ flags.def = jobsubj.log.flags; % default flags
 flags.nopu = jobsubj.log.flags; % force no Pop-Up
 flags.nopu.PopUp = false; 
 
-hmri_log(sprintf('\t============ UNICORT: CORRECT R1 MAPS FOR B1+ BIAS - %s.m (%s) ============', mfilename, datestr(now)),flags.nopu);
+hmri_log(sprintf('\t============ UNICORT: CORRECT R1 MAPS FOR B1+ BIAS - %s.m (%s) ============', mfilename, datetime('now')),flags.nopu);
 
 % json metadata default options
 json = hmri_get_defaults('json');
@@ -178,7 +178,7 @@ try copyfile([spm_str_manip(P_B1,'r') '.json'],[spm_str_manip(out.B1u{1},'r') '.
 % save unicort params as json-file
 spm_jsonwrite(fullfile(supplpath, 'hMRI_map_creation_unicort_params.json'),unicort_params,struct('indent','\t'));
 
-hmri_log(sprintf('\t============ UNICORT: completed (%s) ============', datestr(now)),flags.nopu);
+hmri_log(sprintf('\t============ UNICORT: completed (%s) ============', datetime('now')),flags.nopu);
 
 end
 

@@ -40,7 +40,7 @@ elseif isstruct(VG)
     dm = VG.dim;
 end
 
-M = V.mat\(spm_matrix(x)*VG.mat*spm_matrix([0 0 p 0 0 0]));
+M = inv(V.mat)*spm_matrix(x)*VG.mat*spm_matrix([0 0 p 0 0 0]);
 dataOut = spm_slice_vol(V,M,dm(1:2),interp);
 
 end

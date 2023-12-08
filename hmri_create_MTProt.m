@@ -209,19 +209,14 @@ for ccon=1:mpm_params.ncon % loop over available contrasts
         sprintf('Averaged %sw images - %d echoes', mpm_params.input(ccon).tag, avg_nr));
 
     spm_progress_bar('Init',dm(3),Ni.descrip,'planes completed');
-    % sm = 0;
     for p = 1:dm(3)
-        M = spm_matrix([0 0 p]);
         Y = zeros(dm(1:2));
         for nr = 1:avg_nr
-            M1 = V(nr).mat\V(1).mat*M;
-            Y  = Y + spm_slice_vol(V(nr),M1,dm(1:2),mpm_params.interp);
+            Y  = Y + hmri_read_vols(V(nr),V(1),p,mpm_params.interp);
         end
         Ni.dat(:,:,p) = Y/avg_nr;
-        % sm = sm + sum(Y(:))/avg_nr;
         spm_progress_bar('Set',p);
     end
-    % avg = sm/prod(dm);
     spm_progress_bar('Clear');
     
     input_files = mpm_params.input(ccon).fnam;
@@ -529,8 +524,6 @@ end
 %=========================================================================%
 hmri_log(sprintf('\t-------- Map calculation continued (R1, MTR) --------'), mpm_params.nopuflags);
 
-M0 = Ni.mat;
-
 fa_pdw_rad = fa_pdw * pi / 180;
 if MTwidx; fa_mtw_rad = fa_mtw * pi / 180; end
 if T1widx; fa_t1w_rad = fa_t1w * pi / 180; end
@@ -539,13 +532,12 @@ spm_progress_bar('Init',dm(3),'Calculating maps','planes completed');
 
 % First calculate R1 & MTR
 for p = 1:dm(3)
-    M = M0*spm_matrix([0 0 p]);
 
     % PDw images are always available, so this bit is always loaded:
-    PDw = spm_slice_vol(Vavg(PDwidx),Vavg(PDwidx).mat\M,dm(1:2),mpm_params.interp);
+    PDw = hmri_read_vols(Vavg(PDwidx),Ni,p,mpm_params.interp);
     
     if ~isempty(V_trans)
-        f_T = spm_slice_vol(V_trans(2,:),V_trans(2,:).mat\M,dm(1:2),mpm_params.interp)/100; % divide by 100, since p.u. maps
+        f_T = hmri_read_vols(V_trans(2,:),Ni,p,mpm_params.interp)/100; % divide by 100, since p.u. maps
     else
         f_T = [];
     end
@@ -554,7 +546,7 @@ for p = 1:dm(3)
     % only if trpd = trmt and fapd = famt and if PDw and MTw images are
     % available
     if (MTwidx && PDwidx)
-        MTw = spm_slice_vol(Vavg(MTwidx),Vavg(MTwidx).mat\M,dm(1:2),mpm_params.interp);
+        MTw = hmri_read_vols(Vavg(MTwidx),Ni,p,mpm_params.interp);
         if (TR_mtw == TR_pdw) && (fa_mtw == fa_pdw) % additional MTR image...
             MTR = (PDw-MTw)./(PDw+eps) * 100;
             % write MTR image
@@ -566,7 +558,7 @@ for p = 1:dm(3)
     % available:
     if T1widx
 
-        T1w = spm_slice_vol(Vavg(T1widx),Vavg(T1widx).mat\M,dm(1:2),mpm_params.interp);
+        T1w = hmri_read_vols(Vavg(T1widx),Ni,p,mpm_params.interp);
         
         % Transmit bias corrected quantitative T1 values; if f_T empty then semi-quantitative
         R1=hmri_calc_R1(struct('data',PDw,'fa',fa_pdw_rad,'TR',TR_pdw,'B1',f_T),...
@@ -609,7 +601,6 @@ if (mpm_params.UNICORT.R1)
     Output_hdr{1}.history.output.imtype = mpm_params.output(mpm_params.qR1).descrip;
     set_metadata(fR1,Output_hdr{1},mpm_params.json);
 end
-V_R1 = spm_vol(fR1);
 
 hmri_log(sprintf('\t-------- Map calculation continued (MT, A/PD) --------'), mpm_params.nopuflags);
 
@@ -617,24 +608,23 @@ spm_progress_bar('Init',dm(3),'Calculating maps (continued)','planes completed')
 
 % Then calculate MT & PD
 for p = 1:dm(3)
-    M = M0*spm_matrix([0 0 p]);
 
     if ~isempty(V_trans)
-        f_T = spm_slice_vol(V_trans(2,:),V_trans(2,:).mat\M,dm(1:2),mpm_params.interp)/100; % divide by 100, since p.u. maps
+        f_T = hmri_read_vols(V_trans(2,:),Ni,p,mpm_params.interp)/100; % divide by 100, since p.u. maps
     elseif ~isempty(V_trans_unicort)
-        f_T = spm_slice_vol(V_trans_unicort(1,:),V_trans_unicort(1,:).mat\M,dm(1:2),mpm_params.interp)/100; % divide by 100, since p.u. maps        
+        f_T = hmri_read_vols(V_trans_unicort(1,:),Ni,p,mpm_params.interp)/100; % divide by 100, since p.u. maps        
     else
         f_T = [];
     end
     
     % PDw images are always available, so this bit is always loaded:
-    PDw = spm_slice_vol(Vavg(PDwidx),Vavg(PDwidx).mat\M,dm(1:2),mpm_params.interp);
+    PDw = hmri_read_vols(Vavg(PDwidx),Ni,p,mpm_params.interp);
     
     % T1 map and A/PD maps can only be calculated if T1w images are
     % available:
     if T1widx
 
-        T1w = spm_slice_vol(Vavg(T1widx),Vavg(T1widx).mat\M,dm(1:2),mpm_params.interp);
+        T1w = hmri_read_vols(Vavg(T1widx),Ni,p,mpm_params.interp);
         
         % if "fullOLS" option enabled, use the OLS fit at TE=0 as
         % "T1w_forA"; otherwise use the average calculated earlier (by
@@ -642,7 +632,7 @@ for p = 1:dm(3)
         if mpm_params.fullOLS
             T1w_forA = T1w;
         else
-            T1w_forA = spm_slice_vol(VT1w_forA,VT1w_forA.mat\M,dm(1:2),mpm_params.interp);
+            T1w_forA = hmri_read_vols(VT1w_forA,Ni,p,mpm_params.interp);
         end
                 
         % A values proportional to PD
@@ -671,29 +661,41 @@ for p = 1:dm(3)
         % for MT maps calculation, one needs MTw images on top of the T1w
         % and PDw ones...
         if MTwidx
-            MTw = spm_slice_vol(Vavg(MTwidx),Vavg(MTwidx).mat\M,dm(1:2),3);
-            R1_forMT = hmri_calc_R1(struct('data',PDw,'fa',fa_pdw_rad,'TR',TR_pdw,'B1',1),...
-                struct('data',T1w,'fa',fa_t1w_rad,'TR',TR_t1w,'B1',1),...
+            MTw = hmri_read_vols(Vavg(MTwidx),Ni,p,mpm_params.interp);
+
+            switch mpm_params.MTsatB1CorrectionModel
+                case 'helms' 
+                    B1_mtw=1;
+                    if isempty(f_T)
+                        hmri_log('WARNING: MTsat B1-correction using the Helms model was selected but no B1 map data was found. MTsat will only be corrected with the quadratic model from Helms, et al. (MRM 2008).', mpm_params.defflags)
+                    end
+                case 'lipp'
+                    B1_mtw=f_T;
+                    if isempty(f_T)
+                        hmri_log('WARNING: MTsat B1-correction using the Lipp model was selected but no B1 map data was found. MTsat will not be B1 corrected.', mpm_params.defflags)
+                    end
+            end
+
+            % MT in [p.u.]
+            A_forMT = hmri_calc_A(struct('data',PDw,'fa',fa_pdw_rad,'TR',TR_pdw,'B1',B1_mtw),...
+                struct('data',T1w_forA,'fa',fa_t1w_rad,'TR',TR_t1w,'B1',B1_mtw),...
                 mpm_params.small_angle_approx);
-            R1_forMT(isnan(R1_forMT))=0;
-            A_forMT = hmri_calc_A(struct('data',PDw,'fa',fa_pdw_rad,'TR',TR_pdw,'B1',1),...
-                struct('data',T1w_forA,'fa',fa_t1w_rad,'TR',TR_t1w,'B1',1),...
+            R1_forMT = hmri_calc_R1(struct('data',PDw,'fa',fa_pdw_rad,'TR',TR_pdw,'B1',B1_mtw),...
+                struct('data',T1w,'fa',fa_t1w_rad,'TR',TR_t1w,'B1',B1_mtw),...
                 mpm_params.small_angle_approx);
-            A_forMT(isnan(A_forMT))=0;
-            
-            % MT in [p.u.]; offset by - famt * famt / 2 * 100 where MT_w = 0 (outside mask)
-            MT  = ( (A_forMT * fa_mtw_rad - MTw) ./ (MTw+eps) .* R1_forMT*TR_mtw - fa_mtw_rad^2 / 2 ) * 100;
+            MT = hmri_calc_MTsat(struct('data',MTw,'fa',fa_mtw_rad,'TR',TR_mtw,'B1',B1_mtw), A_forMT, R1_forMT);
+
             % f_T correction is applied either if:
             % - f_T has been provided as separate B1 mapping measurement (not
             % UNICORT!) or
             % - f_T has been calculated using UNICORT *AND* the UNICORT.MT flag
             % is enabled (advanced user only! method not validated yet!)
             if (~isempty(f_T))&&(~mpm_params.UNICORT.R1 || mpm_params.UNICORT.MT)
-                MT = MT .* (1 - 0.4) ./ (1 - 0.4 * f_T);
+                MT = hmri_correct_MTsat(MT,f_T,mpm_params.MTsatB1CorrectionModel,mpm_params.MTsatB1CorrectionC);
             end
-            
-            tmp      = MT;
-            Nmap(mpm_params.qMT).dat(:,:,p) = max(min(tmp,threshall.MT),-threshall.MT);
+
+            MT(isnan(MT))=0;
+            Nmap(mpm_params.qMT).dat(:,:,p) = max(min(MT,threshall.MT),-threshall.MT);
         end
     
     end
@@ -1543,7 +1545,19 @@ if (mpm_params.T1widx && mpm_params.PDwidx && mpm_params.MTwidx)
             mpm_params.output(coutput).descrip{end+1} = '- RF sensitivity bias correction based on a single sensitivity measurement';
         case 'RF_per_contrast'
             mpm_params.output(coutput).descrip{end+1} = '- RF sensitivity bias correction based on a per-contrast sensitivity measurement';
-    end     
+    end
+
+    % B1-correction method
+    mpm_params.MTsatB1CorrectionModel = hmri_get_defaults('MTsatB1CorrectionModel');
+    switch mpm_params.MTsatB1CorrectionModel
+        case 'helms'
+            mpm_params.MTsatB1CorrectionC = hmri_get_defaults('MTsatB1CorrectionHelmsC');
+        case 'lipp'
+            mpm_params.MTsatB1CorrectionC = hmri_get_defaults('MTsatB1CorrectionLippC');
+        otherwise
+            error('unknown MTsat B1 correction model ''%s''. Allowed models are ''helms'' and ''lipp''', mpm_params.MTsatB1CorrectionModel)
+    end
+    hmri_log(sprintf('INFO: Using MTsat B1 correction model ''%s'' with C = %g.', mpm_params.MTsatB1CorrectionModel, mpm_params.MTsatB1CorrectionC), mpm_params.defflags);
 else
     mpm_params.qMT = 0;
 end

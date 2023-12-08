@@ -163,6 +163,13 @@ hmri_def.coreg_bias_flags.fwhm = [7 7];
 hmri_def.small_angle_approx = true;
 
 %--------------------------------------------------------------------------
+% Which model to use for B1-correction of MTsat
+%--------------------------------------------------------------------------
+hmri_def.MTsatB1CorrectionModel = 'helms'; % 'helms' or 'lipp'
+hmri_def.MTsatB1CorrectionHelmsC = 0.4; % value for 220° from Helms, et al. (arXiv 2021)
+hmri_def.MTsatB1CorrectionLippC  = 1.2; % value for 700° from Lipp, et al. (MRM 2023)
+
+%--------------------------------------------------------------------------
 % Ordinary Least Squares & fit at TE=0
 %--------------------------------------------------------------------------
 % Create a Least Squares R2* map. The ESTATICS model is applied

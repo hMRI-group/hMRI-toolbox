@@ -8,6 +8,7 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 ### Added
 - option to choose different models and parameters for B1-correction of MTsat
 - set default WM percent value in hmri_defaults.
+- fix crash if input images have different matrix sizes, and warn
 
 ### Fixed
 - replace `datestr(now)` with `datetime('now')` in line with [MATLAB recommendation](https://mathworks.com/help/matlab/matlab_prog/replace-discouraged-instances-of-serial-date-numbers-and-date-strings.html)

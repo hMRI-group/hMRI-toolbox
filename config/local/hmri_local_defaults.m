@@ -1,4 +1,3 @@
-function hmri_local_defaults
 % PURPOSE
 % To set user-defined (site- or protocol-specific) defaults parameters
 % which are used by the hMRI toolbox. Customized processing parameters can
@@ -164,6 +163,13 @@ hmri_def.coreg_bias_flags.fwhm = [7 7];
 hmri_def.small_angle_approx = true;
 
 %--------------------------------------------------------------------------
+% Which model to use for B1-correction of MTsat
+%--------------------------------------------------------------------------
+hmri_def.MTsatB1CorrectionModel = 'helms'; % 'helms' or 'lipp'
+hmri_def.MTsatB1CorrectionHelmsC = 0.4; % value for 220° from Helms, et al. (arXiv 2021)
+hmri_def.MTsatB1CorrectionLippC  = 1.2; % value for 700° from Lipp, et al. (MRM 2023)
+
+%--------------------------------------------------------------------------
 % Ordinary Least Squares & fit at TE=0
 %--------------------------------------------------------------------------
 % Create a Least Squares R2* map. The ESTATICS model is applied
@@ -227,7 +233,7 @@ hmri_def.UNICORT.MT = false;
 %--------------------------------------------------------------------------
 hmri_def.PDproc.calibr    = 1;   % Calibration of the PD map (if PDw, T1w, 
     % B1map available and RF sensitivity bias correction applied somehow)
-    % based on PD(WM) = 69% [Tofts 2003]. 
+hmri_def.PDproc.WMval = 69;  % WM percentage based on PD(WM) = 69% [Tofts 2003].   
 hmri_def.PDproc.WBMaskTh = 0.1;  % Threshold for calculation of whole-brain mask from TPMs
 hmri_def.PDproc.WMMaskTh = 0.95; % Threshold for calculation of white-matter mask from TPMs
 hmri_def.PDproc.biasreg  = 10^(-5);
@@ -482,4 +488,3 @@ hmri_def.wcombparams.res        = -4;   % Resampling factor, determines interpol
 hmri_def.wcombparams.smthk      = 0;    % If larger than zero, the error maps will be spatially smoothed with the a Gaussian kernel of FWHM = smthk
 hmri_def.wcombparams.dim        = 3;    % Defines dimention along which slices along which weightes will be determined
 
-end

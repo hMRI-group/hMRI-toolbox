@@ -1,4 +1,3 @@
-function hmri_local_defaults_errormaps
 % PURPOSE
 % To set user-defined (site- or protocol-specific) defaults parameters
 % which are used by the hMRI toolbox. Customized processing parameters can
@@ -67,5 +66,3 @@ hmri_def.wcombparams.errormaps  = true; % True: robust combination of error maps
 hmri_def.wcombparams.res        = -4;   % Resampling factor, determines interpolation method (details can be found in spm_slice_vol.m)
 hmri_def.wcombparams.smthk      = 0;    % If larger than zero, the error maps will be spatially smoothed with the a Gaussian kernel of FWHM = smthk
 hmri_def.wcombparams.dim        = 3;    % Defines dimention along which slices along which weightes will be determined
-
-end

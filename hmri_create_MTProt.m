@@ -86,7 +86,7 @@ function [fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw]  = hmri_create_MTProt(jobsubj) %
 
 flags = jobsubj.log.flags;
 flags.PopUp = false;
-hmri_log(sprintf('\t============ MPM PROCESSING - %s.m (%s) ============', mfilename, datestr(now)),flags);
+hmri_log(sprintf('\t============ MPM PROCESSING - %s.m (%s) ============', mfilename, datetime('now')),flags);
 
 % retrieves all required parameters for MPM processing
 mpm_params = get_mpm_params(jobsubj);
@@ -209,19 +209,14 @@ for ccon=1:mpm_params.ncon % loop over available contrasts
         sprintf('Averaged %sw images - %d echoes', mpm_params.input(ccon).tag, avg_nr));
 
     spm_progress_bar('Init',dm(3),Ni.descrip,'planes completed');
-    % sm = 0;
     for p = 1:dm(3)
-        M = spm_matrix([0 0 p]);
         Y = zeros(dm(1:2));
         for nr = 1:avg_nr
-            M1 = V(nr).mat\V(1).mat*M;
-            Y  = Y + spm_slice_vol(V(nr),M1,dm(1:2),mpm_params.interp);
+            Y  = Y + hmri_read_vols(V(nr),V(1),p,mpm_params.interp);
         end
         Ni.dat(:,:,p) = Y/avg_nr;
-        % sm = sm + sum(Y(:))/avg_nr;
         spm_progress_bar('Set',p);
     end
-    % avg = sm/prod(dm);
     spm_progress_bar('Clear');
     
     input_files = mpm_params.input(ccon).fnam;
@@ -393,16 +388,22 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
         for ccon = 1:mpm_params.ncon
             % requires a minimum of neco4R2sfit echoes for a robust fit
             if mpm_params.estaticsR2s(ccon)
-
                 Pte0{ccon}  = fullfile(calcpath,[outbasename '_' mpm_params.input(ccon).tag 'w_' mpm_params.R2s_fit_method 'fit_TEzero.nii']);
                 Ni = hmri_create_nifti(Pte0{ccon}, V_pdw(1), dt, ...
                     sprintf('%s fit to TE=0 for %sw images - %d echoes', mpm_params.R2s_fit_method, mpm_params.input(ccon).tag, length(mpm_params.input(ccon).TE)));
                                 
-                % set metadata
+                % store processing history in metadata
                 input_files = mpm_params.input(ccon).fnam;
                 Output_hdr = init_mpm_output_metadata(input_files, mpm_params);
                 Output_hdr.history.output.imtype = Ni.descrip;
                 Output_hdr.history.output.units = 'a.u.';
+
+                % copy acquisition metadata so extrapolated data could be fed back into 
+                % the toolbox if needed
+                Output_hdr.acqpar = struct('RepetitionTime',mpm_params.input(ccon).TR, ...
+                    'EchoTime',0, ...
+                    'FlipAngle',mpm_params.input(ccon).fa);
+
                 set_metadata(Pte0{ccon},Output_hdr,mpm_params.json);
                 
                 % re-load the updated NIFTI file (in case extended header has
@@ -448,8 +449,7 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
             NSMmap = Ni;
         end
     end % init nifti objects for fullOLS case
-
-
+    
     fR2s_OLS    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qR2s).suffix '_' mpm_params.R2s_fit_method '.nii']);
     Ni = hmri_create_nifti(fR2s_OLS, V_pdw(1), dt, ...
         [mpm_params.R2s_fit_method ' R2* map [s-1]']);
@@ -462,11 +462,10 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
             nechoes(ccon) = size(mpm_params.input(ccon).fnam,1);
         end
     end
-
         
     spm_progress_bar('Init',dm(3),[mpm_params.R2s_fit_method ' R2* fit','planes completed']);
     for p = 1:dm(3)
-       
+        
         for ccon = 1:mpm_params.ncon
             
             % only if enough echoes
@@ -507,8 +506,7 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
                 NEmap(mpm_params.ncon+1).dat(:,:,p) = SError.R2s;
             end
         end
-
-                  
+                
         % NB: mat field defined by V_pdw => first PDw echo
         % threshold T2* at +/- 0.1ms or R2* at +/- 10000 *(1/sec), 
         % negative values are allowed to preserve Gaussian distribution.
@@ -617,8 +615,6 @@ end
 %=========================================================================%
 hmri_log(sprintf('\t-------- Map calculation continued (R1, MTR) --------'), mpm_params.nopuflags);
 
-M0 = Ni.mat;
-
 fa_pdw_rad = fa_pdw * pi / 180;
 if MTwidx; fa_mtw_rad = fa_mtw * pi / 180; end
 if T1widx; fa_t1w_rad = fa_t1w * pi / 180; end
@@ -627,13 +623,12 @@ spm_progress_bar('Init',dm(3),'Calculating maps','planes completed');
 
 % First calculate R1 & MTR
 for p = 1:dm(3)
-    M = M0*spm_matrix([0 0 p]);
 
     % PDw images are always available, so this bit is always loaded:
-    PDw = spm_slice_vol(Vavg(PDwidx),Vavg(PDwidx).mat\M,dm(1:2),mpm_params.interp);
+    PDw = hmri_read_vols(Vavg(PDwidx),Ni,p,mpm_params.interp);
     
     if ~isempty(V_trans)
-        f_T = spm_slice_vol(V_trans(2,:),V_trans(2,:).mat\M,dm(1:2),mpm_params.interp)/100; % divide by 100, since p.u. maps
+        f_T = hmri_read_vols(V_trans(2,:),Ni,p,mpm_params.interp)/100; % divide by 100, since p.u. maps
     else
         f_T = [];
     end
@@ -642,7 +637,7 @@ for p = 1:dm(3)
     % only if trpd = trmt and fapd = famt and if PDw and MTw images are
     % available
     if (MTwidx && PDwidx)
-        MTw = spm_slice_vol(Vavg(MTwidx),Vavg(MTwidx).mat\M,dm(1:2),mpm_params.interp);
+        MTw = hmri_read_vols(Vavg(MTwidx),Ni,p,mpm_params.interp);
         if (TR_mtw == TR_pdw) && (fa_mtw == fa_pdw) % additional MTR image...
             MTR = (PDw-MTw)./(PDw+eps) * 100;
             % write MTR image
@@ -654,7 +649,7 @@ for p = 1:dm(3)
     % available:
     if T1widx
 
-        T1w = spm_slice_vol(Vavg(T1widx),Vavg(T1widx).mat\M,dm(1:2),mpm_params.interp);
+        T1w = hmri_read_vols(Vavg(T1widx),Ni,p,mpm_params.interp);
         
         % Transmit bias corrected quantitative T1 values; if f_T empty then semi-quantitative
         R1_unc=hmri_calc_R1(struct('data',PDw,'fa',fa_pdw_rad,'TR',TR_pdw,'B1',f_T),...
@@ -732,24 +727,23 @@ spm_progress_bar('Init',dm(3),'Calculating maps (continued)','planes completed')
 
 % Then calculate MT & PD
 for p = 1:dm(3)
-    M = M0*spm_matrix([0 0 p]);
 
     if ~isempty(V_trans)
-        f_T = spm_slice_vol(V_trans(2,:),V_trans(2,:).mat\M,dm(1:2),mpm_params.interp)/100; % divide by 100, since p.u. maps
+        f_T = hmri_read_vols(V_trans(2,:),Ni,p,mpm_params.interp)/100; % divide by 100, since p.u. maps
     elseif ~isempty(V_trans_unicort)
-        f_T = spm_slice_vol(V_trans_unicort(1,:),V_trans_unicort(1,:).mat\M,dm(1:2),mpm_params.interp)/100; % divide by 100, since p.u. maps        
+        f_T = hmri_read_vols(V_trans_unicort(1,:),Ni,p,mpm_params.interp)/100; % divide by 100, since p.u. maps        
     else
         f_T = [];
     end
     
     % PDw images are always available, so this bit is always loaded:
-    PDw = spm_slice_vol(Vavg(PDwidx),Vavg(PDwidx).mat\M,dm(1:2),mpm_params.interp);
+    PDw = hmri_read_vols(Vavg(PDwidx),Ni,p,mpm_params.interp);
     
     % T1 map and A/PD maps can only be calculated if T1w images are
     % available:
     if T1widx
-        
-        T1w = spm_slice_vol(Vavg(T1widx),Vavg(T1widx).mat\M,dm(1:2),mpm_params.interp);
+
+        T1w = hmri_read_vols(Vavg(T1widx),Ni,p,mpm_params.interp);
         
         % if "fullOLS" option enabled, use the OLS fit at TE=0 as
         % "T1w_forA"; otherwise use the average calculated earlier (by
@@ -757,7 +751,7 @@ for p = 1:dm(3)
         if mpm_params.fullOLS
             T1w_forA = T1w;
         else
-            T1w_forA = spm_slice_vol(VT1w_forA,VT1w_forA.mat\M,dm(1:2),mpm_params.interp);
+            T1w_forA = hmri_read_vols(VT1w_forA,Ni,p,mpm_params.interp);
         end
                 
         % A values proportional to PD
@@ -807,40 +801,50 @@ for p = 1:dm(3)
         % for MT maps calculation, one needs MTw images on top of the T1w
         % and PDw ones...
         if MTwidx
-            MTw = spm_slice_vol(Vavg(MTwidx),Vavg(MTwidx).mat\M,dm(1:2),3);
-            R1_forMT = hmri_calc_R1(struct('data',PDw,'fa',fa_pdw_rad,'TR',TR_pdw,'B1',1),...
-                struct('data',T1w,'fa',fa_t1w_rad,'TR',TR_t1w,'B1',1),...
+            MTw = hmri_read_vols(Vavg(MTwidx),Ni,p,mpm_params.interp);
+
+            switch mpm_params.MTsatB1CorrectionModel
+                case 'helms' 
+                    B1_mtw=1;
+                    if isempty(f_T)
+                        hmri_log('WARNING: MTsat B1-correction using the Helms model was selected but no B1 map data was found. MTsat will only be corrected with the quadratic model from Helms, et al. (MRM 2008).', mpm_params.defflags)
+                    end
+                case 'lipp'
+                    B1_mtw=f_T;
+                    if isempty(f_T)
+                        hmri_log('WARNING: MTsat B1-correction using the Lipp model was selected but no B1 map data was found. MTsat will not be B1 corrected.', mpm_params.defflags)
+                    end
+            end
+
+            % MT in [p.u.]
+            A_forMT = hmri_calc_A(struct('data',PDw,'fa',fa_pdw_rad,'TR',TR_pdw,'B1',B1_mtw),...
+                struct('data',T1w_forA,'fa',fa_t1w_rad,'TR',TR_t1w,'B1',B1_mtw),...
                 mpm_params.small_angle_approx);
-            R1_forMT(isnan(R1_forMT))=0;
-            A_forMT = hmri_calc_A(struct('data',PDw,'fa',fa_pdw_rad,'TR',TR_pdw,'B1',1),...
-                struct('data',T1w_forA,'fa',fa_t1w_rad,'TR',TR_t1w,'B1',1),...
+            R1_forMT = hmri_calc_R1(struct('data',PDw,'fa',fa_pdw_rad,'TR',TR_pdw,'B1',B1_mtw),...
+                struct('data',T1w,'fa',fa_t1w_rad,'TR',TR_t1w,'B1',B1_mtw),...
                 mpm_params.small_angle_approx);
-            A_forMT(isnan(A_forMT))=0;
-            
-            % MT in [p.u.]; offset by - famt * famt / 2 * 100 where MT_w = 0 (outside mask)
-            MT  = ( (A_forMT * fa_mtw_rad - MTw) ./ (MTw+eps) .* R1_forMT*TR_mtw - fa_mtw_rad^2 / 2 ) * 100;
-            
+            MT = hmri_calc_MTsat(struct('data',MTw,'fa',fa_mtw_rad,'TR',TR_mtw,'B1',B1_mtw), A_forMT, R1_forMT);
+
             % f_T correction is applied either if:
             % - f_T has been provided as separate B1 mapping measurement (not
             % UNICORT!) or
             % - f_T has been calculated using UNICORT *AND* the UNICORT.MT flag
             % is enabled (advanced user only! method not validated yet!)
             if (~isempty(f_T))&&(~mpm_params.UNICORT.R1 || mpm_params.UNICORT.MT)
-                MT = MT .* (1 - 0.4) ./ (1 - 0.4 * f_T);
+                MT = hmri_correct_MTsat(MT,f_T,mpm_params.MTsatB1CorrectionModel,mpm_params.MTsatB1CorrectionC);
             end
             
             % truncate MT maps
-            tmp = MT;
-            tmp = max(min(tmp,threshall.MT),-threshall.MT);
-            Nmap(mpm_params.qMT).dat(:,:,p) = tmp;
-            
+            MT(isnan(MT))=0;
+            Nmap(mpm_params.qMT).dat(:,:,p) = max(min(MT,threshall.MT),-threshall.MT);
+
             if mpm_params.errormaps
                 Edata.MTw  = spm_slice_vol(Verror(MTwidx),Verror(MTwidx).mat\M,dm(1:2),mpm_params.interp);
                 
                 dMT = hmri_make_dMT(PDw,T1w,MTw,Edata.PDw,Edata.T1w,Edata.MTw,fa_pdw_rad,fa_t1w_rad,fa_mtw_rad,TR_pdw,TR_t1w,TR_mtw,mpm_params.small_angle_approx) * 100;
                 
                 if (~isempty(f_T))&&(~mpm_params.UNICORT.R1 || mpm_params.UNICORT.MT)
-                    dMT = dMT .* abs((1 - 0.4) ./ (1 - 0.4 * f_T));
+                    dMT = abs(hmri_correct_MTsat(dMT,f_T,mpm_params.MTsatB1CorrectionModel,mpm_params.MTsatB1CorrectionC);
                 end
                 
                 % truncate MT error maps
@@ -1139,7 +1143,7 @@ spm_jsonwrite(fullfile(supplpath,'hMRI_map_creation_mpm_params.json'),mpm_params
 
 spm_progress_bar('Clear');
 
-hmri_log(sprintf('\t============ MPM PROCESSING: completed (%s) ============', datestr(now)),mpm_params.nopuflags);
+hmri_log(sprintf('\t============ MPM PROCESSING: completed (%s) ============', datetime('now')),mpm_params.nopuflags);
 
 
 end
@@ -1199,12 +1203,12 @@ output_list = spm_preproc_run(job_bfcorr);
 % retrieved from previous step and applied onto the original A map.
 BFfnam = output_list.channel.biasfield{1};
 BF = double(spm_read_vols(spm_vol(BFfnam)));
-Y = BF.*spm_read_vols(spm_vol(fA));    
+Y = BF.*spm_read_vols(spm_vol(fA));
 
 % Calibration of flattened A map to % water content using typical white
-% matter value from the litterature (69%)
-A_WM = WMmask.*Y;
-Y = Y/mean(A_WM(A_WM~=0))*69;
+% matter value from the hmri_defaults (see hmri_def.PDproc.WMval)
+A_WM = WMmask.*Y; 
+Y = Y/mean(A_WM(A_WM~=0))*PDproc.WMval;
 hmri_log(sprintf(['INFO (PD calculation):\n\tmean White Matter intensity: %.1f\n' ...
     '\tSD White Matter intensity %.1f\n'],mean(A_WM(A_WM~=0)),std(A_WM(A_WM~=0))), mpm_params.defflags);
 Y(Y>200) = 0;
@@ -1212,7 +1216,7 @@ Y(Y>200) = 0;
 % Rescale error maps to match PD scaling
 if mpm_params.errormaps 
     PDerror = BF.*PDerror;
-    PDerror = PDerror/mean(A_WM(A_WM~=0))*69;
+    PDerror = abs(PDerror/mean(A_WM(A_WM~=0))*PDproc.WMval);
 end
 
 % MFC: Estimating Error for data set to catch bias field issues:
@@ -1519,7 +1523,7 @@ mpm_params.proc.RFsenscorr = jobsubj.sensitivity;
 mpm_params.proc.threshall = hmri_get_defaults('qMRI_maps_thresh');
 % load PD maps processing parameters (including calibr (calibration
 % parameter) and T2scorr (T2s correction) fields)
-mpm_params.proc.PD = hmri_get_defaults('PDproc');
+mpm_params.proc.PD = hmri_get_defaults('PDproc'); %todo: check user supplied parameters.
 % if no RF sensitivity bias correction or no B1 transmit bias correction
 % applied, not worth trying any calibration:
 if (isfield(mpm_params.proc.RFsenscorr,'RF_none')||(isempty(jobsubj.b1_trans_input)&&~mpm_params.UNICORT.PD)) && mpm_params.proc.PD.calibr
@@ -1667,12 +1671,12 @@ if (mpm_params.T1widx && mpm_params.PDwidx)
             (~isempty(jobsubj.b1_trans_input)|| mpm_params.UNICORT.PD)
         mpm_params.output(coutput).suffix = 'PD';
         mpm_params.output(coutput).descrip{1} = 'PD map (water concentration) [p.u.]';
-        mpm_params.output(coutput).descrip{end+1} = '- WM calibration (69%)';
+        mpm_params.output(coutput).descrip{end+1} = sprintf('- WM calibration (%g%%)', mpm_params.proc.PD.WMval);
         mpm_params.output(coutput).units = 'p.u.';
     else
         mpm_params.output(coutput).suffix = 'A';
         mpm_params.output(coutput).descrip{1} = 'A map (signal amplitude) [a.u.]';
-        mpm_params.output(coutput).descrip{end+1} = '- no WM calibration (69%)';
+        mpm_params.output(coutput).descrip{end+1} = '- no WM calibration';
         mpm_params.output(coutput).units = 'a.u.';
     end
     switch B1transcorr{1}
@@ -1740,7 +1744,19 @@ if (mpm_params.T1widx && mpm_params.PDwidx && mpm_params.MTwidx)
             mpm_params.output(coutput).descrip{end+1} = '- RF sensitivity bias correction based on a single sensitivity measurement';
         case 'RF_per_contrast'
             mpm_params.output(coutput).descrip{end+1} = '- RF sensitivity bias correction based on a per-contrast sensitivity measurement';
-    end     
+    end
+
+    % B1-correction method
+    mpm_params.MTsatB1CorrectionModel = hmri_get_defaults('MTsatB1CorrectionModel');
+    switch mpm_params.MTsatB1CorrectionModel
+        case 'helms'
+            mpm_params.MTsatB1CorrectionC = hmri_get_defaults('MTsatB1CorrectionHelmsC');
+        case 'lipp'
+            mpm_params.MTsatB1CorrectionC = hmri_get_defaults('MTsatB1CorrectionLippC');
+        otherwise
+            error('unknown MTsat B1 correction model ''%s''. Allowed models are ''helms'' and ''lipp''', mpm_params.MTsatB1CorrectionModel)
+    end
+    hmri_log(sprintf('INFO: Using MTsat B1 correction model ''%s'' with C = %g.', mpm_params.MTsatB1CorrectionModel, mpm_params.MTsatB1CorrectionC), mpm_params.defflags);
 else
     mpm_params.qMT = 0;
 end

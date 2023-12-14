@@ -5,10 +5,20 @@ This changelog documents all notable changes to the hMRI-toolbox.
 Most recent version numbers *should* follow the [Semantic Versioning](https://semver.org/spec/v2.0.0.html) principles (e.g. bug fixes: x.x.1 > x.x.2, new feature with backward compatibility: x.2.x > x.3.0, major release affecting the way data are handled and processed: 1.x.x > 2.0.0).
 
 ## [unreleased]
-
 ### Added
+- option to choose different models and parameters for B1-correction of MTsat
+- set default WM percent value in hmri_defaults
 - parameter error maps
 - weighted combination
+
+### Fixed
+- replace `datestr(now)` with `datetime('now')` in line with [MATLAB recommendation](https://mathworks.com/help/matlab/matlab_prog/replace-discouraged-instances-of-serial-date-numbers-and-date-strings.html)
+
+## [v0.6.1]
+### Fixed
+- The local config files have been converted to scripts for compatibility with compiled version
+- function-evaluate SPM-struct (preproc8.val) for SPM development version compatibility
+- copy acquisition metadata to TE=0 volumes in Results/Supplementary folder after map creation so they can be used as input to the toolbox if needed
 
 ## [v0.6.0]
 ### Added

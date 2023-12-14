@@ -208,9 +208,9 @@ for ccon=1:mpm_params.ncon % loop over available contrasts
     Ni = hmri_create_nifti(Pavg{ccon}, V(1), dt, ...
         sprintf('Averaged %sw images - %d echoes', mpm_params.input(ccon).tag, avg_nr));
 
-    spm_progress_bar('Init',dm(3),Ni.descrip,'planes completed');
-    for p = 1:dm(3)
-        Y = zeros(dm(1:2));
+    spm_progress_bar('Init',V(1).dim(3),Ni.descrip,'planes completed');
+    for p = 1:V(1).dim(3)
+        Y = zeros(V(1).dim(1:2));
         for nr = 1:avg_nr
             Y  = Y + hmri_read_vols(V(nr),V(1),p,mpm_params.interp);
         end

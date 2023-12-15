@@ -1179,10 +1179,8 @@ mpm_params.ncon = ccon; % number of contrasts available
 
 % Throw a warning if the contrasts PDw, MTw and T1w have non-matching
 % dimensions
-raw = cat(1, jobsubj.raw_mpm.MT, jobsubj.raw_mpm.PD, jobsubj.raw_mpm.T1);
-rawvol = spm_vol(raw);
-rawvolstruct = cat(1, rawvol{:});
-sts = spm_check_orientations(rawvolstruct);
+raw = [jobsubj.raw_mpm.MT; jobsubj.raw_mpm.PD; jobsubj.raw_mpm.T1];
+sts = spm_check_orientations(spm_vol(char(raw)));
 if ~sts
     LogMsg = sprintf('%s\n\t- WARNING: MTw, PDw and T1w images have non-matching dimensions',LogMsg);
 end

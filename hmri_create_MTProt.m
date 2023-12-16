@@ -1177,18 +1177,22 @@ else
 end 
 mpm_params.ncon = ccon; % number of contrasts available
 
-% Throw a warning if the contrasts PDw, MTw and T1w have non-matching
-% dimensions
+% Message displayed as pop-up if enabled since it is important information 
+hmri_log(LogMsg, mpm_params.defflags);
+
+% Give a warning if the contrasts PDw, MTw and T1w have non-matching
+% dimensions or orientations
 raw = [jobsubj.raw_mpm.MT; jobsubj.raw_mpm.PD; jobsubj.raw_mpm.T1];
 [orientationsMatch, orientationsWarning] = hmri_check_orientations(spm_vol(char(raw)));
 if ~orientationsMatch
-    LogMsg = sprintf('%s\n\t- WARNING: MTw, PDw and T1w images have non-matching dimensions',LogMsg);
-    LogMsg = sprintf('%s%s',LogMsg,orientationsWarning);
-end
+    % Message displayed as pop-up if enabled since it is important information 
+    LogMsg = sprintf(['WARNING: MTw, PDw and T1w images have non-matching dimensions', ...
+        '\n\t- see console for more information']);
+    hmri_log(LogMsg, mpm_params.defflags);
 
-% Message displayed as pop-up if enabled since it is important
-% information 
-hmri_log(LogMsg, mpm_params.defflags);
+    % Message is verbose and so only printed to console and log
+    hmri_log(orientationsWarning, setfield(mpm_params.defflags,'PopUp',false));
+end
 
 % collect TE, TR and FA for each available contrast
 for ccon = 1:mpm_params.ncon

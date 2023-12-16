@@ -21,20 +21,19 @@ if nargin < 2, verbose = true; end
 dims = cat(1,V.dim);
 if any(any(diff(dims,1,1),1))
     sts = false;
-    str = 'The images do not all have the same dimensions.';
+    str = sprintf('%s\n\t** The images do not all have the same dimensions **\n',str);
     if verbose
-        str = strvcat(str,sprintf('\n    ** %s **\n',strtrim(str(end,:))));
-        str = strvcat(str,sprintf('The function assumes that a voxel in one image corresponds with\n'));
-        str = strvcat(str,sprintf('the same  voxel in another.   This  is not a safe assumption if\n'));
-        str = strvcat(str,sprintf('the  image dimensions differ.   Please  ensure  that  you  have\n'));
-        str = strvcat(str,sprintf('processed all the image data in the same way (eg. check spatial\n'));
-        str = strvcat(str,sprintf('normalisation bounding-boxes, voxel-sizes etc).\n'));
-        str = strvcat(str,sprintf('Here are the dimensions of the image volumes.  This list can be\n'));
-        str = strvcat(str,sprintf('used to determine which file(s) are causing the problem.\n\n'));
+        str = sprintf('%sThe function assumes that a voxel in one image corresponds with\n',str);
+        str = sprintf('%sthe same  voxel in another.   This  is not a safe assumption if\n',str);
+        str = sprintf('%sthe  image dimensions differ.   Please  ensure  that  you  have\n',str);
+        str = sprintf('%sprocessed all the image data in the same way (eg. check spatial\n',str);
+        str = sprintf('%snormalisation bounding-boxes, voxel-sizes etc).\n',str);
+        str = sprintf('%sHere are the dimensions of the image volumes.  This list can be\n',str);
+        str = sprintf('%sused to determine which file(s) are causing the problem.\n\n',str);
         for i=1:numel(V)
-            str = strvcat(str,sprintf('[%d %d %d]  %s\n',V(i).dim, V(i).fname));
+            str = sprintf('%s[%d %d %d]  %s\n', str, V(i).dim, V(i).fname);
         end
-        str = strvcat(str,sprintf('\n'));
+        str = sprintf('%s\n',str);
     end
     if ~nargout, error('The dimensions must be identical for this procedure.'); end
 end
@@ -42,26 +41,25 @@ end
 matx = reshape(cat(3,V.mat),[16,numel(V)]);
 if any(any(abs(diff(matx,1,2))>1e-4))
     sts = false;
-    str = strvcat(str,'The images do not all have same orientation and/or voxel sizes.');
+    str = sprintf('%s\n\t** The images do not all have same orientation and/or voxel sizes **',str);
     if verbose
-        str = strvcat(str,sprintf('\n** %s **\n',strtrim(str(end,:))));
-        str = strvcat(str,sprintf('The function assumes that a voxel in one image  corresponds exactly\n'));
-        str = strvcat(str,sprintf('with  the same voxel in another.   This is not a safe assumption if\n'));
-        str = strvcat(str,sprintf('the orientation information  in the headers or .mat files says that\n'));
-        str = strvcat(str,sprintf('the images are oriented differently. Please ensure that you process\n'));
-        str = strvcat(str,sprintf('all data correctly. For example, you may have realigned the images,\n'));
-        str = strvcat(str,sprintf('but not actually resliced them to be in voxel-wise alignment.\n'));
-        str = strvcat(str,sprintf('Here are the orientation matrices of the image volumes.   This list\n'));
-        str = strvcat(str,sprintf('can be used to determine which file(s) are causing the problem.\n\n'));
+        str = sprintf('%sThe function assumes that a voxel in one image  corresponds exactly\n',str);
+        str = sprintf('%swith  the same voxel in another.   This is not a safe assumption if\n',str);
+        str = sprintf('%sthe orientation information  in the headers or .mat files says that\n',str);
+        str = sprintf('%sthe images are oriented differently. Please ensure that you process\n',str);
+        str = sprintf('%sall data correctly. For example, you may have realigned the images,\n',str);
+        str = sprintf('%sbut not actually resliced them to be in voxel-wise alignment.\n',str);
+        str = sprintf('%sHere are the orientation matrices of the image volumes.   This list\n',str);
+        str = sprintf('%scan be used to determine which file(s) are causing the problem.\n\n',str);
         for i=1:numel(V)
-            str = strvcat(str,sprintf('[%g %g %g %g; %g %g %g %g; %g %g %g %g]  %s\n',...
-                V(i).mat(1:3,:)', V(i).fname));
+            str = sprintf('%s[%g %g %g %g; %g %g %g %g; %g %g %g %g]  %s\n',...
+                str, V(i).mat(1:3,:)', V(i).fname);
         end
-        str = strvcat(str,sprintf('\n'));
+        str = sprintf('%s\n',str);
     end
     if ~nargout, error('The orientations etc must be identical for this procedure.'); end
 end
 
 if nargout<2
-    fprintf(str);
+    disp(str);
 end

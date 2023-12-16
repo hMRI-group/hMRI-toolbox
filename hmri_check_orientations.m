@@ -9,7 +9,7 @@ function [sts, str] = hmri_check_orientations(V, verbose)
 %
 % When used without LHS, this function throws an error accordingly.
 %__________________________________________________________________________
-% Adapted from spm_check_orientations.m by John Ashburner
+% Adapted from John Ashburner's spm_check_orientations.m
 % to save all console output in str
 % Copyright (C) 2005-2016 Wellcome Trust Centre for Neuroimaging
 

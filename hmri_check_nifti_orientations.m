@@ -1,6 +1,6 @@
-function [sts, str] = hmri_check_orientations(V, verbose)
+function [sts, str] = hmri_check_nifti_orientations(V, verbose)
 % Check the dimensions and orientations of the images
-% FORMAT [sts, str] = hmri_check_orientations(V [,verbose])
+% FORMAT [sts, str] = hmri_check_nifti_orientations(V [,verbose])
 % V       - a struct array as returned by spm_vol
 % verbose - [Default: true]
 %

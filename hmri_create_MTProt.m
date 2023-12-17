@@ -1183,7 +1183,7 @@ hmri_log(LogMsg, mpm_params.defflags);
 % Give a warning if the contrasts PDw, MTw and T1w have non-matching
 % dimensions or orientations
 raw = [jobsubj.raw_mpm.MT; jobsubj.raw_mpm.PD; jobsubj.raw_mpm.T1];
-[orientationsMatch, orientationsWarning] = hmri_check_orientations(spm_vol(char(raw)));
+[orientationsMatch, orientationsWarning] = hmri_check_nifti_orientations(spm_vol(char(raw)));
 if ~orientationsMatch
     % Message displayed as pop-up if enabled since it is important information 
     LogMsg = sprintf(['WARNING: MTw, PDw and T1w images have non-matching dimensions', ...

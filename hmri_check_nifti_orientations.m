@@ -45,7 +45,7 @@ end
 matx = reshape(cat(3,V.mat),[16,numel(V)]);
 if any(any(abs(diff(matx,1,2))>1e-4))
     sts = false;
-    strori = sprintf('\n\t** The images do not all have same orientation and/or voxel sizes **');
+    strori = sprintf('\n\t** The images do not all have same orientation and/or voxel sizes **\n');
     if verbose
         strori = sprintf('%sThe function assumes that a voxel in one image  corresponds exactly\n',strori);
         strori = sprintf('%swith  the same voxel in another.   This is not a safe assumption if\n',strori);

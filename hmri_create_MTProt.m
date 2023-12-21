@@ -136,11 +136,13 @@ supplpath = mpm_params.supplpath;
 avg_nr = mpm_params.nr_echoes4avg; 
 
 % load PDw images
-% PDw images are the reference space for all results. Therefore, the matrix
-% dimension defined below (dm) is used across the whole script. It must not
-% been redefined.
 V_pdw = spm_vol(mpm_params.input(PDwidx).fnam);
-dm = V_pdw(1).dim;
+
+% We set the PDw images as reference space for all results/different contrasts. 
+% Therefore, the matrix dimension defined below (dm) is used across the whole script. 
+% It should not be redefined.
+V_ref = V_pdw(1);
+dm = V_ref.dim;
 
 %% =======================================================================%
 % Calculate R2* map from PDw echoes
@@ -166,14 +168,14 @@ if mpm_params.basicR2s
     
     % create nifti object for output R2* map
     fR2s = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qR2s).suffix '.nii']);
-    Ni = hmri_create_nifti(fR2s, V_pdw(1), dt, mpm_params.output(mpm_params.qR2s).descrip{1});
+    Ni = hmri_create_nifti(fR2s, V_ref, dt, mpm_params.output(mpm_params.qR2s).descrip{1});
        
     % Fit R2* decay
     for p = 1:dm(3)
         data = zeros([dm(1:2),numel(V_pdw)]);
         for cecho = 1:numel(V_pdw)
             % Allows for reslicing across TE
-            data(:,:,cecho) = hmri_read_vols(V_pdw(cecho),V_pdw(1),p,mpm_params.interp);
+            data(:,:,cecho) = hmri_read_vols(V_pdw(cecho),V_ref,p,mpm_params.interp);
         end
         % Don't want log of < 1 => assuming typical dynamic range of Dicom
         % data, e.g. 12bit @TODO
@@ -208,9 +210,9 @@ for ccon=1:mpm_params.ncon % loop over available contrasts
     Ni = hmri_create_nifti(Pavg{ccon}, V(1), dt, ...
         sprintf('Averaged %sw images - %d echoes', mpm_params.input(ccon).tag, avg_nr));
 
-    spm_progress_bar('Init',dm(3),Ni.descrip,'planes completed');
-    for p = 1:dm(3)
-        Y = zeros(dm(1:2));
+    spm_progress_bar('Init',V(1).dim(3),Ni.descrip,'planes completed');
+    for p = 1:V(1).dim(3)
+        Y = zeros(V(1).dim(1:2));
         for nr = 1:avg_nr
             Y  = Y + hmri_read_vols(V(nr),V(1),p,mpm_params.interp);
         end
@@ -236,9 +238,9 @@ if (PDwidx && T1widx)
     Ni = hmri_create_nifti(PT1w_forA, V(1), dt, ...
         sprintf('Averaged T1w images for PD calculation - %d echoes',PDproc.nr_echoes_forA));
  
-    spm_progress_bar('Init',dm(3),Ni.descrip,'planes completed');
-    for p = 1:dm(3)
-        Y = zeros(dm(1:2));
+    spm_progress_bar('Init',V(1).dim(3),Ni.descrip,'planes completed');
+    for p = 1:V(1).dim(3)
+        Y = zeros(V(1).dim(1:2));
         for nr = 1:PDproc.nr_echoes_forA
             Y  = Y + hmri_read_vols(V(nr),V(1),p,mpm_params.interp);
         end
@@ -314,7 +316,7 @@ if mpm_params.QA.enable
         if mpm_params.estaticsR2s(ccon)
             
             fR2sQA{ccon} = fullfile(calcpath,[outbasename '_R2s_' mpm_params.input(ccon).tag 'w.nii']);
-            Ni = hmri_create_nifti(fR2sQA{ccon}, V_pdw(1), dt, ...
+            Ni = hmri_create_nifti(fR2sQA{ccon}, V_ref, dt, ...
                 'OLS R2* map [s-1]');
             
             Vcon = spm_vol(mpm_params.input(ccon).fnam);
@@ -329,7 +331,7 @@ if mpm_params.QA.enable
                 data = zeros([dm(1:2),numel(Vcon)]);
                 for cecho = 1:numel(mpm_params.input(ccon).TE)
                     % Allows for reslicing across TE
-                    data(:,:,cecho) = hmri_read_vols(Vcon(cecho),V_pdw(1),p,mpm_params.interp);
+                    data(:,:,cecho) = hmri_read_vols(Vcon(cecho),V_ref,p,mpm_params.interp);
                 end
                 % Don't want log of < 1 => assuming typical dynamic range of Dicom
                 % data, e.g. 12bit @TODO
@@ -384,7 +386,7 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
             % requires a minimum of neco4R2sfit echoes for a robust fit
             if mpm_params.estaticsR2s(ccon)
                 Pte0{ccon}  = fullfile(calcpath,[outbasename '_' mpm_params.input(ccon).tag 'w_' mpm_params.R2s_fit_method 'fit_TEzero.nii']);
-                Ni = hmri_create_nifti(Pte0{ccon}, V_pdw(1), dt, ...
+                Ni = hmri_create_nifti(Pte0{ccon}, V_ref, dt, ...
                     sprintf('%s fit to TE=0 for %sw images - %d echoes', mpm_params.R2s_fit_method, mpm_params.input(ccon).tag, length(mpm_params.input(ccon).TE)));
                                 
                 % store processing history in metadata
@@ -412,7 +414,7 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
     end % init nifti objects for fullOLS case
     
     fR2s_OLS    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qR2s).suffix '_' mpm_params.R2s_fit_method '.nii']);
-    Ni = hmri_create_nifti(fR2s_OLS, V_pdw(1), dt, ...
+    Ni = hmri_create_nifti(fR2s_OLS, V_ref, dt, ...
         [mpm_params.R2s_fit_method ' R2* map [s-1]']);
     
     % Combine the data and echo times:
@@ -439,7 +441,7 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
                     % want output (e.g. intercept) in Vavg space.
                     % Don't want log of < 1 => assuming typical dynamic range of Dicom
                     % data, e.g. 12bit @TODO
-                    data(:,:,cecho) = max(hmri_read_vols(Vcon(cecho),V_pdw(1),p,mpm_params.interp, contrastCoregParams(ccon,:)), 1);
+                    data(:,:,cecho) = max(hmri_read_vols(Vcon(cecho),V_ref,p,mpm_params.interp, contrastCoregParams(ccon,:)), 1);
                     
                 end
                 dataToFit(ccon).data = data;
@@ -502,7 +504,7 @@ for ii=1:length(mpm_params.output)-1*(~isempty(fR2s)||~isempty(fR2s_OLS)) % R2s 
     % define NIFTI objects for output images
     outputFn = fullfile(calcpath,[outbasename '_' mpm_params.output(ii).suffix '.nii']);
     
-    Nmap(ii) = hmri_create_nifti(outputFn, V_pdw(1), dt, ...
+    Nmap(ii) = hmri_create_nifti(outputFn, V_ref, dt, ...
         fullfile(calcpath,[outbasename '_' mpm_params.output(ii).suffix '.nii']));
     
 end
@@ -859,7 +861,7 @@ if PDproc.T2scorr && (~isempty(fR2s)||~isempty(fR2s_OLS))
     
     % save correction for inspection
     fR2scorr4A = spm_file(PR2s,'suffix','_corr4A');   
-    NiR2scorr4A = hmri_create_nifti(fR2scorr4A, V_pdw(1), dt, ...
+    NiR2scorr4A = hmri_create_nifti(fR2scorr4A, V_ref, dt, ...
         'R2* bias correction factor for A map (T2scorr option)');
    
     NiR2scorr4A.dat(:,:,:) = R2scorr4A;
@@ -867,7 +869,7 @@ if PDproc.T2scorr && (~isempty(fR2s)||~isempty(fR2s_OLS))
      
     % apply correction
     fAcorr = spm_file(fA,'suffix','_R2scorr');
-    NiAcorr = hmri_create_nifti(fAcorr, V_pdw(1), dt, ...
+    NiAcorr = hmri_create_nifti(fAcorr, V_ref, dt, ...
         'R2* bias corrected A map (T2scorr option)');
     
     tmp = spm_read_vols(spm_vol(fA))./(R2scorr4A+eps);
@@ -1175,9 +1177,22 @@ else
 end 
 mpm_params.ncon = ccon; % number of contrasts available
 
-% Message displayed as pop-up if enabled since it is an important
-% information 
+% Message displayed as pop-up if enabled since it is important information 
 hmri_log(LogMsg, mpm_params.defflags);
+
+% Give a warning if the contrasts PDw, MTw and T1w have non-matching
+% dimensions or orientations
+raw = [jobsubj.raw_mpm.MT; jobsubj.raw_mpm.PD; jobsubj.raw_mpm.T1];
+[orientationsMatch, orientationsWarning] = hmri_check_nifti_orientations(spm_vol(char(raw)));
+if ~orientationsMatch
+    % Message displayed as pop-up if enabled since it is important information 
+    LogMsg = sprintf(['WARNING: MTw, PDw and T1w images have non-matching dimensions', ...
+        '\n\t- see console for more information']);
+    hmri_log(LogMsg, mpm_params.defflags);
+
+    % Message is verbose and so only printed to console and log
+    hmri_log(orientationsWarning, setfield(mpm_params.defflags,'PopUp',false));
+end
 
 % collect TE, TR and FA for each available contrast
 for ccon = 1:mpm_params.ncon

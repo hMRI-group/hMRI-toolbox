@@ -228,28 +228,6 @@ for ccon=1:mpm_params.ncon % loop over available contrasts
     set_metadata(Pavg{ccon},Output_hdr,mpm_params.json);
 end
 
-% Average T1w image for PD calculation 
-% (average over PDproc.nr_echoes_forA echoes, see hmri_defaults):
-% @TODO - ensure reference volume is always consistent, e.g. V v's V_pdw to
-% ensure we are always in the same reference space of the PDw volume.
-if (PDwidx && T1widx)
-    PT1w_forA = fullfile(calcpath,[outbasename '_T1w_forA.nii']);
-    V           = spm_vol(mpm_params.input(T1widx).fnam);
-    Ni = hmri_create_nifti(PT1w_forA, V(1), dt, ...
-        sprintf('Averaged T1w images for PD calculation - %d echoes',PDproc.nr_echoes_forA));
- 
-    spm_progress_bar('Init',V(1).dim(3),Ni.descrip,'planes completed');
-    for p = 1:V(1).dim(3)
-        Y = zeros(V(1).dim(1:2));
-        for nr = 1:PDproc.nr_echoes_forA
-            Y  = Y + hmri_read_vols(V(nr),V(1),p,mpm_params.interp);
-        end
-        Ni.dat(:,:,p) = Y./PDproc.nr_echoes_forA;
-        spm_progress_bar('Set',p);
-    end
-    spm_progress_bar('Clear');
-end
-
 %% =======================================================================%
 % Coregistering the images
 %=========================================================================%
@@ -263,7 +241,6 @@ if mpm_params.coreg
     end
     if T1widx 
         contrastCoregParams(T1widx,:) = hmri_coreg(Pavg{PDwidx}, Pavg{T1widx}, mpm_params.coreg_flags);
-        hmri_coreg(Pavg{PDwidx}, PT1w_forA, mpm_params.coreg_flags);
     end
 end
 
@@ -295,10 +272,7 @@ end
 % load averaged images
 Vavg(PDwidx) = spm_vol(Pavg{PDwidx});
 if MTwidx; Vavg(MTwidx) = spm_vol(Pavg{MTwidx}); end
-if T1widx
-    Vavg(T1widx) = spm_vol(Pavg{T1widx}); 
-    VT1w_forA = spm_vol(PT1w_forA);
-end
+if T1widx; Vavg(T1widx) = spm_vol(Pavg{T1widx}); end
 
 
 %% =======================================================================%
@@ -628,15 +602,6 @@ for p = 1:dm(3)
 
         T1w = hmri_read_vols(Vavg(T1widx),Ni,p,mpm_params.interp);
         
-        % if "fullOLS" option enabled, use the OLS fit at TE=0 as
-        % "T1w_forA"; otherwise use the average calculated earlier (by
-        % default, corresponds to the first echo to reduce R2* bias)
-        if mpm_params.fullOLS
-            T1w_forA = T1w;
-        else
-            T1w_forA = hmri_read_vols(VT1w_forA,Ni,p,mpm_params.interp);
-        end
-                
         % A values proportional to PD
         % f_T correction is applied either if:
         % - f_T has been provided as separate B1 mapping measurement (not
@@ -645,12 +610,12 @@ for p = 1:dm(3)
         % is enabled (advanced user only! method not validated yet!)
         if(~isempty(f_T))&&(~mpm_params.UNICORT.R1 || mpm_params.UNICORT.PD)
             A = hmri_calc_A(struct('data',PDw,'fa',fa_pdw_rad,'TR',TR_pdw,'B1',f_T),...
-                struct('data',T1w_forA,'fa',fa_t1w_rad,'TR',TR_t1w,'B1',f_T),...
+                struct('data',T1w,'fa',fa_t1w_rad,'TR',TR_t1w,'B1',f_T),...
                 mpm_params.small_angle_approx);
         else
             % semi-quantitative A
             A = hmri_calc_A(struct('data',PDw,'fa',fa_pdw_rad,'TR',TR_pdw,'B1',1),...
-                struct('data',T1w_forA,'fa',fa_t1w_rad,'TR',TR_t1w,'B1',1),...
+                struct('data',T1w,'fa',fa_t1w_rad,'TR',TR_t1w,'B1',1),...
                 mpm_params.small_angle_approx);
         end
         
@@ -680,7 +645,7 @@ for p = 1:dm(3)
 
             % MT in [p.u.]
             A_forMT = hmri_calc_A(struct('data',PDw,'fa',fa_pdw_rad,'TR',TR_pdw,'B1',B1_mtw),...
-                struct('data',T1w_forA,'fa',fa_t1w_rad,'TR',TR_t1w,'B1',B1_mtw),...
+                struct('data',T1w,'fa',fa_t1w_rad,'TR',TR_t1w,'B1',B1_mtw),...
                 mpm_params.small_angle_approx);
             R1_forMT = hmri_calc_R1(struct('data',PDw,'fa',fa_pdw_rad,'TR',TR_pdw,'B1',B1_mtw),...
                 struct('data',T1w,'fa',fa_t1w_rad,'TR',TR_t1w,'B1',B1_mtw),...
@@ -853,11 +818,11 @@ if PDproc.T2scorr && (~isempty(fR2s)||~isempty(fR2s_OLS))
     % calculate correction (expected to be between 1 and 1.5 approx)
     R2s = spm_read_vols(spm_vol(PR2s));
     R2scorr4A = zeros(size(R2s));
-    for cecho=1:mpm_params.proc.PD.nr_echoes_forA
+    for cecho=1:avg_nr
         TE = mpm_params.input(PDwidx).TE(cecho)*0.001; % in seconds
         R2scorr4A = R2scorr4A + exp(-TE.*R2s);
     end
-    R2scorr4A = R2scorr4A/mpm_params.proc.PD.nr_echoes_forA;
+    R2scorr4A = R2scorr4A/avg_nr;
     
     % save correction for inspection
     fR2scorr4A = spm_file(PR2s,'suffix','_corr4A');   
@@ -1411,18 +1376,6 @@ if mpm_params.proc.PD.T2scorr && ~(any(mpm_params.estaticsR2s)||mpm_params.basic
         '\ncalculate R2* map. No T2*-weighting bias correction can be ' ...
         '\napplied (T2scorr option). T2scorr disabled.']),mpm_params.defflags);
     mpm_params.proc.PD.T2scorr = 0;
-end
-
-% consistency check for number of echoes averaged for A calculation:
-if mpm_params.PDwidx && mpm_params.T1widx 
-    if mpm_params.proc.PD.nr_echoes_forA > size(mpm_params.input(mpm_params.T1widx).fnam,1)
-        hmri_log(sprintf(['WARNING: number of T1w echoes to be averaged for PD calculation (%d)' ...
-            '\nis bigger than the available number of echoes (%d). Setting nr_echoes_forA' ...
-            '\nto %d, the maximum number of echoes available.'], mpm_params.proc.PD.nr_echoes_forA, ...
-            size(mpm_params.input(mpm_params.T1widx).fnam,1), ...
-            size(mpm_params.input(mpm_params.T1widx).fnam,1)),mpm_params.defflags);
-        mpm_params.proc.PD.nr_echoes_forA = size(mpm_params.input(mpm_params.T1widx).fnam,1);
-    end
 end
 
 % coregistration of all images to the PDw average (or TE=0 fit):

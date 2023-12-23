@@ -157,6 +157,14 @@ hmri_def.coreg_bias_flags.cost_fun = 'nmi';
 hmri_def.coreg_bias_flags.fwhm = [7 7];
 
 %--------------------------------------------------------------------------
+% Averaged images over echoes are used for registration to boost SNR. 
+% However longer echo times will also have lower SNR and more artefacts,
+% and so the maximum echo to use is a trade-off. If OLS is disabled, the
+% averaged images are also used to create R1, PD and MTsat
+%--------------------------------------------------------------------------
+hmri_def.maxTEval4avg = 30; % ms
+
+%--------------------------------------------------------------------------
 % Decide whether to use small angle approximation when computing R1 and PD
 %--------------------------------------------------------------------------
 hmri_def.small_angle_approx = true;

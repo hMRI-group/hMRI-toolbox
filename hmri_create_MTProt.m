@@ -131,9 +131,9 @@ calcpath = mpm_params.calcpath;
 mpm_params.outbasename = outbasename;
 respath = mpm_params.respath;
 supplpath = mpm_params.supplpath;
-% Number of echoes averaged (maximum number or echoes available for ALL
-% contrasts AND under TE_limit (+1) - see get_mpm_params)
-avg_nr = mpm_params.nr_echoes4avg; 
+% Number of echoes averaged in non-OLS case (maximum number of echoes available for ALL
+% contrasts AND under TE_limit - see get_mpm_params)
+avg_nr = nnz(mpm_params.input(PDwidx).TE<=mpm_params.maxTEval4avg);
 
 % load PDw images
 V_pdw = spm_vol(mpm_params.input(PDwidx).fnam);
@@ -205,18 +205,20 @@ hmri_log(sprintf('\t-------- Reading and averaging the images --------'),mpm_par
 % Average only first few echoes for increased SNR and fit T2* 
 Pavg = cell(1,mpm_params.ncon);
 for ccon=1:mpm_params.ncon % loop over available contrasts
+    ccon_avg_nr = nnz(mpm_params.input(ccon).TE<=mpm_params.maxTEval4avg);
+    
     Pavg{ccon}  = fullfile(calcpath,[outbasename '_' mpm_params.input(ccon).tag 'w.nii']);
     V           = spm_vol(mpm_params.input(ccon).fnam);
     Ni = hmri_create_nifti(Pavg{ccon}, V(1), dt, ...
-        sprintf('Averaged %sw images - %d echoes', mpm_params.input(ccon).tag, avg_nr));
+        sprintf('Averaged %sw images - %d echoes', mpm_params.input(ccon).tag, ccon_avg_nr));
 
     spm_progress_bar('Init',V(1).dim(3),Ni.descrip,'planes completed');
     for p = 1:V(1).dim(3)
         Y = zeros(V(1).dim(1:2));
-        for nr = 1:avg_nr
+        for nr = 1:ccon_avg_nr
             Y  = Y + hmri_read_vols(V(nr),V(1),p,mpm_params.interp);
         end
-        Ni.dat(:,:,p) = Y/avg_nr;
+        Ni.dat(:,:,p) = Y/ccon_avg_nr;
         spm_progress_bar('Set',p);
     end
     spm_progress_bar('Clear');
@@ -1174,7 +1176,8 @@ for ccon = 1:mpm_params.ncon
         mpm_params.input(ccon).fa = MPMacq.(['fa_' lower(mpm_params.input(ccon).tag) 'w']);
     end
 end
-  
+
+%TODO: ensure input is sorted by echo time
 % check that echo times are identical (common echoes only)
 % NOTE: only necessary when not using the TE=0 extrapolation
 if ~mpm_params.fullOLS
@@ -1182,7 +1185,7 @@ if ~mpm_params.fullOLS
         TEcon1 = mpm_params.input(ccon).TE;
         TEcon2 = mpm_params.input(ccon+1).TE;
         for necho = 1:min(length(TEcon1),length(TEcon2))
-            if ~(TEcon1(necho)==TEcon2(necho))
+            if TEcon1(necho)~=TEcon2(necho)
                 hmri_log('ERROR: Echo times do not match between contrasts! Aborting.',mpm_params.defflags);
                 error('Echo times do not match between contrasts! Aborting.');
             end
@@ -1191,16 +1194,31 @@ if ~mpm_params.fullOLS
 end
 
 % maximum TE for averaging (ms)
-maxTEval4avg = 30; 
-% find maximum number of echoes that are common to all available contrasts
-ncommonTEvals = 1000;
-for ccon = 1:mpm_params.ncon
-    ncommonTEvals = min(length(mpm_params.input(ccon).TE),ncommonTEvals);
+mpm_params.maxTEval4avg = hmri_get_defaults('maxTEval4avg'); 
+
+if ~mpm_params.fullOLS % maximum echo time needs to be the same for all contrasts
+    % find maximum echo time common to all available contrasts
+    for ccon = 1:mpm_params.ncon
+        mpm_params.maxTEval4avg = min(max(mpm_params.input(ccon).TE),mpm_params.maxTEval4avg);
+    end
+    nr_echoes4avg = nnz(mpm_params.input(1).TE<=mpm_params.maxTEval4avg);
+    if nr_echoes4avg==0
+        hmri_log('ERROR: Contrast with all TE greater than maxTEval4avg found! Aborting.',mpm_params.defflags);
+        error('Contrast with all TE greater than maxTEval4avg found! Aborting.');
+    end
+    hmri_log(sprintf('INFO: averaged PDw/T1w/MTw will be calculated based on the first %d echoes.',nr_echoes4avg),mpm_params.nopuflags);
+else % otherwise use all echoes less than max echo time
+    msg = 'INFO:';
+    for ccon = 1:mpm_params.ncon
+        nr_echoes4avg = nnz(mpm_params.input(ccon).TE<=mpm_params.maxTEval4avg);     
+        if nr_echoes4avg==0
+            hmri_log(sprintf('ERROR: %sw has all TE greater than maxTEval4avg! Aborting.',mpm_params.input(ccon).tag),mpm_params.defflags);
+            error('ERROR: %sw has all TE greater than maxTEval4avg! Aborting.',mpm_params.input(ccon).tag);
+        end
+        msg = sprintf('%saveraged %sw will be calculated based on the first %d echoes\n',msg,mpm_params.input(ccon).tag,nr_echoes4avg);
+    end
+    hmri_log(msg,mpm_params.defflags);
 end
-% find maximum number of echoes that are common to all available contrasts
-% AND one more than the maxTEval4avg:
-mpm_params.nr_echoes4avg = min(length(find(mpm_params.input(1).TE<maxTEval4avg))+1,ncommonTEvals);
-hmri_log(sprintf('INFO: averaged PDw/T1w/MTw will be calculated based on the first %d echoes.',mpm_params.nr_echoes4avg),mpm_params.nopuflags);
 
 % parameter determining whether to use small flip angle assumption or not
 mpm_params.small_angle_approx = hmri_get_defaults('small_angle_approx');
@@ -1369,7 +1387,7 @@ if mpm_params.proc.R2sOLS
         mpm_params.estaticsR2s(ccon) = length(mpm_params.input(ccon).TE)>(mpm_params.neco4R2sfit-1);
     end
 end
-    
+
 % if T2scorr enabled, must check there will be a R2s map generated!
 if mpm_params.proc.PD.T2scorr && ~(any(mpm_params.estaticsR2s)||mpm_params.basicR2s)
     hmri_log(sprintf(['WARNING: not enough echoes available (minimum is %d) to ' ...

@@ -169,7 +169,14 @@ clear tmpfnam;
 if isfield(jobsubj.sensitivity,'RF_once')
     for i=1:length(jobsubj.sensitivity.RF_once)
         tmprawfnam = spm_file(jobsubj.sensitivity.RF_once{i},'number','');
-        tmpfnam{i} = fullfile(rfsens_params.calcpath,spm_file(tmprawfnam,'filename'));
+        %modify file name to prevent over-write
+        if i ==1
+            filestring = 'HC';
+        else
+            filestring = 'BC';
+        end
+        tmpmodfname = spm_file(tmprawfnam, 'path', '', 'suffix',['_' filestring]);
+        tmpfnam{i} = fullfile(rfsens_params.calcpath,tmpmodfname);
         copyfile(tmprawfnam, tmpfnam{i});
         try copyfile([spm_str_manip(tmprawfnam,'r') '.json'],[spm_str_manip(tmpfnam{i},'r') '.json']); end
     end
@@ -193,7 +200,14 @@ elseif isfield(jobsubj.sensitivity,'RF_per_contrast')
         end
         for csens=1:length(raw_sens_input)
             tmprawfnam = spm_file(raw_sens_input{csens},'number','');
-            tmpfnam{csens} = fullfile(rfsens_params.calcpath,spm_file(tmprawfnam,'filename'));
+            %modify file name to prevent over-write
+            if csens ==1
+                filestring = 'HC';
+            else
+                filestring = 'BC';
+            end
+            tmpmodfname = spm_file(tmprawfnam, 'path', '', 'suffix',['_' rfsens_params.input(ccon).tag 'w_' filestring]);
+            tmpfnam{csens} = fullfile(rfsens_params.calcpath,tmpmodfname);
             copyfile(tmprawfnam, tmpfnam{csens});
             try copyfile([spm_str_manip(tmprawfnam,'r') '.json'],[spm_str_manip(tmpfnam{csens},'r') '.json']); end
         end

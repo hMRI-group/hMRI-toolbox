@@ -627,10 +627,10 @@ spm_progress_bar('Init',dm(3),'Calculating maps','planes completed');
 for p = 1:dm(3)
 
     % PDw images are always available, so this bit is always loaded:
-    PDw = hmri_read_vols(Vavg(PDwidx),Ni,p,mpm_params.interp);
+    PDw = hmri_read_vols(Vavg(PDwidx),V_ref,p,mpm_params.interp);
     
     if ~isempty(V_trans)
-        f_T = hmri_read_vols(V_trans(2,:),Ni,p,mpm_params.interp)/100; % divide by 100, since p.u. maps
+        f_T = hmri_read_vols(V_trans(2,:),V_ref,p,mpm_params.interp)/100; % divide by 100, since p.u. maps
     else
         f_T = [];
     end
@@ -639,7 +639,7 @@ for p = 1:dm(3)
     % only if trpd = trmt and fapd = famt and if PDw and MTw images are
     % available
     if (MTwidx && PDwidx)
-        MTw = hmri_read_vols(Vavg(MTwidx),Ni,p,mpm_params.interp);
+        MTw = hmri_read_vols(Vavg(MTwidx),V_ref,p,mpm_params.interp);
         if (TR_mtw == TR_pdw) && (fa_mtw == fa_pdw) % additional MTR image...
             MTR = (PDw-MTw)./(PDw+eps) * 100;
             % write MTR image
@@ -651,7 +651,7 @@ for p = 1:dm(3)
     % available:
     if T1widx
 
-        T1w = hmri_read_vols(Vavg(T1widx),Ni,p,mpm_params.interp);
+        T1w = hmri_read_vols(Vavg(T1widx),V_ref,p,mpm_params.interp);
         
         % Transmit bias corrected quantitative T1 values; if f_T empty then semi-quantitative
         R1_unc=hmri_calc_R1(struct('data',PDw,'fa',fa_pdw_rad,'TR',TR_pdw,'B1',f_T),...
@@ -675,8 +675,8 @@ for p = 1:dm(3)
         Nmap(mpm_params.qR1).dat(:,:,p) = R1; % truncating images
         
         if mpm_params.errormaps
-            Edata.PDw  = spm_slice_vol(Verror(PDwidx),Verror(PDwidx).mat\M,dm(1:2),mpm_params.interp);
-            Edata.T1w  = spm_slice_vol(Verror(T1widx),Verror(T1widx).mat\M,dm(1:2),mpm_params.interp);
+            Edata.PDw = hmri_read_vols(Verror(PDwidx),V_ref,p,mpm_params.interp);
+            Edata.T1w = hmri_read_vols(Verror(T1widx),V_ref,p,mpm_params.interp);
             
             dR1 = hmri_make_dR1(PDw,T1w,Edata.PDw,Edata.T1w,fa_pdw_rad,fa_t1w_rad,TR_pdw,TR_t1w,f_T,mpm_params.small_angle_approx);
             
@@ -731,21 +731,21 @@ spm_progress_bar('Init',dm(3),'Calculating maps (continued)','planes completed')
 for p = 1:dm(3)
 
     if ~isempty(V_trans)
-        f_T = hmri_read_vols(V_trans(2,:),Ni,p,mpm_params.interp)/100; % divide by 100, since p.u. maps
+        f_T = hmri_read_vols(V_trans(2,:),V_ref,p,mpm_params.interp)/100; % divide by 100, since p.u. maps
     elseif ~isempty(V_trans_unicort)
-        f_T = hmri_read_vols(V_trans_unicort(1,:),Ni,p,mpm_params.interp)/100; % divide by 100, since p.u. maps        
+        f_T = hmri_read_vols(V_trans_unicort(1,:),V_ref,p,mpm_params.interp)/100; % divide by 100, since p.u. maps        
     else
         f_T = [];
     end
     
     % PDw images are always available, so this bit is always loaded:
-    PDw = hmri_read_vols(Vavg(PDwidx),Ni,p,mpm_params.interp);
+    PDw = hmri_read_vols(Vavg(PDwidx),V_ref,p,mpm_params.interp);
     
     % T1 map and A/PD maps can only be calculated if T1w images are
     % available:
     if T1widx
 
-        T1w = hmri_read_vols(Vavg(T1widx),Ni,p,mpm_params.interp);
+        T1w = hmri_read_vols(Vavg(T1widx),V_ref,p,mpm_params.interp);
         
         % if "fullOLS" option enabled, use the OLS fit at TE=0 as
         % "T1w_forA"; otherwise use the average calculated earlier (by
@@ -753,7 +753,7 @@ for p = 1:dm(3)
         if mpm_params.fullOLS
             T1w_forA = T1w;
         else
-            T1w_forA = hmri_read_vols(VT1w_forA,Ni,p,mpm_params.interp);
+            T1w_forA = hmri_read_vols(VT1w_forA,V_ref,p,mpm_params.interp);
         end
                 
         % A values proportional to PD
@@ -780,8 +780,8 @@ for p = 1:dm(3)
         % dynamic range increased to 10^5 to accommodate phased-array coils and symmetrical for noise distribution
 
         if mpm_params.errormaps
-            Edata.PDw = spm_slice_vol(Verror(PDwidx),Verror(PDwidx).mat\M,dm(1:2),mpm_params.interp);
-            Edata.T1w = spm_slice_vol(Verror(T1widx),Verror(T1widx).mat\M,dm(1:2),mpm_params.interp);
+            Edata.PDw = hmri_read_vols(Verror(PDwidx),V_ref,p,mpm_params.interp);
+            Edata.T1w = hmri_read_vols(Verror(T1widx),V_ref,p,mpm_params.interp);
             
             dPD = hmri_make_dPD(PDw,T1w,Edata.PDw,Edata.T1w,fa_pdw_rad,fa_t1w_rad,TR_pdw,TR_t1w,f_T,mpm_params.small_angle_approx);
             
@@ -803,7 +803,7 @@ for p = 1:dm(3)
         % for MT maps calculation, one needs MTw images on top of the T1w
         % and PDw ones...
         if MTwidx
-            MTw = hmri_read_vols(Vavg(MTwidx),Ni,p,mpm_params.interp);
+            MTw = hmri_read_vols(Vavg(MTwidx),V_ref,p,mpm_params.interp);
 
             switch mpm_params.MTsatB1CorrectionModel
                 case 'helms' 
@@ -841,7 +841,7 @@ for p = 1:dm(3)
             Nmap(mpm_params.qMT).dat(:,:,p) = max(min(MT,threshall.MT),-threshall.MT);
 
             if mpm_params.errormaps
-                Edata.MTw  = spm_slice_vol(Verror(MTwidx),Verror(MTwidx).mat\M,dm(1:2),mpm_params.interp);
+                Edata.MTw = hmri_read_vols(Verror(MTwidx),V_ref,p,mpm_params.interp);
                 
                 dMT = hmri_make_dMT(PDw,T1w,MTw,Edata.PDw,Edata.T1w,Edata.MTw,fa_pdw_rad,fa_t1w_rad,fa_mtw_rad,TR_pdw,TR_t1w,TR_mtw,mpm_params.small_angle_approx) * 100;
                 

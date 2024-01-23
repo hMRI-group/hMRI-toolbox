@@ -20,7 +20,7 @@ function P_trans = hmri_create_b1map(jobsubj)
 
 flags = jobsubj.log.flags;
 flags.PopUp = false;
-hmri_log(sprintf('\t============ CREATE B1 MAP - %s.m (%s) ============', mfilename, datestr(now)),flags);
+hmri_log(sprintf('\t============ CREATE B1 MAP - %s.m (%s) ============', mfilename, datetime('now')),flags);
 
 % retrieve effective acquisition & processing parameters, alternatively
 % use defaults
@@ -107,7 +107,7 @@ if ~isempty(P_trans)
     P_trans = char(P_trans_copy{1},P_trans_copy{2});
 end
 
-hmri_log(sprintf('\t============ CREATE B1 MAP: completed (%s) ============', datestr(now)),b1map_params.nopuflags);
+hmri_log(sprintf('\t============ CREATE B1 MAP: completed (%s) ============', datetime('now')),b1map_params.nopuflags);
 
 end
 
@@ -643,7 +643,7 @@ b1map_params.defflags = jobsubj.log.flags; % default flags
 b1map_params.nopuflags = jobsubj.log.flags; % force no Pop-Up
 b1map_params.nopuflags.PopUp = false;
 
-hmri_log(sprintf('\t------------ B1 MAP CALCULATION (%s) %s ------------',b1_protocol, datestr(now)),b1map_params.nopuflags);
+hmri_log(sprintf('\t------------ B1 MAP CALCULATION (%s) %s ------------',b1_protocol, datetime('now')),b1map_params.nopuflags);
 
 % save SPM version (slight differences may appear in the results depending
 % on the SPM version!)

@@ -1,4 +1,3 @@
-function hmri_b1_local_defaults_example_1
 % Sets the defaults for B1 bias correction, part of the hMRI toolbox.
 % Local settings to process the hMRI dataset available on
 % https://github.molgen.mpg.de/hMRI-group/Toolbox.
@@ -61,5 +60,3 @@ hmri_def.b1map.i3D_EPI.b1acq.blipDIR = 1;
 hmri_def.b1map.i3D_EPI.b0acq.shortTE = 10; % ms
 hmri_def.b1map.i3D_EPI.b0acq.longTE = 12.46; % ms
 hmri_def.b1map.i3D_EPI.b0acq.iformat = 'PM'; % ms
-
-end

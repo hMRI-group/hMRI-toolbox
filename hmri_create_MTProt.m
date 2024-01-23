@@ -846,7 +846,7 @@ for p = 1:dm(3)
                 dMT = hmri_make_dMT(PDw,T1w,MTw,Edata.PDw,Edata.T1w,Edata.MTw,fa_pdw_rad,fa_t1w_rad,fa_mtw_rad,TR_pdw,TR_t1w,TR_mtw,mpm_params.small_angle_approx) * 100;
                 
                 if (~isempty(f_T))&&(~mpm_params.UNICORT.R1 || mpm_params.UNICORT.MT)
-                    dMT = abs(hmri_correct_MTsat(dMT,f_T,mpm_params.MTsatB1CorrectionModel,mpm_params.MTsatB1CorrectionC);
+                    dMT = abs(hmri_correct_MTsat(dMT,f_T,mpm_params.MTsatB1CorrectionModel,mpm_params.MTsatB1CorrectionC));
                 end
                 
                 % truncate MT error maps

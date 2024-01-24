@@ -193,7 +193,7 @@ b1_input_3DEPI.val       = {b1raw b0raw b1parameters};
 % ---------------------------------------------------------------------
 b1_type         = cfg_choice;
 b1_type.tag     = 'b1_type';
-b1_type.name    = 'B1 bias correction';
+b1_type.name    = 'B1 bias correction method';
 b1_type.help    = {'Choose the methods for B1 bias correction.'
     ['Various types of B1 mapping protocols can be handled by the hMRI ' ...
     'toolbox. See list below for a ' ...

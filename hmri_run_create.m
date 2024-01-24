@@ -132,7 +132,7 @@ if isfield(job.subj.b1percontrast,'b1_MT')
     tmpsub.b1_type = job.subj.b1percontrast.b1_MT{2}.b1_type;
     job.subj.b1_MT_trans_input = hmri_create_b1map(tmpsub);
 else
-    job.subj.b1_type = job.subj.b1percontrast.b1_type;
+    job.subj.b1_type = job.subj.b1percontrast.b1_single.b1_type;
     job.subj.b1_trans_input = hmri_create_b1map(job.subj);
 end
 

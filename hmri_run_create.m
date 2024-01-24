@@ -120,10 +120,20 @@ spm_jsonwrite(fullfile(supplpath,'hMRI_map_creation_job_create_maps.json'),job,s
 
 % run B1 map calculation for B1 bias correction
 if isfield(job.subj.b1percontrast,'b1_MT')
-    error('separate MT pulse B1 map not implemented yet')
+    % excitation pulse B1 map
+    job.subj.b1_type = job.subj.b1percontrast.b1_MT{1}.b1_type;
+    job.subj.b1_trans_input = hmri_create_b1map(job.subj);
+
+    % MT pulse B1 map
+    b1MTpath = [b1path,'_MT'];
+    if ~exist(b1MTpath,'dir'); mkdir(b1MTpath); end
+    tmpsub = job.subj;
+    tmpsub.path.b1path = b1MTpath;
+    tmpsub.b1_type = job.subj.b1percontrast.b1_MT{2}.b1_type;
+    job.subj.b1_MT_trans_input = hmri_create_b1map(tmpsub);
 else
     job.subj.b1_type = job.subj.b1percontrast.b1_type;
-    P_trans = hmri_create_b1map(job.subj);
+    job.subj.b1_trans_input = hmri_create_b1map(job.subj);
 end
 
 % check, if RF sensitivity profile was acquired and do the recalculation
@@ -133,7 +143,6 @@ if isfield(job.subj.sensitivity,'RF_once') || isfield(job.subj.sensitivity,'RF_p
 end
 
 % run hmri_create_MTProt to evaluate the parameter maps
-job.subj.b1_trans_input = P_trans;
 [fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw]  = hmri_create_MTProt(job.subj);
 
 % collect outputs:

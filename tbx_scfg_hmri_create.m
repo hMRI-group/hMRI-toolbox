@@ -124,6 +124,26 @@ b1_type.help=[b1_type.help; {...
     }];
 
 % ---------------------------------------------------------------------
+% b1percontrast Choose whether to have separate B1 map for MT pulse
+% ---------------------------------------------------------------------
+b1_MT      = cfg_branch; % separate B1 map for MT pulse
+b1_MT.tag  = 'b1_MT';
+b1_MT.name = 'Separate B1 map for excitation and MT pulses';
+b1_MT.help = {['One set of B1 mapping data is acquired for the excitation pulse ' ...
+    'and another for the MT pulse.']};
+b1_MT.val  = {b1_type b1_type};
+
+b1percontrast       = cfg_choice;
+b1percontrast.tag   = 'b1percontrast';
+b1percontrast.name  = 'B1 for different contrast options';
+b1percontrast.help  = {'Specify whether one B1 map will be used for all contrasts. '
+    'You can select either:'
+    '- B1 map used for all contrasts'
+    '- Separate B1 map used for excitation and MT pulses'};
+b1percontrast.values  = {b1_type b1_MT};
+b1percontrast.val     = {b1_type};
+
+% ---------------------------------------------------------------------
 % Input images for RF sensitivity - RF sensitivity maps for MTw images
 % ---------------------------------------------------------------------
 sraws3MT          = cfg_files;
@@ -265,7 +285,7 @@ subj            = cfg_branch;
 subj.tag        = 'subj';
 subj.name       = 'Subject';
 subj.help       = {'Specify a subject for maps calculation.'};
-subj.val        = {output sensitivity b1_type raws popup};
+subj.val        = {output sensitivity b1percontrast raws popup};
 
 % ---------------------------------------------------------------------
 % data Data

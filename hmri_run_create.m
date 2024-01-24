@@ -119,7 +119,12 @@ job.SPMver = sprintf('%s (%s)', v, r);
 spm_jsonwrite(fullfile(supplpath,'hMRI_map_creation_job_create_maps.json'),job,struct('indent','\t'));
 
 % run B1 map calculation for B1 bias correction
-P_trans = hmri_create_b1map(job.subj);
+if isfield(job.subj.b1percontrast,'b1_MT')
+    error('separate MT pulse B1 map not implemented yet')
+else
+    job.subj.b1_type = job.subj.b1percontrast.b1_type;
+    P_trans = hmri_create_b1map(job.subj);
+end
 
 % check, if RF sensitivity profile was acquired and do the recalculation
 % accordingly

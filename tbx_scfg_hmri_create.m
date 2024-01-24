@@ -127,13 +127,16 @@ b1_type.help=[b1_type.help; {...
 % b1percontrast Choose whether to have separate B1 map for MT pulse
 % ---------------------------------------------------------------------
 % separate B1 map for MT pulse
+b1_MTpulse = b1_type;
+b1_MTpulse.name = 'MT pulse B1 mapping method';
+b1_MTpulse.tag = 'b1_MTpulse';
+
 b1_MT      = cfg_branch;
 b1_MT.tag  = 'b1_MT';
-b1_MT.name = 'Separate B1 map for excitation and MT pulses';
+b1_MT.name = 'Separate excitation and MT pulse B1 maps';
 b1_MT.help = {['One set of B1 mapping data is acquired for the excitation pulse ' ...
     'and another for the MT pulse.']};
-b1_MT.val  = {setfield(b1_type,'name','Excitation pulse B1 map') ...
-    setfield(b1_type,'name','MT pulse B1 map')}; %#ok<SFLD> 
+b1_MT.val  = {setfield(b1_type,'name','Excitation pulse B1 mapping method') b1_MTpulse}; %#ok<SFLD>
 
 % single B1 map for excitation and MT pulses
 b1_single = cfg_branch;
@@ -148,8 +151,8 @@ b1percontrast.tag   = 'b1percontrast';
 b1percontrast.name  = 'B1 transmit bias correction';
 b1percontrast.help  = {'Specify whether one B1 map will be used for all contrasts. '
     'You can select either:'
-    '- Single B1 map used for all contrasts'
-    '- Separate B1 maps used for excitation and MT pulses'};
+    '- Single B1 map for all pulses'
+    '- Separate B1 map for excitation and MT pulses'};
 b1percontrast.values  = {b1_single b1_MT};
 b1percontrast.val     = {b1_single};
 

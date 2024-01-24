@@ -98,6 +98,13 @@ mpm_params = get_mpm_params(jobsubj);
 % P_trans(1,:) = magnitude image (anatomical reference for coregistration)
 % P_trans(2,:) = B1 map (p.u.)
 P_trans = jobsubj.b1_trans_input;
+if isfield(jobsubj,'b1_MT_trans_input')
+    P_trans_MT = jobsubj.b1_MT_trans_input;
+    separate_MT_B1map = true;
+else
+    P_trans_MT = [];
+    separate_MT_B1map = false;
+end
 
 % index number for each contrast - zero index means no images available
 PDwidx = mpm_params.PDwidx;
@@ -276,6 +283,17 @@ if ~isempty(P_trans)
         hmri_coreg(Pavg{PDwidx}, P_trans, mpm_params.coreg_bias_flags);
     end
     V_trans = spm_vol(P_trans);
+end
+
+V_trans_MT = [];
+if ~isempty(P_trans_MT)
+    % Load B1 mapping data if available and coregister to PDw
+    % P_trans(1,:) = magnitude image (anatomical reference for coregistration) 
+    % P_trans(2,:) = B1 map (p.u.)
+    if mpm_params.coreg
+        hmri_coreg(Pavg{PDwidx}, P_trans_MT, mpm_params.coreg_bias_flags);
+    end
+    V_trans_MT = spm_vol(P_trans_MT);
 end
 
 % parameters saved for quality assessment
@@ -687,13 +705,22 @@ for p = 1:dm(3)
                 mpm_params.small_angle_approx);
             MT = hmri_calc_MTsat(struct('data',MTw,'fa',fa_mtw_rad,'TR',TR_mtw,'B1',B1_mtw), A_forMT, R1_forMT);
 
+            % Use MT-pulse B1 map if available        
+            if ~isempty(V_trans_MT) % separate B1 mapping data provided for MT pulse
+                f_T_MT = hmri_read_vols(V_trans_MT(2,:),Ni,p,mpm_params.interp)/100; % divide by 100, since p.u. maps
+            elseif separate_MT_B1map % separate B1 mapping data for MT pulse selected, but with "no B1 correction" selected
+                f_T_MT = [];
+            else % same B1 mapping data for excitation and MT pulse selected
+                f_T_MT = f_T;
+            end
+
             % f_T correction is applied either if:
             % - f_T has been provided as separate B1 mapping measurement (not
             % UNICORT!) or
             % - f_T has been calculated using UNICORT *AND* the UNICORT.MT flag
             % is enabled (advanced user only! method not validated yet!)
-            if (~isempty(f_T))&&(~mpm_params.UNICORT.R1 || mpm_params.UNICORT.MT)
-                MT = hmri_correct_MTsat(MT,f_T,mpm_params.MTsatB1CorrectionModel,mpm_params.MTsatB1CorrectionC);
+            if (~isempty(f_T_MT))&&(~mpm_params.UNICORT.R1 || mpm_params.UNICORT.MT)
+                MT = hmri_correct_MTsat(MT,f_T_MT,mpm_params.MTsatB1CorrectionModel,mpm_params.MTsatB1CorrectionC);
             end
 
             MT(isnan(MT))=0;

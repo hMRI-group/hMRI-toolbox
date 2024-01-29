@@ -12,6 +12,7 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 ### Fixed
 - replace `datestr(now)` with `datetime('now')` in line with [MATLAB recommendation](https://mathworks.com/help/matlab/matlab_prog/replace-discouraged-instances-of-serial-date-numbers-and-date-strings.html)
 - fix crash if input images have different matrix sizes, and warn
+- make B1-map creation using 3DEPI SE/STE and AFI methods fall back to defaults without sidecar files, rather than crash
 - Modify the filenames as files are copied to RFsensCalc to prevent overwriting in further processing
 
 ## [v0.6.1]

@@ -1177,7 +1177,23 @@ for ccon = 1:mpm_params.ncon
     end
 end
 
-%TODO: ensure input is sorted by echo time
+% ensure amount of data matches number of echoes
+for ccon = 1:mpm_params.ncon
+    nTEs = length(mpm_params.input(ccon).TE);
+    nFiles = size(mpm_params.input(ccon).fnam,1);
+    if nTEs~=nFiles
+        msg = sprintf('%sw metadata has %d TEs, but only %d were provided! Aborting.', mpm_params.input(ccon).tag, nTEs, nFiles);
+        hmri_log(sprintf('ERROR: %s',msg), mpm_params.defflags);
+        error(msg);
+    end
+end
+
+% sort input data by echo time
+for ccon = 1:mpm_params.ncon
+    [mpm_params.input(ccon).TE, ordering] = sort(mpm_params.input(ccon).TE);
+    mpm_params.input(ccon).fnam = mpm_params.input(ccon).fnam(ordering,:);
+end
+
 % check that echo times are identical (common echoes only)
 % NOTE: only necessary when not using the TE=0 extrapolation
 if ~mpm_params.fullOLS
@@ -1193,31 +1209,23 @@ if ~mpm_params.fullOLS
     end
 end
 
-% maximum TE for averaging (ms)
-mpm_params.maxTEval4avg = hmri_get_defaults('maxTEval4avg'); 
-
-if ~mpm_params.fullOLS % maximum echo time needs to be the same for all contrasts
+% use all echoes unless full OLS is turned off, when only similar echoes can be used
+if ~mpm_params.fullOLS % echo times need to be the same for all contrasts
     % find maximum echo time common to all available contrasts
+    mpm_params.maxTEval4avg = 0; 
     for ccon = 1:mpm_params.ncon
         mpm_params.maxTEval4avg = min(max(mpm_params.input(ccon).TE),mpm_params.maxTEval4avg);
     end
     nr_echoes4avg = nnz(mpm_params.input(1).TE<=mpm_params.maxTEval4avg);
-    if nr_echoes4avg==0
-        hmri_log('ERROR: Contrast with all TE greater than maxTEval4avg found! Aborting.',mpm_params.defflags);
-        error('Contrast with all TE greater than maxTEval4avg found! Aborting.');
-    end
-    hmri_log(sprintf('INFO: averaged PDw/T1w/MTw will be calculated based on the first %d echoes.',nr_echoes4avg),mpm_params.nopuflags);
-else % otherwise use all echoes less than max echo time
+    hmri_log(sprintf('INFO: averaged PDw/T1w/MTw will be calculated based on the first %d echoes.',mpm_params.nr_echoes4avg),mpm_params.nopuflags);
+else % otherwise use all echoes
     msg = 'INFO:';
     for ccon = 1:mpm_params.ncon
-        nr_echoes4avg = nnz(mpm_params.input(ccon).TE<=mpm_params.maxTEval4avg);     
-        if nr_echoes4avg==0
-            hmri_log(sprintf('ERROR: %sw has all TE greater than maxTEval4avg! Aborting.',mpm_params.input(ccon).tag),mpm_params.defflags);
-            error('ERROR: %sw has all TE greater than maxTEval4avg! Aborting.',mpm_params.input(ccon).tag);
-        end
-        msg = sprintf('%saveraged %sw will be calculated based on the first %d echoes\n',msg,mpm_params.input(ccon).tag,nr_echoes4avg);
+        nr_echoes4avg = length(mpm_params.input(ccon).TE);  
+        msg = sprintf('%saveraged %sw will be calculated based on the %d echoes\n',msg,mpm_params.input(ccon).tag,nr_echoes4avg);
     end
     hmri_log(msg,mpm_params.defflags);
+    mpm_params.maxTEval4avg = inf; % use all echoes
 end
 
 % parameter determining whether to use small flip angle assumption or not

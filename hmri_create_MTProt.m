@@ -1210,9 +1210,9 @@ if ~mpm_params.fullOLS
 end
 
 % use all echoes unless full OLS is turned off, when only similar echoes can be used
+mpm_params.maxTEval4avg = inf; % use all echoes
 if ~mpm_params.fullOLS % echo times need to be the same for all contrasts
     % find maximum echo time common to all available contrasts
-    mpm_params.maxTEval4avg = 0; 
     for ccon = 1:mpm_params.ncon
         mpm_params.maxTEval4avg = min(max(mpm_params.input(ccon).TE),mpm_params.maxTEval4avg);
     end
@@ -1225,7 +1225,6 @@ else % otherwise use all echoes
         msg = sprintf('%saveraged %sw will be calculated based on the %d echoes\n',msg,mpm_params.input(ccon).tag,nr_echoes4avg);
     end
     hmri_log(msg,mpm_params.defflags);
-    mpm_params.maxTEval4avg = inf; % use all echoes
 end
 
 % parameter determining whether to use small flip angle assumption or not

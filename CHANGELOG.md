@@ -14,16 +14,13 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 - fix crash if input images have different matrix sizes, and warn
 - make B1-map creation using 3DEPI SE/STE and AFI methods fall back to defaults without sidecar files, rather than crash
 - Modify the filenames as files are copied to RFsensCalc to prevent overwriting in further processing
+- batch interface now enforces the number of B1 input images correctly for B1 mapping methods which only need two images.
 
 ## [v0.6.1]
 ### Fixed
 - The local config files have been converted to scripts for compatibility with compiled version
 - function-evaluate SPM-struct (preproc8.val) for SPM development version compatibility.
 - copy acquisition metadata to TE=0 volumes in Results/Supplementary folder after map creation so they can be used as input to the toolbox if needed
-
-
-### Fixed
-- batch interface now enforces the number of B1 input images correctly for B1 mapping methods which only need two images.
 
 ## [v0.6.0]
 ### Added

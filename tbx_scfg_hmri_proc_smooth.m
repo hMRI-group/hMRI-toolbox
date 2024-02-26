@@ -170,6 +170,7 @@ function dep = vout_smooth(job)
 % outputs are calculated.
 % There should be one series of images per parametric map and tissue class,
 % e.g. in the usual case of 4 MPMs and GM/WM -> 8 series of image
+% + 1 series of smoothed tissue class images
 
 n_pams = numel(job.vols_pm);     % #parametric image types
 n_TCs = numel(job.vols_mwc);     % #tissue classes
@@ -184,6 +185,12 @@ for ii=1:n_TCs
     end
 end
     
+for ii=1:n_TCs
+    cdep(end+1) = cfg_dep;
+    cdep(end).sname = sprintf('smwTC #%d', ii);
+    cdep(end).src_output = substruct('.', 'smwc', '{}', {ii});
+    cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
+end
 dep = cdep(2:end);
 
 end

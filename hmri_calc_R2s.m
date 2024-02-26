@@ -147,6 +147,12 @@ switch lower(method)
         beta(2:end,:)=exp(beta(2:end,:));
         
     case {'nlls_ols','nlls_wls1','nlls_wls2','nlls_wls3'}
+        %lsqcurvefit uses toolbox check for it:
+            [status,~] = license('checkout', 'Optimization_toolbox');
+            if status==0
+                error("The methods: 'nlls_ols','nlls_wls1','nlls_wls2','nlls_wls3' require Optimization Toolbox, " + ...
+                    "try another method (e.g. OLS) which does not use Optimization Toolbox.")
+            end
         % Check for NLLS case, where specification of the log-linear 
         % initialisation method is in the method string following a hyphen
         r=regexp(lower(method),'^nlls_(.*)$','tokens');
@@ -156,12 +162,6 @@ switch lower(method)
         [R2s0,A0]=hmri_calc_R2s(weighted_data,initmethod);
         
         if ~exist('opt','var')
-            %lsqcurvefit uses toolbox check for it:
-            [status,~] = license('checkout', 'Optimization_toolbox');
-            if status==0
-                error("The methods: 'nlls_ols','nlls_wls1','nlls_wls2','nlls_wls3' require Optimization Toolbox, " + ...
-                    "try another method (e.g. OLS) which does not use Optimization Toolbox.")
-            end
             opt=optimset('lsqcurvefit');
         end
         opt=optimset(opt,'Display','off');
@@ -174,12 +174,6 @@ switch lower(method)
         
         expDecay=@(x,D) (D(:,2:end)*x(2:end)).*exp(x(1)*D(:,1));
       
-        %lsqcurvefit uses toolbox check for it, before the loop:
-        [status,~] = license('checkout', 'Optimization_toolbox');
-            if status==0
-                error("The methods: 'nlls_ols','nlls_wls1','nlls_wls2','nlls_wls3' require Optimization Toolbox, " + ...
-                    "try another method (e.g. OLS) which does not use Optimization Toolbox.")
-            end
         % Loop over voxels
         parfor n=1:size(y,2)
             beta(:,n)=lsqcurvefit(@(x,D)expDecay(x,D),beta0(:,n),D,y(:,n),[],[],opt);

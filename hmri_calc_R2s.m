@@ -148,11 +148,12 @@ switch lower(method)
         
     case {'nlls_ols','nlls_wls1','nlls_wls2','nlls_wls3'}
         %lsqcurvefit uses toolbox check for it:
-            [status,~] = license('checkout', 'Optimization_toolbox');
-            if status==0
-                error("The methods: 'nlls_ols','nlls_wls1','nlls_wls2','nlls_wls3' require Optimization Toolbox, " + ...
-                    "try another method (e.g. OLS) which does not use Optimization Toolbox.")
-            end
+        [license_status,~] = license('checkout', 'Optimization_toolbox');
+        if license_status==0
+            error("The methods: 'nlls_ols','nlls_wls1','nlls_wls2','nlls_wls3' require Optimization Toolbox, which was not found. " + ...
+                "Please try another method (e.g. OLS or WLS1) which does not use Optimization Toolbox.")
+        end
+
         % Check for NLLS case, where specification of the log-linear 
         % initialisation method is in the method string following a hyphen
         r=regexp(lower(method),'^nlls_(.*)$','tokens');

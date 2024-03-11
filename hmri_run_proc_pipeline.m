@@ -66,10 +66,9 @@ out_US = hmri_run_proc_US(job_US);
 %% 2/ Proceed with dartel (only if requested)
 %-------------------------------------------
 % including template create and warping into MNI space
-
 if job.pipe_c == 2
-    
-    if str2double(spm('Ver','spm_dartel_norm_fun'))>=7182
+    [~,ver] = spm('Ver');
+    if str2double(ver)>=7219
         % Knows how to handle output specification
         use_spm_output_handling = true;
     else

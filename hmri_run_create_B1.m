@@ -74,7 +74,7 @@ job.subj.log.flags = struct('LogFile',struct('Enabled',true,'FileName','hMRI_B1_
     'PopUp',job.subj.popup,'ComWin',true);
 flags = job.subj.log.flags;
 flags.PopUp = false;
-hmri_log(sprintf('\t============ CREATE B1 MAP MODULE - %s.m (%s) ============', mfilename, datestr(now)),flags);
+hmri_log(sprintf('\t============ CREATE B1 MAP MODULE - %s.m (%s) ============', mfilename, datetime('now')),flags);
 
 if newrespath
     hmri_log(sprintf(['WARNING: existing results from previous run(s) were found, \n' ...
@@ -108,6 +108,6 @@ end
 f = fopen(fullfile(respath, '_finished_'), 'wb');
 fclose(f);
 
-hmri_log(sprintf('\t============ CREATE B1 MAP MODULE: completed (%s) ============', datestr(now)),flags);
+hmri_log(sprintf('\t============ CREATE B1 MAP MODULE: completed (%s) ============', datetime('now')),flags);
 
 end

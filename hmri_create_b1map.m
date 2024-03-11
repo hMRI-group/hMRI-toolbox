@@ -20,10 +20,10 @@ function P_trans = hmri_create_b1map(jobsubj)
 
 flags = jobsubj.log.flags;
 flags.PopUp = false;
-hmri_log(sprintf('\t============ CREATE B1 MAP - %s.m (%s) ============', mfilename, datestr(now)),flags);
+hmri_log(sprintf('\t============ CREATE B1 MAP - %s.m (%s) ============', mfilename, datetime('now')),flags);
 
 % retrieve effective acquisition & processing parameters, alternatively
-% use defaults 
+% use defaults
 b1map_params = get_b1map_params(jobsubj);
 
 % save b1map_params as json-file
@@ -42,53 +42,59 @@ switch(b1map_params.b1type)
     case 'i3D_AFI'
         % processing B1 map from AFI data
         P_trans  = calc_AFI_b1map(jobsubj, b1map_params);
-        
+
     case 'i3D_EPI'
         % processing B1 map from SE/STE EPI data
         P_trans  = calc_SESTE_b1map(jobsubj, b1map_params);
-        
+
+    case 'DAM'
+        % processing B1 map from DAM data
+        P_trans  = calc_DAM_b1map(jobsubj, b1map_params);
+
     case 'tfl_b1_map'
         % processing B1 map from tfl_b1map data
-        P_trans  = calc_tfl_b1map(jobsubj, b1map_params);
-        
+        P = b1map_params.b1input(2,:); % scaled FA map from tfl_b1map sequence
+
+        alphanom = get_metadata_val(P,'FlipAngle');
+        scaling = 10/alphanom;
+        offset = 0;
+
+        descrip = 'SIEMENS tfl_b1map protocol';
+
+        P_trans  = calc_scaled_b1map(jobsubj, b1map_params, offset, scaling, descrip);
+
     case 'rf_map'
         % processing B1 map from rf_map data
-        P_trans  = calc_rf_map(jobsubj, b1map_params);
-        
+        P = b1map_params.b1input(2,:); % scaled FA map from rf_map sequence
+
+        % the formula (abs(Vol1)-2048)*180/2048 would result in an absolute FA map
+        alphanom = get_metadata_val(P,'FlipAngle');
+        scaling = 180*100/(alphanom*2048); % *100/alpha to get p.u.
+        offset = -2048;
+
+        descrip = 'SIEMENS rf_map protocol';
+
+        P_trans  = calc_scaled_b1map(jobsubj, b1map_params, offset, scaling, descrip);
+
     case 'pre_processed_B1'
-        if b1map_params.scafac ~= 1
-            % rescale if scaling factor other than 1 is provided
-            rescaled_fnam = fullfile(jobsubj.path.b1path, spm_file(spm_file(b1map_params.b1input(2,:),'suffix','_rescaled'),'filename'));
-            calcflags.descrip = sprintf('Pre-processed B1 map rescaled with factor %f', b1map_params.scafac);
-            outcalc = spm_imcalc(b1map_params.b1input(2,:),rescaled_fnam,sprintf('%f*i1',b1map_params.scafac),calcflags);
-            % set and write metadata
-            json = hmri_get_defaults('json');
-            input_files = b1map_params.b1input(2,:);
-            Output_hdr = init_b1_output_metadata(input_files, b1map_params);
-            Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (Rescaling)'];
-            Output_hdr.history.output.imtype = sprintf('Pre-processed B1 map rescaled with factor %f', b1map_params.scafac);
-            set_metadata(rescaled_fnam,Output_hdr,json);
-            % replace original B1 map by the rescaled one
-            b1map_params.b1input = char(b1map_params.b1input(1,:), rescaled_fnam);
-        end
-        P_trans  = b1map_params.b1input(1:2,:);
-        
-    otherwise 
+        P_trans  = calc_scaled_b1map(jobsubj, b1map_params, 0, b1map_params.scafac, sprintf('Pre-processed B1 map rescaled with factor %f', b1map_params.scafac));
+
+    otherwise
         hmri_log(sprintf('WARNING: unknown B1 type, no B1 map calculation performed.'),b1map_params.defflags);
-       
+
 end
 
 % copy P_trans output to Results/Supplementary directory (nii & json!) and
 % make P_trans point to the copied files (so coregistration is applied to
 % them).
 %
-% NOTES: 
+% NOTES:
 %   - if "cleanup" set to true, the B1mapCalc directory is deleted when the
-%   Map Calculation completes...  
+%   Map Calculation completes...
 %   - just in case no json files have been saved with the output, the
 %   copyfile is called in "try" mode...
 %   - must strip the ',1' (at the end of the file extension '.nii,1')
-%   otherwise copyfile does not find the files!! 
+%   otherwise copyfile does not find the files!!
 
 if ~isempty(P_trans)
     P_trans = spm_file(P_trans,'number','');
@@ -101,7 +107,7 @@ if ~isempty(P_trans)
     P_trans = char(P_trans_copy{1},P_trans_copy{2});
 end
 
-hmri_log(sprintf('\t============ CREATE B1 MAP: completed (%s) ============', datestr(now)),b1map_params.nopuflags);
+hmri_log(sprintf('\t============ CREATE B1 MAP: completed (%s) ============', datetime('now')),b1map_params.nopuflags);
 
 end
 
@@ -121,50 +127,63 @@ b1map_params.outpath = outpath;
 % magnitude images (first series) are used. Phase images (second series)
 % are not used. In each series, first image = TR2 (long TR) and second
 % image = TR1 (short TR).
-fileTR1 = b1map_params.b1input(2,:);
-fileTR2 = b1map_params.b1input(1,:);
+fileTR1 = b1map_params.b1input(1,:);
+fileTR2 = b1map_params.b1input(2,:);
 V1 = spm_vol(fileTR1);
 V2 = spm_vol(fileTR2);
 Y1 = spm_read_vols(V1);
 Y2 = spm_read_vols(V2);
 
+sname = spm_file(V1.fname,'basename');
+
+% copy and rename anatomical reference for uniformity between protocols
+B1ref = fullfile(outpath, [sname '_B1ref.nii']);
+copyfile(char(V1.fname),B1ref);
+try copyfile([spm_str_manip(char(V1.fname),'r') '.json'],[spm_str_manip(B1ref,'r') '.json']); end %#ok<*TRYNC>
+
 TR1 = 1; % only the ratio [TR2/TR1=n] matters
 TR2 = b1map_params.b1acq.TR2TR1ratio;
-alphanom = b1map_params.b1acq.alphanom;
+alphanom = b1map_params.b1acq.alphanom; % degrees
 
-% Mask = squeeze(Vol1);
-% threshold = (prctile(Mask(:),98)-prctile(Mask(:),2))*0.1+prctile(Mask(:),2);
-% Mask = (Mask>threshold);
+% compute B1 map
+FAfun=@(r,n) acosd((r*n-1)./(n-r)); % Eq. (6) in Yarnykh, MRM (2007)
+r=Y2./Y1;
+n=b1map_params.b1acq.TR2TR1ratio;
+FAmap = FAfun(r,n); % flip angle map in degrees
 
-B1map = acos((Y2./Y1*TR2/TR1-1)./(TR2/TR1*ones(size(Y1))-Y2./Y1))*180/pi;
-B1map_norm = abs(B1map)*100/alphanom;
+% print warning if images might have been input in the wrong order
+% This is determined by comparing the number of complex values in the B1
+% map to the number obtained with the images in reverse order.
+if nnz(imag(FAmap))>nnz(imag(FAfun(1./r,n)))
+    warn_message = sprintf(...
+        ['unusually many complex values detected in the AFI \n'...
+        'B1 map. Please perform a visual check of the output B1 map and \n'...
+        'carefully check the order of the input AFI images.']);
+
+    % avoid printing both matlab warning and log message to command window
+    local_defflags = b1map_params.defflags;
+    local_defflags.ComWin = 0;    
+    hmri_log(['WARNING: ',warn_message],local_defflags);
+
+    warning('hmri:afiTooManyImag',warn_message) %#ok<SPWRN> 
+end
+
+% normalise B1 map
+% Take the real part because the imaginary component is erroneous and
+% should only appear in background voxels. Too many would be a sign of
+% incorrect file order.
+B1map_norm = real(FAmap)*100/alphanom;
+
+% masking; mask is written out to folder of B1ref
+mask = mask_for_B1(spm_vol(B1ref),b1map_params.b1mask);
 
 % smoothed map
-smB1map_norm = zeros(size(B1map_norm));
-pxs = sqrt(sum(V1.mat(1:3,1:3).^2)); % Voxel resolution
-smth = 8./pxs;
-spm_smooth(B1map_norm,smB1map_norm,smth);
-
-% masking
-% B1map = B1map.*Mask;
-% B1map_norm = B1map_norm.*Mask;
-% smB1map_norm = smB1map_norm.*Mask;
-
-sname = spm_file(V1.fname,'basename');
+smB1map_norm = smoothB1(V1,B1map_norm,b1map_params.b1proc.B1FWHM,mask);
 
 % save output images
 VB1 = V1;
-% VB1.pinfo = [max(B1map(:))/16384;0;0];
-% VB1.fname = fullfile(outpath, [sname '_B1map.nii']);
-% spm_write_vol(VB1,B1map);
-
-VB1.pinfo = [max(B1map_norm(:))/16384;0;0];
-VB1.descrip = 'B1+ map - normalised (p.u.) - AFI protocol';
-VB1.fname = fullfile(outpath, [sname '_unsmoothed_B1map.nii']);
-spm_write_vol(VB1,B1map_norm);
-
-VB1.pinfo = [max(smB1map_norm(:))/16384;0;0];
-VB1.descrip = 'B1+ map - smoothed and normalised (p.u.) - AFI protocol';
+VB1.pinfo(1) = max(smB1map_norm(:))/spm_type(VB1.dt(1),'maxval');
+VB1.descrip = ['B1+ map - smoothed ( ' sprintf('%d ',b1map_params.b1proc.B1FWHM) 'mm ) and normalised (p.u.) - AFI protocol'];
 VB1.fname = fullfile(outpath, [sname '_B1map.nii']);
 spm_write_vol(VB1,smB1map_norm);
 
@@ -175,16 +194,70 @@ Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (AF
 Output_hdr.history.output.imtype = 'B1+ map (AFI protocol)';
 set_metadata(VB1.fname,Output_hdr,json);
 
-% Rename anatomical reference for uniformity between protocols
-B1ref = fullfile(outpath, [sname '_B1ref.nii']);
-copyfile(char(fileTR1),B1ref);
-try copyfile([spm_str_manip(char(fileTR1),'r') '.json'],[spm_str_manip(B1ref,'r') '.json']); end %#ok<*TRYNC>
-
 % requires anatomic image + map
 P_trans  = char(B1ref,char(VB1.fname));
 
-% VB1.fname = fullfile(outpath, [sname '_B1map_mask.nii']);
-% spm_write_vol(VB1,Mask);
+end
+
+%% =======================================================================%
+% B1 map calculation - DAM protocol % TL copied and adapted from AFI_b1map
+%=========================================================================%
+function P_trans = calc_DAM_b1map(jobsubj, b1map_params)
+
+% default format specifications for the output metadata
+json = hmri_get_defaults('json');
+
+% define output dir
+outpath = jobsubj.path.b1path;
+b1map_params.outpath = outpath;
+
+% first image = 2alpha (2*alpha) and second image = alpha.
+file_alpha = b1map_params.b1input(2,:);
+file_2alpha = b1map_params.b1input(1,:);
+V1 = spm_vol(file_alpha);
+V2 = spm_vol(file_2alpha);
+Y1 = spm_read_vols(V1);
+Y2 = spm_read_vols(V2);
+
+sname = spm_file(V1.fname,'basename');
+
+% copy and rename anatomical reference for uniformity between protocols
+B1ref = fullfile(outpath, [sname '_B1ref.nii']);
+copyfile(char(V1.fname),B1ref);
+try copyfile([spm_str_manip(char(V1.fname),'r') '.json'],[spm_str_manip(B1ref,'r') '.json']); end %#ok<*TRYNC>
+
+alphanom = b1map_params.b1acq.alphanom;
+
+% compute B1 map
+% Note: imaginary component is erroneous and should only appear in
+% background voxels. Too many would be a sign of incorrect file order.
+B1map = acosd(Y2./(2*Y1))/alphanom;
+
+% normalise B1 map
+B1map_norm = real(B1map)*100;
+
+% masking; mask is written out to folder of B1ref
+mask = mask_for_B1(spm_vol(B1ref),b1map_params.b1mask);
+
+% smoothed map
+smB1map_norm = smoothB1(V1,B1map_norm,b1map_params.b1proc.B1FWHM,mask);
+
+% save output images
+VB1 = V1;
+VB1.pinfo(1) = max(smB1map_norm(:))/spm_type(VB1.dt(1),'maxval');
+VB1.descrip = ['B1+ map - smoothed ( ' sprintf('%d ',b1map_params.b1proc.B1FWHM) 'mm ) and normalised (p.u.) - DAM protocol'];
+VB1.fname = fullfile(outpath, [sname '_B1map.nii']);
+spm_write_vol(VB1,smB1map_norm);
+
+% set and write metadata
+input_files = b1map_params.b1input;
+Output_hdr = init_b1_output_metadata(input_files, b1map_params);
+Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (DAM protocol)'];
+Output_hdr.history.output.imtype = 'B1+ map (DAM protocol)';
+set_metadata(VB1.fname,Output_hdr,json);
+
+% requires anatomic image + map
+P_trans  = char(B1ref,char(VB1.fname));
 
 end
 
@@ -199,7 +272,7 @@ function P_trans = calc_SESTE_b1map(jobsubj, b1map_params)
 % for B0 map calculation.
 % This macro calls the functions hmri_create_B1Map_unwarp and
 % hmri_create_B1Map_process for correction of image distortions, padding
-% and smoothing of the images. 
+% and smoothing of the images.
 % Output:
 %     - distorted B1 (B1map_*) and error (SDmap_*) maps
 %     - undistorted B1 (uB1map_*) and error (uSDmap_*) maps
@@ -211,53 +284,44 @@ function P_trans = calc_SESTE_b1map(jobsubj, b1map_params)
 % The sum of square image of all SE images is created (SumOfSq) and
 % undistorted (uSumOfSq) for coregistration of the B1 map to an anatomical
 % dataset.
-% 
+%
 % For coherence among B1 protocols, the fully processed B1 map (smuB1map_*)
 % is renamed *_B1map.nii, while the undistorted SoS image (uSumOfSq) is
 % renamed *_B1ref for anatomical reference.
 
 json = hmri_get_defaults('json');
 
-P    = b1map_params.b1input; % B1 data - 11 pairs
-Q    = b1map_params.b0input; % B0 data - 3 volumes
+b0input = b1map_params.b0input; % B0 data - 3 volumes
 
-V = spm_vol(P);
-n = numel(V);
-
-assert(rem(n,2)==0, ...
-   ['B1 mapping image volumes must be a set of SE, STE pairs ' ...
-   'thus the number of input volumes (currently %d) must be even.'], n);
-
-assert(n == 2 * numel(b1map_params.b1acq.beta), ...
-   ['Number of B1 mapping image pairs (%d) does not match ' ...
-    'the number of nominal flip angles (%d)!'], ...
-    n/2, numel(b1map_params.b1acq.beta));
-
-% splitting images into SE and STE volumes
-% TODO: check that correct data selected (compare echo times?)
-V_SE = V(1:2:end);
-V_STE = V(2:2:end);
+V_SE = spm_vol(b1map_params.SEinput);
+V_STE = spm_vol(b1map_params.STEinput);
 
 % calc_SESTE_b1map expects fa in decreasing order
 [b1map_params.b1acq.beta, fa_order] = sort(b1map_params.b1acq.beta, 'descend');
 
-% rearranging volumes in decreasing fa
-V_SE = V_SE(fa_order);
+% rearrange volumes in decreasing fa
+V_SE  = V_SE(fa_order);
 V_STE = V_STE(fa_order);
 
-% TODO: Keeping SE and STE separated might be easier to read
-% but requires a lot of code changes below, so merging into
-% original list with corrected order
-V(1:2:end) = V_SE;
-V(2:2:end) = V_STE;
+n = 2*length(V_SE);
 
-Y_tmptmp = zeros([V(1).dim(1:2) n]);
-Y_ab = zeros(V(1).dim(1:3));
-Y_cd = zeros(V(1).dim(1:3));
-Index_Matrix = zeros([V(1).dim(1:3) b1map_params.b1proc.Nonominalvalues]);
-real_Y_tmp = zeros([V(1).dim(1:2) 2*b1map_params.b1proc.Nonominalvalues]);
+% Because we use magnitude images and trigonometric functions are periodic,
+% there is ambiguity in the calculated angles. The number of ambiguous
+% angles to try is determined by how high the actual flip angle is; if less
+% than 90°, only one angle would be needed, less than 180°, 2, and greater
+% than 180°, 3. Note that the number of permutations to test will scale
+% combinatorically with the number of ambiguous angles to test!
+nAmbiguousAngles=b1map_params.b1proc.nAmbiguousAngles;
+if nAmbiguousAngles<2 % Use at least as many as Lutti, et al. (MRM, 2010)
+    nAmbiguousAngles=2;
+end
 
-Ssq_matrix = sqrt(sum(spm_read_vols(V(1:2:end)).^2,4));
+Y_tmptmp = zeros([V_SE(1).dim(1:2) n/2 nAmbiguousAngles]);
+Y_mn_out = zeros(V_SE(1).dim(1:3));
+Y_sd_out = zeros(V_SE(1).dim(1:3));
+real_Y_tmp = zeros([V_SE(1).dim(1:2) b1map_params.b1proc.Nonominalvalues nAmbiguousAngles]);
+
+Ssq_matrix = sqrt(sum(spm_read_vols(V_SE).^2,4));
 
 %-Define output directory
 %-----------------------------------------------------------------------
@@ -266,48 +330,67 @@ b1map_params.outpath = outpath;
 
 %-Start progress plot
 %-----------------------------------------------------------------------
-spm_progress_bar('Init',V(1).dim(3),'B1 map fit','planes completed');
+spm_progress_bar('Init',V_SE(1).dim(3),'B1 map fit','planes completed');
 
 %-Loop over planes computing result Y
 %-----------------------------------------------------------------------
-clear Temp_mat;
 corr_fact = exp(b1map_params.b1acq.TM/b1map_params.b1proc.T1);
-for p = 1:V(1).dim(3) %loop over the partition dimension of the data set
-    B = spm_matrix([0 0 -p 0 0 0 1 1 1]);
+interp = 0;  % nearest neighbor interpolation
+for p = 1:V_SE(1).dim(3) %loop over the partition dimension of the data set
+    SE_intensities = zeros([V_SE(1).dim(1:2),n/2]);
     for i = 1:n/2
-        M = inv(B*inv(V(1).mat)*V(1).mat); %#ok<*MINV>
-        Y_tmptmp(:,:,((i-1)*2+1))  = real( ...
-            acos(corr_fact*spm_slice_vol(V((i-1)*2+2),M,V(1).dim(1:2),0) ./ ...
-            (spm_slice_vol(V((i-1)*2+1),M,V(1).dim(1:2),0)+b1map_params.b1proc.eps))/pi*180/b1map_params.b1acq.beta(i) ...
-            ); % nearest neighbor interpolation
-        Y_tmptmp(:,:,((i-1)*2+2))  = 180/b1map_params.b1acq.beta(i) - Y_tmptmp(:,:,((i-1)*2+1));
-        Temp_mat(:,:,i) = spm_slice_vol(V((i-1)*2+1),M,V(1).dim(1:2),0); %#ok<*AGROW>
+        % SE image intensities to determine which estimates to trust
+        SE_intensities(:,:,i) = hmri_read_vols(V_SE(i),V_SE(1),p,interp);
+
+        % B1 estimates
+        Y_tmptmp(:,:,i,1) = real(acosd(corr_fact * ...
+            hmri_read_vols(V_STE(i),V_SE(1),p,interp) ./ ...
+            (SE_intensities(:,:,i)+b1map_params.b1proc.eps)) / ...
+            b1map_params.b1acq.beta(i));
+
+        % Alternative B1 estimates due to pi/2 ambiguity of acos for magnitude images
+        Y_tmptmp(:,:,i,2) = 180/b1map_params.b1acq.beta(i) - Y_tmptmp(:,:,i,1);
+
+        % We can keep adding pi to the angles, reflecting ambiguity in acos for larger actual flip angles
+        for j=3:nAmbiguousAngles
+            Y_tmptmp(:,:,i,j) = 180/b1map_params.b1acq.beta(i) + Y_tmptmp(:,:,i,j-2);
+        end
+
     end
-    
-    [~,indexes] = sort(Temp_mat,3);
-    for x_nr = 1:V(1).dim(1)
-        for y_nr = 1:V(1).dim(2)
-            for k=1:b1map_params.b1proc.Nonominalvalues
-                real_Y_tmp(x_nr,y_nr,2*k-1) = Y_tmptmp(x_nr,y_nr,2*indexes(x_nr,y_nr,n/2-k+1)-1);
-                real_Y_tmp(x_nr,y_nr,2*k)   = Y_tmptmp(x_nr,y_nr,2*indexes(x_nr,y_nr,n/2-k+1));
-                Index_Matrix(x_nr,y_nr,p,k) = indexes(x_nr,y_nr,indexes(x_nr,y_nr,n/2-k+1));
-            end
+
+    % We trust values with highest SE intensity
+    [~,indexes] = sort(SE_intensities,3,'descend');
+    for x_nr = 1:V_SE(1).dim(1)
+        for y_nr = 1:V_SE(1).dim(2)
+            real_Y_tmp(x_nr,y_nr,:,:) = Y_tmptmp(x_nr,y_nr,indexes(x_nr,y_nr,1:b1map_params.b1proc.Nonominalvalues),:);
         end
     end
-    
-    Y_tmp = sort(real(real_Y_tmp), 3); % take the real value due to noise problems
-    Y_sd  = zeros([V(1).dim(1:2) (b1map_params.b1proc.Nonominalvalues+1)]);
-    Y_mn  = zeros([V(1).dim(1:2) (b1map_params.b1proc.Nonominalvalues+1)]);
-    for i = 1:(b1map_params.b1proc.Nonominalvalues+1)
-        Y_sd(:,:,i) = std(Y_tmp(:,:,i:(i + b1map_params.b1proc.Nonominalvalues-1)), [], 3);
-        Y_mn(:,:,i) = mean(Y_tmp(:,:,i:(i + b1map_params.b1proc.Nonominalvalues-1)), 3);
+
+    % Test all permutations of the different ambiguous-angle B1 estimates
+    % to find the combination with the lowest standard deviation
+    % The algorithm below treats the combinations as (nAmbiguousAngles)-ary
+    % numbers from 00...0 to NN...N to index all possible combinations
+    Nperms=nAmbiguousAngles^b1map_params.b1proc.Nonominalvalues;
+    Y_sd  = zeros([V_SE(1).dim(1:2) Nperms]);
+    Y_mn  = zeros([V_SE(1).dim(1:2) Nperms]);
+    for i = 1:Nperms
+        perm=(dec2base(i-1, nAmbiguousAngles, b1map_params.b1proc.Nonominalvalues)-'0') + 1; % difference between char 'N' and char '0' is integer N
+        idxs=sub2ind([b1map_params.b1proc.Nonominalvalues,nAmbiguousAngles],1:b1map_params.b1proc.Nonominalvalues,perm);
+        Y_sd(:,:,i) = std(real(real_Y_tmp(:,:,idxs)),[],3); % real part chosen to mitigate noise problems
+        Y_mn(:,:,i) = mean(real(real_Y_tmp(:,:,idxs)),3);
     end
-    
+
     [~,min_index] = min(Y_sd,[],3); % !! min_index is a 2D array. Size given by resolution along read and phase directions
-    for x_nr = 1:V(1).dim(1)
-        for y_nr = 1:V(1).dim(2)
-            Y_ab(x_nr,y_nr,p) = Y_mn(x_nr,y_nr, min_index(x_nr,y_nr)); % Y_ab is the relative flip angle value averaged over the n flip angles (determined by minizing the SD i.e. keeping the most uniform relative flip angle values)
-            Y_cd(x_nr,y_nr,p) = Y_sd(x_nr,y_nr, min_index(x_nr,y_nr)); % Y_cd is the corresponding standard deviation between the relative flip angle values
+    for x_nr = 1:V_SE(1).dim(1)
+        for y_nr = 1:V_SE(1).dim(2)
+            % Y_mn_out is the relative flip angle value averaged over the
+            % Nonominalvalues flip angles (determined by minimising the SD,
+            % i.e. keeping the most uniform relative flip angle values)
+            Y_mn_out(x_nr,y_nr,p) = Y_mn(x_nr,y_nr, min_index(x_nr,y_nr));
+
+            % Y_sd_out is the corresponding standard deviation between the
+            % relative flip angle values
+            Y_sd_out(x_nr,y_nr,p) = Y_sd(x_nr,y_nr, min_index(x_nr,y_nr));
         end
     end
     spm_progress_bar('Set',p);
@@ -319,28 +402,28 @@ end
 input_files = b1map_params.b1input;
 Output_hdr = init_b1_output_metadata(input_files, b1map_params);
 Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (EPI SE/STE protocol)'];
- 
+
 % save B1 map (still distorted and not smoothed)
 Output_hdr.history.output.imtype = 'SE/STE B1 mapping - Distorted B1+ map';
 Output_hdr.history.output.units = 'p.u.';
-V_save = struct('fname',V(1).fname,'dim',V(1).dim,'mat',V(1).mat,'dt',V(1).dt,'descrip','B1 map [%]');
+V_save = struct('fname',V_SE(1).fname,'dim',V_SE(1).dim,'mat',V_SE(1).mat,'dt',V_SE(1).dt,'descrip','B1 map [%]');
 [~,outname,e] = fileparts(V_save.fname);
 V_save.fname = fullfile(outpath,['B1map_' outname e]);
-V_save = spm_write_vol(V_save,Y_ab*100);
+V_save = spm_write_vol(V_save,Y_mn_out*100);
 set_metadata(V_save.fname,Output_hdr,json);
 
 % save SD map (still distorted and not smoothed)
 Output_hdr.history.output.imtype = 'SE/STE B1 mapping - Distorted SD (error) map';
 Output_hdr.history.output.units = 'p.u.';
-W_save = struct('fname',V(1).fname,'dim',V(1).dim,'mat',V(1).mat,'dt',V(1).dt,'descrip','SD [%]');
+W_save = struct('fname',V_SE(1).fname,'dim',V_SE(1).dim,'mat',V_SE(1).mat,'dt',V_SE(1).dt,'descrip','SD [%]');
 W_save.fname = fullfile(outpath,['SDmap_' outname e]);
-W_save = spm_write_vol(W_save,Y_cd*100);
+W_save = spm_write_vol(W_save,Y_sd_out*100);
 set_metadata(W_save.fname,Output_hdr,json);
 
 % save SD map (still distorted and not smoothed)
 Output_hdr.history.output.imtype = 'SE/STE B1 mapping - SSQ image';
 Output_hdr.history.output.units = 'a.u.';
-X_save = struct('fname',V(1).fname,'dim',V(1).dim,'mat',V(1).mat,'dt',V(1).dt,'descrip','SE SSQ matrix');
+X_save = struct('fname',V_SE(1).fname,'dim',V_SE(1).dim,'mat',V_SE(1).mat,'dt',V_SE(1).dt,'descrip','SE SSQ matrix');
 X_save.fname = fullfile(outpath,['SumOfSq' outname e]);
 X_save = spm_write_vol(X_save,Ssq_matrix); %#ok<*NASGU>
 set_metadata(X_save.fname,Output_hdr,json);
@@ -350,19 +433,19 @@ set_metadata(X_save.fname,Output_hdr,json);
 %-----------------------------------------------------------------------
 % since B0 data will be coregistered and resliced with the B1 data, we copy
 % them into the calcpath directory to avoid altering the the raw data:
-Qtmp = cell(size(Q,1),1);
-for i=1:size(Q,1)
-    Qtmp{i} = fullfile(outpath, spm_file(Q(i,:), 'filename'));
-    copyfile(deblank(Q(i,:)), Qtmp{i});
-    try copyfile([spm_str_manip(deblank(Q(i,:)),'r') '.json'],[spm_str_manip(Qtmp{i},'r') '.json']); end %#ok<*TRYNC>
+Qtmp = cell(size(b0input,1),1);
+for i=1:size(b0input,1)
+    Qtmp{i} = fullfile(outpath, spm_file(b0input(i,:), 'filename'));
+    copyfile(deblank(b0input(i,:)), Qtmp{i});
+    try copyfile([spm_str_manip(deblank(b0input(i,:)),'r') '.json'],[spm_str_manip(Qtmp{i},'r') '.json']); end %#ok<*TRYNC>
 end
-Q = char(Qtmp);
+b0input = char(Qtmp);
 
-% magnitude image 
+% magnitude image
 % NOTE: must strip the ',1' (at the end of the file extension '.nii,1')!!
-magfnam = spm_file(Q(1,:),'number','');
+magfnam = spm_file(b0input(1,:),'number','');
 % phase image
-phasefnam = spm_file(Q(3,:),'number','');
+phasefnam = spm_file(b0input(3,:),'number','');
 % both fieldmap images
 fmfnam = char(phasefnam,magfnam);
 % image to be corrected ("anatomical" reference = SSQ image)
@@ -388,27 +471,27 @@ input_files = char(b1map_params.b1input,b1map_params.b0input);
 Output_hdr = init_b1_output_metadata(input_files, b1map_params);
 Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (EPI SE/STE protocol)'];
 
-% set metadata for unwarped B1 image 
+% set metadata for unwarped B1 image
 Output_hdr.history.output.imtype = 'SE/STE B1 mapping - Unwarped B1 map';
 Output_hdr.history.output.units = 'p.u.';
 set_metadata(ub1_img{1},Output_hdr,json);
 
-% set metadata for unwarped SD map 
+% set metadata for unwarped SD map
 Output_hdr.history.output.imtype = 'SE/STE B1 mapping - Unwarped SD (error) map';
 Output_hdr.history.output.units = 'p.u.';
 set_metadata(ustd_img{1},Output_hdr,json);
 
-% set metadata for unwarped SSQ map 
+% set metadata for unwarped SSQ map
 Output_hdr.history.output.imtype = 'SE/STE B1 mapping - Unwarped SSQ image for anatomical reference';
 Output_hdr.history.output.units = 'a.u.';
 set_metadata(uanat_img{1},Output_hdr,json);
 
-% set metadata for phase-unwrapped regularised field map (Hz) (fpm_* file) 
+% set metadata for phase-unwrapped regularised field map (Hz) (fpm_* file)
 Output_hdr.history.output.imtype = 'SE/STE B1 mapping - Phase-unwrapped regularised field map';
 Output_hdr.history.output.units = 'Hz';
 set_metadata(fmap_img{1}.fname,Output_hdr,json);
 
-% set metadata for Voxel Displacement Map (vdm5_* file) 
+% set metadata for Voxel Displacement Map (vdm5_* file)
 Output_hdr.history.output.imtype = 'SE/STE B1 mapping - Voxel displacement map';
 Output_hdr.history.output.units = 'Vx';
 set_metadata(fmap_img{2}.fname,Output_hdr,json);
@@ -444,7 +527,7 @@ end
 % set correct output for the current subfunction (unwrapped "anatomical"
 % image (SSQ) for coregistration and final B1 map). For coherence among B1
 % protocol, rename these files *_B1ref (for anatomical reference) and
-% *_B1map (for B1+ bias map in p.u.):  
+% *_B1map (for B1+ bias map in p.u.):
 B1map = fullfile(outpath,[outname '_B1map.nii']);
 copyfile(allub1_img{2}.fname, B1map);
 try copyfile([spm_str_manip(allub1_img{2}.fname,'r') '.json'],[spm_str_manip(B1map,'r') '.json']); end
@@ -456,118 +539,58 @@ P_trans  = char(B1ref, B1map);
 end
 
 %% =======================================================================%
-% B1 map calculation - SIEMENS tfl_b1map protocol
-% Written by Tobias Leutritz (based on calc_AFI_b1map by TL)
+% B1 map scaling
+% Written by Tobias Leutritz; adapted by Luke Edwards
 %=========================================================================%
-function P_trans = calc_tfl_b1map(jobsubj, b1map_params)
+function P_trans = calc_scaled_b1map(jobsubj, b1map_params, offset, scaling, descrip)
 
 json = hmri_get_defaults('json');
 
-P = b1map_params.b1input(2,:); % scaled FA map from tfl_b1map sequence
-Q = b1map_params.b1input(1,:); % anatomical image from tfl_b1map sequence
+P = b1map_params.b1input(2,:); % scaled FA map
+Q = b1map_params.b1input(1,:); % anatomical image
 
 % read header information and volumes
 V1 = spm_vol(P); % image volume information
 V2 = spm_vol(Q);
+input_files = cat(1,{V2.fname},{V1.fname}); % for metadata
 Vol1 = spm_read_vols(V1);
-Vol2 = spm_read_vols(V2);
 
-alphanom = get_metadata_val(P,'FlipAngle'); % nominal flip angle of tfl_b1map
-
-% generating the map
-B1map_norm = abs(Vol1)*10/alphanom;
-
-% smoothed map
-smB1map_norm = zeros(size(B1map_norm));
-pxs = sqrt(sum(V1.mat(1:3,1:3).^2)); % Voxel resolution
-smth = 8./pxs;
-spm_smooth(B1map_norm,smB1map_norm,smth);
-
-% Save everything in OUTPUT dir
-%-----------------------------------------------------------------------
 % determine output directory path
 outpath = jobsubj.path.b1path;
 b1map_params.outpath = outpath;
 
-sname = spm_file(V1.fname,'basename');
-
-VB1 = V1;
-VB1.pinfo = [max(smB1map_norm(:))/16384;0;0]; % what is this for? (TL)
-VB1.fname = fullfile(outpath, [sname '_B1map.nii']);
-VB1.descrip = 'Smoothed & normalised (p.u.) B1 bias map - TFL B1map protocol';
-spm_write_vol(VB1,smB1map_norm);
-
-% set and write metadata
-input_files = cat(1,{V2.fname},{V1.fname});
-Output_hdr = init_b1_output_metadata(input_files, b1map_params);
-Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (SIEMENS tfl_b1map protocol)'];
-
-set_metadata(VB1.fname,Output_hdr,json);
-
-% copy also anatomical image to outpath to prevent modification of original data
+% copy anatomical image to outpath to prevent modification of original data
 anat_fname = fullfile(outpath, [spm_file(V2.fname, 'basename') '_B1ref.nii']);
 copyfile(V2.fname, anat_fname);
 try copyfile([spm_str_manip(V2.fname,'r') '.json'],[spm_str_manip(anat_fname,'r') '.json']); end %#ok<*TRYNC>
-
-% requires anatomic image + map
-P_trans  = char(char(anat_fname),char(VB1.fname));
-
-end
-
-%% =======================================================================%
-% B1 map calculation - SIEMENS rf_map protocol
-% Written by Tobias Leutritz 
-%=========================================================================%
-function P_trans = calc_rf_map(jobsubj, b1map_params)
-
-json = hmri_get_defaults('json');
-
-P = b1map_params.b1input(2,:); % scaled FA map from rf_map sequence
-Q = b1map_params.b1input(1,:); % anatomical image from rf_map sequence
-
-% read header information and volumes
-V1 = spm_vol(P); % image volume information
-V2 = spm_vol(Q);
-Vol1 = spm_read_vols(V1);
-Vol2 = spm_read_vols(V2);
-alphanom = get_metadata_val(P,'FlipAngle'); % nominal flip angle of rf_map
+V2 = spm_vol(anat_fname);
 
 % generating the map
-B1map_norm = (abs(Vol1)-2048)*180*100/(alphanom*2048); % *100/alpha to get p.u.
-% the formula (abs(Vol1)-2048)*180/2048 would result in an absolute FA map
+B1map_norm = (abs(Vol1)+offset)*scaling;
+
+% masking; mask is written out to folder of the anatomical image
+% (this should be outpath due to copying the anatomical file above)
+mask = mask_for_B1(V2,b1map_params.b1mask);
 
 % smoothed map
-smB1map_norm = zeros(size(B1map_norm));
-pxs = sqrt(sum(V1.mat(1:3,1:3).^2)); % Voxel resolution
-smth = 8./pxs;
-spm_smooth(B1map_norm,smB1map_norm,smth);
+smB1map_norm = smoothB1(V1,B1map_norm,b1map_params.b1proc.B1FWHM,mask);
 
-% Save everything in OUTPUT dir
+% Save B1map in OUTPUT dir
 %-----------------------------------------------------------------------
-% determine output directory path
-outpath = jobsubj.path.b1path;
-b1map_params.outpath = outpath;
-
 sname = spm_file(V1.fname,'basename');
 
 VB1 = V1;
-VB1.pinfo = [max(smB1map_norm(:))/16384;0;0]; % what is this for? (TL)
+VB1.pinfo(1) = max(smB1map_norm(:))/spm_type(VB1.dt(1),'maxval');
 VB1.fname = fullfile(outpath, [sname '_B1map.nii']);
-VB1.descrip = 'Smoothed & normalised (p.u.) B1 bias map - TFL B1map protocol';
+VB1.descrip = ['B1+ map - smoothed ( ' sprintf('%d ',b1map_params.b1proc.B1FWHM) 'mm ) and normalised (p.u.) - ' descrip];
 spm_write_vol(VB1,smB1map_norm);
 
 % set and write metadata
-input_files = cat(1,{V2.fname},{V1.fname});
 Output_hdr = init_b1_output_metadata(input_files, b1map_params);
-Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (SIEMENS rf_map protocol)'];
+Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (' descrip ')'];
 set_metadata(VB1.fname,Output_hdr,json);
 
-% copy also anatomical image to outpath to prevent modification of original data
-anat_fname = fullfile(outpath, [spm_file(V2.fname, 'basename') '_B1ref.nii']);
-copyfile(V2.fname, anat_fname);
-try copyfile([spm_str_manip(V2.fname,'r') '.json'],[spm_str_manip(anat_fname,'r') '.json']); end %#ok<*TRYNC>
-
-% requires anatomic image + map
+% requires anatomical image + map
 P_trans  = char(char(anat_fname),char(VB1.fname));
 
 end
@@ -578,12 +601,12 @@ end
 % be applied. If so, all the required parameters for b1map calculation are
 % retrieved, including b1map and b0map acquisition parameters and
 % processing parameters, if applicable. Check whether input data are
-% coherent with the processing type selected. Missing parameters will be 
+% coherent with the processing type selected. Missing parameters will be
 % retrieved from the hmri_get_defaults.
 %=========================================================================%
 function b1map_params = get_b1map_params(jobsubj)
 
-% retrieve b1 protocol from job 
+% retrieve b1 protocol from job
 % (can be different - a variation of - the b1 type)
 f = fieldnames(jobsubj.b1_type);
 b1_protocol = f{1};
@@ -611,16 +634,16 @@ if isfield(jobsubj.b1_type.(b1_protocol),'b1parameters')
 end
 
 % load all B1 bias correction defaults parameters & add default file
-b1map_params = hmri_get_defaults(['b1map.' b1_protocol]); 
+b1map_params = hmri_get_defaults(['b1map.' b1_protocol]);
 b1map_params.defaults_file = deffnam;
 b1map_params.custom_defaults = custom_def;
 
 % flags for logging information and warnings
 b1map_params.defflags = jobsubj.log.flags; % default flags
 b1map_params.nopuflags = jobsubj.log.flags; % force no Pop-Up
-b1map_params.nopuflags.PopUp = false; 
+b1map_params.nopuflags.PopUp = false;
 
-hmri_log(sprintf('\t------------ B1 MAP CALCULATION (%s) %s ------------',b1_protocol, datestr(now)),b1map_params.nopuflags);
+hmri_log(sprintf('\t------------ B1 MAP CALCULATION (%s) %s ------------',b1_protocol, datetime('now')),b1map_params.nopuflags);
 
 % save SPM version (slight differences may appear in the results depending
 % on the SPM version!)
@@ -630,16 +653,16 @@ b1map_params.SPMver = sprintf('%s (%s)', v, r);
 % load B1 input images if any
 % (NB: if a 'b1input' field is present, it should NOT be empty)
 if isfield(jobsubj.b1_type.(b1_protocol),'b1input')
-    b1map_params.b1input = char(spm_file(jobsubj.b1_type.(b1_protocol).b1input,'number',''));        
+    b1map_params.b1input = char(spm_file(jobsubj.b1_type.(b1_protocol).b1input,'number',''));
     if isempty(b1map_params.b1input)
         hmri_log(sprintf(['WARNING: expected B1 input images missing. Switching to "no \n' ...
             '\tB1 correction" mode. If you meant to apply B1 bias correction, \n' ...
             '\tcheck your data and re-run the batch.']),b1map_params.defflags);
         b1_protocol = 'no_B1_correction';
-        b1map_params = hmri_get_defaults('b1map.no_B1_correction'); 
+        b1map_params = hmri_get_defaults('b1map.no_B1_correction');
     end
 end
-        
+
 % load B0 input images if any
 % (NB: if a 'b0input' field is present, it may be empty)
 if isfield(jobsubj.b1_type.(b1_protocol),'b0input')
@@ -647,13 +670,13 @@ if isfield(jobsubj.b1_type.(b1_protocol),'b0input')
     if isempty(b1map_params.b0input)
         % hmri_log(sprintf(['WARNING: expected B0 fieldmap not available for EPI undistortion.\n' ...
         %     '\tNo fieldmap correction will be applied.']),b1map_params.defflags);
-        % b1map_params.b0avail = false; 
+        % b1map_params.b0avail = false;
         hmri_log(sprintf(['WARNING: expected B0 fieldmap not available for EPI undistortion.\n' ...
             '\tThe current implementation does not allow you to apply EPI-based B1 bias \n' ...
             '\tcorrection without phase unwrapping. Switching to "no B1 correction" mode.\n' ...
             '\tIf you meant to apply B1 bias correction, check your data and re-run the batch.']),b1map_params.defflags);
         b1_protocol = 'no_B1_correction';
-        b1map_params = hmri_get_defaults('b1map.no_B1_correction');        
+        b1map_params = hmri_get_defaults('b1map.no_B1_correction');
     end
 end
 
@@ -664,7 +687,7 @@ switch b1_protocol
 
     case 'no_B1_correction'
         hmri_log(sprintf('No B1 map available. No B1 correction applied (semi-quantitative maps only)'),b1map_params.nopuflags);
-        
+
     case 'pre_processed_B1'
         b1map_params.scafac = jobsubj.b1_type.(b1_protocol).scafac;
         if ~isempty(b1map_params.b1input)
@@ -678,155 +701,302 @@ switch b1_protocol
     case 'i3D_EPI'
         if ~isempty(b1map_params.b1input)
             hmri_log(sprintf('SE/STE EPI protocol selected ...'),b1map_params.nopuflags);
-            b1hdr = get_metadata(b1map_params.b1input(1,:));
             
-            try
-                tmp = get_metadata_val(b1hdr{1},'B1mapNominalFAValues');
+            b1hdrFile = b1map_params.b1input(1,:);
+
+            V = spm_vol(b1map_params.b1input);
+
+            assert(rem(length(V),2)==0, ...
+                ['B1 mapping image volumes must be a set of SE, STE pairs ' ...
+                'thus the number of input volumes (currently %d) must be even.'], length(V));
+
+            % splitting images into SE and STE volumes
+            % assumes conventional hMRI toolbox order as default but checks this order
+            % when echo times are defined and b1validation.checkTEs is true
+            % Echo times for input validation
+            tmp = get_metadata_val(b1hdrFile,'EchoTime');
+            b1map_params.b1acq.EchoTimes=[];
+            if b1map_params.b1validation.checkTEs
+                if isempty(tmp)
+                    hmri_log(sprintf('WARNING: no echo times found for SE/STE input;\ninput validation based on echo time will not be performed'),b1map_params.defflags);
+                    b1map_params.b1validation.checkTEs = false;
+                else
+                    b1map_params.b1acq.EchoTimes=zeros(1,size(b1map_params.b1input,1));
+                    for n=1:size(b1map_params.b1input,1)
+                        b1map_params.b1acq.EchoTimes(n) = get_metadata_val(b1map_params.b1input(n,:),'EchoTime');
+                    end
+                end
+            end
+            EchoTimes=b1map_params.b1acq.EchoTimes;
+            if b1map_params.b1validation.checkTEs && ~isempty(EchoTimes) % check echo times defined
+                uEchoTimes=unique(EchoTimes);
+                switch length(uEchoTimes)
+                    case 2
+                        % shorter TE assumed to be SE, longer STE.
+                        % flip angle pairs are assumed to be in the order given in
+                        % b1map_params.b1acq.beta
+                        V_SE  = V(b1map_params.b1acq.EchoTimes == min(uEchoTimes));
+                        V_STE = V(b1map_params.b1acq.EchoTimes == max(uEchoTimes));
+                    case 1 % assume conventional hMRI toolbox order but warn
+                        hmri_log(sprintf(...
+                            ['WARNING: expected 2 different echo times (corresponding to\n' ...
+                            'spin echo and stimulated echo) in 3D EPI input data, but\n' ...
+                            'all data have the same echo time. Standard input order will\n' ...
+                            'be assumed, but it is recommended to check this is correct.']),...
+                            b1map_params.defflags);
+                        V_SE  = V(1:2:end);
+                        V_STE = V(2:2:end);
+                    otherwise % assume conventional hMRI toolbox order but warn
+                        hmri_log(sprintf(...
+                            ['WARNING: expected 2 different echo times (corresponding to\n' ...
+                            'spin echo and stimulated echo) in 3D EPI input data, but\n' ...
+                            'there are %i different echo times. Standard input order will\n' ...
+                            'be assumed, but it is recommended to check this is correct.'],...
+                            length(uEchoTimes)),b1map_params.defflags);
+                        V_SE  = V(1:2:end);
+                        V_STE = V(2:2:end);
+                end
+            else
+                % assume conventional hMRI toolbox order as default in absence of other
+                % information or when TE check is disabled
+                V_SE  = V(1:2:end);
+                V_STE = V(2:2:end);
+            end
+
+            assert(length(V_SE) == length(V_STE), ...
+                ['Number of spin echo volumes (%d) does not match the number of' ...
+                'stimulated echo volumes (%d)!'], length(V_SE), length(V_STE));
+
+            if b1map_params.b1validation.useBidsFlipAngleField
+                tmp = get_metadata_val(b1hdrFile,'FlipAngle');
+                FA_SE = zeros(1,length(V_SE));
+                FA_STE = FA_SE;
+                if ~isempty(tmp)&&tmp~=0
+                    for n = 1:length(V_SE)
+                        FA_SE(n)  = get_metadata_val(V_SE(n).fname, 'FlipAngle');
+                        FA_STE(n) = get_metadata_val(V_STE(n).fname, 'FlipAngle');
+                    end
+                else
+                    hmri_log('WARNING: "useBidsFlipAngleField" is true but FlipAngle is empty or zero', ...
+                        b1map_params.defflags);
+                end
+                assert(all(sort(FA_SE)==sort(FA_STE)),'the set of SE and STE flip angles must be identical!')
+
+                if any([FA_SE(:),FA_STE(:)]==0)
+                    hmri_log('WARNING: zero flip angles detected in SE/STE metadata. This is probably not correct.', ...
+                        b1map_params.defflags);
+                end
+
+                % make sure that SE and STE volumes are in the correct
+                % order. Note that calc_SESTE_b1map expects fa in
+                % decreasing order
+                [b1map_params.b1acq.beta, fa_order] = sort(FA_SE, 'descend');
+                V_SE  = V_SE(fa_order);
+                [~, fa_order] = sort(FA_STE, 'descend');
+                V_STE = V_STE(fa_order);
+            else
+                tmp = get_metadata_val(b1hdrFile,'B1mapNominalFAValues');
                 if isempty(tmp)
                     hmri_log(sprintf('WARNING: using defaults value for nominal SE/STE flip angle values \n(%s) instead of metadata', ...
                         sprintf('%d ',b1map_params.b1acq.beta)),b1map_params.defflags);
-                else b1map_params.b1acq.beta = tmp; 
+                else
+                    b1map_params.b1acq.beta = tmp;
                 end
-                
-                tmp = get_metadata_val(b1hdr{1},'B1mapMixingTime');
-                if isempty(tmp)
-                    hmri_log(sprintf('WARNING: using defaults value for mixing time \n(%d ms) instead of metadata', ...
+            end
+
+            assert(length(V_SE) == numel(b1map_params.b1acq.beta), ...
+                ['Number of B1 mapping image pairs (%d) does not match ' ...
+                'the number of nominal flip angles (%d)!'], ...
+                length(V_SE), numel(b1map_params.b1acq.beta));
+
+            b1map_params.SEinput = char({V_SE.fname}');
+            b1map_params.STEinput = char({V_STE.fname}');
+
+            tmp = get_metadata_val(b1hdrFile,'B1mapMixingTime');
+            if isempty(tmp)
+                hmri_log(sprintf('WARNING: using defaults value for mixing time \n(%d ms) instead of metadata', ...
                     b1map_params.b1acq.TM),b1map_params.defflags);
-                else b1map_params.b1acq.TM = tmp; 
+            else
+                b1map_params.b1acq.TM = tmp;
+            end
+
+            tmp = get_metadata_val(b1hdrFile,'epiReadoutDuration'); % must take into account PAT but not PF acceleration
+            if isempty(tmp)
+                hmri_log(sprintf('WARNING: using defaults value for EPI readout duration\n(%d ms) instead of metadata', ...
+                    b1map_params.b1acq.tert),b1map_params.defflags);
+            else
+                b1map_params.b1acq.tert = tmp;
+            end
+
+            tmp = get_metadata_val(b1hdrFile,'PhaseEncodingDirectionSign');
+            if isempty(tmp)
+                hmri_log(sprintf('WARNING: using defaults value for PE direction\n(%d) instead of metadata', ...
+                    b1map_params.b1acq.blipDIR),b1map_params.defflags);
+            else
+                b1map_params.b1acq.blipDIR = tmp;
+            end
+
+            % consistency check for T1 value and field strength:
+            tmp = get_metadata_val(b1hdrFile,'MagneticFieldStrength');
+            supportedB0 = false;
+            matchT1fieldstrength = false;
+            if ~isempty(tmp)
+                switch round(tmp)
+                    case 3
+                        supportedB0 = true;
+                        expectedT1 = 1192;
+                    case 7
+                        supportedB0 = true;
+                        expectedT1 = 1633;
+                    otherwise
+                        supportedB0 = false;
+                        expectedT1 = NaN;
                 end
-                
-                tmp = get_metadata_val(b1hdr{1},'epiReadoutDuration'); % must take into account PAT but not PF acceleration
+                if b1map_params.b1proc.T1 == expectedT1
+                    matchT1fieldstrength = true;
+                end
+                if ~supportedB0
+                    hmri_log(sprintf(['WARNING: field strength (B0 = %.0fT) not supported. The reference T1' ...
+                        '\nvalue for B1 map calculation for that field strength is not currently ' ...
+                        '\nimplemented in the hMRI-toolbox. Please make sure the assumed ' ...
+                        '\nvalue (T1 = %.0f ms) is correct, otherwise set it via a customised ' ...
+                        '\nB1 default file (config/local/hmri_b1_local_defaults.m).' ...
+                        '\nIf the value is already properly set, just ignore this message.'], ...
+                        tmp, b1map_params.b1proc.T1),b1map_params.defflags);
+                else
+                    if ~matchT1fieldstrength && custom_def
+                        hmri_log(sprintf(['WARNING: the assumed T1 value for B1 map calculation does not ' ...
+                            '\nmatch the expected value for the used field strength: ' ...
+                            '\n    B0 = %.0fT, T1 = %d/%d (expected/actual) ms.' ...
+                            '\n\nPlease check T1 value is properly set in your local settings ' ...
+                            '\n(see hmri_def.b1map.i3D_EPI.b1proc.T1 in your customised ' ...
+                            '\n%s config file).' ...
+                            '\n\nRecommended values are: ' ...
+                            '\n    - @3T: T1 = 1192 ms' ...
+                            '\n    - @7T: T1 = 1633 ms' ...
+                            '\n\nIf the value was set differently on purpose, just ignore this message.'], ...
+                            tmp, expectedT1, b1map_params.b1proc.T1, char(spm_file(deffnam,'filename'))), b1map_params.defflags);
+                    elseif ~matchT1fieldstrength && ~custom_def
+                        hmri_log(sprintf(['WARNING: the assumed T1 value for B1 map calculation ' ...
+                            '\nhas been set to match the used field strength: ' ...
+                            '\n    B0 = %.0fT, T1 = %d ms.' ...
+                            '\n\nPlease consider properly setting the T1 value uing a local ' ...
+                            '\ndefaults file (see config/local/hmri_b1_local_defaults.m ' ...
+                            '\nand parameter hmri_def.b1map.i3D_EPI.b1proc.T1 therein).' ...
+                            '\n\nRecommended values are: ' ...
+                            '\n    - @3T: T1 = 1192 ms' ...
+                            '\n    - @7T: T1 = 1633 ms'], ...
+                            tmp, expectedT1),b1map_params.defflags);
+                        b1map_params.b1proc.T1 = expectedT1;
+                    end
+                end
+                b1map_params.b1proc.matchT1fieldstrength = matchT1fieldstrength;
+                b1map_params.b1proc.expectedT1 = expectedT1;
+            end
+
+            if ~isempty(b1map_params.b0input)
+                % note that the current implementation assumes that
+                % b0 input images = 2 magnitude images (1st and 2nd
+                % echoes) and 1 presubtracted phase image.
+                tmp = get_metadata_val(b1map_params.b0input(1,:),'EchoTime');
                 if isempty(tmp)
-                    hmri_log(sprintf('WARNING: using defaults value for EPI readout duration\n(%d ms) instead of metadata', ...
-                        b1map_params.b1acq.tert),b1map_params.defflags);
-                else b1map_params.b1acq.tert = tmp; 
+                    hmri_log(sprintf('WARNING: using defaults value for B0 mapping TEs\n(short TE=%.2fms) instead of metadata', ...
+                        b1map_params.b0acq.shortTE),b1map_params.defflags);
+                else
+                    b1map_params.b0acq.shortTE = tmp;
                 end
-                
-                tmp = get_metadata_val(b1hdr{1},'PhaseEncodingDirectionSign');
+
+                tmp = get_metadata_val(b1map_params.b0input(2,:),'EchoTime');
                 if isempty(tmp)
-                    hmri_log(sprintf('WARNING: using defaults value for PE direction\n(%d) instead of metadata', ...
-                        b1map_params.b1acq.blipDIR),b1map_params.defflags);
-                else b1map_params.b1acq.blipDIR = tmp; 
+                    hmri_log(sprintf('WARNING: using defaults value for B0 mapping TEs\n(long TE=%.2fms) instead of metadata', ...
+                        b1map_params.b0acq.longTE),b1map_params.defflags);
+                else
+                    b1map_params.b0acq.longTE = tmp;
                 end
-                
-                % consistency check for T1 value and field strength:
-                tmp = get_metadata_val(b1hdr{1},'MagneticFieldStrength');
-                supportedB0 = false;
-                matchT1fieldstrength = false;
-                if ~isempty(tmp)
-                    switch round(tmp)
-                        case 3
-                            supportedB0 = true;
-                            expectedT1 = 1192;
-                        case 7
-                            supportedB0 = true;
-                            expectedT1 = 1633;
-                        otherwise
-                            supportedB0 = false;
-                            expectedT1 = NaN;
-                    end
-                    if b1map_params.b1proc.T1 == expectedT1
-                        matchT1fieldstrength = true;
-                    end
-                    if ~supportedB0
-                        hmri_log(sprintf(['WARNING: field strength (B0 = %.0fT) not supported. The reference T1' ...
-                            '\nvalue for B1 map calculation for that field strength is not currently ' ...
-                            '\nimplemented in the hMRI-toolbox. Please make sure the assumed ' ...
-                            '\nvalue (T1 = %.0f ms) is correct, otherwise set it via a customised ' ...
-                            '\nB1 default file (config/local/hmri_b1_local_defaults.m).' ...
-                            '\nIf the value is already properly set, just ignore this message.'], ...
-                            tmp, b1map_params.b1proc.T1),b1map_params.defflags);
-                    else
-                        if ~matchT1fieldstrength && custom_def
-                            hmri_log(sprintf(['WARNING: the assumed T1 value for B1 map calculation does not ' ...
-                                '\nmatch the expected value for the used field strength: ' ...
-                                '\n    B0 = %.0fT, T1 = %d/%d (expected/actual) ms.' ...
-                                '\n\nPlease check T1 value is properly set in your local settings ' ...
-                                '\n(see hmri_def.b1map.i3D_EPI.b1proc.T1 in your customised ' ...
-                                '\n%s config file).' ...
-                                '\n\nRecommended values are: ' ...
-                                '\n    - @3T: T1 = 1192 ms' ...
-                                '\n    - @7T: T1 = 1633 ms' ...
-                                '\n\nIf the value was set differently on purpose, just ignore this message.'], ...
-                                tmp, expectedT1, b1map_params.b1proc.T1, char(spm_file(deffnam,'filename'))), b1map_params.defflags);
-                        elseif ~matchT1fieldstrength && ~custom_def
-                             hmri_log(sprintf(['WARNING: the assumed T1 value for B1 map calculation ' ...
-                                '\nhas been set to match the used field strength: ' ...
-                                '\n    B0 = %.0fT, T1 = %d ms.' ...
-                                '\n\nPlease consider to properly set the T1 value uing a local ' ...
-                                '\ndefaults file (see config/local/hmri_b1_local_defaults.m ' ...
-                                '\nand parameter hmri_def.b1map.i3D_EPI.b1proc.T1 therein).' ...
-                                '\n\nRecommended values are: ' ...
-                                '\n    - @3T: T1 = 1192 ms' ...
-                                '\n    - @7T: T1 = 1633 ms'], ...
-                                tmp, expectedT1),b1map_params.defflags);
-                            b1map_params.b1proc.T1 = expectedT1;
-                        end
-                    end
-                    b1map_params.b1proc.matchT1fieldstrength = matchT1fieldstrength;
-                    b1map_params.b1proc.expectedT1 = expectedT1;
-                end
-                    
-                
-                if ~isempty(b1map_params.b0input)
-                    % note that the current implementation assumes that
-                    % b0 input images = 2 magnitude images (1st and 2nd
-                    % echoes) and 1 presubtracted phase image.
-                    tmp = get_metadata_val(b1map_params.b0input(1,:),'EchoTime');
-                    if isempty(tmp)
-                        hmri_log(sprintf('WARNING: using defaults value for B0 mapping TEs\n(short TE=%.2fms) instead of metadata', ...
-                            b1map_params.b0acq.shortTE),b1map_params.defflags);
-                    else b1map_params.b0acq.shortTE = tmp; 
-                    end
-                    
-                    tmp = get_metadata_val(b1map_params.b0input(2,:),'EchoTime');
-                    if isempty(tmp)
-                        hmri_log(sprintf('WARNING: using defaults value for B0 mapping TEs\n(long TE=%.2fms) instead of metadata', ...
-                            b1map_params.b0acq.longTE),b1map_params.defflags);
-                    else b1map_params.b0acq.longTE = tmp; 
-                    end
-                    b1map_params.b0acq.iformat = 'PM';
-                end
-            catch %#ok<*CTCH>
-                hmri_log(sprintf(['WARNING: possibly no metadata associated to the input images. \n' ...
-                    'Default acquisition and processing parameters will be used.']),b1map_params.defflags);
+                b1map_params.b0acq.iformat = 'PM';
             end
         end
+
     case 'i3D_AFI'
         if ~isempty(b1map_params.b1input)
             hmri_log(sprintf('AFI protocol selected ...'),b1map_params.nopuflags);
-            b1hdr = get_metadata(b1map_params.b1input(1,:));
-            
+            b1hdrFile{1} = b1map_params.b1input(1,:);
+            b1hdrFile{2} = b1map_params.b1input(2,:);
+
             try
-                tr = get_metadata_val(b1hdr{1},'RepetitionTimes');
-                if isempty(tr)
-                    hmri_log(sprintf('WARNING: using defaults values for TRs\n(TR ratio = %.1f) instead of metadata', ...
-                        b1map_params.b1acq.TR2TR1ratio),b1map_params.defflags);
-                else b1map_params.b1acq.TR2TR1ratio = tr(2)/tr(1); 
+                tr1 = get_metadata_val(b1hdrFile{1},'RepetitionTime');
+                tr2 = get_metadata_val(b1hdrFile{2},'RepetitionTime');
+                if ~isempty(tr1) && ~isempty(tr2) && tr1~=tr2 % BIDS-like data
+                    b1map_params.b1acq.TR2TR1ratio = tr2/tr1;
+                else % Use Siemens-style metadata or b1-defaults file value
+                    hmri_log('WARNING: the two repetition times in the AFI B1-mapping metadata are missing or equal. Trying the RepetitionTimes (alTR) field...',b1map_params.defflags);
+                    trList = get_metadata_val(b1hdrFile{1},'RepetitionTimes');
+                    if isempty(trList) % Use b1-defaults file value
+                        assert(b1map_params.b1acq.TR2TR1ratio~=1,'The TR2TR1ratio is not allowed to be 1 in an AFI B1-mapping acquisition! Check the input configuration file.')
+                        hmri_log(sprintf('WARNING: using defaults values for\n(TR ratio = %.1f) instead of metadata', ...
+                            b1map_params.b1acq.TR2TR1ratio),b1map_params.defflags);
+                    else % Use Siemens-style metadata
+                        assert(trList(2)~=trList(1),'The two repetition times (TRs) are not allowed to be equal in an AFI B1-mapping acquisition! Check the input data.')
+                        b1map_params.b1acq.TR2TR1ratio = trList(2)/trList(1);
+                    end
                 end
-                
-                tmp = get_metadata_val(b1hdr{1},'FlipAngle');
+
+                tmp = get_metadata_val(b1hdrFile{1},'FlipAngle');
                 if isempty(tmp)
-                    hmri_log(sprintf('WARNING: using defaults value for flip ange \n(%d deg) instead of metadata', ...
+                    hmri_log(sprintf('WARNING: using defaults value for flip angle \n(%d deg) instead of metadata', ...
                         b1map_params.b1acq.alphanom), b1map_params.defflags);
-                else b1map_params.b1acq.alphanom = tmp; 
+                else
+                    b1map_params.b1acq.alphanom = tmp;
                 end
+            catch
+                hmri_log(sprintf(['WARNING: possibly no metadata associated with the input images. \n' ...
+                    'Default acquisition and processing parameters will be used.']),b1map_params.defflags);
+            end
+        end
+
+    case 'DAM'
+        if ~isempty(b1map_params.b1input)
+            hmri_log(sprintf('DAM protocol selected ...'),b1map_params.nopuflags);
+            try
+                fa1 = get_metadata_val(b1map_params.b1input(2,:),'FlipAngle');
+                fa1=fa1{1};
+                if isempty(fa1)
+                    hmri_log(sprintf('WARNING: using defaults values for flip angle\n(FA = %d deg) instead of metadata', ...
+                        b1map_params.b1acq.alphanom),b1map_params.defflags);
+                else
+                    b1map_params.b1acq.alphanom = fa1;
+
+                    % Check whether flip angles match
+                    fa2 = get_metadata_val(b1map_params.b1input(1,:),'FlipAngle');
+                    fa2=fa2{1};
+                    if ~isempty(fa2)
+                        if fa2~=(2*fa1)
+                            hmri_log(sprintf([...
+                                'WARNING: detected flip angle from the metadata of the \n' ...
+                                'first DAM B1 volume (%d deg) is not 2x the detected \n' ...
+                                'flip angle for the second DAM B1 volume (%d deg).\n'...
+                                'Please check the input data carefully.'],fa2,fa1),...
+                                b1map_params.defflags);
+                        end
+                    end
+                end
+
             catch
                 hmri_log(sprintf(['WARNING: possibly no metadata associated to the input images. \n' ...
                     'Default acquisition and processing parameters will be used.']),b1map_params.defflags);
             end
         end
-        
+
     case 'tfl_b1_map'
         if ~isempty(b1map_params.b1input)
             hmri_log(sprintf('SIEMENS tfl_b1map protocol selected ...'),b1map_params.nopuflags);
         end
-                        
+
     case 'rf_map'
         if ~isempty(b1map_params.b1input)
             hmri_log(sprintf('SIEMENS rf_map protocol selected ...'),b1map_params.nopuflags);
         end
-        
+
     otherwise
         hmri_log(sprintf(['WARNING: something must have gone wrong in the JOB configuration.\n' ...
             '\tUnknown B1 processing methods, assuming "no B1 correction" mode.']),b1map_params.defflags);
@@ -846,6 +1016,10 @@ end
 if isfield(b1map_params, 'b1proc')
     hmri_log(sprintf('B1 processing parameters (check carefully!):\n\n%s', ...
         printstruct(b1map_params.b1proc)),b1map_params.defflags);
+end
+if isfield(b1map_params, 'b1mask')
+    hmri_log(sprintf('B1 masking parameters (check carefully!):\n\n%s', ...
+        printstruct(b1map_params.b1mask)),b1map_params.defflags);
 end
 
 end
@@ -867,8 +1041,8 @@ metastruc = init_output_metadata_structure(input_files, proc, output);
 end
 
 %=========================================================================%
-% To rpint a structure into text - assumes simple structure (no
-% sub-structure in it at this point) 
+% To print a structure into text - assumes simple structure (no
+% sub-structure in it at this point).
 %=========================================================================%
 function s = printstruct(struc)
 
@@ -877,4 +1051,47 @@ fntmp = fieldnames(struc);
 for cf = 1:length(fntmp)
     s = sprintf('%s %16s: %s\n', s, fntmp{cf}, num2str(struc.(fntmp{cf})));
 end
+end
+
+%=========================================================================%
+% To smooth B1 map calculation output.
+%=========================================================================%
+function smB1map_norm = smoothB1(V,B1map_norm,B1FWHM,mask)
+
+assert(numel(B1FWHM)==1||numel(B1FWHM)==3,...
+    ['FWHM of B1 smoothing kernel (B1FWHM) must have either one element ' ...
+    '(isotropic smoothing) or three elements (3d anisotropic smoothing)']);
+
+assert(all(B1FWHM(:)>=0),['FWHM of B1 smoothing kernel (B1FWHM) cannot be ' ...
+    'negative! Check the b1 defaults file.'])
+
+if any(B1FWHM>0)
+    smB1map_norm = zeros(size(B1map_norm));
+    pxs = sqrt(sum(V.mat(1:3,1:3).^2)); % Voxel resolution
+    smth = B1FWHM./pxs;
+    spm_smooth(mask.*B1map_norm,smB1map_norm,smth);
+
+    % Renormalise so that we are not biased by zeroed background voxels
+    if numel(mask)>1 % i.e. mask is not a scalar
+        norm_factor = zeros(size(B1map_norm));
+        spm_smooth(double(mask),norm_factor,smth);
+        smB1map_norm(norm_factor~=0)=smB1map_norm(norm_factor~=0)./norm_factor(norm_factor~=0);
+    end
+else % skip calculation if kernel width is zero
+    smB1map_norm = B1map_norm;
+end
+
+end
+
+%=========================================================================%
+% Mask for B1 map.
+%=========================================================================%
+function bmask = mask_for_B1(Vanat,flags)
+
+if flags.domask
+    bmask=hmri_create_pm_brain_mask(Vanat,flags);
+else
+    bmask=true; % return a scalar
+end
+
 end

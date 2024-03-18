@@ -147,8 +147,10 @@ switch lower(method)
         beta(2:end,:)=exp(beta(2:end,:));
         
     case {'nlls_ols','nlls_wls1','nlls_wls2','nlls_wls3'}
-        %lsqcurvefit uses toolbox check for it:
-        [license_status,~] = license('checkout', 'Optimization_toolbox');
+        %lsqcurvefit uses toolbox check for it by using ver:
+        versionStruct = ver;
+        versionCell = {versionStruct.Name};
+        license_status = any(ismember(versionCell, 'Optimization Toolbox'));
         if license_status==0
             error("The methods: 'nlls_ols','nlls_wls1','nlls_wls2','nlls_wls3' require Optimization Toolbox, which was not found. " + ...
                 "Please try another method (e.g. OLS or WLS1) which does not use Optimization Toolbox.")

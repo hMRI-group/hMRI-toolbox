@@ -147,6 +147,15 @@ switch lower(method)
         beta(2:end,:)=exp(beta(2:end,:));
         
     case {'nlls_ols','nlls_wls1','nlls_wls2','nlls_wls3'}
+        %lsqcurvefit uses toolbox check for it by using ver:
+        versionStruct = ver;
+        versionCell = {versionStruct.Name};
+        license_status = any(ismember(versionCell, 'Optimization Toolbox'));
+        if license_status==0
+            error("The methods: 'nlls_ols','nlls_wls1','nlls_wls2','nlls_wls3' require Optimization Toolbox, which was not found. " + ...
+                "Please try another method (e.g. OLS or WLS1) which does not use Optimization Toolbox.")
+        end
+
         % Check for NLLS case, where specification of the log-linear 
         % initialisation method is in the method string following a hyphen
         r=regexp(lower(method),'^nlls_(.*)$','tokens');
@@ -167,7 +176,7 @@ switch lower(method)
         end
         
         expDecay=@(x,D) (D(:,2:end)*x(2:end)).*exp(x(1)*D(:,1));
-        
+      
         % Loop over voxels
         parfor n=1:size(y,2)
             beta(:,n)=lsqcurvefit(@(x,D)expDecay(x,D),beta0(:,n),D,y(:,n),[],[],opt);

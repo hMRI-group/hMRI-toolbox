@@ -1116,7 +1116,9 @@ if mpm_params.neco4R2sfit<2
 end
 
 % UNICORT settings:
-mpm_params.UNICORT.R1 = isfield(jobsubj.b1percontrast,'UNICORT'); % uses UNICORT to estimate B1 transmit bias
+b1_fields = fields(jobsubj.b1percontrast);
+b1_type = jobsubj.b1percontrast.(b1_fields{1}).b1_type;
+mpm_params.UNICORT.R1 = isfield(b1_type,'UNICORT'); % uses UNICORT to estimate B1 transmit bias
 tmp = hmri_get_defaults('UNICORT');
 mpm_params.UNICORT.PD = tmp.PD; % uses B1map estimated as biasfield for R1 to correct for B1 transmit bias in PD
 mpm_params.UNICORT.MT = tmp.MT; % uses B1map estimated as biasfield for R1 to correct for B1 transmit bias in MT
@@ -1467,7 +1469,7 @@ hmri_log(sprintf('Method: %s, Sampling: %s, Smoothing: %s', mpm_params.coreg_bia
 
 % Prepare output for R1, PD, MT and R2* maps
 RFsenscorr = fieldnames(mpm_params.proc.RFsenscorr);
-B1transcorr = fieldnames(jobsubj.b1_type);
+B1transcorr = fieldnames(b1_type);
 coutput = 0;
 
 % R1 output: requires PDw and T1w input and optional B1 transmit (or

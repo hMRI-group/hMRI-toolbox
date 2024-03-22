@@ -113,10 +113,14 @@ b1_input_noB1.val     = {'noB1'};
 % Add extra B1 mapping methods which cannot be run independently of the
 % MPM map creation to the menu
 % ---------------------------------------------------------------------
-b1_type.values  = [b1_type.values {b1_input_noB1}];
+b1_type.values  = [b1_type.values {b1_input_noB1 b1_input_UNICORT}];
 b1_type.help=[b1_type.help; {...
     [' - no B1 correction: This option is *not* recommended when computing R1 maps. ' ...
-    'Consider using UNICORT instead.'] ...
+    'Consider using UNICORT instead.']
+    ['- UNICORT: Use this option when B1 maps not available. ' ...
+    'Bias field estimation and correction will be performed ' ...
+    'using the approach described in [Weiskopf et al., NeuroImage 2011; 54:2116-2124]. ' ...
+    'WARNING: the correction only applies to R1 maps.']
     }];
 
 % ---------------------------------------------------------------------
@@ -148,12 +152,8 @@ b1percontrast.name  = 'B1 transmit bias correction';
 b1percontrast.help  = {'Specify whether one B1 map will be used for all contrasts. '
     'You can select either:'
     '- Single B1 map for all pulses'
-    '- Separate B1 map for excitation and MT pulses'
-    ['- UNICORT: Use this option when B1 maps not available. ' ...
-    'Bias field estimation and correction will be performed ' ...
-    'using the approach described in [Weiskopf et al., NeuroImage 2011; 54:2116-2124]. ' ...
-    'WARNING: the correction only applies to R1 maps.']};
-b1percontrast.values  = {b1_single b1_MT b1_input_UNICORT};
+    '- Separate B1 map for excitation and MT pulses'};
+b1percontrast.values  = {b1_single b1_MT};
 b1percontrast.val     = {b1_single};
 
 % ---------------------------------------------------------------------

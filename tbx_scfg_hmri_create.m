@@ -113,8 +113,9 @@ b1_input_noB1.val     = {'noB1'};
 % Add extra B1 mapping methods which cannot be run independently of the
 % MPM map creation to the menu
 % ---------------------------------------------------------------------
-b1_type.values  = [b1_type.values {b1_input_noB1 b1_input_UNICORT}];
-b1_type.help=[b1_type.help; {...
+b1_type_exc = b1_type;
+b1_type_exc.values  = [b1_type.values {b1_input_noB1 b1_input_UNICORT}];
+b1_type_exc.help=[b1_type_exc.help; {...
     [' - no B1 correction: This option is *not* recommended when computing R1 maps. ' ...
     'Consider using UNICORT instead.']
     ['- UNICORT: Use this option when B1 maps not available. ' ...
@@ -123,20 +124,24 @@ b1_type.help=[b1_type.help; {...
     'WARNING: the correction only applies to R1 maps.']
     }];
 
+% potentially separate B1 map type for MT pulse (no UNICORT option)
+b1_type_MT = b1_type;
+b1_type_MT.values  = [b1_type.values {b1_input_noB1}];
+b1_type_MT.help=[b1_type_MT.help; {...
+    ' - no B1 correction: This option should only be used when there is no matching B1 mapping data. '}];
+b1_type_MT.name = 'MT pulse B1 mapping method';
+b1_type_MT.tag = 'b1_MTpulse';
+
 % ---------------------------------------------------------------------
 % b1percontrast Choose whether to have separate B1 map for MT pulse
 % ---------------------------------------------------------------------
 % separate B1 map for MT pulse
-b1_MTpulse = b1_type;
-b1_MTpulse.name = 'MT pulse B1 mapping method';
-b1_MTpulse.tag = 'b1_MTpulse';
-
 b1_MT      = cfg_branch;
 b1_MT.tag  = 'b1_MT';
 b1_MT.name = 'Separate excitation and MT pulse B1 maps';
 b1_MT.help = {['One set of B1 mapping data is acquired for the excitation pulse ' ...
     'and another for the MT pulse.']};
-b1_MT.val  = {setfield(b1_type,'name','Excitation pulse B1 mapping method') b1_MTpulse}; %#ok<SFLD> 
+b1_MT.val  = {setfield(b1_type_exc,'name','Excitation pulse B1 mapping method') b1_type_MT}; %#ok<SFLD> 
 
 % single B1 map for excitation and MT pulses
 b1_single = cfg_branch;
@@ -144,7 +149,7 @@ b1_single.tag  = 'b1_single';
 b1_single.name = 'Single B1 map for all pulses';
 b1_single.help = {['A single set of B1 mapping data is acquired for the excitation pulse ' ...
     'and the MT pulse.']};
-b1_single.val  = {b1_type};
+b1_single.val  = {b1_type_exc};
 
 b1percontrast       = cfg_choice;
 b1percontrast.tag   = 'b1percontrast';

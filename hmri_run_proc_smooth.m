@@ -4,10 +4,13 @@ function out = hmri_run_proc_smooth(job)
 % Data are selected in a 'many subject' style, i.e. all the images of one
 % type are selected from many subjects at once!
 % 
-% The 'out' structure is organized as a structure out.tc where
-% - tc is a cell-array of size {n_TCs x n_pams}
-% - each element tc{ii,jj} is a cell array {n_subj x 1} with each subject's
-%   smoothed data for the ii^th TC and jj^th MPM
+% The 'out' structure is organized as a structure with 2 fields
+% .tc   : cell-array of size {n_TCs x n_pams}. Each element tc{ii,jj} is a 
+%         cell array {n_subj x 1} with each subject's smoothed data for
+%         the ii^th TC and jj^th MPM
+% .smwc : cell-array of size {n_TCs x1}. Each element smwc{ii} is a char
+%         array (n_subj x 1) with each subject's smooth modulated warped
+%         ii^th tissue class
 %_______________________________________________________________________
 % Copyright (C) 2017 Cyclotron Research Centre
 
@@ -45,6 +48,7 @@ fn_TPM = char(fn_TPM_i);
 
 % Loop over all the subjects and process them one at a time
 out.tc = cell(n_TCs,n_pams);
+out.smwc = cell(n_TCs,1);
 
 for i_subj = 1:n_subj
     fn_wMPM = cell(n_pams,1);
@@ -59,13 +63,15 @@ for i_subj = 1:n_subj
         fn_mwTC{jj} = job.vols_mwc{jj}{i_subj};
     end
     
-    fn_out = hmri_proc_MPMsmooth(char(fn_wMPM), char(fn_mwTC), fn_TPM, ...
+    [fn_out, fn_smwc] = hmri_proc_MPMsmooth( ...
+                char(fn_wMPM), char(fn_mwTC), fn_TPM, ...
                 job.fwhm, l_TC, pth_out);
     
     for jj = 1:n_TCs
         for kk = 1:n_pams
             out.tc{jj,kk}{i_subj,1} = fn_out{kk}(jj,:); %#ok<*STRNU>
         end
+        out.smwc{jj}{i_subj,1} = fn_smwc(jj,:);
     end
     
 end

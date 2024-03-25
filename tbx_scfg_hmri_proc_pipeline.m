@@ -4,10 +4,12 @@ function proc_pipel = tbx_scfg_hmri_proc_pipeline
 % -> Provides standard processign pipelines.
 % 
 % For simplicity, 2 standard pipelines are also set up:
-% - US+Smooth -> applies US, warps into MNI, then smoothes
-%               (weighted-average)
-% - US+Dartel+Smooth -> applies US, builds Dartel template and warps into
-%                       MNI, then smoothes (weighted-average)
+% - US+Smooth+MaskCrt
+%       -> applies US, warps into MNI, smoothes (weighted-average), then
+%          creates tissue masks
+% - US+Dartel+Smooth+MaskCrt
+%       -> applies US, builds Dartel template and warps into MNI, smoothes
+%          (weighted-average), then creates tissue masks
 % Most of the parameters are therefore pre-defined and hardcoded!
 % For more flexibility, you ought to use the individual modules and build
 % your own pipeline.
@@ -110,13 +112,13 @@ pipe_c.tag    = 'pipe_c';
 pipe_c.name   = 'Pipeline';
 pipe_c.help   = {
     'Chose the predefined pipeline that you prefer:'
-    '- US+Smooth -> applies US, warps into MNI, then smoothes (weighted-average)'
-    ['- US+Dartel+Smooth -> applies US, builds Dartel template and warps into' ...
-      'MNI, then smoothes (weighted-average)']
+    '- US+Smooth+MaskCrt -> applies US, warps into MNI, smoothes (weighted-average), then creates tissue masks'
+    ['- US+Dartel+Smooth+MaskCrt -> applies US, builds Dartel template and warps into' ...
+      'MNI, smoothes (weighted-average), then creates tissue masks']
     }';
 pipe_c.labels = {
-                 'US+smooth'
-                 'US+Dartel+smooth'}';
+                 'US+Smooth+MaskCrt'
+                 'US+Dartel+Smooth+MaskCrt'}';
 pipe_c.values = {1 2};
 pipe_c.val    = {2};
 
@@ -153,7 +155,8 @@ vox.help     = {[...
 bb         = cfg_entry;
 bb.tag     = 'bb';
 bb.name    = 'Bounding box';
-bb.help    = {'The bounding box (in mm) of the volume which is to be written (relative to the anterior commissure).'};
+bb.help    = {['The bounding box (in mm) of the volume which is to be ' ...
+    'written (relative to the anterior commissure).']};
 bb.strtype = 'r';
 bb.num     = [2 3];
 bb.def     = @(val)spm_get_defaults('normalise.write.bb', val{:});
@@ -166,13 +169,17 @@ proc_pipel.tag     = 'proc_pipel';
 proc_pipel.name    = 'Proc. hMRI -> Pipelines';
 proc_pipel.help    = {
     ['Parameter maps are spatially processed and brought into standard space',...
-    'for furhter statistical analysis. Only 2 tissue classes, GM & WM, '...
-    'are considered.']
+    'for further statistical analysis. Only 2 tissue classes, GM & WM, '...
+    'are considered useful but the CSF is also needed for the mask creation .']
     [' ']
     ['For simplicity, 2 standard pipelines are also set up:']
-    ['- US+Smooth -> applies US, warps into MNI, then smoothes (weighted-average)']
-    ['- US+Dartel+Smooth -> applies US, builds Dartel template and warps' ...
-    'into MNI, then smoothes (weighted-average)']
+    ['- US+Smooth+MaskCrt -> applies US, warps into MNI, smoothes (weighted-average), then creates tissue masks']
+    ['- US+Dartel+Smooth+MaskCrt -> applies US, builds Dartel template and warps ' ...
+    'into MNI, smoothes (weighted-average), then creates tissue masks']
+    ['Along with tissue specific masks, the mean smoothed tissue class images are also created. ' ...
+    'The masks should then be entered as ''explicit mask'' ' ...
+    'for the SPM analysis. See Section 2.4 in Callaghan et al, 2014, ' ...
+    'for further explanations.']
     }'; %#ok<*NBRAK>
 proc_pipel.val  = {output vols many_pams vox bb fwhm pipe_c};
 proc_pipel.prog = @hmri_run_proc_pipeline;
@@ -193,6 +200,18 @@ end
 function dep = vout_proc_pipeline(job)
 % This depends on job contents, which may not be present when virtual
 % outputs are calculated.
+% 
+% The output structure 'out' provides:
+% .tc     : cell-array of size {n_TCs x n_pams}. Each element tc{ii,jj} is 
+%           a cell array {n_subj x 1} with each subject's smoothed data for
+%           the ii^th TC and jj^th MPM
+% .smwc   : cell-array of size {n_TCs x1}. Each element smwc{ii} is a 
+%           char array (n_subj x 1) with each subject's smooth modulated 
+%           warped ii^th tissue class
+% .maskTC : cell-array of size {n_TCs x1}. Each element smwc{ii} is the 
+%           filename of the ii^th tissue specific masks
+
+% First collect the smoothed warped parametric maps.
 % There should be one series of images per parametric map and tissue class,
 % e.g. in the usual case of 4 MPMs and GM/WM -> 8 series of image
 
@@ -209,6 +228,22 @@ for ii=1:n_TCs
     end
 end
     
+% NEED to collect the other output from the pipeline:
+% - smoothed modulated warped GM & WM from all subjects
+for ii=1:n_TCs
+    cdep(end+1) = cfg_dep;
+    cdep(end).sname = sprintf('smwTC #%d', ii);
+    cdep(end).src_output = substruct('.', 'smwc', '{}', {ii});
+    cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
+end
+% - tissue specific masks for the GM & WM
+for ii=1:n_TCs
+    cdep(end+1) = cfg_dep; %#ok<*AGROW>
+    cdep(end).sname = sprintf('maskTC #%d', ii);
+    cdep(end).src_output = substruct('.', 'maskTC', '()', {ii});
+    cdep(end).tgt_spec = cfg_findspec({{'filter','image','strtype','e'}});
+end
+
 dep = cdep(2:end);
 
 end

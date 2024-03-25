@@ -1,11 +1,14 @@
-function fn_out = hmri_proc_MPMsmooth(fn_wMPM, fn_mwTC, fn_TPM, fwhm, l_TC, pth_out)
+function [fn_out,fn_smwc] = hmri_proc_MPMsmooth(fn_wMPM, fn_mwTC, fn_TPM, fwhm, l_TC, pth_out)
 % Applying tissue specific smoothing, aka. weighted averaging, in order to 
 % limit partial volume effect. 
+% Since modulated warped tissue class images are also smoothed along the
+% way, these are kept and could be used for standard VBM analysis
+%
 % This works on multiple parametric and tissue class maps from a *single*
 % subject.
 % 
 % FORMAT
-%   fn_out = hmri_proc_MPMsmooth(fn_wMPM, fn_mwTC, fn_TPM, fwhm)
+%   [fn_out,fn_smwc] = hmri_proc_MPMsmooth(fn_wMPM, fn_mwTC, fn_TPM, fwhm)
 % 
 % INPUT
 % - fn_wMPM : filenames (char array) of the warped MPM, i.e. the
@@ -21,6 +24,7 @@ function fn_out = hmri_proc_MPMsmooth(fn_wMPM, fn_mwTC, fn_TPM, fwhm, l_TC, pth_
 % OUTPUT
 % - fn_out  : cell array (one cell per MPM) of filenames (char array) of 
 %             the "smoothed tissue specific MPMs".
+% - fn_smwc : char array of smoothed modulate warped tissue classes.
 % 
 % REFERENCE
 % Draganski et al, 2011, doi:10.1016/j.neuroimage.2011.01.052
@@ -31,7 +35,7 @@ function fn_out = hmri_proc_MPMsmooth(fn_wMPM, fn_mwTC, fn_TPM, fwhm, l_TC, pth_
 % Cyclotron Research Centre, University of Liege, Belgium
 
 
-% NOTES:
+%% NOTES:
 % this works for one subject at a time, i.e. in the classic case of 4 MPMs 
 % and GM/WM tissue classes take the 
 % + 4 warped quantitative maps (in fn_wMPM) 
@@ -56,7 +60,7 @@ function fn_out = hmri_proc_MPMsmooth(fn_wMPM, fn_mwTC, fn_TPM, fwhm, l_TC, pth_
 % - Just pass the full name of the TPM, without subvolume index, the exact 
 %   TC used is defined by the fn_mwTC
 %
-% FUTURE:
+%% FUTURE:
 % With present computer having large amounts of RAM, we could do most of
 % the image calculation direction by loading the nifti files directly. This
 % would eschew the use of spm_imcalc (and its annoying messages...) and
@@ -64,6 +68,7 @@ function fn_out = hmri_proc_MPMsmooth(fn_wMPM, fn_mwTC, fn_TPM, fwhm, l_TC, pth_
 % Not sure how to perform the Gaussian smoothingn though. Probably some
 % re-implementation could do the trick.
 
+%% Deal with input
 % Check input
 if nargin<6, pth_out = []; end
 if nargin<4, fwhm = 6; end
@@ -84,20 +89,26 @@ if nargin<5 || numel(l_TC)~=nTC
 end
 
 % Flags for image calculation
-ic_flag = struct(...
-    'dtype', 16, ... % keep things in floats
+ic_flag = struct(... % type is set below based on that of input image
     'interp', -4);   % 4th order spline interpolation
 
+%% Do the job
 % Initialize output and loop over MPMs
 fn_out = cell(nMPM,1);
 for ii=1:nMPM
     % ii^th MPM to be treated
     fn_wMPM_ii = fn_wMPM(ii,:) ;
     
+    % Deal with image type -> keep original
+    % + find out if it has NaN representation
+    V_ii = spm_vol(fn_wMPM_ii);
+    ic_flag.dtype = V_ii.dt(1);
+    NaNrep = spm_type(V_ii.dt(1),'nanrep');
+    
     % Get the TC-weighted MPM -> p-images
     p = cell(nTC,1);
     for jj=1:nTC
-        % MPM weighted with its own GM/WM/lesion, and a priori>.05
+        % MPM weighted with its own tissue classes, e.g. GM/WM/CSF maps, and mask with corresponding TPM >.05
         tmp = char(fn_wMPM_ii, fn_mwTC(jj,:), fn_TPM(jj,:)); % i1, i2, i3
         p_tmp = spm_imcalc( tmp, ...
             spm_file(fn_wMPM_ii,'prefix',['p',num2str(l_TC(jj)),'_']), ...
@@ -105,11 +116,13 @@ for ii=1:nMPM
         p{jj} = p_tmp.fname;
     end
     
-    % Smooth TC -> m-images
-    m = cell(nTC,1);
-    for jj=1:nTC
-        m{jj} = spm_file(fn_mwTC(jj,:),'prefix','s','number','');
-        spm_smooth(fn_mwTC(jj,:),m{jj},fwhm); % smooth mwc(jj)
+    % Smooth TC -> m-images, generate at 1st run
+    if ii==1
+        m = cell(nTC,1);
+        for jj=1:nTC
+            m{jj} = spm_file(fn_mwTC(jj,:),'prefix','s','number','');
+            spm_smooth(fn_mwTC(jj,:),m{jj},fwhm); % smooth mwc(jj)
+        end
     end
     
     % Smooth weighted MPM (p) -> n-images
@@ -132,13 +145,21 @@ for ii=1:nMPM
             '(i1./i2).*(i2>0.05)',ic_flag);
     end
     
+    % Set 0's to NaN for the types that have NaN representation
+    % -> proper implicit masking during SPM analysis
+    if NaNrep
+        % simply call the ad hoc function
+        hmri_proc_zero2nan(q{jj})
+    end
+    
     fn_out{ii} = char(q); % saved as char array
     
-    fn_2delete = char(char(p),char(m),char(n));
+    fn_2delete = char(char(p),char(n));
     for jj=1:size(fn_2delete,1)
         delete(deblank(fn_2delete(jj,:)));
     end
 end
+fn_smwc = char(m); % catch the smwc images.
 
 end
 

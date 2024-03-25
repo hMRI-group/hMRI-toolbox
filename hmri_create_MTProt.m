@@ -833,7 +833,7 @@ for p = 1:dm(3)
             % - f_T has been calculated using UNICORT *AND* the UNICORT.MT flag
             % is enabled (advanced user only! method not validated yet!)
             if (~isempty(f_T))&&(~mpm_params.UNICORT.R1 || mpm_params.UNICORT.MT)
-                MT = hmri_correct_MTsat(MT,f_T,mpm_params.MTsatB1CorrectionModel,mpm_params.MTsatB1CorrectionC);
+                [MT,dMTsatcorr] = hmri_correct_MTsat(MT,f_T,mpm_params.MTsatB1CorrectionModel,mpm_params.MTsatB1CorrectionC);
             end
             
             % truncate MT maps
@@ -846,7 +846,8 @@ for p = 1:dm(3)
                 dMT = hmri_make_dMT(PDw,T1w,MTw,Edata.PDw,Edata.T1w,Edata.MTw,fa_pdw_rad,fa_t1w_rad,fa_mtw_rad,TR_pdw,TR_t1w,TR_mtw,mpm_params.small_angle_approx) * 100;
                 
                 if (~isempty(f_T))&&(~mpm_params.UNICORT.R1 || mpm_params.UNICORT.MT)
-                    dMT = abs(hmri_correct_MTsat(dMT,f_T,mpm_params.MTsatB1CorrectionModel,mpm_params.MTsatB1CorrectionC));
+                    % use chain rule to include MTsat B1 correction in error maps
+                    dMT = dMT.*abs(dMTsatcorr);
                 end
                 
                 % truncate MT error maps

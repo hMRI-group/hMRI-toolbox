@@ -122,23 +122,23 @@ job.SPMver = sprintf('%s (%s)', v, r);
 spm_jsonwrite(fullfile(supplpath,'hMRI_map_creation_job_create_maps.json'),job,struct('indent','\t'));
 
 % run B1 map calculation for B1 bias correction
-if isfield(job.subj.b1percontrast,'b1_MT')
+if isfield(job.subj.b1_type,'b1_MT')
     % excitation pulse B1 map
     tmpsub = job.subj;
     tmpsub.b1_suffix = '';
-    tmpsub.b1_type = job.subj.b1percontrast.b1_MT.b1_type;
+    tmpsub.b1_type = job.subj.b1_type.b1_MT.b1_type;
     job.subj.b1_trans_input = hmri_create_b1map(tmpsub);
 
     % MT pulse B1 map
     tmpsub = job.subj;
     tmpsub.b1_suffix = '_MT';
     tmpsub.path.b1path = b1_MT_path;
-    tmpsub.b1_type = job.subj.b1percontrast.b1_MT.b1_MTpulse;
+    tmpsub.b1_type = job.subj.b1_type.b1_MT.b1_type_MT;
     job.subj.b1_MT_trans_input = hmri_create_b1map(tmpsub);
 else
     tmpsub = job.subj;
     tmpsub.b1_suffix = '';
-    tmpsub.b1_type = job.subj.b1percontrast.b1_single.b1_type;
+    tmpsub.b1_type = job.subj.b1_type;
     job.subj.b1_trans_input = hmri_create_b1map(tmpsub);
 end
 

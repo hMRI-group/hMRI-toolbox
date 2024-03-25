@@ -78,7 +78,7 @@ raws.val        = {raws1 raws2 raws3};
 % ---------------------------------------------------------------------
 % menu b1_type
 % ---------------------------------------------------------------------
-[b1_type,b1parameters] = tbx_scfg_hmri_B1_menu;
+[b1_type_orig,b1parameters] = tbx_scfg_hmri_B1_menu;
 
 % ---------------------------------------------------------------------
 % New B1 mapping methods should be added to tbx_scfg_hmri_B1_menu.m
@@ -113,9 +113,9 @@ b1_input_noB1.val     = {'noB1'};
 % Add extra B1 mapping methods which cannot be run independently of the
 % MPM map creation to the menu
 % ---------------------------------------------------------------------
-b1_type_exc = b1_type;
-b1_type_exc.values  = [b1_type.values {b1_input_noB1 b1_input_UNICORT}];
-b1_type_exc.help=[b1_type_exc.help; {...
+b1_type = b1_type_orig;
+b1_type.values  = [b1_type.values {b1_input_noB1 b1_input_UNICORT}];
+b1_type.help=[b1_type.help; {...
     [' - no B1 correction: This option is *not* recommended when computing R1 maps. ' ...
     'Consider using UNICORT instead.']
     ['- UNICORT: Use this option when B1 maps not available. ' ...
@@ -124,42 +124,29 @@ b1_type_exc.help=[b1_type_exc.help; {...
     'WARNING: the correction only applies to R1 maps.']
     }];
 
+% ---------------------------------------------------------------------
+% Separate B1 map for MT pulse
+% ---------------------------------------------------------------------
 % potentially separate B1 map type for MT pulse (no UNICORT option)
-b1_type_MT = b1_type;
-b1_type_MT.values  = [b1_type.values {b1_input_noB1}];
+b1_type_MT = b1_type_orig;
+b1_type_MT.values  = [b1_type_MT.values {b1_input_noB1}];
 b1_type_MT.help=[b1_type_MT.help; {...
     ' - no B1 correction: This option should only be used when there is no matching B1 mapping data. '}];
 b1_type_MT.name = 'MT pulse B1 mapping method';
-b1_type_MT.tag = 'b1_MTpulse';
+b1_type_MT.tag = 'b1_type_MT';
 
-% ---------------------------------------------------------------------
-% b1percontrast Choose whether to have separate B1 map for MT pulse
-% ---------------------------------------------------------------------
-% separate B1 map for MT pulse
 b1_MT      = cfg_branch;
 b1_MT.tag  = 'b1_MT';
 b1_MT.name = 'Separate excitation and MT pulse B1 maps';
 b1_MT.help = {['One set of B1 mapping data is acquired for the excitation pulse ' ...
     'and another for the MT pulse.']};
-b1_MT.val  = {setfield(b1_type_exc,'name','Excitation pulse B1 mapping method') b1_type_MT}; %#ok<SFLD> 
+b1_MT.val  = {setfield(b1_type,'name','Excitation pulse B1 mapping method') b1_type_MT}; %#ok<SFLD> 
 
-% single B1 map for excitation and MT pulses
-b1_single = cfg_branch;
-b1_single.tag  = 'b1_single';
-b1_single.name = 'Single B1 map for all pulses';
-b1_single.help = {['A single set of B1 mapping data is acquired for the excitation pulse ' ...
-    'and the MT pulse.']};
-b1_single.val  = {b1_type_exc};
-
-b1percontrast       = cfg_choice;
-b1percontrast.tag   = 'b1percontrast';
-b1percontrast.name  = 'B1 transmit bias correction';
-b1percontrast.help  = {'Specify whether one B1 map will be used for all contrasts. '
-    'You can select either:'
-    '- Single B1 map for all pulses'
-    '- Separate B1 map for excitation and MT pulses'};
-b1percontrast.values  = {b1_single b1_MT};
-b1percontrast.val     = {b1_single};
+% ---------------------------------------------------------------------
+% Add separate B1 mapping for MT pulse to the menu
+% ---------------------------------------------------------------------
+b1_type.values  = [b1_type.values {b1_MT}];
+b1_type.help=[b1_type.help; {'Separate excitation and MT pulse B1 maps'}];
 
 % ---------------------------------------------------------------------
 % Input images for RF sensitivity - RF sensitivity maps for MTw images
@@ -303,7 +290,7 @@ subj            = cfg_branch;
 subj.tag        = 'subj';
 subj.name       = 'Subject';
 subj.help       = {'Specify a subject for maps calculation.'};
-subj.val        = {output sensitivity b1percontrast raws popup};
+subj.val        = {output sensitivity b1_type raws popup};
 
 % ---------------------------------------------------------------------
 % data Data

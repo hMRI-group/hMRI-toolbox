@@ -1116,8 +1116,11 @@ if mpm_params.neco4R2sfit<2
 end
 
 % UNICORT settings:
-b1_fields = fields(jobsubj.b1percontrast);
-b1_type = jobsubj.b1percontrast.(b1_fields{1}).b1_type;
+if isfield(jobsubj.b1_type,'b1_MT')
+    b1_type = jobsubj.b1_type.b1_MT.b1_type;
+else
+    b1_type = jobsubj.b1_type;
+end
 mpm_params.UNICORT.R1 = isfield(b1_type,'UNICORT'); % uses UNICORT to estimate B1 transmit bias
 tmp = hmri_get_defaults('UNICORT');
 mpm_params.UNICORT.PD = tmp.PD; % uses B1map estimated as biasfield for R1 to correct for B1 transmit bias in PD

@@ -783,7 +783,7 @@ switch inParName
                     % adFree: [0,0,0,0,0,0,0,SlabGradScale,RefocCorr,0,FatSatAngle,RFSpoilBasicIncr] --> 'seste1h3d2' 'seste1f3d2'
                     % adFree: [0,0,0,0,0,0,0,SlabGradScale,RefocCorr,0,0,RFSpoilBasicIncr] --> 'seste1e3d2', i.e. no FatSatAngle in special card
                     parLocation{cRes} = 'HardCodedParameter';
-                    parValue{cRes} = 2*(115:-5:65);
+                    parValue{cRes} = 2*(115:-5:0);
                 case 'b1epi2d3d2' % 800um protocol from WTCN
                     % wip parameters are sorted as follows:
                     % alFree: [Tmixing DurationPer5Deg BWT_SE/STE_factor (?) CrusherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]

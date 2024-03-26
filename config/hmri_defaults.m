@@ -485,7 +485,7 @@ hmri_def.wcombparams.am         = true; % True: arithmetic mean is written out, 
 hmri_def.wcombparams.errormaps  = true; % True: robust combination of error maps is generated and written out
 % The following parameters are for experts only.
 hmri_def.wcombparams.res        = -4;   % Resampling factor, determines interpolation method (details can be found in spm_slice_vol.m)
-hmri_def.wcombparams.smthk      = 0;    % If larger than zero, the error maps will be spatially smoothed with the a Gaussian kernel of FWHM = smthk
-hmri_def.wcombparams.dim        = 3;    % Defines dimention along which slices along which weightes will be determined
+hmri_def.wcombparams.smthk      = 0;    % If larger than zero, the error maps will be spatially smoothed with a Gaussian kernel of FWHM = smthk
+hmri_def.wcombparams.dim        = 3;    % Dimension along which slices will be taken; weights will be smoothed perpendicular to this
 
 end

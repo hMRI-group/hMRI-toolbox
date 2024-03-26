@@ -28,7 +28,7 @@ in_vols2.num     = [0 3];
 in_weights1         = cfg_files;
 in_weights1.tag     = 'in_weights1';
 in_weights1.name    = 'Weight images for first run';
-in_weights1.help    = {'Select three weight images for first run, corresponding to the three MPMs MT, PD, and T1.'};
+in_weights1.help    = {'Select three weight images for first run, corresponding to the three MPMs MTsat, PD, and R1.'};
 in_weights1.filter = 'image';
 in_weights1.ufilter = '.*param_error';
 in_weights1.num     = [0 3];
@@ -37,7 +37,7 @@ in_weights1.num     = [0 3];
 in_weights2         = cfg_files;
 in_weights2.tag     = 'in_weights2';
 in_weights2.name    = 'Weight images for second run';
-in_weights2.help    = {'Select three weight images for second run, corresponding to the three MPMs MT, PD, and T1.'};
+in_weights2.help    = {'Select three weight images for second run, corresponding to the three MPMs MTsat, PD, and R1.'};
 in_weights2.filter = 'image';
 in_weights2.ufilter = '.*param_error';
 in_weights2.num     = [0 3];
@@ -46,7 +46,7 @@ in_weights2.num     = [0 3];
 in_ref         = cfg_files;
 in_ref.tag     = 'in_ref';
 in_ref.name    = 'Refence image (or done for none)';
-in_ref.help    = {'Select a reference image, to which all other data will be resampled to. In case no reference image is selected, the first MT image of the first run will be used as reference.'};
+in_ref.help    = {'Select a reference image, to which all other data will be resampled to. If no reference image is selected, the first MTsat map of the first run will be used as reference.'};
 in_ref.filter = 'image';
 in_ref.ufilter = '.*';
 in_ref.num     = [0 1];
@@ -72,6 +72,9 @@ tbx_wcomb_out.help    = {
 };
 tbx_wcomb_out.prog = @local_hmri_wcomb;
 tbx_wcomb_out.vout = @out_hmri_wcomb;
+
+end
+
 %% dependencies
 function out = local_hmri_wcomb(job)
 Pout = hmri_wcomb_2mpms(char(job.in_vols1), char(job.in_vols2), char(job.in_weights1), char(job.in_weights2), char(job.in_ref), char(job.in_msk));
@@ -79,9 +82,12 @@ Pout = hmri_wcomb_2mpms(char(job.in_vols1), char(job.in_vols2), char(job.in_weig
 extentwa = '_wa';
 out.wafiles = spm_file(Pout, 'suffix', extentwa);
 
+end
+
 function dep = out_hmri_wcomb(job)
 kk = 1;
 dep(kk)            = cfg_dep;
 dep(kk).sname      = 'Weighted Average';
 dep(kk).src_output = substruct('.','wafiles');
 dep(kk).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
+end

@@ -1,4 +1,4 @@
-function [fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw]  = hmri_create_MTProt(jobsubj) %#ok<*STOUT>
+function [fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw, PR2s_param_error]  = hmri_create_MTProt(jobsubj) %#ok<*STOUT>
 %==========================================================================
 % This is hmri_create_MTProt, part of the hMRI-Toolbox.
 %
@@ -27,7 +27,8 @@ function [fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw]  = hmri_create_MTProt(jobsubj) %
 %           defaults settings (PDproc & RF sensitivity bias correction)). 
 %   PPDw    average PD-weighted image filename (or OLS fit at TE=0 if fullOLS = true) 
 %   PT1w    average T1-weighted image filename (or OLS fit at TE=0 if fullOLS = true)  
-%   PMTw    average MT-weighted image filename (or OLS fit at TE=0 if fullOLS = true)  
+%   PMTw    average MT-weighted image filename (or OLS fit at TE=0 if fullOLS = true)
+%   PR2s_param_error    parameter error maps (if errormaps = true)
 %
 % OTHER USEFUL VARIABLES EXPLAINED
 %   P_mtw, P_pdw, P_t1w (from jobsubj.raw_mpm) are MTw, PDw, T1w series of
@@ -605,6 +606,8 @@ if mpm_params.errormaps
             NSNRpara.MT = Ni;
         end
     end
+else % ensure return value always exists
+    PR2s_param_error = struct();
 end
 
 %% =======================================================================%

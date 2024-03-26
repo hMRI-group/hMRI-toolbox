@@ -6,13 +6,16 @@ function out = hmri_run_create(job)
 % apply UNICORT.
 %==========================================================================
 
-out.R1 = {};
+out.R1  = {};
 out.R2s = {};
-out.A = {};
-out.MT = {};
+out.A   = {};
+out.MT  = {};
 out.T1w = {};
 out.MTw = {};
 out.PDw = {};
+out.R1error = {};
+out.Aerror  = {};
+out.MTerror = {};
 
 % loop over subjects in the main function, calling the local function for
 % each subject:
@@ -27,11 +30,14 @@ for in=1:numel(job.subj)
     out.T1w{end+1} = out.subj(in).T1w{1};
     out.MTw{end+1} = out.subj(in).MTw{1};
     out.PDw{end+1} = out.subj(in).PDw{1};
+    out.R1error{end+1} = out.subj(in).R1error{1};
+    out.Aerror{end+1}  = out.subj(in).Aerror{1};
+    out.MTerror{end+1} = out.subj(in).MTerror{1};
 end
 end
 
 %% =======================================================================%
-% LOCAL SUBFUNCTION (PROCESSING FOR ONE SUBJET)
+% LOCAL SUBFUNCTION (PROCESSING FOR ONE SUBJECT)
 %=========================================================================%
 function out_loc = hmri_create_local(job)
 
@@ -129,7 +135,7 @@ end
 
 % run hmri_create_MTProt to evaluate the parameter maps
 job.subj.b1_trans_input = P_trans;
-[fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw]  = hmri_create_MTProt(job.subj);
+[fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw, Perror]  = hmri_create_MTProt(job.subj);
 
 % collect outputs:
 out_loc.subj.R1  = {fR1};
@@ -139,6 +145,23 @@ out_loc.subj.A   = {fA};
 out_loc.subj.T1w = {PT1w};
 out_loc.subj.MTw = {PMTw};
 out_loc.subj.PDw = {PPDw};
+
+% collect error map output:
+if isfield(Perror,'R1')
+    out_loc.subj.R1error = {Perror.R1};
+else
+    out_loc.subj.R1error = {''};
+end
+if isfield(Perror,'PD')
+    out_loc.subj.Aerror = {Perror.PD};
+else
+    out_loc.subj.Aerror = {''};
+end
+if isfield(Perror,'MT')
+    out_loc.subj.MTerror = {Perror.MT};
+else
+    out_loc.subj.MTerror = {''};
+end
 
 % clean after if required
 if hmri_get_defaults('cleanup')

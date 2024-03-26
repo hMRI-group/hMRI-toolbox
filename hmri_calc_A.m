@@ -47,8 +47,11 @@ else
 end
 
 assert(all(size(PDw.data)==size(T1w.data)),'hmri:inputArraySize','PDw.data and T1w.data must be the same size!')
-assert(PDw.TR>0,'hmri:TR','PDw.TR must be positive!')
-assert(T1w.TR>0,'hmri:TR','T1w.TR must be positive!')
+
+% Sanity check TR
+% Use "isAlways" so that hmri_calc_A.m can be called using symbolic variables
+assert(isAlways(PDw.TR>0),'hmri:TR','PDw.TR must be positive!')
+assert(isAlways(T1w.TR>0),'hmri:TR','T1w.TR must be positive!')
 
 A=T1w.data.*PDw.data.*( T1w.TR.*PDw.t./T1w.t - PDw.TR.*T1w.t./PDw.t )...
     ./ ( PDw.data.*T1w.TR.*PDw.t - T1w.data.*PDw.TR.*T1w.t );

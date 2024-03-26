@@ -43,6 +43,6 @@ hmri.help    = {
     'and will include a number of (as yet unspecified) extensions in ',...
     'future updates.  Please report any bugs or problems to lreninfo@gmail.com.']
     }';
-hmri.values  = {tbx_scfg_hmri_config tbx_scfg_hmri_dicom_import tbx_scfg_hmri_autoreorient tbx_scfg_hmri_imperf_spoil tbx_scfg_hmri_B1_create tbx_scfg_hmri_create tbx_scfg_hmri_quality tbx_scfg_hmri_proc tbx_scfg_hmri_QUIQI};
+hmri.values  = {tbx_scfg_hmri_config tbx_scfg_hmri_dicom_import tbx_scfg_hmri_autoreorient tbx_scfg_hmri_imperf_spoil tbx_scfg_hmri_B1_create tbx_scfg_hmri_create tbx_scfg_hmri_wcomb tbx_scfg_hmri_quality tbx_scfg_hmri_proc tbx_scfg_hmri_QUIQI};
 end
 

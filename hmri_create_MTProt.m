@@ -573,7 +573,7 @@ if mpm_params.errormaps
     % set metadata are missing
     if (PDwidx && T1widx)
         % R1 error maps
-        PR2s_param_error.R1    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qR1).suffix 'param_error.nii']);
+        PR2s_param_error.R1    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qR1).suffix '_param_error.nii']);
         Ni = hmri_create_nifti(PR2s_param_error.R1,V_pdw(1),dt,['Error map for ' mpm_params.output(mpm_params.qR1).suffix 'param']);
         NEpara.R1 = nifti;
         NEpara.R1 = Ni;
@@ -584,7 +584,7 @@ if mpm_params.errormaps
         NSNRpara.R1 = Ni;
         
         % PD error maps
-        PR2s_param_error.PD    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qPD).suffix 'param_error.nii']);
+        PR2s_param_error.PD    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qPD).suffix '_param_error.nii']);
         Ni = hmri_create_nifti(PR2s_param_error.PD,V_pdw(1),dt,['Error map for ' mpm_params.output(mpm_params.qPD).suffix 'param']);
         NEpara.PD = nifti;
         NEpara.PD = Ni;
@@ -595,7 +595,7 @@ if mpm_params.errormaps
         NSNRpara.PD = Ni;
         if MTwidx
             % MT error maps
-            PR2s_param_error.MT    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qMT).suffix 'param_error.nii']);
+            PR2s_param_error.MT    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qMT).suffix '_param_error.nii']);
             Ni = hmri_create_nifti(PR2s_param_error.MT,V_pdw(1),dt,['Error map for ' mpm_params.output(mpm_params.qMT).suffix 'param']);
             NEpara.MT = nifti;
             NEpara.MT = Ni;

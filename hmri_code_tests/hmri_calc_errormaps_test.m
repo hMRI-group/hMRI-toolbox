@@ -1,9 +1,9 @@
 %% Main function to generate tests
-function tests = hmri_make_errormaps_test
+function tests = hmri_calc_errormaps_test
 tests = functiontests(localfunctions);
 end
 
-function hmri_make_dR1_test(testCase)
+function hmri_calc_dR1_test(testCase)
 htu = hmri_test_utils;
 
 % Define reasonable parameter set
@@ -51,7 +51,7 @@ T1wErr.data=T1w.data+errorinT1;
 
 R1est=hmri_calc_R1(PDwErr,T1wErr,B1map);
 
-errorinR1=hmri_make_dR1(PDwErr.data,T1wErr.data,errorinPD,errorinT1,PDwErr.fa,T1wErr.fa,PDwErr.TR,T1wErr.TR,B1map,R1est);
+errorinR1=hmri_calc_dR1(PDwErr.data,T1wErr.data,errorinPD,errorinT1,PDwErr.fa,T1wErr.fa,PDwErr.TR,T1wErr.TR,B1map,R1est);
 
 merrorinR1 = mean(errorinR1,4);
 
@@ -67,7 +67,7 @@ assert(rms((rms_error(:)-merrorinR1(:))./R1(:))<tol)
 end
 
 
-function hmri_make_dPD_test(testCase)
+function hmri_calc_dPD_test(testCase)
 htu = hmri_test_utils;
 
 % Define reasonable parameter set
@@ -115,7 +115,7 @@ T1wErr.data=T1w.data+errorinT1;
 
 Aest=hmri_calc_A(PDwErr,T1wErr,B1map);
 
-modelerrorinPD=hmri_make_dPD(PDwErr.data,T1wErr.data,errorinPD,errorinT1,PDwErr.fa,T1wErr.fa,PDwErr.TR,T1wErr.TR,B1map,Aest);
+modelerrorinPD=hmri_calc_dPD(PDwErr.data,T1wErr.data,errorinPD,errorinT1,PDwErr.fa,T1wErr.fa,PDwErr.TR,T1wErr.TR,B1map,Aest);
 
 mmodelerrorinPD = mean(modelerrorinPD,4);
 

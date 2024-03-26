@@ -1,4 +1,4 @@
-function dPD = hmri_make_dPD(SPD,ST1,dSPD,dST1,alpha_PD,alpha_T1,TRPD,TRT1,f_T,small_angle_approximation)
+function dPD = hmri_calc_dPD(SPD,ST1,dSPD,dST1,alpha_PD,alpha_T1,TRPD,TRT1,f_T,small_angle_approximation)
 % Calculate propagation of uncertainty for PD map
 % (https://en.wikipedia.org/wiki/Propagation_of_uncertainty).
 % % S.Mohammadi 06.09.2019

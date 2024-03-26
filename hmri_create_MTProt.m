@@ -444,11 +444,6 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
             PR2s_OLS_error{ccon}    = fullfile(calcpath,[outbasename '_' 'R2s_errorESTATICS' '.nii']);
             Ni = hmri_create_nifti(PR2s_OLS_error{ccon},V_pdw(1),dt,'Error map for R2s contrast');
             NEmap(ccon) = Ni;
-            
-            % this is unused
-            PR2s_OLS_mSNR    = fullfile(calcpath,[outbasename '_' 'R2s_mSNR' '.nii']);
-            Ni      = hmri_create_nifti(PR2s_OLS_mSNR,V_pdw(1),dt,'Standarized map for R2s contrast');
-            NSMmap = Ni;
         end
     end % init nifti objects for fullOLS case
     
@@ -678,7 +673,7 @@ for p = 1:dm(3)
             Edata.PDw = hmri_read_vols(Verror(PDwidx),V_ref,p,mpm_params.interp);
             Edata.T1w = hmri_read_vols(Verror(T1widx),V_ref,p,mpm_params.interp);
             
-            dR1 = hmri_make_dR1(PDw,T1w,Edata.PDw,Edata.T1w,fa_pdw_rad,fa_t1w_rad,TR_pdw,TR_t1w,f_T,mpm_params.small_angle_approx);
+            dR1 = hmri_calc_dR1(PDw,T1w,Edata.PDw,Edata.T1w,fa_pdw_rad,fa_t1w_rad,TR_pdw,TR_t1w,f_T,mpm_params.small_angle_approx);
             
             if ISC.enabled&&~isempty(f_T)
                 % Use chain rule to include the imperfect spoiling 
@@ -783,7 +778,7 @@ for p = 1:dm(3)
             Edata.PDw = hmri_read_vols(Verror(PDwidx),V_ref,p,mpm_params.interp);
             Edata.T1w = hmri_read_vols(Verror(T1widx),V_ref,p,mpm_params.interp);
             
-            dPD = hmri_make_dPD(PDw,T1w,Edata.PDw,Edata.T1w,fa_pdw_rad,fa_t1w_rad,TR_pdw,TR_t1w,f_T,mpm_params.small_angle_approx);
+            dPD = hmri_calc_dPD(PDw,T1w,Edata.PDw,Edata.T1w,fa_pdw_rad,fa_t1w_rad,TR_pdw,TR_t1w,f_T,mpm_params.small_angle_approx);
             
             % truncate PD error maps
             dPD(isinf(dPD)) = 0;
@@ -843,7 +838,7 @@ for p = 1:dm(3)
             if mpm_params.errormaps
                 Edata.MTw = hmri_read_vols(Verror(MTwidx),V_ref,p,mpm_params.interp);
                 
-                dMT = hmri_make_dMT(PDw,T1w,MTw,Edata.PDw,Edata.T1w,Edata.MTw,fa_pdw_rad,fa_t1w_rad,fa_mtw_rad,TR_pdw,TR_t1w,TR_mtw,mpm_params.small_angle_approx) * 100;
+                dMT = hmri_calc_dMT(PDw,T1w,MTw,Edata.PDw,Edata.T1w,Edata.MTw,fa_pdw_rad,fa_t1w_rad,fa_mtw_rad,TR_pdw,TR_t1w,TR_mtw,mpm_params.small_angle_approx) * 100;
                 
                 if (~isempty(f_T))&&(~mpm_params.UNICORT.R1 || mpm_params.UNICORT.MT)
                     % use chain rule to include MTsat B1 correction in error maps

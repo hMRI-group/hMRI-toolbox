@@ -1,4 +1,4 @@
-function dMT = hmri_make_dMT(SPD,ST1,SMT,dSPD,dST1,dSMT,alpha_PD,alpha_T1,alpha_MT,TRPD,TRT1,TRMT,small_angle_approximation)
+function dMT = hmri_calc_dMT(SPD,ST1,SMT,dSPD,dST1,dSMT,alpha_PD,alpha_T1,alpha_MT,TRPD,TRT1,TRMT,small_angle_approximation)
 % Calculate propagation of uncertainty for MT map
 % (https://en.wikipedia.org/wiki/Propagation_of_uncertainty).
 % Taking the total differential from Eq. A9 in Tabelow et al., NI, 2019

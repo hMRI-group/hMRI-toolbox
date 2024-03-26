@@ -1,4 +1,4 @@
-function dR1 = hmri_make_dR1(SPD,ST1,dSPD,dST1,alpha_PD,alpha_T1,TRPD,TRT1,f_T,small_angle_approximation)
+function dR1 = hmri_calc_dR1(SPD,ST1,dSPD,dST1,alpha_PD,alpha_T1,TRPD,TRT1,f_T,small_angle_approximation)
 % Calculate propagation of uncertainty for R1 map
 % (https://en.wikipedia.org/wiki/Propagation_of_uncertainty).
 % S.Mohammadi 06.09.2019

@@ -1,20 +1,21 @@
-function PoutRO = hmri_wcomb_2mpms(PIn1,PIn2,Pw1,Pw2,PVG,PMSK)
+function PoutRO = hmri_wcomb_2mpms(PIn1,PIn2,Pw1,Pw2,outdir,PVG,PMSK)
 % This function combines two input images (PIn1 and PIn2) using two weight
 % images (Pw1 and Pw2) for each input image, respectively. PVG is used as
 % reference (space defining image). If PVG is unspecified, it will
 % automatically use PIn1.
 % S. Mohammadi 18/10/2019
 % In:
-% PIn1           - Filepath & name of first input image
-% PIn2           - Filepath & name of second input image
-% Pw1            - Filepath & name of first weight image
-% Pw2            - Filepath & name of second weight image
-% PVG            - Filepath & name of reference image (Image to which all
-%                  will be resliced
-% PMSK           - Filepath & name of brain mask image
+% PIn1   - Filepath & name of first input image
+% PIn2   - Filepath & name of second input image
+% Pw1    - Filepath & name of first weight image
+% Pw2    - Filepath & name of second weight image
+% outdir - Output directory
+% PVG    - Filepath & name of reference image (optional: Image to which all
+%          others will be resliced)
+% PMSK   - Filepath & name of brain mask image
 
 % Out:
-% PoutRO         - Robust combination
+% PoutRO - Robust combination
 
 wcombparams = hmri_get_defaults('wcombparams');
 write_am    = wcombparams.am; % write arithmetic mean image
@@ -61,15 +62,15 @@ else
 end
 
 % define output volumes
-PoutRO = spm_file(VIn1.fname,'suffix',['_RO_k' num2str(kt)]);
+PoutRO = spm_file(VIn1.fname,'path',outdir,'suffix','_RO');
 Ntmp = hmri_create_nifti(PoutRO,VG,dt,deblank([VIn1.descrip  ' - robust combination']));
 
 if write_error
-    Pout = spm_file(Vw1.fname,'suffix',['_RO_k' num2str(kt)]);
+    Pout = spm_file(Vw1.fname,'path',outdir,'suffix',['_RO_k' num2str(kt)]);
     Ntmperror = hmri_create_nifti(Pout,VG,dt,deblank([Vw1.descrip  ' - robust combination error maps']));
 end
-if write_am==true
-    Pout = spm_file(VIn1.fname,'suffix','_AM');
+if write_am
+    Pout = spm_file(VIn1.fname,'path',outdir,'suffix','_AM');
     Ntmpam = hmri_create_nifti(Pout,VG,dt,deblank([VIn1.descrip  ' - arithmetic mean']));
 end
 
@@ -109,7 +110,7 @@ for p = 1:VG.dim(dim)
     else
         nAw1 = Aw1(AMSK(:,:,p))./Aw2(AMSK(:,:,p));
         nAw1(nAw1<0)=1;
-        f1 = local_fermi(nAw1,kt); % we take 1- to down-weight regions that have high res
+        f1 = local_fermi(nAw1,kt); % we take 1- to downweight regions that have high res
     end
 
     Awavg = zeros(VG.dim(dplane));

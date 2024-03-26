@@ -62,14 +62,42 @@ in_msk.ufilter = '.*';
 in_msk.num     = [0 1];
 in_msk.val     = {''};
 
+%% define variable: output directory
+indir         = cfg_entry;
+indir.tag     = 'indir';
+indir.name    = 'Input directory';
+indir.help    = {['Output files will be written to the same folder ' ...
+    'as each corresponding input file.']};
+indir.strtype = 's';
+indir.num     = [1 Inf];
+indir.val     = {'yes'};
+
+outdir         = cfg_files;
+outdir.tag     = 'outdir';
+outdir.name    = 'Output directory';
+outdir.help    = {'Select a directory where output files will be written to.'};
+outdir.filter = 'dir';
+outdir.ufilter = '.*';
+outdir.num     = [1 1];
+
+output         = cfg_choice;
+output.tag     = 'output';
+output.name    = 'Output choice';
+output.help    = {['Output directory can be the same as the input ' ...
+    'directory for each input file or user selected']};
+output.values  = {indir outdir };
+output.val = {indir};
+
 %% call local wcomb function
 tbx_wcomb_out         = cfg_exbranch;
 tbx_wcomb_out.tag     = 'tbx_scfg_hmri_wcomb';
 tbx_wcomb_out.name    = 'Combine two successive MPM datasets';
-tbx_wcomb_out.val     = {in_vols1 in_vols2 in_weights1 in_weights2 in_ref in_msk};
+tbx_wcomb_out.val     = {output in_vols1 in_vols2 in_weights1 in_weights2 in_ref in_msk};
 tbx_wcomb_out.help    = {
-                    'Robust combination of two MPMs from successive runs using error maps. This approach requires the acquisition of two successive runs of the MPM protocol. The proposed method and an example protocol is described in Mohammadi et al. 2022, NeuroImage'
-};
+    ['Robust combination of two MPMs from successive runs using error maps. ' ...
+    'This approach requires the acquisition of two successive runs of the MPM protocol. ' ...
+    'The proposed method and an example protocol is described in Mohammadi et al. 2022, NeuroImage']
+    };
 tbx_wcomb_out.prog = @local_hmri_wcomb;
 tbx_wcomb_out.vout = @out_hmri_wcomb;
 
@@ -77,10 +105,18 @@ end
 
 %% dependencies
 function out = local_hmri_wcomb(job)
+
 nInputs = size(job.in_vols1,1);
 Pout = cell(nInputs,1);
 for n=1:nInputs
-    Pout{n} = hmri_wcomb_2mpms(char(job.in_vols1(n)), char(job.in_vols2(n)), char(job.in_weights1(n)), char(job.in_weights2(n)), char(job.in_ref), char(job.in_msk));
+    if isfield(job.output,'indir')
+        outdir = fileparts(job.in_vols1{n});
+    elseif isfield(job.output,'outdir')
+        outdir = job.output.outdir{1};
+        if ~exist(outdir,'dir'); mkdir(outdir); end
+    end
+
+    Pout{n} = hmri_wcomb_2mpms(char(job.in_vols1(n)), char(job.in_vols2(n)), char(job.in_weights1(n)), char(job.in_weights2(n)), outdir, char(job.in_ref), char(job.in_msk));
 end
 
 extentwa = '_wa';

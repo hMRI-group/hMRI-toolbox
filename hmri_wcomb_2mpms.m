@@ -94,7 +94,7 @@ for p = 1:VG.dim(dim)
     AIn2 = hmri_read_vols(VIn2,VG,p,res);
     if write_am
         Aam = (AIn1 + AIn2)./2;
-        read_nifti_perm(Ntmpam,reshape(Aam(:),VG.dim(dplane)),dim,p)
+        write_nifti_slice(Ntmpam,reshape(Aam(:),VG.dim(dplane)),dim,p)
     end
     if smthk>0
         Aw1 = sAw1(:,:,p);
@@ -116,13 +116,13 @@ for p = 1:VG.dim(dim)
     if nnz(AMSK(:,:,p))>0
         Awavg(AMSK(:,:,p)) = (AIn1(AMSK(:,:,p)).*f1 + AIn2(AMSK(:,:,p)).*(max(f1)-f1))./max(f1);
     end
-    read_nifti_perm(Ntmp,reshape(Awavg,VG.dim(dplane)),dim,p)
+    write_nifti_slice(Ntmp,reshape(Awavg,VG.dim(dplane)),dim,p)
 
-    Awerr = zeros(VG.dim(dplane));
     if write_error
+        Awerr = zeros(VG.dim(dplane));
         Awerr(AMSK(:,:,p)) = (Aw1(AMSK(:,:,p)).*f1 + Aw2(AMSK(:,:,p)).*(max(f1)-f1))./max(f1);
+        write_nifti_slice(Ntmperror,reshape(Awerr,VG.dim(dplane)),dim,p)
     end
-    read_nifti_perm(Ntmperror,reshape(Awerr,VG.dim(dplane)),dim,p)
 
     spm_progress_bar('Set',p);
 end
@@ -137,9 +137,9 @@ function f = local_fermi(x,kt)
     f = 1./(exp((x-1)/kt)+1);
 end
 
-function read_nifti_perm(Nif,A,dim,p)
-% This function reads the data A into the nifti file Nif, accounting for
-% the permutation of dimension defined by dim.
+function write_nifti_slice(Nif,A,dim,p)
+% This function writes the data A into the nifti file Nif, accounting for
+% the choice of slice dimension defined by dim.
 % S.Mohammadi 18.10.2019
     switch dim
         case 1

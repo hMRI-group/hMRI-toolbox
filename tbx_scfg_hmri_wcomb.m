@@ -45,8 +45,8 @@ in_weights2.num     = [0 3];
 %% define variable: reference image
 in_ref         = cfg_files;
 in_ref.tag     = 'in_ref';
-in_ref.name    = 'Refence image (or done for none)';
-in_ref.help    = {'Select a reference image, to which all other data will be resampled to. If no reference image is selected, the first MTsat map of the first run will be used as reference.'};
+in_ref.name    = 'Reference image (or done for none)';
+in_ref.help    = {'Select a reference image, to which all other data will be resampled. If no reference image is selected, the first MTsat map of the first run will be used as reference.'};
 in_ref.filter = 'image';
 in_ref.ufilter = '.*';
 in_ref.num     = [0 1];
@@ -87,7 +87,7 @@ end
 function dep = out_hmri_wcomb(job)
 kk = 1;
 dep(kk)            = cfg_dep;
-dep(kk).sname      = 'Weighted Average';
+dep(kk).sname      = 'Robust combination';
 dep(kk).src_output = substruct('.','wafiles');
 dep(kk).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
 end

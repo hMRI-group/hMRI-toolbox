@@ -41,6 +41,7 @@ in_weights2.help    = {'Select three weight images for second run, corresponding
 in_weights2.filter = 'image';
 in_weights2.ufilter = '.*param_error';
 in_weights2.num     = [0 3];
+
 %% define variable: reference image
 in_ref         = cfg_files;
 in_ref.tag     = 'in_ref';
@@ -50,6 +51,7 @@ in_ref.filter = 'image';
 in_ref.ufilter = '.*';
 in_ref.num     = [0 1];
 in_ref.val     = {''};
+
 %% define variable: mask image
 in_msk         = cfg_files;
 in_msk.tag     = 'in_msk';
@@ -59,6 +61,7 @@ in_msk.filter = 'image';
 in_msk.ufilter = '.*';
 in_msk.num     = [0 1];
 in_msk.val     = {''};
+
 %% call local wcomb function
 tbx_wcomb_out         = cfg_exbranch;
 tbx_wcomb_out.tag     = 'tbx_scfg_hmri_wcomb';

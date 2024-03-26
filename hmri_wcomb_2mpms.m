@@ -1,4 +1,4 @@
-function Pout = hmri_wcomb_2mpms(PIn1,PIn2,Pw1,Pw2,PVG,PMSK)
+function PoutRO = hmri_wcomb_2mpms(PIn1,PIn2,Pw1,Pw2,PVG,PMSK)
 % This function combines two input images (PIn1 and PIn2) using two weight
 % images (Pw1 and Pw2) for each input image, respectively. PVG is used as
 % reference (space defining image). If PVG is unspecified, it will
@@ -14,7 +14,7 @@ function Pout = hmri_wcomb_2mpms(PIn1,PIn2,Pw1,Pw2,PVG,PMSK)
 % PMSK           - Filepath & name of brain mask image
 
 % Out:
-% Pout          - Robust combination
+% PoutRO         - Robust combination
 
 wcombparams = hmri_get_defaults('wcombparams');
 write_am    = wcombparams.am; % write arithmetic mean image
@@ -40,13 +40,13 @@ switch dim % choose which dimension slices will be read in; this is important if
 end
 VIn1 = spm_vol(PIn1);
 VIn2 = spm_vol(PIn2);
-Vw1 = spm_vol(Pw1);
-Vw2 = spm_vol(Pw2);
+Vw1  = spm_vol(Pw1);
+Vw2  = spm_vol(Pw2);
 % define reference volume
 if exist('PVG','var') && ~isempty(PVG)
     VG = spm_vol(PVG);
 else
-    VG = spm_vol(VIn1(1));
+    VG = spm_vol(VIn1);
 end
 
 if exist('PMSK','var') && ~isempty(PMSK)
@@ -60,75 +60,73 @@ else
     AMSK = true(VG.dim);
 end
 
-for inx = 1:size(VIn1,1)
-    % define output volumes
-    PoutRO = spm_file(VIn1(inx).fname,'suffix',['_RO_k' num2str(kt)]);
-    Ntmp = hmri_create_nifti(PoutRO,VG,dt,deblank([VIn1(inx).descrip  ' - robust combination']));
+% define output volumes
+PoutRO = spm_file(VIn1.fname,'suffix',['_RO_k' num2str(kt)]);
+Ntmp = hmri_create_nifti(PoutRO,VG,dt,deblank([VIn1.descrip  ' - robust combination']));
 
-    if write_error
-        Pout = spm_file(Vw1(inx).fname,'suffix',['_RO_k' num2str(kt)]);
-        Ntmperror = hmri_create_nifti(Pout,VG,dt,deblank([Vw1(inx).descrip  ' - robust combination error maps']));
-    end
-    if write_am==true
-        Pout = spm_file(VIn1(inx).fname,'suffix','_AM');
-        Ntmpam = hmri_create_nifti(Pout,VG,dt,deblank([VIn1(inx).descrip  ' - arithmetic mean']));
-    end
-
-    spm_progress_bar('Init',VG.dim(3),Ntmp.descrip,'planes completed');
-
-    if smthk>0
-        % smooth weights
-        vxg         = sqrt(sum(VG.mat(1:3,1:3).^2));
-        smthk       = smthk.*vxg;
-
-        for p = 1:VG.dim(dim)
-            Aw1 = hmri_read_vols(Vw1(inx),VG,p,res);
-            Aw2 = hmri_read_vols(Vw2(inx),VG,p,res);
-        end
-        sAw1 = Aw1;
-        sAw2 = Aw2;
-        spm_smooth(sAw1,Aw1, smthk);
-        spm_smooth(sAw2,Aw2, smthk);
-    end
-    for p = 1:VG.dim(dim)
-        AIn1 = hmri_read_vols(VIn1(inx),VG,p,res);
-        AIn2 = hmri_read_vols(VIn2(inx),VG,p,res);
-        if write_am
-            Aam = (AIn1 + AIn2)./2;
-            read_nifti_perm(Ntmpam,reshape(Aam(:),VG.dim(dplane)),dim,p)
-        end
-        if smthk>0
-            Aw1 = sAw1(:,:,p);
-            Aw2 = sAw2(:,:,p);
-        else
-            Aw1 = hmri_read_vols(Vw1(inx),VG,p,res);
-            Aw2 = hmri_read_vols(Vw2(inx),VG,p,res);
-        end
-
-        if nnz(AMSK(:,:,p))<1e1
-            f1 = 1;
-        else
-            nAw1 = Aw1(AMSK(:,:,p))./Aw2(AMSK(:,:,p));
-            nAw1(nAw1<0)=1;
-            f1 = local_fermi(nAw1,kt); % we take 1- to down-weight regions that have high res
-        end
-
-        Awavg = zeros(VG.dim(dplane));
-        if nnz(AMSK(:,:,p))>0
-            Awavg(AMSK(:,:,p)) = (AIn1(AMSK(:,:,p)).*f1 + AIn2(AMSK(:,:,p)).*(max(f1)-f1))./max(f1);
-        end
-        read_nifti_perm(Ntmp,reshape(Awavg,VG.dim(dplane)),dim,p)
-
-        Awerr = zeros(VG.dim(dplane));
-        if write_error
-            Awerr(AMSK(:,:,p)) = (Aw1(AMSK(:,:,p)).*f1 + Aw2(AMSK(:,:,p)).*(max(f1)-f1))./max(f1);
-        end
-        read_nifti_perm(Ntmperror,reshape(Awerr,VG.dim(dplane)),dim,p)
-
-        spm_progress_bar('Set',p);
-    end
-    spm_progress_bar('Clear');
+if write_error
+    Pout = spm_file(Vw1.fname,'suffix',['_RO_k' num2str(kt)]);
+    Ntmperror = hmri_create_nifti(Pout,VG,dt,deblank([Vw1.descrip  ' - robust combination error maps']));
 end
+if write_am==true
+    Pout = spm_file(VIn1.fname,'suffix','_AM');
+    Ntmpam = hmri_create_nifti(Pout,VG,dt,deblank([VIn1.descrip  ' - arithmetic mean']));
+end
+
+spm_progress_bar('Init',VG.dim(3),Ntmp.descrip,'planes completed');
+
+if smthk>0
+    % smooth weights
+    vxg         = sqrt(sum(VG.mat(1:3,1:3).^2));
+    smthk       = smthk.*vxg;
+
+    for p = 1:VG.dim(dim)
+        Aw1 = hmri_read_vols(Vw1,VG,p,res);
+        Aw2 = hmri_read_vols(Vw2,VG,p,res);
+    end
+    sAw1 = Aw1;
+    sAw2 = Aw2;
+    spm_smooth(sAw1,Aw1, smthk);
+    spm_smooth(sAw2,Aw2, smthk);
+end
+for p = 1:VG.dim(dim)
+    AIn1 = hmri_read_vols(VIn1,VG,p,res);
+    AIn2 = hmri_read_vols(VIn2,VG,p,res);
+    if write_am
+        Aam = (AIn1 + AIn2)./2;
+        read_nifti_perm(Ntmpam,reshape(Aam(:),VG.dim(dplane)),dim,p)
+    end
+    if smthk>0
+        Aw1 = sAw1(:,:,p);
+        Aw2 = sAw2(:,:,p);
+    else
+        Aw1 = hmri_read_vols(Vw1,VG,p,res);
+        Aw2 = hmri_read_vols(Vw2,VG,p,res);
+    end
+
+    if nnz(AMSK(:,:,p))<1e1
+        f1 = 1;
+    else
+        nAw1 = Aw1(AMSK(:,:,p))./Aw2(AMSK(:,:,p));
+        nAw1(nAw1<0)=1;
+        f1 = local_fermi(nAw1,kt); % we take 1- to down-weight regions that have high res
+    end
+
+    Awavg = zeros(VG.dim(dplane));
+    if nnz(AMSK(:,:,p))>0
+        Awavg(AMSK(:,:,p)) = (AIn1(AMSK(:,:,p)).*f1 + AIn2(AMSK(:,:,p)).*(max(f1)-f1))./max(f1);
+    end
+    read_nifti_perm(Ntmp,reshape(Awavg,VG.dim(dplane)),dim,p)
+
+    Awerr = zeros(VG.dim(dplane));
+    if write_error
+        Awerr(AMSK(:,:,p)) = (Aw1(AMSK(:,:,p)).*f1 + Aw2(AMSK(:,:,p)).*(max(f1)-f1))./max(f1);
+    end
+    read_nifti_perm(Ntmperror,reshape(Awerr,VG.dim(dplane)),dim,p)
+
+    spm_progress_bar('Set',p);
+end
+spm_progress_bar('Clear');
 
 end
 

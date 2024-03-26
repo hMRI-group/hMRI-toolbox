@@ -66,7 +66,7 @@ PoutRO = spm_file(VIn1.fname,'path',outdir,'suffix','_RO');
 Ntmp = hmri_create_nifti(PoutRO,VG,dt,deblank([VIn1.descrip  ' - robust combination']));
 
 if write_error
-    Pout = spm_file(Vw1.fname,'path',outdir,'suffix',['_RO_k' num2str(kt)]);
+    Pout = spm_file(Vw1.fname,'path',outdir,'suffix','_RO_errormap');
     Ntmperror = hmri_create_nifti(Pout,VG,dt,deblank([Vw1.descrip  ' - robust combination error maps']));
 end
 if write_am

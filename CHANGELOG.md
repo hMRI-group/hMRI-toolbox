@@ -8,13 +8,15 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 ### Added
 - option to choose different models and parameters for B1-correction of MTsat
 - set default WM percent value in hmri_defaults
-- fix crash if input images have different matrix sizes, and warn
 - parameter error maps
 - robust combination of two runs using error maps
 
 ### Fixed
 - replace `datestr(now)` with `datetime('now')` in line with [MATLAB recommendation](https://mathworks.com/help/matlab/matlab_prog/replace-discouraged-instances-of-serial-date-numbers-and-date-strings.html)
+- fix crash if input images have different matrix sizes, and warn
+- make B1-map creation using 3DEPI SE/STE and AFI methods fall back to defaults without sidecar files, rather than crash
 - Modify the filenames as files are copied to RFsensCalc to prevent overwriting in further processing
+- batch interface now enforces the number of B1 input images correctly for B1 mapping methods which only need two images.
 
 ## [v0.6.1]
 ### Fixed

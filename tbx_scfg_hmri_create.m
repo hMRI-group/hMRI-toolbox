@@ -365,15 +365,15 @@ for i=1:numel(job.subj)
     k=k+1;
 
     cdep(k)            = cfg_dep;
-    cdep(k).sname      = sprintf('Aerror_subj%d',i);
-    cdep(k).src_output = substruct('.','subj','()',{i},'.','Aerror','()',{':'});
+    cdep(k).sname      = sprintf('MTerror_subj%d',i);
+    cdep(k).src_output = substruct('.','subj','()',{i},'.','MTerror','()',{':'});
     cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
     
     k=k+1;
 
     cdep(k)            = cfg_dep;
-    cdep(k).sname      = sprintf('MTerror_subj%d',i);
-    cdep(k).src_output = substruct('.','subj','()',{i},'.','MTerror','()',{':'});
+    cdep(k).sname      = sprintf('Aerror_subj%d',i);
+    cdep(k).src_output = substruct('.','subj','()',{i},'.','Aerror','()',{':'});
     cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
     
     k=k+1;

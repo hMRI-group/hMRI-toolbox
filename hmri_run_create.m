@@ -148,19 +148,19 @@ out_loc.subj.PDw = {PPDw};
 
 % collect error map output:
 if isfield(Perror,'R1')
-    out_loc.subj.R1error{end+1} = {Perror.R1};
+    out_loc.subj.R1error = {Perror.R1};
 else
-    out_loc.subj.R1error{end+1} = {''};
+    out_loc.subj.R1error = {''};
 end
 if isfield(Perror,'PD')
-    out_loc.subj.Aerror{end+1} = {Perror.PD};
+    out_loc.subj.Aerror = {Perror.PD};
 else
-    out_loc.subj.Aerror{end+1} = {''};
+    out_loc.subj.Aerror = {''};
 end
 if isfield(Perror,'MT')
-    out_loc.subj.MTerror{end+1} = {Perror.MT};
+    out_loc.subj.MTerror = {Perror.MT};
 else
-    out_loc.subj.MTerror{end+1} = {''};
+    out_loc.subj.MTerror = {''};
 end
 
 % clean after if required

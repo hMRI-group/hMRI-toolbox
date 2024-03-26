@@ -10,7 +10,7 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 - set default WM percent value in hmri_defaults
 - fix crash if input images have different matrix sizes, and warn
 - parameter error maps
-- weighted combination
+- robust combination of two runs using error maps
 
 ### Fixed
 - replace `datestr(now)` with `datetime('now')` in line with [MATLAB recommendation](https://mathworks.com/help/matlab/matlab_prog/replace-discouraged-instances-of-serial-date-numbers-and-date-strings.html)

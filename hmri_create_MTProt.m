@@ -1089,8 +1089,11 @@ if mpm_params.errormaps
     % R1, PD, MT error maps
     outfields=fieldnames(PR2s_param_error)';
     for ccon = 1:length(outfields)
-        copyfile(PR2s_param_error.(outfields{ccon}), fullfile(supplpath, spm_file(PR2s_param_error.(outfields{ccon}),'filename')));
-        try copyfile([spm_str_manip(PR2s_param_error.(outfields{ccon}),'r') '.json'],fullfile(supplpath, [spm_file(PR2s_param_error.(outfields{ccon}),'basename') '.json'])); end
+        errormap_final = fullfile(supplpath, spm_file(PR2s_param_error.(outfields{ccon}),'filename'));
+        copyfile(PR2s_param_error.(outfields{ccon}), errormap_final);
+        try copyfile([spm_str_manip(errormap_final,'r') '.json'],fullfile(supplpath, [spm_file(errormap_final,'basename') '.json'])); end
+        PR2s_param_error.(outfields{ccon}) = errormap_final;
+        
         copyfile(P_mSNRscore.(outfields{ccon}), fullfile(supplpath, spm_file(P_mSNRscore.(outfields{ccon}),'filename')));
         try copyfile([spm_str_manip(P_mSNRscore.(outfields{ccon}),'r') '.json'],fullfile(supplpath, [spm_file(P_mSNRscore.(outfields{ccon}),'basename') '.json'])); end
     end

@@ -657,7 +657,7 @@ switch inParName
                         EchoSpacing = 330; % us
                     case 'b1epi2b3d2' % 1mm protocol from WTCN
                         EchoSpacing = 540; % us
-                    case {'seste1h3d2' 'seste1f3d2' 'seste1e3d2'} % 1mm protocol from WTCN
+                    case {'seste1d3d2' 'seste1h3d2' 'seste1f3d2' 'seste1e3d2'} % 1mm protocol from WTCN
                         % wip parameters are sorted as follows:
                         % alFree: [VoxDeph,SpoilAmp,EddCurr0,EddCurr1,TRamp,TFlat,BWT,0,0,0,0,0,0,MixingTime,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12345]
                         % adFree: [0,0,0,0,0,0,0,SlabGradScale,RefocCorr,0,FatSatAngle,RFSpoilBasicIncr] --> 'seste1h3d2' 'seste1f3d2'
@@ -777,7 +777,7 @@ switch inParName
                     % adFree: [RefocCorr ScaleSGrad? MaxRefocAngle DecRefocAngle FAforReferScans]
                     parLocation{cRes} = [nam{1} '.adFree(3:4)'];
                     parValue{cRes} = val{1}.adFree(3):-val{1}.adFree(4):0;
-                case {'seste1h3d2' 'seste1f3d2' 'seste1e3d2'} % 1mm protocol from WTCN
+                case {'seste1d3d2' 'seste1h3d2' 'seste1f3d2' 'seste1e3d2'} % 1mm protocol from WTCN
                     % wip parameters are sorted as follows:
                     % alFree: [VoxDeph,SpoilAmp,EddCurr0,EddCurr1,TRamp,TFlat,BWT,0,0,0,0,0,0,MixingTime,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12345]
                     % adFree: [0,0,0,0,0,0,0,SlabGradScale,RefocCorr,0,FatSatAngle,RFSpoilBasicIncr] --> 'seste1h3d2' 'seste1f3d2'
@@ -839,7 +839,7 @@ switch inParName
                     % alFree: [Tmixing DurationPer5Deg BWT_SE/STE_factor (?) CrusherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
                     % adFree: [RefocCorr ScaleSGrad? MaxRefocAngle DecRefocAngle FAforReferScans RFSpoilIncr]
                     index = 6;
-                case {'seste1h3d2' 'seste1f3d2' 'seste1e3d2'} % 1mm protocol from WTCN
+                case {'seste1d3d2' 'seste1h3d2' 'seste1f3d2' 'seste1e3d2'} % 1mm protocol from WTCN
                     % wip parameters are sorted as follows:
                     % alFree: [VoxDeph,SpoilAmp,EddCurr0,EddCurr1,TRamp,TFlat,BWT,0,0,0,0,0,0,MixingTime,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12345]
                     % adFree: [0,0,0,0,0,0,0,SlabGradScale,RefocCorr,0,FatSatAngle,RFSpoilBasicIncr] --> 'seste1h3d2' 'seste1f3d2'
@@ -907,7 +907,7 @@ switch inParName
                     % alFree: [EddyCurrentDelay Tmixing (?) DurationPer5Deg BWT_SE/STE_factor (?) CrusherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
                     % adFree: [RefocCorr ScaleSGrad? MaxRefocAngle DecRefocAngle FAforReferScans]
                     index = 2;
-                case {'seste1h3d2' 'seste1f3d2' 'seste1e3d2'} % 1mm protocol from WTCN
+                case {'seste1d3d2' 'seste1h3d2' 'seste1f3d2' 'seste1e3d2'} % 1mm protocol from WTCN
                     % wip parameters are sorted as follows:
                     % alFree: [VoxDeph,SpoilAmp,EddCurr0,EddCurr1,TRamp,TFlat,BWT,0,0,0,0,0,0,MixingTime,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12345]
                     % adFree: [0,0,0,0,0,0,0,SlabGradScale,RefocCorr,0,FatSatAngle,RFSpoilBasicIncr] --> 'seste1h3d2' 'seste1f3d2'

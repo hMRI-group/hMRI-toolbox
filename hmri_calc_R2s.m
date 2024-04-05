@@ -153,8 +153,7 @@ switch lower(method)
         ver_status = any(ismember(versionCell, 'Optimization Toolbox'));
         [license_status,~] = license('checkout', 'Optimization_toolbox');
         if ver_status==0 || license_status==0
-            error("The methods: 'nlls_ols','nlls_wls1','nlls_wls2','nlls_wls3' require Optimization Toolbox, which was not found. " + ...
-                "Please try another method (e.g. OLS or WLS1) which does not use Optimization Toolbox.")
+            error("The methods: 'nlls_ols','nlls_wls1','nlls_wls2','nlls_wls3' require Optimization Toolbox: either this toolbox and/or its license is missing.")
         end
 
         % Check for NLLS case, where specification of the log-linear 

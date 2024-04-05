@@ -147,7 +147,9 @@ switch lower(method)
         beta(2:end,:)=exp(beta(2:end,:));
         
     case {'nlls_ols','nlls_wls1','nlls_wls2','nlls_wls3'}
-        %lsqcurvefit uses toolbox check for it by using ver:
+        %lsqcurvefit uses optimization toolbox
+        %Check both for the toolbox and/or an active license for it
+        %Error if one of them is missing
         versionStruct = ver;
         versionCell = {versionStruct.Name};
         ver_status = any(ismember(versionCell, 'Optimization Toolbox'));

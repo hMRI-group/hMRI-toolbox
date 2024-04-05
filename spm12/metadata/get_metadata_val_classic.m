@@ -657,9 +657,11 @@ switch inParName
                         EchoSpacing = 330; % us
                     case 'b1epi2b3d2' % 1mm protocol from WTCN
                         EchoSpacing = 540; % us
-                    case 'seste1d3d2' % 1mm protocol from WTCN
-                        % alFree: [VoxDeph,SpoilAmp,EddCurr0,EddCurr1,TRamp,TFlat,BWT,0,0,0,0,0,2,MixingTime,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12345],
-                        % adFree: [0,0,0,0,0,0,0,SlabGradScale,RefocCorr,0,0,RFSpoilBasicIncr]
+                    case {'seste1d3d2' 'seste1h3d2' 'seste1f3d2' 'seste1e3d2'} % 1mm protocol from WTCN
+                        % wip parameters are sorted as follows:
+                        % alFree: [VoxDeph,SpoilAmp,EddCurr0,EddCurr1,TRamp,TFlat,BWT,0,0,0,0,0,0,MixingTime,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12345]
+                        % adFree: [0,0,0,0,0,0,0,SlabGradScale,RefocCorr,0,FatSatAngle,RFSpoilBasicIncr] --> 'seste1h3d2' 'seste1f3d2'
+                        % adFree: [0,0,0,0,0,0,0,SlabGradScale,RefocCorr,0,0,RFSpoilBasicIncr] --> 'seste1e3d2', i.e. no FatSatAngle in special card
                         Wip = get_metadata_val(mstruc, 'WipParameters');
                         EchoSpacing = Wip.alFree(5)*2+Wip.alFree(6);
                     case {'b1sev1a3d2' 'b1sev1b3d2' 'b1epi2f3d2' 'b1epi2g3d2' 'b1sev1a'} % 7T and Prisma versions by Kerrin Pine
@@ -775,12 +777,13 @@ switch inParName
                     % adFree: [RefocCorr ScaleSGrad? MaxRefocAngle DecRefocAngle FAforReferScans]
                     parLocation{cRes} = [nam{1} '.adFree(3:4)'];
                     parValue{cRes} = val{1}.adFree(3):-val{1}.adFree(4):0;
-                case 'seste1d3d2' % 1mm protocol from WTCN (MFC)
+                case {'seste1d3d2' 'seste1h3d2' 'seste1f3d2' 'seste1e3d2'} % 1mm protocol from WTCN
                     % wip parameters are sorted as follows:
-                    % alFree: [VoxDeph,SpoilAmp,EddCurr0,EddCurr1,TRamp,TFlat,BWT,0,0,0,0,0,2,MixingTime,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12345],
-                    % adFree: [0,0,0,0,0,0,0,SlabGradScale,RefocCorr,0,0,RFSpoilBasicIncr]
+                    % alFree: [VoxDeph,SpoilAmp,EddCurr0,EddCurr1,TRamp,TFlat,BWT,0,0,0,0,0,0,MixingTime,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12345]
+                    % adFree: [0,0,0,0,0,0,0,SlabGradScale,RefocCorr,0,FatSatAngle,RFSpoilBasicIncr] --> 'seste1h3d2' 'seste1f3d2'
+                    % adFree: [0,0,0,0,0,0,0,SlabGradScale,RefocCorr,0,0,RFSpoilBasicIncr] --> 'seste1e3d2', i.e. no FatSatAngle in special card
                     parLocation{cRes} = 'HardCodedParameter';
-                    parValue{cRes} = 230:-10:0;
+                    parValue{cRes} = 2*(115:-5:0);
                 case 'b1epi2d3d2' % 800um protocol from WTCN
                     % wip parameters are sorted as follows:
                     % alFree: [Tmixing DurationPer5Deg BWT_SE/STE_factor (?) CrusherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
@@ -836,10 +839,11 @@ switch inParName
                     % alFree: [Tmixing DurationPer5Deg BWT_SE/STE_factor (?) CrusherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
                     % adFree: [RefocCorr ScaleSGrad? MaxRefocAngle DecRefocAngle FAforReferScans RFSpoilIncr]
                     index = 6;
-                case 'seste1d3d2' % 1mm protocol from WTCN (MFC)
+                case {'seste1d3d2' 'seste1h3d2' 'seste1f3d2' 'seste1e3d2'} % 1mm protocol from WTCN
                     % wip parameters are sorted as follows:
-                    % alFree: [VoxDeph,SpoilAmp,EddCurr0,EddCurr1,TRamp,TFlat,BWT,0,0,0,0,0,2,MixingTime,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12345],
-                    % adFree: [0,0,0,0,0,0,0,SlabGradScale,RefocCorr,0,0,RFSpoilBasicIncr]
+                    % alFree: [VoxDeph,SpoilAmp,EddCurr0,EddCurr1,TRamp,TFlat,BWT,0,0,0,0,0,0,MixingTime,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12345]
+                    % adFree: [0,0,0,0,0,0,0,SlabGradScale,RefocCorr,0,FatSatAngle,RFSpoilBasicIncr] --> 'seste1h3d2' 'seste1f3d2'
+                    % adFree: [0,0,0,0,0,0,0,SlabGradScale,RefocCorr,0,0,RFSpoilBasicIncr] --> 'seste1e3d2', i.e. no FatSatAngle in special card
                     index = 12;
                 case 'fl3d_2d3d6' % VA35 Allegra
                     % wip parameters are sorted as follows:
@@ -903,10 +907,11 @@ switch inParName
                     % alFree: [EddyCurrentDelay Tmixing (?) DurationPer5Deg BWT_SE/STE_factor (?) CrusherPerm(on/off=2/3) OptimizedRFDur(on/off=2/3)]
                     % adFree: [RefocCorr ScaleSGrad? MaxRefocAngle DecRefocAngle FAforReferScans]
                     index = 2;
-                case 'seste1d3d2' % 1mm protocol from WTCN (MFC)
+                case {'seste1d3d2' 'seste1h3d2' 'seste1f3d2' 'seste1e3d2'} % 1mm protocol from WTCN
                     % wip parameters are sorted as follows:
-                    % alFree: [VoxDeph,SpoilAmp,EddCurr0,EddCurr1,TRamp,TFlat,BWT,0,0,0,0,0,2,MixingTime,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12345],
-                    % adFree: [0,0,0,0,0,0,0,SlabGradScale,RefocCorr,0,0,RFSpoilBasicIncr]
+                    % alFree: [VoxDeph,SpoilAmp,EddCurr0,EddCurr1,TRamp,TFlat,BWT,0,0,0,0,0,0,MixingTime,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,12345]
+                    % adFree: [0,0,0,0,0,0,0,SlabGradScale,RefocCorr,0,FatSatAngle,RFSpoilBasicIncr] --> 'seste1h3d2' 'seste1f3d2'
+                    % adFree: [0,0,0,0,0,0,0,SlabGradScale,RefocCorr,0,0,RFSpoilBasicIncr] --> 'seste1e3d2', i.e. no FatSatAngle in special card
                     index = 14;
                 case 'b1epi2d3d2' % 800um protocol from WTCN
                     % wip parameters are sorted as follows:

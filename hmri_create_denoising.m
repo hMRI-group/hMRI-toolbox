@@ -193,4 +193,26 @@ noiseObj.setRescalePhase(rescale_phs)
 noiseObj.setProcessSlabIn2D(process_2d)
 noiseObj.setRandomMatrixTheory(use_rmt)
 
+%With all the input parameters execute
+%Catch error if the java script returns an error
+lcpcaflags_nopopup = lcpcaflags;
+lcpcaflags_nopopup.PopUp = false;
+hmri_log(sprintf('Executing Lcpca-denoising (Java) module \n'), lcpcaflags_nopopup);
+try
+noiseObj.execute;
+catch ME
+hmri_log('There was an error in the Java code: could not execute Lcpca denosing!', lcpcaflags_nopopup);
+    disp(ME.message)
+    rethrow(ME)
+end
+hmri_log('Lcpca-denoising (Java) module succesfully executed', lcpcaflags_nopopup);
+
+
+%initialize the cells to be populated with fullpaths of output
+%magnitude and phase images
+out_mag = {};
+idx_mag = 1;
+out_phase = {};
+idx_phase =1;
+
 end

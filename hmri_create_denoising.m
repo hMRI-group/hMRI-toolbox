@@ -13,6 +13,7 @@ switch denoising_protocol
 varargout{1} = output_mag;
 varargout{2} = output_phase;
 end
+end
 
 %=========================================================================%
 % Write/Arrange denoising parameters tp the denoising_params.
@@ -26,7 +27,6 @@ denoising_protocol = dntypename{1};
 % init defaults filename and optional-defaults bool 
 deffnam = '';
 custom_def = false;
-end
 
 % load customized defaults parameters from customized denoising defaults file if any
 % (the customized defaults file must be run to overwrite the standard
@@ -60,6 +60,5 @@ denoising_params.nopuflags.PopUp = false;
 % on the SPM version!)
 [v,r] = spm('Ver');
 denoising_params.SPMver = sprintf('%s (%s)', v, r);
-
 
 end

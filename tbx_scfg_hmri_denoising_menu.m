@@ -46,4 +46,32 @@ DNparameters.help   = {['You can either stick with metadata and standard ' ...
     '(fallback for situations where no metadata are available).']};
 DNparameters.values = {DNmetadata DNdefaults};
 DNparameters.val    = {DNmetadata};
+
+% ---------------------------------------------------------------------
+% Magnitude input images 
+% ---------------------------------------------------------------------
+% mag_img is the default covering most used cases. 
+% If specific methods require changes to these defaults, please create 
+% a new field with a unique name and use that.
+mag_img         = cfg_files;
+mag_img.tag     = 'mag_input';
+mag_img.name    = 'Magnitude input (required)';
+mag_img.help    = {'Select the (required) magnitude images to be denoised'};
+mag_img.filter  = 'image';
+mag_img.ufilter = '.*';
+mag_img.num     = [1 Inf];
+
+
+% ---------------------------------------------------------------------
+% Phase input images
+% ---------------------------------------------------------------------
+phase_img         = cfg_files;
+phase_img.tag     = 'phase_input';
+phase_img.name    = 'Phase input (optional)';
+phase_img.help    = {'Select the (optional) phase images to be denoised'};
+phase_img.filter  = 'image';
+phase_img.ufilter = '.*';
+phase_img.num     = [0 Inf];
+
+
 end

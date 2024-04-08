@@ -100,6 +100,23 @@ switch dntype{1}
 hmri_log(sprintf('\t============ %s - %s.m (%s) ============',"APPLYING LCPCA-DENOISING", mfilename, datestr(now)),flags);
 [output_mag, output_phase] = hmri_create_denoising(job);
 
+%Assign output dependency to the denoised output images
+phase_bool = any(~cellfun(@isempty,output_phase));
+arrayLength = length(output_mag);
+for i = 1:2*arrayLength
+    if i<=arrayLength
+    idxstr = ['DenoisedMagnitude' int2str(i)];
+    out.subj.(idxstr) = {output_mag{i}};
+    elseif phase_bool && i>arrayLength 
+    idxstr = ['DenoisedPhase' int2str(i-arrayLength)];
+    out.subj.(idxstr) = {output_phase{i-arrayLength}};
+    else
+        break
+    end
+end
+end
+hmri_log(sprintf('\t============ DENOISING MODULE: completed (%s) ============', datestr(now)),flags);
+
 
 
 end

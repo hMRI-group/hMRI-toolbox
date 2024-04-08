@@ -128,4 +128,26 @@ output_path = cellstr(lcpcadenoiseparams.output_path);
 supp_path = cellstr(lcpcadenoiseparams.supp_path);
 lcpcaflags = lcpcadenoiseparams.defflags;
 
+%Get the full input file list
+phase_bool = any(~cellfun(@isempty,phase_list));
+if phase_bool
+    fullim_list = [image_list; phase_list];
+else
+    fullim_list = image_list;
+end
+
+%set the metadata mod
+json = hmri_get_defaults('json');
+
+%Create denoising object
+noiseObj= javaObject('nl.uva.imcn.algorithms.LocalComplexPCADenoising');
+
+%Get the image_number and dimensions from the first image of magnitude
+%images
+imdatavol = spm_vol(image_list{1});
+resolutions = sqrt(sum(imdatavol.mat(1:3,1:3).^2)); 
+imdatamatrix = spm_read_vols(imdatavol);
+dimensions = size(imdatamatrix);
+image_number = length(image_list)+1;
+
 end

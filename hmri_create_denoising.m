@@ -46,5 +46,20 @@ if isfield(jobsubj.denoisingtype.(denoising_protocol),'DNparameters')
     end
 end
 
+% set all denoising defaults and set the defaults file to be true
+denoising_params = hmri_get_defaults(['denoising.' denoising_protocol]);
+denoising_params.defaults_file = deffnam;
+denoising_params.custom_defaults = custom_def;
+
+% flags for logging information and warnings
+denoising_params.defflags = jobsubj.log.flags; % default flags
+denoising_params.nopuflags = jobsubj.log.flags; % force no Pop-Up
+denoising_params.nopuflags.PopUp = false;
+
+% save SPM version (slight differences may appear in the results depending
+% on the SPM version!)
+[v,r] = spm('Ver');
+denoising_params.SPMver = sprintf('%s (%s)', v, r);
+
 
 end

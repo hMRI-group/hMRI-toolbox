@@ -82,6 +82,17 @@ sdata.num       = [1 Inf];
 sdata.val       = {subj};
 sdata.values    = {subj};
 
+% ---------------------------------------------------------------------
+% denoise images
+% ---------------------------------------------------------------------
+denoise         = cfg_exbranch;
+denoise.tag     = 'denoise';
+denoise.name    = 'Denoising';
+denoise.val     = { sdata };
+denoise.help    = {'Denoising of raw/processed images with different methods'};
+denoise.prog    = @hmri_run_denoise;
+denoise.vout    = @vout_create;
+
 
 
 end

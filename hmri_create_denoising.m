@@ -293,3 +293,19 @@ javarmpath(jarlcpca)
 
 
 end
+
+%=========================================================================%
+% To arrange the metadata structure for denoising output.
+%=========================================================================%
+function metastruc = init_dn_output_metadata(input_files, denoising_params)
+
+proc.descrip = ['hMRI toolbox - ' mfilename '.m - Denoising'];
+proc.version = hmri_get_version;
+proc.params = denoising_params;
+
+output.imtype = 'Denoised Image';
+output.units = '';
+
+metastruc = init_output_metadata_structure(input_files, proc, output);
+
+end

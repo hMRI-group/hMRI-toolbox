@@ -24,4 +24,12 @@ popup.help   = {['The user can review and keep track of all the information ' ..
 popup.labels = {'Disable' 'Enable'};
 popup.values = {false true};
 popup.val = {true};
+
+% ---------------------------------------------------------------------
+% menu denoisingtype
+% ---------------------------------------------------------------------
+denoisingtype = tbx_scfg_hmri_denoising_menu;
+
+
+
 end

@@ -86,7 +86,7 @@ switch denoising_protocol
         denoising_params.output_path = jobsubj.path.dnrespath;
         denoising_params.supp_path = jobsubj.path.supplpath;
 
-            %Print lcpca denoising parameters ngbsize and std cut off
+        %Print lcpca denoising parameters ngbsize and std cut off
         print_lcpca_params.Neighborhood_Size = denoising_params.ngbsize;
         print_lcpca_params.Standard_Deviation_Cuttoff =  denoising_params.std;
         printdnstruct = printstruct(print_lcpca_params);

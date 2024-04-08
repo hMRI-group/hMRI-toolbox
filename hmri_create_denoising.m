@@ -309,3 +309,16 @@ output.units = '';
 metastruc = init_output_metadata_structure(input_files, proc, output);
 
 end
+
+%=========================================================================%
+% To print a structure into text - assumes simple structure (no
+% sub-structure in it at this point).
+%=========================================================================%
+function s = printstruct(struc)
+
+s = '';
+fntmp = fieldnames(struc);
+for cf = 1:length(fntmp)
+    s = sprintf('%s %16s: %s\n', s, fntmp{cf}, num2str(struc.(fntmp{cf})));
+end
+end

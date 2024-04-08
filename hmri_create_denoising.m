@@ -285,5 +285,11 @@ save(fullfile(supp_path{1}, 'dim_img.mat'), 'dim_img')
 err_img = reshape(noiseObj.getNoiseFitImage(), dimensions);
 save(fullfile(supp_path{1}, 'err_img.mat'), 'err_img')
 
+%Clear object and remove .jar from path properly
+clear("noiseObj")
+javarmpath(jarcommons)
+javarmpath(jarmipav)
+javarmpath(jarlcpca)
+
 
 end

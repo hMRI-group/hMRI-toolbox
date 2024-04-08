@@ -12,7 +12,6 @@ catch
     outpath = fileparts(Pin(1,:)); % case indir
 end
 
-
 % save outpath as default for this job
 hmri_get_defaults('outdir',outpath);
 
@@ -116,7 +115,4 @@ for i = 1:2*arrayLength
 end
 end
 hmri_log(sprintf('\t============ DENOISING MODULE: completed (%s) ============', datestr(now)),flags);
-
-
-
 end

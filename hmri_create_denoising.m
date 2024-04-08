@@ -163,6 +163,34 @@ else
     hmri_log('The raw data does not have the correct dimensions (must be 3D or 4D data) for processing: please check your data!', lcpcaflags);
     error('The raw data does not have the correct dimensions (must be 3D or 4D data) for processing: please check your data!')
 end
-noiseObj.setResolutions(resolutions(1),resolutions(2), resolutions(3)); % see also mpm_denoise
+noiseObj.setResolutions(resolutions(1),resolutions(2), resolutions(3)); 
+
+%Loop through all reshaped echos
+for echo = 1:length(image_list)
+    %read vol from filepath
+    datavol = spm_vol(image_list{echo});
+    datamatrix = spm_read_vols(datavol);
+%place vol for denoising
+noiseObj.setMagnitudeImageAt(echo, reshape(datamatrix, [1 prod(size(datamatrix))]));
+
+%Add phase images if they exist
+if phase_bool
+    %read vol from filepath
+    datavol = spm_vol(phase_list{echo});
+    datamatrix = spm_read_vols(datavol);
+%place vol for denoising
+noiseObj.setPhaseImageAt(echo, reshape(datamatrix, [1 prod(size(datamatrix))]));
+end
+end
+
+%set all other params
+noiseObj.setPatchSize(ngb_size)
+noiseObj.setStdevCutoff(stdev_cutoff)
+noiseObj.setMinimumDimension(min_dimension)
+noiseObj.setMaximumDimension(max_dimension)
+noiseObj.setUnwrapPhase(unwrap) 
+noiseObj.setRescalePhase(rescale_phs) 
+noiseObj.setProcessSlabIn2D(process_2d)
+noiseObj.setRandomMatrixTheory(use_rmt)
 
 end

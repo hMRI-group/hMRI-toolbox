@@ -63,5 +63,35 @@ else
     hmri_log(sprintf('INFO: the output directory is:\n%s\n',outpath),flags);
 end
 
+%check basic requirements and error if basic reqirements fail
+switch dntype{1}
+    case 'lcpca_denoise'
+        check_params.mag_input = cellstr(char(spm_file(job.subj.denoisingtype.(dntype{1}).mag_input,'number','')));
+        check_params.phase_input = cellstr(char(spm_file(job.subj.denoisingtype.(dntype{1}).phase_input,'number','')));
+        check_params.phase_bool = any(~cellfun(@isempty, check_params.phase_input));
+        check_params.mag_bool = any(~cellfun(@isempty, check_params.mag_input));
+
+        %Issue an error and abort in cases of non-existent magnitude image data and
+        %non-equal number of non-empty phase and magnitude images
+
+        if ~check_params.mag_bool || ~isfield(job.subj.denoisingtype.(dntype{1}),'mag_input')
+        hmri_log('No magnitude images were entered, aborting! Please check your input data and try again!', flags);
+        error('Error: No magnitude images were entered, aborting! Please check your input data and try again!')
+        end
+
+        if check_params.phase_bool && (length(check_params.mag_input) ~= length(check_params.phase_input))
+        hmri_log('The number of phase and magnitude images are different, please check your input data and try again!', flags);
+        error("Error: The number of phase and magnitude images are different, please check your input data and try again!")
+        end
+end
+ 
+% save SPM version (slight differences may appear in the results depending
+% on the SPM version!)
+[v,r] = spm('Ver');
+job.SPMver = sprintf('%s (%s)', v, r);
+
+% save original job
+spm_jsonwrite(fullfile(supplpath,'hMRI_denoising_job.json'),job,struct('indent','\t'));
+
 
 end

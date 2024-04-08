@@ -96,3 +96,20 @@ switch denoising_protocol
 end
 
 end
+
+%===============================================================================================%
+% Calculate LCPCA-denoising: Java-Matlab interface for Lcpca-denoising(P. Bazin et al.)
+%=================================================================================================%
+function [output_mag, output_phase] = hmri_calc_lcpcadenoise(lcpcadenoiseparams)
+
+%get the path to the jar files
+[mfilepath, ~,~] = fileparts(mfilename("fullpath"));
+jarcommons = fullfile(fullfile(mfilepath,'jar'),'commons-math3-3.5.jar');
+jarmipav = fullfile(fullfile(mfilepath,'jar'),'Jama-mipav.jar');
+jarlcpca = fullfile(fullfile(mfilepath,'jar'),'lcpca2.jar');
+
+%add required .jar files to the path
+javaaddpath(jarcommons)
+javaaddpath(jarmipav)
+javaaddpath(jarlcpca)
+end

@@ -112,4 +112,20 @@ jarlcpca = fullfile(fullfile(mfilepath,'jar'),'lcpca2.jar');
 javaaddpath(jarcommons)
 javaaddpath(jarmipav)
 javaaddpath(jarlcpca)
+
+%Read from the input the processing parameters
+image_list = cellstr(lcpcadenoiseparams.mag_input);
+phase_list = cellstr(lcpcadenoiseparams.phase_input);
+ngb_size = lcpcadenoiseparams.ngbsize;
+stdev_cutoff = lcpcadenoiseparams.std;
+min_dimension = lcpcadenoiseparams.min_dimension;
+max_dimension = lcpcadenoiseparams.max_dimension;
+unwrap = lcpcadenoiseparams.unwrap;
+rescale_phs = lcpcadenoiseparams.rescale_phs;
+process_2d = lcpcadenoiseparams.process_2d;
+use_rmt = lcpcadenoiseparams.use_rmt;
+output_path = cellstr(lcpcadenoiseparams.output_path);
+supp_path = cellstr(lcpcadenoiseparams.supp_path);
+lcpcaflags = lcpcadenoiseparams.defflags;
+
 end

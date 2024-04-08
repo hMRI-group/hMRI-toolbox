@@ -150,4 +150,19 @@ imdatamatrix = spm_read_vols(imdatavol);
 dimensions = size(imdatamatrix);
 image_number = length(image_list)+1;
 
+%Set the image_number, dimensions and resolution for processing
+noiseObj.setImageNumber(image_number); %number of echoes
+
+%Set dimensions based on whether it is 3D or 4D data
+%Throw an error if neither
+if length(dimensions) == 3
+noiseObj.setDimensions(dimensions(1),dimensions(2),dimensions(3));
+elseif length(dimensions) == 4
+noiseObj.setDimensions(dimensions(1),dimensions(2),dimensions(3), dimensions(4));
+else
+    hmri_log('The raw data does not have the correct dimensions (must be 3D or 4D data) for processing: please check your data!', lcpcaflags);
+    error('The raw data does not have the correct dimensions (must be 3D or 4D data) for processing: please check your data!')
+end
+noiseObj.setResolutions(resolutions(1),resolutions(2), resolutions(3)); % see also mpm_denoise
+
 end

@@ -28,5 +28,23 @@ deffnam = '';
 custom_def = false;
 end
 
+% load customized defaults parameters from customized denoising defaults file if any
+% (the customized defaults file must be run to overwrite the standard
+% defaults parameters)
+if isfield(jobsubj.denoisingtype.(denoising_protocol),'DNparameters')
+    % first reinitialise processing parameters to standard defaults:
+    hmri_denoising_defaults;
+    deffnam = fullfile(fileparts(mfilename('fullpath')),'config','hmri_denoising_defaults.m');
+    custom_def = false;
+
+    % then, if customized defaults file available, run it to overwrite
+    % standard defaults parameters.
+    if isfield(jobsubj.denoisingtype.(denoising_protocol).DNparameters,'DNdefaults')
+        deffnam = jobsubj.denoisingtype.(denoising_protocol).DNparameters.DNdefaults;
+        spm('Run',deffnam);
+        custom_def = true;
+    end
+end
+
 
 end

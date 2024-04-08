@@ -13,4 +13,20 @@ switch denoising_protocol
 varargout{1} = output_mag;
 varargout{2} = output_phase;
 end
+
+%=========================================================================%
+% Write/Arrange denoising parameters tp the denoising_params.
+%=========================================================================%
+function denoising_params = get_denoising_params(jobsubj)
+
+% get denoising method
+dntypename = fieldnames(jobsubj.denoisingtype);
+denoising_protocol = dntypename{1};
+
+% init defaults filename and optional-defaults bool 
+deffnam = '';
+custom_def = false;
+end
+
+
 end

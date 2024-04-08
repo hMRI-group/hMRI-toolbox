@@ -93,6 +93,56 @@ denoise.help    = {'Denoising of raw/processed images with different methods'};
 denoise.prog    = @hmri_run_denoise;
 denoise.vout    = @vout_create;
 
+end
 
+% ========================================================================
+%% VOUT & OTHER SUBFUNCTIONS
+% ========================================================================
+% The RUN function:
+% - out = hmri_run_denoise(job)
+% is defined separately.
+%_______________________________________________________________________
 
+function dep = vout_create(job)
+% This depends on job contents, which may not be present when virtual
+% outputs are calculated, depending on the denoising type.
+
+dnfield = fieldnames(job.subj.denoisingtype);
+denoisingmethod = dnfield{1};
+
+switch denoisingmethod
+    case 'lcpca_denoise'
+%define variables and initialize cfg_dep based on availibility of phase images 
+arrayLength = numel(job.subj.denoisingtype.lcpca_denoise.mag_input);
+%phase_bool= any(~cellfun(@isempty, job.subj.denoisingtype.lcpca_denoise.phase_input));
+phase_bool = isempty(job.subj.denoisingtype.lcpca_denoise.phase_input);
+if phase_bool
+cdep(1,2*arrayLength) = cfg_dep;
+else
+    cdep(1,arrayLength) = cfg_dep;
+end
+
+%iterate to generate dependency tags for outputs
+for i=1:numel(job.subj)
+    for k =1:2*arrayLength
+        if k<=arrayLength
+    cdep(k)            = cfg_dep;
+    cdep(k).sname      = sprintf('lcpcaDenoised_magnitude%d',k);
+    idxstr = ['DenoisedMagnitude' int2str(k)];
+    cdep(k).src_output = substruct('.','subj','()',{i},'.',idxstr,'()',{':'});
+    cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
+        
+        elseif k>arrayLength && ~phase_bool 
+    cdep(k)            = cfg_dep;
+    cdep(k).sname      = sprintf('lcpcaDenoised_phase%d',k-arrayLength);
+    idxstr = ['DenoisedPhase' int2str(k-arrayLength)];
+    cdep(k).src_output = substruct('.','subj','()',{i},'.',idxstr,'()',{':'});
+    cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
+        else
+            break
+        end
+    end
+end
+dep = cdep;
+end    
 end

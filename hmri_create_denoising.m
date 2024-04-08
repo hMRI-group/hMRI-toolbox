@@ -61,4 +61,38 @@ denoising_params.nopuflags.PopUp = false;
 [v,r] = spm('Ver');
 denoising_params.SPMver = sprintf('%s (%s)', v, r);
 
+%Denoising method-specific parameters
+%Load all the batch entered and possibly user-modified parameters
+switch denoising_protocol
+    case 'lcpca_denoise'
+        denoising_params.mag_input = cellstr(char(spm_file(jobsubj.denoisingtype.(denoising_protocol).mag_input,'number','')));
+        denoising_params.phase_input = cellstr(char(spm_file(jobsubj.denoisingtype.(denoising_protocol).phase_input,'number','')));
+        denoising_params.phase_bool = any(~cellfun(@isempty, denoising_params.phase_input));
+        denoising_params.mag_bool = any(~cellfun(@isempty, denoising_params.mag_input));
+        
+        
+        %processing can continue if only magnitude images were entered but
+        %only warn that optional phase img are missing
+        
+        if ~denoising_params.phase_bool || ~isfield(jobsubj.denoisingtype.(denoising_protocol),'phase_input')
+        hmri_log('No (optional) phase images were entered, Lcpca-denoising continues with only magnitude images', denoising_params.nopuflags);
+        warning('No (optional) phase images were entered, Lcpca-denoising continues with only magnitude images')
+        end
+        
+
+        dnstruct = jobsubj.denoisingtype.lcpca_denoise;
+        denoising_params.ngbsize =dnstruct.ngbsize;
+        denoising_params.std =dnstruct.std;
+        denoising_params.output_path = jobsubj.path.dnrespath;
+        denoising_params.supp_path = jobsubj.path.supplpath;
+
+        %Print lcpca denoising parameters ngbsize and std cut off
+        print_lcpca_params.Neighborhood_Size = denoising_params.ngbsize;
+        print_lcpca_params.Standard_Deviation_Cuttoff =  denoising_params.std;
+        printdnstruct = printstruct(print_lcpca_params);
+        hmri_log(sprintf('Lcpca Denoising Parameters:\n\n%s\n\n%s\n\n%s\n\n\n', ...
+        printdnstruct{2}, printdnstruct{3}, printdnstruct{4}),denoising_params.nopuflags);
+
+end
+
 end

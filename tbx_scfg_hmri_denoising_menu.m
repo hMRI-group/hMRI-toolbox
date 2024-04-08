@@ -73,5 +73,28 @@ phase_img.filter  = 'image';
 phase_img.ufilter = '.*';
 phase_img.num     = [0 Inf];
 
+% ---------------------------------------------------------------------
+% Standard deviation parameter
+% ---------------------------------------------------------------------
+std         = cfg_entry;
+std.tag     = 'std';
+std.name    = 'Standard deviation cut-off';
+std.val     = {[1.05]};
+std.strtype = 'e';
+std.num     = [1 1];
+std.help    = {['Specify the standard deviation cut off for denoising']};
+
+
+% ---------------------------------------------------------------------
+% Neighborhood size
+% ---------------------------------------------------------------------
+ngbsize         = cfg_entry;
+ngbsize.tag     = 'ngbsize';
+ngbsize.name    = 'Neighborhood size';
+ngbsize.val     = {[4]};
+ngbsize.strtype = 'e';
+ngbsize.num     = [1 1];
+ngbsize.help    = {['Specify the neghborhood size']};
+
 
 end

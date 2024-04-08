@@ -275,4 +275,8 @@ for echo = 1:length(image_list)
        
 end
 
+%Take out computed outputs
+output_mag = out_mag; 
+output_phase = out_phase;
+
 end

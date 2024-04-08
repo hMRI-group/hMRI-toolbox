@@ -215,4 +215,64 @@ idx_mag = 1;
 out_phase = {};
 idx_phase =1;
 
+%Get the results for all echos and reshape
+for echo = 1:length(image_list)
+    datamatrix = noiseObj.getDenoisedMagnitudeImageAt(echo);
+    volumedata = reshape(datamatrix, dimensions);
+
+    %Write the volume to .nii with an update to standard .nii header
+    firstfile = image_list{echo};
+    filehdr = spm_vol(image_list{echo});
+
+    [path,filename,ext] = fileparts(firstfile);
+    filename = strcat('LcpcaDenoised_',filename,'.nii');
+
+    outfname = fullfile(output_path{1}, filename);
+    filehdr.fname = outfname;
+    filehdr.descrip = strcat(filehdr.descrip, ' + lcpca denoised');
+    spm_write_vol(filehdr, volumedata);
+
+    %write metadata as extended header and sidecar json
+    Output_hdr = init_dn_output_metadata(fullim_list, lcpcadenoiseparams);
+    Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (LCPCA)'];
+    Output_hdr.history.output.imtype = 'Denoising (LCPCA)';
+    set_metadata(outfname,Output_hdr,json);
+
+    %add image to the output list
+    out_mag{idx_mag} = outfname;
+    idx_mag = idx_mag +1;
+    
+
+    %Get also the phase images if applicable
+
+    if phase_bool
+    datamatrix = noiseObj.getDenoisedPhaseImageAt(echo);
+    volumedata = reshape(datamatrix, dimensions);
+
+    %Write the volume to .nii with an update to standard .nii header
+    firstfile = phase_list{echo};
+    filehdr = spm_vol(phase_list{echo});
+
+    [path,filename,ext] = fileparts(firstfile);
+    filename = strcat('LcpcaDenoised_',filename,'.nii');
+
+    outfname = fullfile(output_path{1}, filename);
+    filehdr.fname = outfname;
+    filehdr.descrip = strcat(filehdr.descrip, ' + lcpca denoised');
+    spm_write_vol(filehdr, volumedata);
+
+    %write metadata as extended header and sidecar json
+    Output_hdr = init_dn_output_metadata(fullim_list, lcpcadenoiseparams);
+    Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (LCPCA)'];
+    Output_hdr.history.output.imtype = 'Denoising (LCPCA)';
+    set_metadata(outfname,Output_hdr,json);
+
+    %add image to the output list
+    out_phase{idx_phase} = outfname;
+    idx_phase = idx_phase +1;
+    
+    end
+       
+end
+
 end

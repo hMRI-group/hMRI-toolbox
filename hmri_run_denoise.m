@@ -93,5 +93,13 @@ job.SPMver = sprintf('%s (%s)', v, r);
 % save original job
 spm_jsonwrite(fullfile(supplpath,'hMRI_denoising_job.json'),job,struct('indent','\t'));
 
+% run the denoising and collect the results
+switch dntype{1}
+    case 'lcpca_denoise'
+%Write to log and command window the specific denosing being applied
+hmri_log(sprintf('\t============ %s - %s.m (%s) ============',"APPLYING LCPCA-DENOISING", mfilename, datestr(now)),flags);
+[output_mag, output_phase] = hmri_create_denoising(job);
+
+
 
 end

@@ -30,6 +30,58 @@ popup.val = {true};
 % ---------------------------------------------------------------------
 denoisingtype = tbx_scfg_hmri_denoising_menu;
 
+% ---------------------------------------------------------------------
+% indir Input directory as output directory
+% ---------------------------------------------------------------------
+indir         = cfg_entry;
+indir.tag     = 'indir';
+indir.name    = 'Input directory';
+indir.help    = {['Output files will be written to the same folder ' ...
+    'as each corresponding input file.']};
+indir.strtype = 's';
+indir.num     = [1 Inf];
+indir.val     = {'yes'};
+% ---------------------------------------------------------------------
+% outdir Output directory
+% ---------------------------------------------------------------------
+outdir         = cfg_files;
+outdir.tag     = 'outdir';
+outdir.name    = 'Output directory';
+outdir.help    = {'Select a directory where output files will be written to.'};
+outdir.filter = 'dir';
+outdir.ufilter = '.*';
+outdir.num     = [1 1];
+% ---------------------------------------------------------------------
+% output Output choice
+% ---------------------------------------------------------------------
+output         = cfg_choice;
+output.tag     = 'output';
+output.name    = 'Output choice';
+output.help    = {['Output directory can be the same as the input ' ...
+    'directory for each input file or user selected']};
+output.values  = {indir outdir};
+output.val = {indir};
+
+% ---------------------------------------------------------------------
+% subj Subject
+% ---------------------------------------------------------------------
+subj            = cfg_branch;
+subj.tag        = 'subj';
+subj.name       = 'Subject';
+subj.help       = {'Specify a subject for denoising.'};
+subj.val        = {output denoisingtype popup};
+
+% ---------------------------------------------------------------------
+% data Data
+% ---------------------------------------------------------------------
+sdata           = cfg_repeat;
+sdata.tag       = 'data';
+sdata.name      = 'Few Subjects';
+sdata.help      = {'Specify the number of subjects.'};
+sdata.num       = [1 Inf];
+sdata.val       = {subj};
+sdata.values    = {subj};
+
 
 
 end

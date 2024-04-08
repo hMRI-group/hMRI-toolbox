@@ -279,4 +279,11 @@ end
 output_mag = out_mag; 
 output_phase = out_phase;
 
+%save estimated local dimensions and residuals (between input and denoised images)
+dim_img = reshape(noiseObj.getLocalDimensionImage(), dimensions);
+save(fullfile(supp_path{1}, 'dim_img.mat'), 'dim_img')
+err_img = reshape(noiseObj.getNoiseFitImage(), dimensions);
+save(fullfile(supp_path{1}, 'err_img.mat'), 'err_img')
+
+
 end

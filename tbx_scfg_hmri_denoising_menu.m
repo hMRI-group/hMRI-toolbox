@@ -42,8 +42,7 @@ DNparameters        = cfg_choice;
 DNparameters.tag    = 'DNparameters';
 DNparameters.name   = 'Processing parameters';
 DNparameters.help   = {['You can either stick with metadata and standard ' ...
-    'defaults parameters (recommended) or select your own customised defaults file ' ...
-    '(fallback for situations where no metadata are available).']};
+    'defaults parameters (recommended) or select your own customised defaults file ']};
 DNparameters.values = {DNmetadata DNdefaults};
 DNparameters.val    = {DNmetadata};
 

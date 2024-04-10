@@ -118,7 +118,8 @@ denoisingtype.help   = {'Choose the methods for denoising.'
     'toolbox. See list below for a ' ...
     'brief description of each type. Note that all types may not be ' ...
     'available at your site.']
-    [' - Lcpca denoising: Pilou et al. -paper here']
+    ['- Lcpca denoising: Bazin, et al. (2019) Denoising High-Field Multi-Dimensional MRI With Local'...
+'Complex PCA, Front. Neurosci. doi:10.3389/fnins.2019.01066']
     [' - No denoising:...']};
 denoisingtype.values = {denoisinginput_lcpca};
 denoisingtype.val    = {denoisinginput_lcpca};

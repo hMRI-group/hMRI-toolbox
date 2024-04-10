@@ -98,9 +98,16 @@ end
 end
 
 %===============================================================================================%
-% Calculate LCPCA-denoising: Java-Matlab interface for Lcpca-denoising(P. Bazin et al.)
+% Calculate LCPCA-denoising: Java-Matlab interface for Lcpca-denoising
 %=================================================================================================%
 function [output_mag, output_phase] = hmri_calc_lcpcadenoise(lcpcadenoiseparams)
+
+%{
+Paper Reference for Lcpca denoising (originally written in Java by Pilou Bazin):
+    [1] Bazin, et al. (2019) "Denoising High-Field Multi-Dimensional MRI With Local
+Complex PCA", Front. Neurosci. doi:10.3389/fnins.2019.01066
+%}
+
 
 %get the path to the jar files
 [mfilepath, ~,~] = fileparts(mfilename("fullpath"));

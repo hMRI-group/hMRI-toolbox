@@ -89,7 +89,7 @@ end
 [v,r] = spm('Ver');
 job.SPMver = sprintf('%s (%s)', v, r);
 
-% save original job
+% save original job to supplementary directory
 spm_jsonwrite(fullfile(supplpath,'hMRI_denoising_job.json'),job,struct('indent','\t'));
 
 % run the denoising and collect the results

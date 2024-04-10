@@ -49,9 +49,6 @@ DNparameters.val    = {DNmetadata};
 % ---------------------------------------------------------------------
 % Magnitude input images 
 % ---------------------------------------------------------------------
-% mag_img is the default covering most used cases. 
-% If specific methods require changes to these defaults, please create 
-% a new field with a unique name and use that.
 mag_img         = cfg_files;
 mag_img.tag     = 'mag_input';
 mag_img.name    = 'Magnitude input (required)';

@@ -90,7 +90,9 @@ ngbsize.name    = 'Neighborhood size';
 ngbsize.val     = {[4]};
 ngbsize.strtype = 'e';
 ngbsize.num     = [1 1];
-ngbsize.help    = {['Specify the neghborhood size']};
+ngbsize.help    = {['Specify the neghborhood size'], ['This parameter' ...
+    'sets the size of the local PCA neighborhood to be increased with number of inputs.' ...
+    'Though the default size is 4, a size of 3 works better in lower resolutions.']};
 
 % ---------------------------------------------------------------------
 % LCPCA Denoising protocol

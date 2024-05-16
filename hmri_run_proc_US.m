@@ -78,7 +78,7 @@ for nm = 1:length(job.subjc)
     if ~same_dir
         l_filter = {'^c[\d].*\.nii$','^rc[\d].*\.nii$', ...
             '^wc[\d].*\.nii$','^mwc[\d].*\.nii$','^y_.*\.nii$', ...
-            '^.*_seg8.mat$','^BiasField_.*\.nii$'}; % ,'^m.*\.nii$'};
+            '^iy_.*\.nii$','^.*_seg8.mat$','^BiasField_.*\.nii$'};
         f2move = spm_select('FPList',struc_path,l_filter);
         for ii=1:size(f2move,1)
             movefile(deblank(f2move(ii,:)),dn_output);

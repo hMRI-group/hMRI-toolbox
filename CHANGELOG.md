@@ -8,6 +8,7 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 ### Added
 - option to choose different models and parameters for B1-correction of MTsat
 - set default WM percent value in hmri_defaults.
+- spatial processing: add explicit mask creation and fix implicit mask (0 to NaN in float images)
 - update FIL seste seq parameters in get_metadata_val_classic
 
 ### Fixed

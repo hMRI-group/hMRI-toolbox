@@ -37,8 +37,8 @@ jobs:
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
-          username: RUN_HMRI_DOCKER
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{secrets.RUN_HMRI_DOCKER}}
+          password: ${{secrets.GITHUB_TOKEN }}
           
       - name: Deploy Container
         run: |

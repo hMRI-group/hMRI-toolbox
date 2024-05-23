@@ -9,7 +9,6 @@ on:
         required: true
         default: false
   
-
   release:
     types: [published]
 
@@ -19,15 +18,11 @@ jobs:
   build-test-deploy-docker:
     runs-on: ubuntu-latest
     env:
-      registry: ghcr.io
-    
-    
+      registry: ghcr.io  
     name: Build 
     steps:
-    
       - name: Checkout
         uses: actions/checkout@v3
-
       - name: Build Container
         run: |
           tag=v0.6.1
@@ -39,7 +34,6 @@ jobs:
           registry: ghcr.io
           username: ${{secrets.RUN_HMRI_DOCKER}}
           password: ${{secrets.GITHUB_TOKEN }}
-          
       - name: Deploy Container
         run: |
           docker push ${{ env.registry }}/${GITHUB_REPOSITORY} --all-tags

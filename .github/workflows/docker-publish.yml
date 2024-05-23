@@ -6,8 +6,13 @@ name: Docker
 # documentation.
 
 on:
-  schedule:
-    - cron: '20 11 * * *'
+  workflow_dispatch:
+    inputs:
+      force_push:
+        description: 'Force push?'
+        type: boolean
+        required: true
+        default: false
   push:
     branches: [ "master" ]
     # Publish semver tags as releases.

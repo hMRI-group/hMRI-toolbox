@@ -29,7 +29,7 @@ jobs:
       - name: Build Container
         run: |
           tag=v0.6.1
-          docker build -f container/Dockerfile -t ${{ env.registry }}/hmri:${tag} .
+          docker build -f container/Dockerfile -t hmritoolbox/hmri:v6.1 .
           docker images
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v2
@@ -39,4 +39,4 @@ jobs:
           password: ${{secrets.GITHUB_TOKEN }}
       - name: Deploy Container
         run: |
-          docker image push ${{ env.registry }}/hmri:${tag}
+          docker image push hmritoolbox/hmri:v6.1

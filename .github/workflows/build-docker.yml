@@ -8,6 +8,8 @@ on:
         type: boolean
         required: true
         default: false
+  schedule:
+    - cron: '20 11 * * *'
   
 #  release:
 #    types: [published]

@@ -39,4 +39,4 @@ jobs:
           password: ${{secrets.GITHUB_TOKEN }}
       - name: Deploy Container
         run: |
-          docker push ${{ env.registry }}/hmri:${tag} --all-tags
+          docker image push ${{ env.registry }}/hmri:${tag}

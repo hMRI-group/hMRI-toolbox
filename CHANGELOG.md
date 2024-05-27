@@ -17,6 +17,7 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 - make B1-map creation using 3DEPI SE/STE and AFI methods fall back to defaults without sidecar files, rather than crash
 - Modify the filenames as files are copied to RFsensCalc to prevent overwriting in further processing
 - batch interface now enforces the number of B1 input images correctly for B1 mapping methods which only need two images.
+- Fix error if optimization toolbox not present during NLLS R2* calculation
 
 ## [v0.6.1]
 ### Fixed

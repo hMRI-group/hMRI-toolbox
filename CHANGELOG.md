@@ -8,6 +8,7 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 ### Added
 - option to choose different models and parameters for B1-correction of MTsat
 - set default WM percent value in hmri_defaults.
+- spatial processing: add explicit mask creation and fix implicit mask (0 to NaN in float images)
 - update FIL seste seq parameters in get_metadata_val_classic
 
 ### Fixed
@@ -16,6 +17,7 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 - make B1-map creation using 3DEPI SE/STE and AFI methods fall back to defaults without sidecar files, rather than crash
 - Modify the filenames as files are copied to RFsensCalc to prevent overwriting in further processing
 - batch interface now enforces the number of B1 input images correctly for B1 mapping methods which only need two images.
+- Fix error if optimization toolbox not present during NLLS R2* calculation
 
 ## [v0.6.1]
 ### Fixed

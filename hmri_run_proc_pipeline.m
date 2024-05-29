@@ -1,7 +1,15 @@
 function out = hmri_run_proc_pipeline(job)
-% Deal with the preprocessing pipelines. There are 2 options
-% 1/ US+Smooth
-% 2/ US+Dartel+Smooth
+% Deal with the preprocessing pipelines. There are 2 options: 
+% 1/ "US+Smooth+MaskCrt"
+% 2/ "US+Dartel+Smooth+MaskCrt" 
+% The only difference is the inclusion of Dartel to bring all the data into 
+% a common space, before warping into MNI.
+% 
+% So the operations go through 3 or 4 main steps:
+% 1/ unified segementation, if no Dartel with warping to MNI
+% 2/ if with Dartel, Dartel estimation and warping to MNI
+% 3/ smoothing with tissue class specific smoothing
+% 4/ creation of tissue specific mask
 %
 % Input include only some parametric maps, the structural maps (for
 % segmentation), the required smoothing and which pipeline to use. All
@@ -11,12 +19,21 @@ function out = hmri_run_proc_pipeline(job)
 %
 % For more flexibility, individual modules can be combined. :-)
 %
+% The output structure 'out' provides:
+% .tc     : cell-array of size {n_TCs x n_pams}. Each element tc{ii,jj} is 
+%           a cell array {n_subj x 1} with each subject's smoothed data for
+%           the ii^th TC and jj^th MPM
+% .smwc   : cell-array of size {n_TCs x1}. Each element smwc{ii} is a 
+%           char array (n_subj x 1) with each subject's smooth modulated 
+%           warped ii^th tissue class
+% .maskTC : cell-array of size {n_TCs x1}. Each element smwc{ii} is the 
+%           filename of the ii^th tissue specific masks
 %_______________________________________________________________________
 % Copyright (C) 2017 Cyclotron Research Centre
 
 % Written by Christophe Phillips
 
-% 1/ Setup the smoothing and execute hmri_run_proc_US
+%% 1/ Setup the smoothing and execute hmri_run_proc_US
 %----------------------------------------------------
 % Get the proc_US job structure, with all the defaults
 proc_us = tbx_scfg_hmri_proc_US;
@@ -30,10 +47,6 @@ job_US.many_sdatas.channel.vols = job.s_vols;
 % Set voxel sizes & BB
 job_US.many_sdatas.vox = job.vox;
 job_US.many_sdatas.bb  = job.bb;
-
-% Only spit out CSF in native space (no Dartel imported) & warped (no modulation)
-job_US.tissue(3).native = [1 0];
-job_US.tissue(3).warped = [0 0];
 
 % Get the output direcotry across
 job_US.many_sdatas.output = job.output;
@@ -50,7 +63,7 @@ out_US = hmri_run_proc_US(job_US);
 %         maps
 % .def  : cell-array with the deformations for each subject.
 
-% 2/ Proceed with dartel (only if requested)
+%% 2/ Proceed with dartel (only if requested)
 %-------------------------------------------
 % including template create and warping into MNI space
 if job.pipe_c == 2
@@ -100,8 +113,8 @@ if job.pipe_c == 2
     [~, job_Dnorm] = harvest(proc_Dnorm, proc_Dnorm, false, false);
     % get last tempalte
     job_Dnorm.template = out_Dwarp.template(end);
-    % get GM and WM tissue class
-    for ii=1:2
+    % get GM, WM and CSF tissue class
+    for ii=1:3
         job_Dnorm.multsdata.vols_tc{ii} = ...
             spm_file(out_US.tiss(ii).c,'number',1);
     end
@@ -120,12 +133,12 @@ if job.pipe_c == 2
     out_Dnorm = hmri_run_proc_dartel_norm(job_Dnorm);
 end
 
-% 3/ Deal with smoothing, with hmri_run_proc_smooth
+%% 3/ Deal with smoothing, with hmri_run_proc_smooth
 %--------------------------------------------------
 proc_smooth = tbx_scfg_hmri_proc_smooth;
 [~, job_smooth] = harvest(proc_smooth, proc_smooth, false, false);
 
-% Get the image data, working *only* with mwc1 and mwc2 (GM and WM)
+% Get the image data, working with mwc1, mwc2 and mwc3 (GM, WM and CSF)
 switch job.pipe_c
     case 1 % US+smooth
         job_smooth = fill_fn_from_US(job_smooth,out_US);
@@ -142,14 +155,39 @@ job_smooth.fwhm = job.fwhm;
 % Run the *_proc_smooth
 fprintf('\nhMRI-pipeline: running the weighted-average (smoothing) module.\n')
 out_wa = hmri_run_proc_smooth(job_smooth);
-% where the 'out_wa' is organized as a structure out_wa.tc where
-% - tc is a cell-array of size {n_TCs x n_pams}
-% - each element tc{ii,jj} is a cell array {n_subj x 1} with each subject's
-%   smoothed data for the ii^th TC and jj^th MPM
+% The 'out_wa' structure is organized as a structure with 2 fields
+% .tc   : cell-array of size {n_TCs x n_pams}. Each element tc{ii,jj} is a 
+%         cell array {n_subj x 1} with each subject's smoothed data for
+%         the ii^th TC and jj^th MPM
+% .smwc : cell-array of size {n_TCs x1}. Each element smwc{ii} is a char
+%         array (n_subj x 1) with each subject's smooth modulated warped
+%         ii^th tissue class
+
+%% 4/ Create the tissue specific masks
+proc_crtMask = tbx_scfg_hmri_proc_crtMask;
+[~, job_crtMask] = harvest(proc_crtMask, proc_crtMask, false, false);
+% Get the smwc images in & fix output directory
+job_crtMask.vols_smwc = out_wa.smwc;
+if isfield(job.output,'outdir_ps')
+    job_crtMask.options.output = struct('outdir',job.output.outdir_ps);
+else
+    job_crtMask.options.output = job.output;
+end
+% Call to 
+out_cM = hmri_run_proc_crtMask(job_crtMask);
+% The out_cM structure has 2 fields:
+% .fn_maskTC : filenames (char array) of the tissue specific masks
+% .fn_meanTC : filenames (char array) of the mean tissue class images
 
 
-% 4/ Collect output and as needed
-out = out_wa; % -> good enouh for the moment!
+%% 5/ Collect output and as needed
+out = out_wa; 
+% There are 2 fields with cell array in 'out_wa' :
+% .tc   : tissue specifically smoothed qMRIs 
+% .smwc : smooth modulated warped tissue class images
+
+% Adding the the tissue mask images -> necessary for SPM analysis
+out.maskTC = cellstr(out_cM.fn_maskTC);
 
 end
 
@@ -167,8 +205,8 @@ N_pm = numel(out_US.maps);
 for ii=1:N_pm
     job_smooth.vols_pm{ii} = out_US.maps(ii).wvols_pm;
 end
-% Tissue classes -> use GM and WM, i.e. #1 and #2
-for ii=1:2
+% Tissue classes -> use GM, WM and CSF, i.e. #1, #2 and #3
+for ii=1:3
     job_smooth.vols_mwc{ii} = spm_file(out_US.tiss(ii).mwc,'number',1);
 end
 

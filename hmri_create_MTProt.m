@@ -205,7 +205,13 @@ hmri_log(sprintf('\t-------- Reading and averaging the images --------'),mpm_par
 % Average only first few echoes for increased SNR and fit T2* 
 Pavg = cell(1,mpm_params.ncon);
 for ccon=1:mpm_params.ncon % loop over available contrasts
-    ccon_avg_nr = nnz(mpm_params.input(ccon).TE<=mpm_params.maxTEval4avg);
+    % select all volumes with TE less than max TE 
+    vols2avg = find(mpm_params.input(ccon).TE<=mpm_params.maxTEval4avg);
+    ccon_avg_nr = length(vols2avg);
+    if ccon_avg_nr==0 % ensure that we select at least one image
+        [~,vols2avg] = min(mpm_params.input(ccon).TE);
+        ccon_avg_nr = 1;
+    end
     
     Pavg{ccon}  = fullfile(calcpath,[outbasename '_' mpm_params.input(ccon).tag 'w.nii']);
     V           = spm_vol(mpm_params.input(ccon).fnam);
@@ -215,7 +221,7 @@ for ccon=1:mpm_params.ncon % loop over available contrasts
     spm_progress_bar('Init',V(1).dim(3),Ni.descrip,'planes completed');
     for p = 1:V(1).dim(3)
         Y = zeros(V(1).dim(1:2));
-        for nr = 1:ccon_avg_nr
+        for nr = vols2avg
             Y  = Y + hmri_read_vols(V(nr),V(1),p,mpm_params.interp);
         end
         Ni.dat(:,:,p) = Y/ccon_avg_nr;
@@ -1184,7 +1190,7 @@ for ccon = 1:mpm_params.ncon
     if nTEs~=nFiles
         msg = sprintf('%sw metadata has %d TEs, but only %d were provided! Aborting.', mpm_params.input(ccon).tag, nTEs, nFiles);
         hmri_log(sprintf('ERROR: %s',msg), mpm_params.defflags);
-        error(msg);
+        error(msg); %#ok<SPERR>
     end
 end
 
@@ -1217,7 +1223,7 @@ if ~mpm_params.fullOLS % echo times need to be the same for all contrasts
         mpm_params.maxTEval4avg = min(max(mpm_params.input(ccon).TE),mpm_params.maxTEval4avg);
     end
     nr_echoes4avg = nnz(mpm_params.input(1).TE<=mpm_params.maxTEval4avg);
-    hmri_log(sprintf('INFO: averaged PDw/T1w/MTw will be calculated based on the first %d echoes.',mpm_params.nr_echoes4avg),mpm_params.nopuflags);
+    hmri_log(sprintf('INFO: averaged PDw/T1w/MTw will be calculated based on the first %d echoes.',nr_echoes4avg),mpm_params.nopuflags);
 else % otherwise use all echoes
     msg = 'INFO:';
     for ccon = 1:mpm_params.ncon

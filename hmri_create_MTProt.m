@@ -131,9 +131,6 @@ calcpath = mpm_params.calcpath;
 mpm_params.outbasename = outbasename;
 respath = mpm_params.respath;
 supplpath = mpm_params.supplpath;
-% Number of echoes averaged in non-OLS case (maximum number of echoes available for ALL
-% contrasts AND under TE_limit - see get_mpm_params)
-avg_nr = nnz(mpm_params.input(PDwidx).TE<=mpm_params.maxTEval4avg);
 
 % load PDw images
 V_pdw = spm_vol(mpm_params.input(PDwidx).fnam);
@@ -823,10 +820,14 @@ if PDproc.T2scorr && (~isempty(fR2s)||~isempty(fR2s_OLS))
         PR2s = fR2s;
     end
     
+    % find all volumes with TE less than max TE 
+    vols2avg = find(mpm_params.input(PDwidx).TE<=mpm_params.maxTEval4avg);
+    avg_nr = length(vols2avg);
+
     % calculate correction (expected to be between 1 and 1.5 approx)
     R2s = spm_read_vols(spm_vol(PR2s));
     R2scorr4A = zeros(size(R2s));
-    for cecho=1:avg_nr
+    for cecho = vols2avg
         TE = mpm_params.input(PDwidx).TE(cecho)*0.001; % in seconds
         R2scorr4A = R2scorr4A + exp(-TE.*R2s);
     end
@@ -839,7 +840,6 @@ if PDproc.T2scorr && (~isempty(fR2s)||~isempty(fR2s_OLS))
    
     NiR2scorr4A.dat(:,:,:) = R2scorr4A;
     
-     
     % apply correction
     fAcorr = spm_file(fA,'suffix','_R2scorr');
     NiAcorr = hmri_create_nifti(fAcorr, V_ref, dt, ...

@@ -218,7 +218,7 @@ for ccon=1:mpm_params.ncon % loop over available contrasts
     spm_progress_bar('Init',V(1).dim(3),Ni.descrip,'planes completed');
     for p = 1:V(1).dim(3)
         Y = zeros(V(1).dim(1:2));
-        for nr = vols2avg
+        for nr = vols2avg'
             Y  = Y + hmri_read_vols(V(nr),V(1),p,mpm_params.interp);
         end
         Ni.dat(:,:,p) = Y/ccon_avg_nr;
@@ -827,7 +827,7 @@ if PDproc.T2scorr && (~isempty(fR2s)||~isempty(fR2s_OLS))
     % calculate correction (expected to be between 1 and 1.5 approx)
     R2s = spm_read_vols(spm_vol(PR2s));
     R2scorr4A = zeros(size(R2s));
-    for cecho = vols2avg
+    for cecho = vols2avg'
         TE = mpm_params.input(PDwidx).TE(cecho)*0.001; % in seconds
         R2scorr4A = R2scorr4A + exp(-TE.*R2s);
     end

@@ -708,6 +708,11 @@ for p = 1:dm(3)
             % Use MT-pulse B1 map if available        
             if ~isempty(V_trans_MT) % separate B1 mapping data provided for MT pulse
                 f_T_MT = hmri_read_vols(V_trans_MT(2,:),Ni,p,mpm_params.interp)/100; % divide by 100, since p.u. maps
+                switch mpm_params.MTsatB1CorrectionModel
+                    % need to undo implicit B1^2 scaling from MPM B1 map
+                    case 'helms'
+                        MT = MT.*(f_T./f_T_MT).^2;
+                end
             elseif separate_MT_B1map % separate B1 mapping data for MT pulse selected, but with "no B1 correction" selected
                 f_T_MT = [];
             else % same B1 mapping data for excitation and MT pulse selected

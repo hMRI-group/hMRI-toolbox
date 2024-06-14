@@ -250,43 +250,31 @@ function dep = vout_create(job)
 % outputs are calculated, depending on the denoising type.
 
 % iterate to generate dependency tags for outputs
-dep = [];
+nsub = numel(job.subj);
 contrasts = {'mtw','pdw','t1w'};
-for i=1:numel(job.subj)
-    dnfield = fieldnames(job.subj(i).denoisingtype);
+ncon = length(contrasts);
+dep = repmat(cfg_dep,1,2*ncon*nsub);
+for i=1:nsub
+    for k=1:ncon
 
-    switch dnfield{1}
-        case 'lcpca_denoise'
+        con = contrasts{k};
 
-            for k = 1:length(contrasts)
+        % define variables and initialize cfg_dep for magnitude images
+        cdep            = cfg_dep;
+        cdep.sname      = sprintf('lcpcaDenoised_%s_magnitude',con);
+        idxstr = ['DenoisedMagnitude' con];
+        cdep.src_output = substruct('.','subj','()',{i},'.',idxstr,'()',{':'});
+        cdep.tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
+        dep((i-1)*ncon+k) = cdep;
 
-                con = contrasts{k};
+        % define variables and initialize cfg_dep for phase images
+        cdep            = cfg_dep;
+        cdep.sname      = sprintf('lcpcaDenoised_%s_phase',con);
+        idxstr = ['DenoisedPhase' con];
+        cdep.src_output = substruct('.','subj','()',{i},'.',idxstr,'()',{':'});
+        cdep.tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
+        dep((i-1)*ncon+k+nsub*ncon) = cdep;
 
-                % define variables and initialize cfg_dep based on availability of phase images
-                if iscell(job.subj(i).denoisingtype.lcpca_denoise.(con).mag_img)
-                    arrayLength = numel(job.subj(i).denoisingtype.lcpca_denoise.(con).mag_img);
-                    if ~isempty(arrayLength)
-                        cdep            = cfg_dep;
-                        cdep.sname      = sprintf('lcpcaDenoised_%s_magnitude',con);
-                        idxstr = ['DenoisedMagnitude' con];
-                        cdep.src_output = substruct('.','subj','()',{i},'.',idxstr,'()',{':'});
-                        cdep.tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
-
-                        dep = [dep,cdep]; %#ok<AGROW>
-
-                        phase_bool = ~isempty(job.subj(i).denoisingtype.lcpca_denoise.(con).phase_img);
-                        if phase_bool
-                            cdep            = cfg_dep;
-                            cdep.sname      = sprintf('lcpcaDenoised_%s_phase',con);
-                            idxstr = ['DenoisedPhase' con];
-                            cdep.src_output = substruct('.','subj','()',{i},'.',idxstr,'()',{':'});
-                            cdep.tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
-
-                            dep = [dep,cdep]; %#ok<AGROW>
-                        end
-                    end
-                end
-            end
     end
 end
 end

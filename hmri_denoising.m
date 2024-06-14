@@ -212,7 +212,7 @@ catch ME
     end
     rethrow(ME)
 end
-hmri_log('Lcpca-denoising (Java) module executed succesfully', lcpcaflags_nopopup);
+hmri_log('Lcpca-denoising (Java) module executed successfully', lcpcaflags_nopopup);
 
 % initialize the cells to be populated with fullpaths of output magnitude and phase images
 out_mag = cell(1,length(image_list));

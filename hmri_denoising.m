@@ -16,7 +16,7 @@ end
 end
 
 %=========================================================================%
-% Write/Arrange denoising parameters tp the denoising_params.
+% Write denoising parameters to denoising_params.
 %=========================================================================%
 function denoising_params = get_denoising_params(jobsubj)
 
@@ -72,21 +72,19 @@ switch denoising_protocol
 
         % processing can continue if only magnitude images were entered but
         % only warn that optional phase img are missing
-
         if ~denoising_params.phase_bool || ~isfield(jobsubj.denoisingtype.(denoising_protocol),'phase_input')
-            hmri_log('No (optional) phase images were entered, Lcpca-denoising continues with only magnitude images', denoising_params.nopuflags);
-            warning('No (optional) phase images were entered, Lcpca-denoising continues with only magnitude images')
+            hmri_log('Warning: No (optional) phase images were entered, Lcpca-denoising continues with only magnitude images', denoising_params.nopuflags);
         end
 
         dnstruct = jobsubj.denoisingtype.lcpca_denoise;
-        denoising_params.ngbsize =dnstruct.ngbsize;
-        denoising_params.std =dnstruct.std;
+        denoising_params.ngbsize = dnstruct.ngbsize;
+        denoising_params.std = dnstruct.std;
         denoising_params.output_path = jobsubj.path.dnrespath;
         denoising_params.supp_path = jobsubj.path.supplpath;
 
         % Print lcpca denoising parameters ngbsize and std cut off
         print_lcpca_params.Neighborhood_Size = denoising_params.ngbsize;
-        print_lcpca_params.Standard_Deviation_Cuttoff =  denoising_params.std;
+        print_lcpca_params.Standard_Deviation_Cutoff = denoising_params.std;
         printdnstruct = printstruct(print_lcpca_params);
         hmri_log(sprintf('Lcpca Denoising Parameters:\n\n%s', ...
             printdnstruct),denoising_params.nopuflags);
@@ -115,7 +113,7 @@ javaaddpath(jarcommons)
 javaaddpath(jarmipav)
 javaaddpath(jarlcpca)
 
-% Read from the input the processing parameters
+% Read processing parameters from input
 image_list = cellstr(lcpcadenoiseparams.mag_input);
 phase_list = cellstr(lcpcadenoiseparams.phase_input);
 ngb_size = lcpcadenoiseparams.ngbsize;
@@ -152,7 +150,7 @@ dimensions = size(imdatamatrix);
 image_number = length(image_list)+1;
 
 % Set the image_number, dimensions and resolution for processing
-noiseObj.setImageNumber(image_number); %number of echoes
+noiseObj.setImageNumber(image_number); % number of echoes
 
 % Set dimensions based on whether it is 3D or 4D data
 % Throw an error if neither
@@ -196,18 +194,25 @@ noiseObj.setRandomMatrixTheory(use_rmt)
 
 % Execute with all the input parameters
 % Catch errors thrown by the java script
+%TODO: provide specific warning for any java heap errors
 lcpcaflags_nopopup = lcpcaflags;
 lcpcaflags_nopopup.PopUp = false;
 hmri_log(sprintf('Executing Lcpca-denoising (Java) module \n'), lcpcaflags_nopopup);
 try
     noiseObj.execute;
 catch ME
-    hmri_log('There was an error in the Java code: could not execute Lcpca denosing!', lcpcaflags_nopopup);
     disp(ME.message)
+    if isa(ME,'matlab.exception.JavaException')
+        hmri_log('There was an error in the Java code: could not execute Lcpca denoising!', lcpcaflags_nopopup);
+        if strcmp(ME.ExceptionObject,'java.lang.OutOfMemoryError: Java heap space')
+            msg = sprintf(['Error: Lcpca denoising did not run because the Java heap space is too small for the amount of data to be denoised.\n' ...
+                           '       Please try increasing the java heap size in the Matlab preferences.\n']);
+            hmri_log(msg, lcpcaflags_nopopup);
+        end        
+    end
     rethrow(ME)
 end
-hmri_log('Lcpca-denoising (Java) module succesfully executed', lcpcaflags_nopopup);
-
+hmri_log('Lcpca-denoising (Java) module executed succesfully', lcpcaflags_nopopup);
 
 % initialize the cells to be populated with fullpaths of output magnitude and phase images
 out_mag = cell(1,length(image_list));
@@ -240,7 +245,7 @@ for echo = 1:length(image_list)
     % write metadata as extended header and sidecar json
     Output_hdr = init_dn_output_metadata(fullim_list, lcpcadenoiseparams);
     Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (LCPCA)'];
-    Output_hdr.history.output.imtype = 'Denoising (LCPCA)';
+    Output_hdr.history.output.imtype = 'Denoised (LCPCA)';
     % add acquisition data if available (otherwise fields will be empty)
     jsonfilename = fullfile(path,strcat(mainfilename,'.json'));
     if exist(jsonfilename, 'file') ==2
@@ -266,7 +271,6 @@ for echo = 1:length(image_list)
     out_mag{idx_mag} = outfname;
     idx_mag = idx_mag +1;
 
-
     % Also write the phase images if applicable
     if phase_bool
         datamatrix = noiseObj.getDenoisedPhaseImageAt(echo);
@@ -288,7 +292,7 @@ for echo = 1:length(image_list)
         % write metadata as extended header and sidecar json
         Output_hdr = init_dn_output_metadata(fullim_list, lcpcadenoiseparams);
         Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (LCPCA)'];
-        Output_hdr.history.output.imtype = 'Denoising (LCPCA)';
+        Output_hdr.history.output.imtype = 'Denoised (LCPCA)';
         % add acquisition data if available (otherwise fields will be empty)
         jsonfilename = fullfile(path,strcat(mainfilename,'.json'));
         if exist(jsonfilename, 'file') ==2
@@ -312,7 +316,7 @@ for echo = 1:length(image_list)
 
         % add image to the output list
         out_phase{idx_phase} = outfname;
-        idx_phase = idx_phase +1;
+        idx_phase = idx_phase + 1;
 
     end
 

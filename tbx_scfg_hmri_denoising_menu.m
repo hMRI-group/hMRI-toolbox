@@ -22,6 +22,7 @@ DNdefaults.ufilter = [...
     ];
 DNdefaults.num     = [1 1];
 
+
 % ---------------------------------------------------------------------
 % Use metadata or standard defaults (no customization)
 % ---------------------------------------------------------------------
@@ -32,6 +33,7 @@ DNmetadata.help    = {''};
 DNmetadata.strtype = 's';
 DNmetadata.num     = [1 Inf];
 DNmetadata.val     = {'yes'};
+
 
 %--------------------------------------------------------------------------
 % DN processing parameters
@@ -45,6 +47,7 @@ DNparameters.help   = {['You can either stick with metadata and standard ' ...
     'required and which parameters are optional.']};
 DNparameters.values = {DNmetadata DNdefaults};
 DNparameters.val    = {DNmetadata};
+
 
 % ---------------------------------------------------------------------
 % Magnitude input images
@@ -68,6 +71,7 @@ phase_img.help    = {'Select the (optional) phase images to be denoised'};
 phase_img.filter  = 'image';
 phase_img.ufilter = '.*';
 phase_img.num     = [0 Inf];
+
 
 % ---------------------------------------------------------------------
 % Standard deviation parameter
@@ -97,6 +101,7 @@ ngbsize.num     = [1 1];
 ngbsize.help    = {'Specify the neghborhood size', ['This parameter' ...
     ' sets the size of the local PCA neighborhood.' ...
     ' Though the default size is 4, a size of 3 works better in lower resolutions.']};
+
 
 % ---------------------------------------------------------------------
 % LCPCA Denoising protocol

@@ -47,7 +47,7 @@ DNparameters.values = {DNmetadata DNdefaults};
 DNparameters.val    = {DNmetadata};
 
 % ---------------------------------------------------------------------
-% Magnitude input images 
+% Magnitude input images
 % ---------------------------------------------------------------------
 mag_img         = cfg_files;
 mag_img.tag     = 'mag_input';
@@ -75,10 +75,10 @@ phase_img.num     = [0 Inf];
 std         = cfg_entry;
 std.tag     = 'std';
 std.name    = 'Standard deviation cut-off';
-std.val     = {[1.05]};
+std.val     = {1.05};
 std.strtype = 'e';
 std.num     = [1 1];
-std.help    = {['Specify the standard deviation cut off for denoising'], ['This parameter' ...
+std.help    = {'Specify the standard deviation cut off for denoising', ['This parameter' ...
     ' is the factor of the local noise level to remove PCA components. Higher values remove more components.' ...
     ' The optimal cutoff can be increased when including more images. ' ...
     ' We recommend the following cut-off sizes for various image numbers:' ...
@@ -91,10 +91,10 @@ std.help    = {['Specify the standard deviation cut off for denoising'], ['This 
 ngbsize         = cfg_entry;
 ngbsize.tag     = 'ngbsize';
 ngbsize.name    = 'Neighborhood size';
-ngbsize.val     = {[4]};
+ngbsize.val     = {4};
 ngbsize.strtype = 'e';
 ngbsize.num     = [1 1];
-ngbsize.help    = {['Specify the neghborhood size'], ['This parameter' ...
+ngbsize.help    = {'Specify the neghborhood size', ['This parameter' ...
     ' sets the size of the local PCA neighborhood.' ...
     ' Though the default size is 4, a size of 3 works better in lower resolutions.']};
 
@@ -121,10 +121,9 @@ denoisingtype.help   = {'Choose the methods for denoising.'
     'toolbox. See list below for a ' ...
     'brief description of each type.']
     ['- Lcpca denoising: Bazin, et al. (2019) Denoising High-Field Multi-Dimensional MRI With Local'...
-'Complex PCA, Front. Neurosci. doi:10.3389/fnins.2019.01066']
-    [' - No denoising:...']};
+    'Complex PCA, Front. Neurosci. doi:10.3389/fnins.2019.01066']
+    ' - No denoising:...'};
 denoisingtype.values = {denoisinginput_lcpca};
 denoisingtype.val    = {denoisinginput_lcpca};
-
 
 end

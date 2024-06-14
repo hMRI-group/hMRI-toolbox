@@ -9,9 +9,9 @@ denoising_protocol = protocolfield{1};
 %execute the chosen denoising method and define output
 switch denoising_protocol
     case 'lcpca_denoise'
-[output_mag, output_phase] = hmri_calc_lcpcadenoise(denoisedout);
-varargout{1} = output_mag;
-varargout{2} = output_phase;
+        [output_mag, output_phase] = hmri_calc_lcpcadenoise(denoisedout);
+        varargout{1} = output_mag;
+        varargout{2} = output_phase;
 end
 end
 
@@ -24,7 +24,7 @@ function denoising_params = get_denoising_params(jobsubj)
 dntypename = fieldnames(jobsubj.denoisingtype);
 denoising_protocol = dntypename{1};
 
-% init defaults filename and optional-defaults bool 
+% init defaults filename and optional-defaults bool
 deffnam = '';
 custom_def = false;
 
@@ -69,16 +69,16 @@ switch denoising_protocol
         denoising_params.phase_input = cellstr(char(spm_file(jobsubj.denoisingtype.(denoising_protocol).phase_input,'number','')));
         denoising_params.phase_bool = any(~cellfun(@isempty, denoising_params.phase_input));
         denoising_params.mag_bool = any(~cellfun(@isempty, denoising_params.mag_input));
-        
-        
+
+
         %processing can continue if only magnitude images were entered but
         %only warn that optional phase img are missing
-        
+
         if ~denoising_params.phase_bool || ~isfield(jobsubj.denoisingtype.(denoising_protocol),'phase_input')
-        hmri_log('No (optional) phase images were entered, Lcpca-denoising continues with only magnitude images', denoising_params.nopuflags);
-        warning('No (optional) phase images were entered, Lcpca-denoising continues with only magnitude images')
+            hmri_log('No (optional) phase images were entered, Lcpca-denoising continues with only magnitude images', denoising_params.nopuflags);
+            warning('No (optional) phase images were entered, Lcpca-denoising continues with only magnitude images')
         end
-        
+
 
         dnstruct = jobsubj.denoisingtype.lcpca_denoise;
         denoising_params.ngbsize =dnstruct.ngbsize;
@@ -91,7 +91,7 @@ switch denoising_protocol
         print_lcpca_params.Standard_Deviation_Cuttoff =  denoising_params.std;
         printdnstruct = printstruct(print_lcpca_params);
         hmri_log(sprintf('Lcpca Denoising Parameters:\n\n%s', ...
-        printdnstruct),denoising_params.nopuflags);
+            printdnstruct),denoising_params.nopuflags);
 
 end
 
@@ -152,7 +152,7 @@ noiseObj= javaObject('nl.uva.imcn.algorithms.LocalComplexPCADenoising');
 %Get the image_number and dimensions from the first image of magnitude
 %images
 imdatavol = spm_vol(image_list{1});
-resolutions = sqrt(sum(imdatavol.mat(1:3,1:3).^2)); 
+resolutions = sqrt(sum(imdatavol.mat(1:3,1:3).^2));
 imdatamatrix = spm_read_vols(imdatavol);
 dimensions = size(imdatamatrix);
 image_number = length(image_list)+1;
@@ -163,31 +163,31 @@ noiseObj.setImageNumber(image_number); %number of echoes
 %Set dimensions based on whether it is 3D or 4D data
 %Throw an error if neither
 if length(dimensions) == 3
-noiseObj.setDimensions(dimensions(1),dimensions(2),dimensions(3));
+    noiseObj.setDimensions(dimensions(1),dimensions(2),dimensions(3));
 elseif length(dimensions) == 4
-noiseObj.setDimensions(dimensions(1),dimensions(2),dimensions(3), dimensions(4));
+    noiseObj.setDimensions(dimensions(1),dimensions(2),dimensions(3), dimensions(4));
 else
     hmri_log('The raw data does not have the correct dimensions (must be 3D or 4D data) for processing: please check your data!', lcpcaflags);
     error('The raw data does not have the correct dimensions (must be 3D or 4D data) for processing: please check your data!')
 end
-noiseObj.setResolutions(resolutions(1),resolutions(2), resolutions(3)); 
+noiseObj.setResolutions(resolutions(1),resolutions(2), resolutions(3));
 
 %Loop through all reshaped echos
 for echo = 1:length(image_list)
     %read vol from filepath
     datavol = spm_vol(image_list{echo});
     datamatrix = spm_read_vols(datavol);
-%place vol for denoising
-noiseObj.setMagnitudeImageAt(echo, reshape(datamatrix, [1 prod(size(datamatrix))]));
+    %place vol for denoising
+    noiseObj.setMagnitudeImageAt(echo, reshape(datamatrix, [1 numel(datamatrix)]));
 
-%Add phase images if they exist
-if phase_bool
-    %read vol from filepath
-    datavol = spm_vol(phase_list{echo});
-    datamatrix = spm_read_vols(datavol);
-%place vol for denoising
-noiseObj.setPhaseImageAt(echo, reshape(datamatrix, [1 prod(size(datamatrix))]));
-end
+    %Add phase images if they exist
+    if phase_bool
+        %read vol from filepath
+        datavol = spm_vol(phase_list{echo});
+        datamatrix = spm_read_vols(datavol);
+        %place vol for denoising
+        noiseObj.setPhaseImageAt(echo, reshape(datamatrix, [1 numel(datamatrix)]));
+    end
 end
 
 %set all other params
@@ -195,8 +195,8 @@ noiseObj.setPatchSize(ngb_size)
 noiseObj.setStdevCutoff(stdev_cutoff)
 noiseObj.setMinimumDimension(min_dimension)
 noiseObj.setMaximumDimension(max_dimension)
-noiseObj.setUnwrapPhase(unwrap) 
-noiseObj.setRescalePhase(rescale_phs) 
+noiseObj.setUnwrapPhase(unwrap)
+noiseObj.setRescalePhase(rescale_phs)
 noiseObj.setProcessSlabIn2D(process_2d)
 noiseObj.setRandomMatrixTheory(use_rmt)
 
@@ -206,9 +206,9 @@ lcpcaflags_nopopup = lcpcaflags;
 lcpcaflags_nopopup.PopUp = false;
 hmri_log(sprintf('Executing Lcpca-denoising (Java) module \n'), lcpcaflags_nopopup);
 try
-noiseObj.execute;
+    noiseObj.execute;
 catch ME
-hmri_log('There was an error in the Java code: could not execute Lcpca denosing!', lcpcaflags_nopopup);
+    hmri_log('There was an error in the Java code: could not execute Lcpca denosing!', lcpcaflags_nopopup);
     disp(ME.message)
     rethrow(ME)
 end
@@ -217,10 +217,14 @@ hmri_log('Lcpca-denoising (Java) module succesfully executed', lcpcaflags_nopopu
 
 %initialize the cells to be populated with fullpaths of output
 %magnitude and phase images
-out_mag = {};
+out_mag = cell(1,length(image_list));
 idx_mag = 1;
-out_phase = {};
-idx_phase =1;
+if phase_bool 
+    out_phase = cell(1,length(image_list));
+else
+    out_phase = {};
+end
+idx_phase = 1;
 
 %Get the results for all echos and reshape
 for echo = 1:length(image_list)
@@ -231,7 +235,7 @@ for echo = 1:length(image_list)
     firstfile = image_list{echo};
     filehdr = spm_vol(image_list{echo});
 
-    [path,filename,ext] = fileparts(firstfile);
+    [path,filename,~] = fileparts(firstfile);
     [~,mainfilename,~] = fileparts(firstfile);
     filename = strcat('LcpcaDenoised_',filename,'.nii');
 
@@ -248,18 +252,18 @@ for echo = 1:length(image_list)
     jsonfilename = fullfile(path,strcat(mainfilename,'.json'));
     if exist(jsonfilename, 'file') ==2
         try
-    jsondata = spm_jsonread(jsonfilename);
-    data_RepetitionTime = get_metadata_val(jsondata,'RepetitionTime');
-    data_EchoTime = get_metadata_val(jsondata,'EchoTime' );
-    data_FlipAngle = get_metadata_val(jsondata, 'FlipAngle');
-    Output_hdr.acqpar = struct('RepetitionTime',data_RepetitionTime, ...
-                    'EchoTime',data_EchoTime,'FlipAngle',data_FlipAngle);
+            jsondata = spm_jsonread(jsonfilename);
+            data_RepetitionTime = get_metadata_val(jsondata,'RepetitionTime');
+            data_EchoTime = get_metadata_val(jsondata,'EchoTime' );
+            data_FlipAngle = get_metadata_val(jsondata, 'FlipAngle');
+            Output_hdr.acqpar = struct('RepetitionTime',data_RepetitionTime, ...
+                'EchoTime',data_EchoTime,'FlipAngle',data_FlipAngle);
         catch
-            hmri_log('Although json sidecar file were found, the writing of acquisition metadata failed', lcpcaflags_nopopup);  
-      
-       end
+            hmri_log('Although json sidecar file were found, the writing of acquisition metadata failed', lcpcaflags_nopopup);
+
+        end
     else
-      hmri_log('No json sidecar file were found, skipping the writing of acquisition metadata', lcpcaflags_nopopup);  
+        hmri_log('No json sidecar file were found, skipping the writing of acquisition metadata', lcpcaflags_nopopup);
     end
 
     %Set all the metadata
@@ -268,62 +272,62 @@ for echo = 1:length(image_list)
     %add image to the output list
     out_mag{idx_mag} = outfname;
     idx_mag = idx_mag +1;
-    
+
 
     %Get also the phase images if applicable
 
     if phase_bool
-    datamatrix = noiseObj.getDenoisedPhaseImageAt(echo);
-    volumedata = reshape(datamatrix, dimensions);
+        datamatrix = noiseObj.getDenoisedPhaseImageAt(echo);
+        volumedata = reshape(datamatrix, dimensions);
 
-    %Write the volume to .nii with an update to standard .nii header
-    firstfile = phase_list{echo};
-    filehdr = spm_vol(phase_list{echo});
+        %Write the volume to .nii with an update to standard .nii header
+        firstfile = phase_list{echo};
+        filehdr = spm_vol(phase_list{echo});
 
-    [path,filename,ext] = fileparts(firstfile);
-    [~,mainfilename,~] = fileparts(firstfile);
-    filename = strcat('LcpcaDenoised_',filename,'.nii');
+        [path,filename,~] = fileparts(firstfile);
+        [~,mainfilename,~] = fileparts(firstfile);
+        filename = strcat('LcpcaDenoised_',filename,'.nii');
 
-    outfname = fullfile(output_path{1}, filename);
-    filehdr.fname = outfname;
-    filehdr.descrip = strcat(filehdr.descrip, ' + lcpca denoised');
-    spm_write_vol(filehdr, volumedata);
+        outfname = fullfile(output_path{1}, filename);
+        filehdr.fname = outfname;
+        filehdr.descrip = strcat(filehdr.descrip, ' + lcpca denoised');
+        spm_write_vol(filehdr, volumedata);
 
-    %write metadata as extended header and sidecar json
-    Output_hdr = init_dn_output_metadata(fullim_list, lcpcadenoiseparams);
-    Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (LCPCA)'];
-    Output_hdr.history.output.imtype = 'Denoising (LCPCA)';
-    %add acquisition data if available (otherwise fields will be empty)
-    jsonfilename = fullfile(path,strcat(mainfilename,'.json'));
-    if exist(jsonfilename, 'file') ==2
-        try
-    jsondata = spm_jsonread(jsonfilename);
-    data_RepetitionTime = get_metadata_val(jsondata,'RepetitionTime');
-    data_EchoTime = get_metadata_val(jsondata,'EchoTime' );
-    data_FlipAngle = get_metadata_val(jsondata, 'FlipAngle');
-    Output_hdr.acqpar = struct('RepetitionTime',data_RepetitionTime, ...
+        %write metadata as extended header and sidecar json
+        Output_hdr = init_dn_output_metadata(fullim_list, lcpcadenoiseparams);
+        Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (LCPCA)'];
+        Output_hdr.history.output.imtype = 'Denoising (LCPCA)';
+        %add acquisition data if available (otherwise fields will be empty)
+        jsonfilename = fullfile(path,strcat(mainfilename,'.json'));
+        if exist(jsonfilename, 'file') ==2
+            try
+                jsondata = spm_jsonread(jsonfilename);
+                data_RepetitionTime = get_metadata_val(jsondata,'RepetitionTime');
+                data_EchoTime = get_metadata_val(jsondata,'EchoTime' );
+                data_FlipAngle = get_metadata_val(jsondata, 'FlipAngle');
+                Output_hdr.acqpar = struct('RepetitionTime',data_RepetitionTime, ...
                     'EchoTime',data_EchoTime,'FlipAngle',data_FlipAngle);
-        catch
-            hmri_log('Although json sidecar file were found, the writing of acquisition metadata failed', lcpcaflags_nopopup);  
-      
-       end
-    else
-      hmri_log('No json sidecar file were found, skipping the writing of acquisition metadata', lcpcaflags_nopopup);  
+            catch
+                hmri_log('Although json sidecar file were found, the writing of acquisition metadata failed', lcpcaflags_nopopup);
+
+            end
+        else
+            hmri_log('No json sidecar file were found, skipping the writing of acquisition metadata', lcpcaflags_nopopup);
+        end
+
+        %Set all the metadata
+        set_metadata(outfname,Output_hdr,json);
+
+        %add image to the output list
+        out_phase{idx_phase} = outfname;
+        idx_phase = idx_phase +1;
+
     end
 
-    %Set all the metadata
-    set_metadata(outfname,Output_hdr,json);
-
-    %add image to the output list
-    out_phase{idx_phase} = outfname;
-    idx_phase = idx_phase +1;
-    
-    end
-       
 end
 
 %Take out computed outputs
-output_mag = out_mag; 
+output_mag = out_mag;
 output_phase = out_phase;
 
 %save estimated local dimensions and residuals (between input and denoised images)

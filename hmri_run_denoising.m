@@ -1,13 +1,13 @@
-function out = hmri_run_denoise(job)
+function out = hmri_run_denoising(job)
 
 %Get denoising protocol
 dntype=fields(job.subj.denoisingtype);
 
 %Case indir versus outdir
-try 
+try
     outpath = job.subj.output.outdir{1}; % case outdir
     if ~exist(outpath,'dir'); mkdir(outpath); end
-catch  
+catch
     Pin = char(job.subj.denoisingtype.(dntype{1}).mag_input);
     outpath = fileparts(Pin(1,:)); % case indir
 end
@@ -20,7 +20,7 @@ hmri_get_defaults('outdir',outpath);
 % <output directory>/Results/Supplementary
 % If repeated runs, <output directory> is replaced by <output
 % directory>/Run_xx to avoid overwriting previous outputs.
- 
+
 % define a directory for final results
 % RESULTS contains the final denoised maps
 % Supplementary containes additonal info and log
@@ -43,7 +43,7 @@ supplpath = fullfile(outpath, 'Results', 'Supplementary');
 if ~exist(supplpath,'dir'); mkdir(supplpath); end
 
 % save all these paths in the job.subj structure
-job.subj.path.dnrespath = respath; 
+job.subj.path.dnrespath = respath;
 job.subj.path.respath = respath;
 job.subj.path.supplpath = supplpath;
 
@@ -53,7 +53,7 @@ job.subj.log.flags = struct('LogFile',struct('Enabled',true,'FileName','hMRI_den
     'PopUp',job.subj.popup,'ComWin',true);
 flags = job.subj.log.flags;
 flags.PopUp = false;
-hmri_log(sprintf('\t============ DENOISING MODULE - %s.m (%s) ============', mfilename, datestr(now)),flags);
+hmri_log(sprintf('\t============ DENOISING MODULE - %s.m (%s) ============', mfilename, datetime('now')),flags);
 
 if newrespath
     hmri_log(sprintf(['WARNING: existing results from previous run(s) were found, \n' ...
@@ -74,16 +74,16 @@ switch dntype{1}
         %non-equal number of non-empty phase and magnitude images
 
         if ~check_params.mag_bool || ~isfield(job.subj.denoisingtype.(dntype{1}),'mag_input')
-        hmri_log('No magnitude images were entered, aborting! Please check your input data and try again!', flags);
-        error('Error: No magnitude images were entered, aborting! Please check your input data and try again!')
+            hmri_log('No magnitude images were entered, aborting! Please check your input data and try again!', flags);
+            error('Error: No magnitude images were entered, aborting! Please check your input data and try again!')
         end
 
         if check_params.phase_bool && (length(check_params.mag_input) ~= length(check_params.phase_input))
-        hmri_log('The number of phase and magnitude images are different, please check your input data and try again!', flags);
-        error("Error: The number of phase and magnitude images are different, please check your input data and try again!")
+            hmri_log('The number of phase and magnitude images are different, please check your input data and try again!', flags);
+            error("Error: The number of phase and magnitude images are different, please check your input data and try again!")
         end
 end
- 
+
 % save SPM version (slight differences may appear in the results depending
 % on the SPM version!)
 [v,r] = spm('Ver');
@@ -95,24 +95,24 @@ spm_jsonwrite(fullfile(supplpath,'hMRI_denoising_job.json'),job,struct('indent',
 % run the denoising and collect the results
 switch dntype{1}
     case 'lcpca_denoise'
-%Write to log and command window the specific denosing being applied
-hmri_log(sprintf('\t============ %s - %s.m (%s) ============',"APPLYING LCPCA-DENOISING", mfilename, datestr(now)),flags);
-[output_mag, output_phase] = hmri_create_denoising(job);
+        %Write to log and command window the specific denosing being applied
+        hmri_log(sprintf('\t============ %s - %s.m (%s) ============',"APPLYING LCPCA-DENOISING", mfilename, datetime('now')),flags);
+        [output_mag, output_phase] = hmri_create_denoising(job);
 
-%Assign output dependency to the denoised output images
-phase_bool = any(~cellfun(@isempty,output_phase));
-arrayLength = length(output_mag);
-for i = 1:2*arrayLength
-    if i<=arrayLength
-    idxstr = ['DenoisedMagnitude' int2str(i)];
-    out.subj.(idxstr) = {output_mag{i}};
-    elseif phase_bool && i>arrayLength 
-    idxstr = ['DenoisedPhase' int2str(i-arrayLength)];
-    out.subj.(idxstr) = {output_phase{i-arrayLength}};
-    else
-        break
-    end
+        %Assign output dependency to the denoised output images
+        phase_bool = any(~cellfun(@isempty,output_phase));
+        arrayLength = length(output_mag);
+        for i = 1:2*arrayLength
+            if i<=arrayLength
+                idxstr = ['DenoisedMagnitude' int2str(i)];
+                out.subj.(idxstr) = output_mag(i);
+            elseif phase_bool && i>arrayLength
+                idxstr = ['DenoisedPhase' int2str(i-arrayLength)];
+                out.subj.(idxstr) = output_phase(i-arrayLength);
+            else
+                break
+            end
+        end
 end
-end
-hmri_log(sprintf('\t============ DENOISING MODULE: completed (%s) ============', datestr(now)),flags);
+hmri_log(sprintf('\t============ DENOISING MODULE: completed (%s) ============', datetime('now')),flags);
 end

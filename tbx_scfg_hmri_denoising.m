@@ -112,9 +112,9 @@ denoisingmethod = dnfield{1};
 
 switch denoisingmethod
     case 'lcpca_denoise'
-        %define variables and initialize cfg_dep based on availibility of phase images
+        % define variables and initialize cfg_dep based on availibility of phase images
         arrayLength = numel(job.subj.denoisingtype.lcpca_denoise.mag_input);
-        %phase_bool= any(~cellfun(@isempty, job.subj.denoisingtype.lcpca_denoise.phase_input));
+        % phase_bool= any(~cellfun(@isempty, job.subj.denoisingtype.lcpca_denoise.phase_input));
         phase_bool = isempty(job.subj.denoisingtype.lcpca_denoise.phase_input);
         if phase_bool
             cdep(1,2*arrayLength) = cfg_dep;
@@ -122,7 +122,7 @@ switch denoisingmethod
             cdep(1,arrayLength) = cfg_dep;
         end
 
-        %iterate to generate dependency tags for outputs
+        % iterate to generate dependency tags for outputs
         for i=1:numel(job.subj)
             for k =1:2*arrayLength
                 if k<=arrayLength

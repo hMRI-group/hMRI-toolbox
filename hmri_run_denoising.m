@@ -1,9 +1,9 @@
 function out = hmri_run_denoising(job)
 
-%Get denoising protocol
+% Get denoising protocol
 dntype=fields(job.subj.denoisingtype);
 
-%Case indir versus outdir
+% Case indir versus outdir
 try
     outpath = job.subj.output.outdir{1}; % case outdir
     if ~exist(outpath,'dir'); mkdir(outpath); end
@@ -62,7 +62,7 @@ else
     hmri_log(sprintf('INFO: the output directory is:\n%s\n',outpath),flags);
 end
 
-%check basic requirements and error if basic reqirements fail
+% check basic requirements and error if basic reqirements fail
 switch dntype{1}
     case 'lcpca_denoise'
         check_params.mag_input = cellstr(char(spm_file(job.subj.denoisingtype.(dntype{1}).mag_input,'number','')));
@@ -70,17 +70,18 @@ switch dntype{1}
         check_params.phase_bool = any(~cellfun(@isempty, check_params.phase_input));
         check_params.mag_bool = any(~cellfun(@isempty, check_params.mag_input));
 
-        %Issue an error and abort in cases of non-existent magnitude image data and
-        %non-equal number of non-empty phase and magnitude images
-
+        % Issue an error and abort in cases of non-existent magnitude image data and
+        % non-equal number of non-empty phase and magnitude images
         if ~check_params.mag_bool || ~isfield(job.subj.denoisingtype.(dntype{1}),'mag_input')
-            hmri_log('No magnitude images were entered, aborting! Please check your input data and try again!', flags);
-            error('Error: No magnitude images were entered, aborting! Please check your input data and try again!')
+            msg = 'No magnitude images were entered, aborting! Please check your input data and try again!';
+            hmri_log(msg, flags);
+            error(msg)
         end
 
         if check_params.phase_bool && (length(check_params.mag_input) ~= length(check_params.phase_input))
-            hmri_log('The number of phase and magnitude images are different, please check your input data and try again!', flags);
-            error("Error: The number of phase and magnitude images are different, please check your input data and try again!")
+            msg = 'The number of phase and magnitude images are different, please check your input data and try again!';
+            hmri_log(msg, flags);
+            error(msg)
         end
 end
 
@@ -95,11 +96,11 @@ spm_jsonwrite(fullfile(supplpath,'hMRI_denoising_job.json'),job,struct('indent',
 % run the denoising and collect the results
 switch dntype{1}
     case 'lcpca_denoise'
-        %Write to log and command window the specific denosing being applied
+        % Write to log and command window the specific denosing being applied
         hmri_log(sprintf('\t============ %s - %s.m (%s) ============',"APPLYING LCPCA-DENOISING", mfilename, datetime('now')),flags);
-        [output_mag, output_phase] = hmri_create_denoising(job);
+        [output_mag, output_phase] = hmri_denoising(job);
 
-        %Assign output dependency to the denoised output images
+        % Assign output dependency to the denoised output images
         phase_bool = any(~cellfun(@isempty,output_phase));
         arrayLength = length(output_mag);
         for i = 1:2*arrayLength

@@ -75,8 +75,8 @@ DNparameters.val    = {DNmetadata};
 % Magnitude input images
 % ---------------------------------------------------------------------
 mag_img         = cfg_files;
-mag_img.tag     = 'mag_input';
-mag_img.name    = 'Magnitude input (required)';
+mag_img.tag     = 'mag_img';
+mag_img.name    = 'Magnitude input';
 mag_img.help    = {'Select the (required) magnitude images to be denoised'};
 mag_img.filter  = 'image';
 mag_img.ufilter = '.*';
@@ -86,13 +86,34 @@ mag_img.num     = [1 Inf];
 % Phase input images
 % ---------------------------------------------------------------------
 phase_img         = cfg_files;
-phase_img.tag     = 'phase_input';
+phase_img.tag     = 'phase_img';
 phase_img.name    = 'Phase input (optional)';
 phase_img.help    = {'Select the (optional) phase images to be denoised'};
 phase_img.filter  = 'image';
 phase_img.ufilter = '.*';
 phase_img.num     = [0 Inf];
 phase_img.val     = {''};
+
+% ---------------------------------------------------------------------
+% Separate MPM inputs
+% ---------------------------------------------------------------------
+mtw      = cfg_branch;
+mtw.tag  = 'mtw';
+mtw.name = 'MTw input';
+mtw.help = {'Input Magnitude/Phase images from MTw data'};
+mtw.val  = {mag_img phase_img};
+
+pdw      = cfg_branch;
+pdw.tag  = 't1w';
+pdw.name = 'T1w input';
+pdw.help = {'Input Magnitude/Phase images from PDw data'};
+pdw.val  = {mag_img phase_img};
+
+t1w      = cfg_branch;
+t1w.tag  = 'pdw';
+t1w.name = 'PDw input';
+t1w.help = {'Input Magnitude/Phase images from T1w data'};
+t1w.val  = {mag_img phase_img};
 
 % ---------------------------------------------------------------------
 % Standard deviation parameter
@@ -131,19 +152,19 @@ denoisinginput_lcpca.name = 'LCPCA denoising';
 denoisinginput_lcpca.help = {'Input Magnitude/Phase images for Lcpca-denoising'
     ['Regarding processing parameters, you can either stick with metadata and standard ' ...
     'defaults parameters (recommended) or select your own hmri_denoising_local_defaults_*.m customised defaults file.']};
-denoisinginput_lcpca.val  = {mag_img phase_img DNparameters std ngbsize};
+denoisinginput_lcpca.val  = {mtw pdw t1w DNparameters std ngbsize};
 
 % ---------------------------------------------------------------------
 % menu denoisingtype
 % ---------------------------------------------------------------------
 denoisingtype        = cfg_choice;
 denoisingtype.tag    = 'denoisingtype';
-denoisingtype.name   = 'Denoising method for raw/processed images';
-denoisingtype.help   = {'Choose the methods for denoising.'
+denoisingtype.name   = 'Denoising method';
+denoisingtype.help   = {'Choose the method for denoising.'
     ['Various types of denoising methods can be handled by the hMRI ' ...
     'toolbox. See list below for a ' ...
     'brief description of each type.']
-    ['- Lcpca denoising: Bazin, et al. (2019) Denoising High-Field Multi-Dimensional MRI With Local'...
+    ['- LC-PCA denoising: Bazin, et al. (2019) Denoising High-Field Multi-Dimensional MRI With Local'...
     'Complex PCA, Front. Neurosci. doi:10.3389/fnins.2019.01066']
     ' - No denoising:...'};
 denoisingtype.values = {denoisinginput_lcpca};
@@ -228,40 +249,44 @@ function dep = vout_create(job)
 % This depends on job contents, which may not be present when virtual
 % outputs are calculated, depending on the denoising type.
 
-dnfield = fieldnames(job.subj.denoisingtype);
-denoisingmethod = dnfield{1};
+% iterate to generate dependency tags for outputs
+dep = [];
+contrasts = {'mtw','pdw','t1w'};
+for i=1:numel(job.subj)
+    dnfield = fieldnames(job.subj(i).denoisingtype);
 
-switch denoisingmethod
-    case 'lcpca_denoise'
-        % define variables and initialize cfg_dep based on availability of phase images
-        arrayLength = numel(job.subj.denoisingtype.lcpca_denoise.mag_input);
-        no_phase = isempty(job.subj.denoisingtype.lcpca_denoise.phase_input);
-        if no_phase
-            cdep = repmat(cfg_dep,1,  arrayLength);
-        else
-            cdep = repmat(cfg_dep,1,2*arrayLength);
-        end
+    switch dnfield{1}
+        case 'lcpca_denoise'
 
-        % iterate to generate dependency tags for outputs
-        for i=1:numel(job.subj)
-            for k = 1:2*arrayLength
-                if k<=arrayLength
-                    cdep(k)            = cfg_dep;
-                    cdep(k).sname      = sprintf('lcpcaDenoised_magnitude%d',k);
-                    idxstr = ['DenoisedMagnitude' int2str(k)];
-                    cdep(k).src_output = substruct('.','subj','()',{i},'.',idxstr,'()',{':'});
-                    cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
-                elseif k>arrayLength && ~no_phase
-                    cdep(k)            = cfg_dep;
-                    cdep(k).sname      = sprintf('lcpcaDenoised_phase%d',k-arrayLength);
-                    idxstr = ['DenoisedPhase' int2str(k-arrayLength)];
-                    cdep(k).src_output = substruct('.','subj','()',{i},'.',idxstr,'()',{':'});
-                    cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
-                else
-                    break
+            for k = 1:length(contrasts)
+
+                con = contrasts{k};
+
+                % define variables and initialize cfg_dep based on availability of phase images
+                if iscell(job.subj(i).denoisingtype.lcpca_denoise.(con).mag_img)
+                    arrayLength = numel(job.subj(i).denoisingtype.lcpca_denoise.(con).mag_img);
+                    if ~isempty(arrayLength)
+                        cdep            = cfg_dep;
+                        cdep.sname      = sprintf('lcpcaDenoised_%s_magnitude',con);
+                        idxstr = ['DenoisedMagnitude' con];
+                        cdep.src_output = substruct('.','subj','()',{i},'.',idxstr,'()',{':'});
+                        cdep.tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
+
+                        dep = [dep,cdep]; %#ok<AGROW>
+
+                        phase_bool = ~isempty(job.subj(i).denoisingtype.lcpca_denoise.(con).phase_img);
+                        if phase_bool
+                            cdep            = cfg_dep;
+                            cdep.sname      = sprintf('lcpcaDenoised_%s_phase',con);
+                            idxstr = ['DenoisedPhase' con];
+                            cdep.src_output = substruct('.','subj','()',{i},'.',idxstr,'()',{':'});
+                            cdep.tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
+
+                            dep = [dep,cdep]; %#ok<AGROW>
+                        end
+                    end
                 end
             end
-        end
-        dep = cdep;
+    end
 end
 end

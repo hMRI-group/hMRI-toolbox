@@ -65,14 +65,14 @@ denoising_params.SPMver = sprintf('%s (%s)', v, r);
 % Load all the batch entered and possibly user-modified parameters
 switch denoising_protocol
     case 'lcpca_denoise'
-        denoising_params.mag_input = cellstr(char(spm_file(jobsubj.denoisingtype.(denoising_protocol).mag_input,'number','')));
-        denoising_params.phase_input = cellstr(char(spm_file(jobsubj.denoisingtype.(denoising_protocol).phase_input,'number','')));
-        denoising_params.phase_bool = any(~cellfun(@isempty, denoising_params.phase_input));
-        denoising_params.mag_bool = any(~cellfun(@isempty, denoising_params.mag_input));
+        denoising_params.mag_img = cellstr(char(spm_file(jobsubj.denoisingtype.(denoising_protocol).mag_img,'number','')));
+        denoising_params.phase_img = cellstr(char(spm_file(jobsubj.denoisingtype.(denoising_protocol).phase_img,'number','')));
+        denoising_params.phase_bool = any(~cellfun(@isempty, denoising_params.phase_img));
+        denoising_params.mag_bool = any(~cellfun(@isempty, denoising_params.mag_img));
 
         % processing can continue if only magnitude images were entered but
         % only warn that optional phase img are missing
-        if ~denoising_params.phase_bool || ~isfield(jobsubj.denoisingtype.(denoising_protocol),'phase_input')
+        if ~denoising_params.phase_bool || ~isfield(jobsubj.denoisingtype.(denoising_protocol),'phase_img')
             hmri_log('Warning: No (optional) phase images were entered, Lcpca-denoising continues with only magnitude images', denoising_params.nopuflags);
         end
 
@@ -114,8 +114,8 @@ javaaddpath(jarmipav)
 javaaddpath(jarlcpca)
 
 % Read processing parameters from input
-image_list = cellstr(lcpcadenoiseparams.mag_input);
-phase_list = cellstr(lcpcadenoiseparams.phase_input);
+image_list = cellstr(lcpcadenoiseparams.mag_img);
+phase_list = cellstr(lcpcadenoiseparams.phase_img);
 ngb_size = lcpcadenoiseparams.ngbsize;
 stdev_cutoff = lcpcadenoiseparams.std;
 min_dimension = lcpcadenoiseparams.min_dimension;

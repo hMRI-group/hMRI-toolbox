@@ -1,5 +1,15 @@
 function out = hmri_run_denoising(job)
 
+% loop over subjects in the main function, calling the local function for
+% each subject:
+for in=1:numel(job.subj)
+    out.subj(in) = hmri_denoising_local(job.subj(in));
+end
+
+end
+
+function out = hmri_denoising_local(job)
+
 % Get denoising protocol
 dntype=fields(job.subj.denoisingtype);
 
@@ -96,9 +106,14 @@ spm_jsonwrite(fullfile(supplpath,'hMRI_denoising_job.json'),job,struct('indent',
 % run the denoising and collect the results
 switch dntype{1}
     case 'lcpca_denoise'
-        % Write to log and command window the specific denosing being applied
+        % Write to log and command window which specific denoising applied
         hmri_log(sprintf('\t============ %s - %s.m (%s) ============',"APPLYING LCPCA-DENOISING", mfilename, datetime('now')),flags);
+
+        %TODO: concatenate all contrasts into jobsubj.denoisingtype.(denoising_protocol).mag_img and phase_img
+
         [output_mag, output_phase] = hmri_denoising(job);
+
+        %TODO: extract all contrasts into separate contrasts
 
         % Assign output dependency to the denoised output images
         phase_bool = any(~cellfun(@isempty,output_phase));

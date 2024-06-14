@@ -73,7 +73,7 @@ switch denoising_protocol
         % processing can continue if only magnitude images were entered but
         % only warn that optional phase img are missing
         if ~denoising_params.phase_bool || ~isfield(jobsubj.denoisingtype.(denoising_protocol),'phase_img')
-            hmri_log('Warning: No (optional) phase images were entered, Lcpca-denoising continues with only magnitude images', denoising_params.nopuflags);
+            hmri_log('Warning: No (optional) phase images were entered, Lcpca-denoising continues with only magnitude images', denoising_params.defflags);
         end
 
         dnstruct = jobsubj.denoisingtype.lcpca_denoise;
@@ -87,7 +87,7 @@ switch denoising_protocol
         print_lcpca_params.Standard_Deviation_Cutoff = denoising_params.std;
         printdnstruct = printstruct(print_lcpca_params);
         hmri_log(sprintf('Lcpca Denoising Parameters:\n\n%s', ...
-            printdnstruct),denoising_params.nopuflags);
+            printdnstruct),denoising_params.defflags);
 
 end
 
@@ -103,7 +103,7 @@ function [output_mag, output_phase] = hmri_calc_lcpcadenoise(lcpcadenoiseparams)
 %   Complex PCA", Front. Neurosci. doi:10.3389/fnins.2019.01066
 
 % get the path to the jar files
-[mfilepath, ~,~] = fileparts(mfilename("fullpath"));
+mfilepath = fileparts(mfilename("fullpath"));
 jarcommons = fullfile(fullfile(mfilepath,'jar'),'commons-math3-3.5.jar');
 jarmipav = fullfile(fullfile(mfilepath,'jar'),'Jama-mipav.jar');
 jarlcpca = fullfile(fullfile(mfilepath,'jar'),'lcpca2.jar');
@@ -129,7 +129,7 @@ supp_path = cellstr(lcpcadenoiseparams.supp_path);
 lcpcaflags = lcpcadenoiseparams.defflags;
 
 % Get the full input file list
-phase_bool = any(~cellfun(@isempty,phase_list));
+phase_bool = ~any(cellfun(@isempty,phase_list));
 if phase_bool
     fullim_list = [image_list; phase_list];
 else
@@ -157,12 +157,13 @@ noiseObj.setImageNumber(image_number); % number of echoes
 if length(dimensions) == 3
     noiseObj.setDimensions(dimensions(1),dimensions(2),dimensions(3));
 elseif length(dimensions) == 4
-    noiseObj.setDimensions(dimensions(1),dimensions(2),dimensions(3), dimensions(4));
+    noiseObj.setDimensions(dimensions(1),dimensions(2),dimensions(3),dimensions(4));
 else
-    hmri_log('The raw data does not have the correct dimensions (must be 3D or 4D data) for processing: please check your data!', lcpcaflags);
-    error('The raw data does not have the correct dimensions (must be 3D or 4D data) for processing: please check your data!')
+    msg='The raw data does not have the correct dimensions (must be 3D or 4D data) for processing: please check your data!';
+    hmri_log(msg, lcpcaflags);
+    error(msg)
 end
-noiseObj.setResolutions(resolutions(1),resolutions(2), resolutions(3));
+noiseObj.setResolutions(resolutions(1),resolutions(2),resolutions(3));
 
 % Loop through all reshaped echos
 for echo = 1:length(image_list)
@@ -194,7 +195,6 @@ noiseObj.setRandomMatrixTheory(use_rmt)
 
 % Execute with all the input parameters
 % Catch errors thrown by the java script
-%TODO: provide specific warning for any java heap errors
 lcpcaflags_nopopup = lcpcaflags;
 lcpcaflags_nopopup.PopUp = false;
 hmri_log(sprintf('Executing Lcpca-denoising (Java) module \n'), lcpcaflags_nopopup);
@@ -257,11 +257,11 @@ for echo = 1:length(image_list)
             Output_hdr.acqpar = struct('RepetitionTime',data_RepetitionTime, ...
                 'EchoTime',data_EchoTime,'FlipAngle',data_FlipAngle);
         catch
-            hmri_log('Although json sidecar file were found, the writing of acquisition metadata failed', lcpcaflags_nopopup);
+            hmri_log('Although json sidecar file was found, the writing of acquisition metadata failed', lcpcaflags_nopopup);
 
         end
     else
-        hmri_log('No json sidecar file were found, skipping the writing of acquisition metadata', lcpcaflags_nopopup);
+        hmri_log('No json sidecar file was found, skipping the writing of acquisition metadata', lcpcaflags_nopopup);
     end
 
     % Set all the metadata
@@ -269,7 +269,7 @@ for echo = 1:length(image_list)
 
     % add image to the output list
     out_mag{idx_mag} = outfname;
-    idx_mag = idx_mag +1;
+    idx_mag = idx_mag + 1;
 
     % Also write the phase images if applicable
     if phase_bool
@@ -304,11 +304,11 @@ for echo = 1:length(image_list)
                 Output_hdr.acqpar = struct('RepetitionTime',data_RepetitionTime, ...
                     'EchoTime',data_EchoTime,'FlipAngle',data_FlipAngle);
             catch
-                hmri_log('Although json sidecar file were found, the writing of acquisition metadata failed', lcpcaflags_nopopup);
+                hmri_log('Although json sidecar file was found, the writing of acquisition metadata failed', lcpcaflags_nopopup);
 
             end
         else
-            hmri_log('No json sidecar file were found, skipping the writing of acquisition metadata', lcpcaflags_nopopup);
+            hmri_log('No json sidecar file was found, skipping the writing of acquisition metadata', lcpcaflags_nopopup);
         end
 
         % Set all the metadata

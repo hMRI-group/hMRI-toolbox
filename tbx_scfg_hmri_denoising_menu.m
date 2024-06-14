@@ -71,6 +71,7 @@ phase_img.help    = {'Select the (optional) phase images to be denoised'};
 phase_img.filter  = 'image';
 phase_img.ufilter = '.*';
 phase_img.num     = [0 Inf];
+phase_img.val     = {''};
 
 
 % ---------------------------------------------------------------------
@@ -111,7 +112,7 @@ denoisinginput_lcpca.tag  = 'lcpca_denoise';
 denoisinginput_lcpca.name = 'LCPCA denoising';
 denoisinginput_lcpca.help = {'Input Magnitude/Phase images for Lcpca-denoising'
     ['Regarding processing parameters, you can either stick with metadata and standard ' ...
-    'defaults parameters (recommended) or select your own [hmri_denoisinglocal_defaults_*.m] customised defaults file.']};
+    'defaults parameters (recommended) or select your own [hmri_denoising_local_defaults_*.m] customised defaults file.']};
 denoisinginput_lcpca.val  = {mag_img phase_img DNparameters std ngbsize};
 
 

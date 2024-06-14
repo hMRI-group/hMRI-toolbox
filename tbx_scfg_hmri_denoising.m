@@ -41,6 +41,7 @@ indir.help    = {['Output files will be written to the same folder ' ...
 indir.strtype = 's';
 indir.num     = [1 Inf];
 indir.val     = {'yes'};
+
 % ---------------------------------------------------------------------
 % outdir Output directory
 % ---------------------------------------------------------------------
@@ -51,6 +52,7 @@ outdir.help    = {'Select a directory where output files will be written to.'};
 outdir.filter = 'dir';
 outdir.ufilter = '.*';
 outdir.num     = [1 1];
+
 % ---------------------------------------------------------------------
 % output Output choice
 % ---------------------------------------------------------------------

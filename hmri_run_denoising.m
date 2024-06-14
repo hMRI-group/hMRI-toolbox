@@ -72,7 +72,7 @@ else
     hmri_log(sprintf('INFO: the output directory is:\n%s\n',outpath),flags);
 end
 
-% check basic requirements and error if basic reqirements fail
+% check basic requirements and error if basic requirements fail
 switch dntype{1}
     case 'lcpca_denoise'
         check_params.mag_input = cellstr(char(spm_file(job.subj.denoisingtype.(dntype{1}).mag_input,'number','')));
@@ -104,31 +104,44 @@ job.SPMver = sprintf('%s (%s)', v, r);
 spm_jsonwrite(fullfile(supplpath,'hMRI_denoising_job.json'),job,struct('indent','\t'));
 
 % run the denoising and collect the results
-switch dntype{1}
-    case 'lcpca_denoise'
-        % Write to log and command window which specific denoising applied
-        hmri_log(sprintf('\t============ %s - %s.m (%s) ============',"APPLYING LCPCA-DENOISING", mfilename, datetime('now')),flags);
+hmri_log(sprintf('\t============ %s - %s.m (%s) ============',"APPLYING DENOISING", mfilename, datetime('now')),flags);
 
-        %TODO: concatenate all contrasts into jobsubj.denoisingtype.(denoising_protocol).mag_img and phase_img
+% concatenate all contrasts into jobsubj.denoisingtype.(denoising_protocol).mag_img and phase_img
+contrasts = {'mtw','pdw','t1w'};
+denoising_protocol = fieldnames(jobsubj.denoisingtype);
+jobsubj.denoisingtype.(denoising_protocol{1}).mag_img = {};
+jobsubj.denoisingtype.(denoising_protocol{1}).phase_img = {};
+for c = 1:length(contrasts)
+    con = contrasts{c};
 
-        [output_mag, output_phase] = hmri_denoising(job);
+    jobsubj.denoisingtype.(denoising_protocol{1}).mag_img = 
+        [jobsubj.denoisingtype.(denoising_protocol{1}).mag_img;
+        jobsubj.denoisingtype.(denoising_protocol{1}).(con).mag_img];
 
-        %TODO: extract all contrasts into separate contrasts
-
-        % Assign output dependency to the denoised output images
-        phase_bool = any(~cellfun(@isempty,output_phase));
-        arrayLength = length(output_mag);
-        for i = 1:2*arrayLength
-            if i<=arrayLength
-                idxstr = ['DenoisedMagnitude' int2str(i)];
-                out.subj.(idxstr) = output_mag(i);
-            elseif phase_bool && i>arrayLength
-                idxstr = ['DenoisedPhase' int2str(i-arrayLength)];
-                out.subj.(idxstr) = output_phase(i-arrayLength);
-            else
-                break
-            end
-        end
+    jobsubj.denoisingtype.(denoising_protocol{1}).phase_img = 
+        [jobsubj.denoisingtype.(denoising_protocol{1}).phase_img;
+        jobsubj.denoisingtype.(denoising_protocol{1}).(con).phase_img];
 end
+
+% run the denoising
+[output_mag, output_phase] = hmri_denoising(job);
+
+% assign output dependencies to denoised output images of separate contrasts
+iMag = 1;
+iPhase = 1;
+for c = 1:length(contrasts)
+    con = contrasts{c};
+
+    nMag = length(jobsubj.denoisingtype.(denoising_protocol{1}).(con).mag_img);
+    idxstr = ['DenoisedMagnitude' con];
+    out.subj.(idxstr) = output_mag(iMag:iMag+nMag);
+    iMag = iMag + nMag;
+    
+    nPhase = length(jobsubj.denoisingtype.(denoising_protocol{1}).(con).phase_img);
+    idxstr = ['DenoisedPhase' con];
+    out.subj.(idxstr) = output_phase(iPhase:iPhase+nPhase);
+    iPhase = iPhase + nPhase;
+end
+
 hmri_log(sprintf('\t============ DENOISING MODULE: completed (%s) ============', datetime('now')),flags);
 end

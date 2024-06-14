@@ -233,27 +233,25 @@ denoisingmethod = dnfield{1};
 
 switch denoisingmethod
     case 'lcpca_denoise'
-        % define variables and initialize cfg_dep based on availibility of phase images
+        % define variables and initialize cfg_dep based on availability of phase images
         arrayLength = numel(job.subj.denoisingtype.lcpca_denoise.mag_input);
-        % phase_bool= any(~cellfun(@isempty, job.subj.denoisingtype.lcpca_denoise.phase_input));
-        phase_bool = isempty(job.subj.denoisingtype.lcpca_denoise.phase_input);
-        if phase_bool
-            cdep(1,2*arrayLength) = cfg_dep;
+        no_phase = isempty(job.subj.denoisingtype.lcpca_denoise.phase_input);
+        if no_phase
+            cdep = repmat(cfg_dep,1,  arrayLength);
         else
-            cdep(1,arrayLength) = cfg_dep;
+            cdep = repmat(cfg_dep,1,2*arrayLength);
         end
 
         % iterate to generate dependency tags for outputs
         for i=1:numel(job.subj)
-            for k =1:2*arrayLength
+            for k = 1:2*arrayLength
                 if k<=arrayLength
                     cdep(k)            = cfg_dep;
                     cdep(k).sname      = sprintf('lcpcaDenoised_magnitude%d',k);
                     idxstr = ['DenoisedMagnitude' int2str(k)];
                     cdep(k).src_output = substruct('.','subj','()',{i},'.',idxstr,'()',{':'});
                     cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
-
-                elseif k>arrayLength && ~phase_bool
+                elseif k>arrayLength && ~no_phase
                     cdep(k)            = cfg_dep;
                     cdep(k).sname      = sprintf('lcpcaDenoised_phase%d',k-arrayLength);
                     idxstr = ['DenoisedPhase' int2str(k-arrayLength)];

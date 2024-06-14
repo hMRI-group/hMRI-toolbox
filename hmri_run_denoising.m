@@ -11,7 +11,7 @@ end
 function out = hmri_denoising_local(job)
 
 % Get denoising protocol
-dntype=fields(job.subj.denoisingtype);
+dntype=fieldnames(job.subj.denoisingtype);
 
 % Case indir versus outdir
 try
@@ -73,26 +73,23 @@ else
 end
 
 % check basic requirements and error if basic requirements fail
-switch dntype{1}
-    case 'lcpca_denoise'
-        check_params.mag_input = cellstr(char(spm_file(job.subj.denoisingtype.(dntype{1}).mag_input,'number','')));
-        check_params.phase_input = cellstr(char(spm_file(job.subj.denoisingtype.(dntype{1}).phase_input,'number','')));
-        check_params.phase_bool = any(~cellfun(@isempty, check_params.phase_input));
-        check_params.mag_bool = any(~cellfun(@isempty, check_params.mag_input));
+check_params.mag_input = cellstr(char(spm_file(job.subj.denoisingtype.(dntype{1}).mag_input,'number','')));
+check_params.phase_input = cellstr(char(spm_file(job.subj.denoisingtype.(dntype{1}).phase_input,'number','')));
+check_params.phase_bool = any(~cellfun(@isempty, check_params.phase_input));
+check_params.mag_bool = any(~cellfun(@isempty, check_params.mag_input));
 
-        % Issue an error and abort in cases of non-existent magnitude image data and
-        % non-equal number of non-empty phase and magnitude images
-        if ~check_params.mag_bool || ~isfield(job.subj.denoisingtype.(dntype{1}),'mag_input')
-            msg = 'No magnitude images were entered, aborting! Please check your input data and try again!';
-            hmri_log(msg, flags);
-            error(msg)
-        end
+% Issue an error and abort in cases of non-existent magnitude image data and
+% non-equal number of non-empty phase and magnitude images
+if ~check_params.mag_bool || ~isfield(job.subj.denoisingtype.(dntype{1}),'mag_input')
+    msg = 'No magnitude images were entered, aborting! Please check your input data and try again!';
+    hmri_log(msg, flags);
+    error(msg)
+end
 
-        if check_params.phase_bool && (length(check_params.mag_input) ~= length(check_params.phase_input))
-            msg = 'The number of phase and magnitude images are different, please check your input data and try again!';
-            hmri_log(msg, flags);
-            error(msg)
-        end
+if check_params.phase_bool && (length(check_params.mag_input) ~= length(check_params.phase_input))
+    msg = 'The number of phase and magnitude images are different, please check your input data and try again!';
+    hmri_log(msg, flags);
+    error(msg)
 end
 
 % save SPM version (slight differences may appear in the results depending
@@ -108,19 +105,18 @@ hmri_log(sprintf('\t============ %s - %s.m (%s) ============',"APPLYING DENOISIN
 
 % concatenate all contrasts into jobsubj.denoisingtype.(denoising_protocol).mag_img and phase_img
 contrasts = {'mtw','pdw','t1w'};
-denoising_protocol = fieldnames(jobsubj.denoisingtype);
-jobsubj.denoisingtype.(denoising_protocol{1}).mag_img = {};
-jobsubj.denoisingtype.(denoising_protocol{1}).phase_img = {};
+jobsubj.denoisingtype.(dntype{1}).mag_img = {};
+jobsubj.denoisingtype.(dntype{1}).phase_img = {};
 for c = 1:length(contrasts)
     con = contrasts{c};
 
-    jobsubj.denoisingtype.(denoising_protocol{1}).mag_img = 
-        [jobsubj.denoisingtype.(denoising_protocol{1}).mag_img;
-        jobsubj.denoisingtype.(denoising_protocol{1}).(con).mag_img];
+    jobsubj.denoisingtype.(dntype{1}).mag_img = 
+        [jobsubj.denoisingtype.(dntype{1}).mag_img;
+        jobsubj.denoisingtype.(dntype{1}).(con).mag_img];
 
-    jobsubj.denoisingtype.(denoising_protocol{1}).phase_img = 
-        [jobsubj.denoisingtype.(denoising_protocol{1}).phase_img;
-        jobsubj.denoisingtype.(denoising_protocol{1}).(con).phase_img];
+    jobsubj.denoisingtype.(dntype{1}).phase_img = 
+        [jobsubj.denoisingtype.(dntype{1}).phase_img;
+        jobsubj.denoisingtype.(dntype{1}).(con).phase_img];
 end
 
 % run the denoising
@@ -132,12 +128,12 @@ iPhase = 1;
 for c = 1:length(contrasts)
     con = contrasts{c};
 
-    nMag = length(jobsubj.denoisingtype.(denoising_protocol{1}).(con).mag_img);
+    nMag = length(jobsubj.denoisingtype.(dntype{1}).(con).mag_img);
     idxstr = ['DenoisedMagnitude' con];
     out.subj.(idxstr) = output_mag(iMag:iMag+nMag);
     iMag = iMag + nMag;
     
-    nPhase = length(jobsubj.denoisingtype.(denoising_protocol{1}).(con).phase_img);
+    nPhase = length(jobsubj.denoisingtype.(dntype{1}).(con).phase_img);
     idxstr = ['DenoisedPhase' con];
     out.subj.(idxstr) = output_phase(iPhase:iPhase+nPhase);
     iPhase = iPhase + nPhase;

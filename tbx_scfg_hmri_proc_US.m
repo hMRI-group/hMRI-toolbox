@@ -1,7 +1,7 @@
 function proc_us = tbx_scfg_hmri_proc_US
 % Configuration file for the segmentation part of the processing modules of
 % the "histological MRI" (hMRI) toolbox.
-% -> Apply "unifies segementation" (US) on series of images.
+% -> Apply "unified segmentation" (US) on series of images.
 %_______________________________________________________________________
 % Copyright (C) 2017 Cyclotron Research Centre
 

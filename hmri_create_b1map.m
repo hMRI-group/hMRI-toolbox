@@ -706,7 +706,8 @@ switch b1_protocol
     case 'i3D_EPI'
         if ~isempty(b1map_params.b1input)
             hmri_log(sprintf('SE/STE EPI protocol selected ...'),b1map_params.nopuflags);
-            b1hdr = get_metadata(b1map_params.b1input(1,:));
+            
+            b1hdrFile = b1map_params.b1input(1,:);
 
             V = spm_vol(b1map_params.b1input);
 
@@ -718,7 +719,7 @@ switch b1_protocol
             % assumes conventional hMRI toolbox order as default but checks this order
             % when echo times are defined and b1validation.checkTEs is true
             % Echo times for input validation
-            tmp = get_metadata_val(b1hdr{1},'EchoTime');
+            tmp = get_metadata_val(b1hdrFile,'EchoTime');
             b1map_params.b1acq.EchoTimes=[];
             if b1map_params.b1validation.checkTEs
                 if isempty(tmp)
@@ -772,7 +773,7 @@ switch b1_protocol
                 'stimulated echo volumes (%d)!'], length(V_SE), length(V_STE));
 
             if b1map_params.b1validation.useBidsFlipAngleField
-                tmp = get_metadata_val(b1hdr{1},'FlipAngle');
+                tmp = get_metadata_val(b1hdrFile,'FlipAngle');
                 FA_SE = zeros(1,length(V_SE));
                 FA_STE = FA_SE;
                 if ~isempty(tmp)&&tmp~=0
@@ -799,7 +800,7 @@ switch b1_protocol
                 [~, fa_order] = sort(FA_STE, 'descend');
                 V_STE = V_STE(fa_order);
             else
-                tmp = get_metadata_val(b1hdr{1},'B1mapNominalFAValues');
+                tmp = get_metadata_val(b1hdrFile,'B1mapNominalFAValues');
                 if isempty(tmp)
                     hmri_log(sprintf('WARNING: using defaults value for nominal SE/STE flip angle values \n(%s) instead of metadata', ...
                         sprintf('%d ',b1map_params.b1acq.beta)),b1map_params.defflags);
@@ -816,7 +817,7 @@ switch b1_protocol
             b1map_params.SEinput = char({V_SE.fname}');
             b1map_params.STEinput = char({V_STE.fname}');
 
-            tmp = get_metadata_val(b1hdr{1},'B1mapMixingTime');
+            tmp = get_metadata_val(b1hdrFile,'B1mapMixingTime');
             if isempty(tmp)
                 hmri_log(sprintf('WARNING: using defaults value for mixing time \n(%d ms) instead of metadata', ...
                     b1map_params.b1acq.TM),b1map_params.defflags);
@@ -824,7 +825,7 @@ switch b1_protocol
                 b1map_params.b1acq.TM = tmp;
             end
 
-            tmp = get_metadata_val(b1hdr{1},'epiReadoutDuration'); % must take into account PAT but not PF acceleration
+            tmp = get_metadata_val(b1hdrFile,'epiReadoutDuration'); % must take into account PAT but not PF acceleration
             if isempty(tmp)
                 hmri_log(sprintf('WARNING: using defaults value for EPI readout duration\n(%d ms) instead of metadata', ...
                     b1map_params.b1acq.tert),b1map_params.defflags);
@@ -832,7 +833,7 @@ switch b1_protocol
                 b1map_params.b1acq.tert = tmp;
             end
 
-            tmp = get_metadata_val(b1hdr{1},'PhaseEncodingDirectionSign');
+            tmp = get_metadata_val(b1hdrFile,'PhaseEncodingDirectionSign');
             if isempty(tmp)
                 hmri_log(sprintf('WARNING: using defaults value for PE direction\n(%d) instead of metadata', ...
                     b1map_params.b1acq.blipDIR),b1map_params.defflags);
@@ -841,7 +842,7 @@ switch b1_protocol
             end
 
             % consistency check for T1 value and field strength:
-            tmp = get_metadata_val(b1hdr{1},'MagneticFieldStrength');
+            tmp = get_metadata_val(b1hdrFile,'MagneticFieldStrength');
             supportedB0 = false;
             matchT1fieldstrength = false;
             if ~isempty(tmp)
@@ -924,16 +925,17 @@ switch b1_protocol
     case 'i3D_AFI'
         if ~isempty(b1map_params.b1input)
             hmri_log(sprintf('AFI protocol selected ...'),b1map_params.nopuflags);
-            b1hdr = get_metadata(b1map_params.b1input);
+            b1hdrFile{1} = b1map_params.b1input(1,:);
+            b1hdrFile{2} = b1map_params.b1input(2,:);
 
             try
-                tr1 = get_metadata_val(b1hdr{1},'RepetitionTime');
-                tr2 = get_metadata_val(b1hdr{2},'RepetitionTime');
+                tr1 = get_metadata_val(b1hdrFile{1},'RepetitionTime');
+                tr2 = get_metadata_val(b1hdrFile{2},'RepetitionTime');
                 if ~isempty(tr1) && ~isempty(tr2) && tr1~=tr2 % BIDS-like data
                     b1map_params.b1acq.TR2TR1ratio = tr2/tr1;
                 else % Use Siemens-style metadata or b1-defaults file value
                     hmri_log('WARNING: the two repetition times in the AFI B1-mapping metadata are missing or equal. Trying the RepetitionTimes (alTR) field...',b1map_params.defflags);
-                    trList = get_metadata_val(b1hdr{1},'RepetitionTimes');
+                    trList = get_metadata_val(b1hdrFile{1},'RepetitionTimes');
                     if isempty(trList) % Use b1-defaults file value
                         assert(b1map_params.b1acq.TR2TR1ratio~=1,'The TR2TR1ratio is not allowed to be 1 in an AFI B1-mapping acquisition! Check the input configuration file.')
                         hmri_log(sprintf('WARNING: using defaults values for\n(TR ratio = %.1f) instead of metadata', ...
@@ -944,7 +946,7 @@ switch b1_protocol
                     end
                 end
 
-                tmp = get_metadata_val(b1hdr{1},'FlipAngle');
+                tmp = get_metadata_val(b1hdrFile{1},'FlipAngle');
                 if isempty(tmp)
                     hmri_log(sprintf('WARNING: using defaults value for flip angle \n(%d deg) instead of metadata', ...
                         b1map_params.b1acq.alphanom), b1map_params.defflags);

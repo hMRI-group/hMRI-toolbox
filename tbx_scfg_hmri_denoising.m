@@ -80,7 +80,8 @@ mag_img.name    = 'Magnitude input';
 mag_img.help    = {'Select the (required) magnitude images to be denoised'};
 mag_img.filter  = 'image';
 mag_img.ufilter = '.*';
-mag_img.num     = [1 Inf];
+mag_img.num     = [0 Inf];
+mag_img.val     = {''};
 
 % ---------------------------------------------------------------------
 % Phase input images
@@ -99,21 +100,27 @@ phase_img.val     = {''};
 % ---------------------------------------------------------------------
 mtw      = cfg_branch;
 mtw.tag  = 'mtw';
-mtw.name = 'MTw input';
+mtw.name = 'MTw input (optional)';
 mtw.help = {'Input Magnitude/Phase images from MTw data'};
 mtw.val  = {mag_img phase_img};
 
-pdw      = cfg_branch;
-pdw.tag  = 't1w';
-pdw.name = 'T1w input';
-pdw.help = {'Input Magnitude/Phase images from PDw data'};
-pdw.val  = {mag_img phase_img};
-
 t1w      = cfg_branch;
-t1w.tag  = 'pdw';
-t1w.name = 'PDw input';
+t1w.tag  = 't1w';
+t1w.name = 'T1w input (optional)';
 t1w.help = {'Input Magnitude/Phase images from T1w data'};
 t1w.val  = {mag_img phase_img};
+
+% PDw is required input
+pdw_mag_img = mag_img;
+pdw_mag_img.num = [1 Inf];
+pdw_mag_img.val = {};
+
+pdw      = cfg_branch;
+pdw.tag  = 'pdw';
+pdw.name = 'PDw input';
+pdw.help = {'Input Magnitude/Phase images from PDw data', ...
+    'If you only have one kind of weighting, please put them here.'};
+pdw.val  = {pdw_mag_img phase_img};
 
 % ---------------------------------------------------------------------
 % Standard deviation parameter
@@ -152,7 +159,7 @@ denoisinginput_lcpca.name = 'LCPCA denoising';
 denoisinginput_lcpca.help = {'Input Magnitude/Phase images for Lcpca-denoising'
     ['Regarding processing parameters, you can either stick with metadata and standard ' ...
     'defaults parameters (recommended) or select your own hmri_denoising_local_defaults_*.m customised defaults file.']};
-denoisinginput_lcpca.val  = {mtw pdw t1w DNparameters std ngbsize};
+denoisinginput_lcpca.val  = {DNparameters std ngbsize};
 
 % ---------------------------------------------------------------------
 % menu denoisingtype
@@ -211,7 +218,7 @@ subj            = cfg_branch;
 subj.tag        = 'subj';
 subj.name       = 'Subject';
 subj.help       = {'Specify a subject for denoising.'};
-subj.val        = {output denoisingtype popup};
+subj.val        = {output pdw t1w mtw denoisingtype popup};
 
 % ---------------------------------------------------------------------
 % data Data
@@ -251,7 +258,7 @@ function dep = vout_create(job)
 
 % iterate to generate dependency tags for outputs
 nsub = numel(job.subj);
-contrasts = {'mtw','pdw','t1w'};
+contrasts = {'pdw','t1w','mtw'};
 ncon = length(contrasts);
 dep = repmat(cfg_dep,1,2*ncon*nsub);
 for i=1:nsub
@@ -261,7 +268,7 @@ for i=1:nsub
 
         % define variables and initialize cfg_dep for magnitude images
         cdep            = cfg_dep;
-        cdep.sname      = sprintf('lcpcaDenoised_%s_magnitude',con);
+        cdep.sname      = sprintf('Denoised_%s_magnitude',con);
         idxstr = ['DenoisedMagnitude' con];
         cdep.src_output = substruct('.','subj','()',{i},'.',idxstr,'()',{':'});
         cdep.tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
@@ -269,7 +276,7 @@ for i=1:nsub
 
         % define variables and initialize cfg_dep for phase images
         cdep            = cfg_dep;
-        cdep.sname      = sprintf('lcpcaDenoised_%s_phase',con);
+        cdep.sname      = sprintf('Denoised_%s_phase',con);
         idxstr = ['DenoisedPhase' con];
         cdep.src_output = substruct('.','subj','()',{i},'.',idxstr,'()',{':'});
         cdep.tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});

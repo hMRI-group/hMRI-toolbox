@@ -1,15 +1,14 @@
-function varargout = hmri_denoising(job)
+function varargout = hmri_denoising(jobsubj)
 
 % retrieve effective acquisition & processing parameters
-jobsubj = job.subj;
-denoisedout = get_denoising_params(jobsubj);
+denoising_params = get_denoising_params(jobsubj);
 protocolfield = fieldnames(jobsubj.denoisingtype);
 denoising_protocol = protocolfield{1};
 
 % execute the chosen denoising method and define output
 switch denoising_protocol
     case 'lcpca_denoise'
-        [output_mag, output_phase] = hmri_calc_lcpcadenoise(denoisedout);
+        [output_mag, output_phase] = hmri_calc_lcpcadenoise(denoising_params);
         varargout{1} = output_mag;
         varargout{2} = output_phase;
 end
@@ -61,20 +60,22 @@ denoising_params.nopuflags.PopUp = false;
 [v,r] = spm('Ver');
 denoising_params.SPMver = sprintf('%s (%s)', v, r);
 
+% Load input data
+denoising_params.mag_img = cellstr(char(spm_file(jobsubj.mag_img,'number','')));
+denoising_params.phase_img = cellstr(char(spm_file(jobsubj.phase_img,'number','')));
+denoising_params.phase_bool = any(~cellfun(@isempty, denoising_params.phase_img));
+denoising_params.mag_bool = any(~cellfun(@isempty, denoising_params.mag_img));
+
+% processing can continue if only magnitude images were entered but
+% only warn that optional phase img are missing
+if ~denoising_params.phase_bool || ~isfield(jobsubj,'phase_img')
+    hmri_log('Warning: No (optional) phase images were entered, denoising will continue with only magnitude images', denoising_params.defflags);
+end
+
 % Denoising method-specific parameters
 % Load all the batch entered and possibly user-modified parameters
 switch denoising_protocol
     case 'lcpca_denoise'
-        denoising_params.mag_img = cellstr(char(spm_file(jobsubj.denoisingtype.(denoising_protocol).mag_img,'number','')));
-        denoising_params.phase_img = cellstr(char(spm_file(jobsubj.denoisingtype.(denoising_protocol).phase_img,'number','')));
-        denoising_params.phase_bool = any(~cellfun(@isempty, denoising_params.phase_img));
-        denoising_params.mag_bool = any(~cellfun(@isempty, denoising_params.mag_img));
-
-        % processing can continue if only magnitude images were entered but
-        % only warn that optional phase img are missing
-        if ~denoising_params.phase_bool || ~isfield(jobsubj.denoisingtype.(denoising_protocol),'phase_img')
-            hmri_log('Warning: No (optional) phase images were entered, Lcpca-denoising continues with only magnitude images', denoising_params.defflags);
-        end
 
         dnstruct = jobsubj.denoisingtype.lcpca_denoise;
         denoising_params.ngbsize = dnstruct.ngbsize;

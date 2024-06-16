@@ -8,17 +8,24 @@ end
 
 end
 
-function out = hmri_denoising_local(job)
+function out = hmri_denoising_local(jobsubj)
 
-% Get denoising protocol
-dntype=fieldnames(job.subj.denoisingtype);
+% concatenate all contrasts into jobsubj.mag_img and phase_img
+contrasts = {'pdw','t1w','mtw'};
+jobsubj.mag_img = {};
+jobsubj.phase_img = {};
+for c = 1:length(contrasts)
+    con = contrasts{c};
+    jobsubj.mag_img = [jobsubj.mag_img; jobsubj.(con).mag_img];
+    jobsubj.phase_img = [jobsubj.phase_img; jobsubj.(con).phase_img];
+end
 
 % Case indir versus outdir
 try
-    outpath = job.subj.output.outdir{1}; % case outdir
+    outpath = jobsubj.output.outdir{1}; % case outdir
     if ~exist(outpath,'dir'); mkdir(outpath); end
 catch
-    Pin = char(job.subj.denoisingtype.(dntype{1}).mag_input);
+    Pin = char(jobsubj.mag_img);
     outpath = fileparts(Pin(1,:)); % case indir
 end
 
@@ -52,41 +59,41 @@ if ~exist(respath,'dir'); mkdir(respath); end
 supplpath = fullfile(outpath, 'Results', 'Supplementary');
 if ~exist(supplpath,'dir'); mkdir(supplpath); end
 
-% save all these paths in the job.subj structure
-job.subj.path.dnrespath = respath;
-job.subj.path.respath = respath;
-job.subj.path.supplpath = supplpath;
+% save all these paths in the jobsubj structure
+jobsubj.path.dnrespath = respath;
+jobsubj.path.respath = respath;
+jobsubj.path.supplpath = supplpath;
 
 % save log file location
-job.subj.log.logfile = fullfile(supplpath, 'hMRI_denoising_logfile.log');
-job.subj.log.flags = struct('LogFile',struct('Enabled',true,'FileName','hMRI_denoising_logfile.log','LogDir',supplpath), ...
-    'PopUp',job.subj.popup,'ComWin',true);
-flags = job.subj.log.flags;
+jobsubj.log.logfile = fullfile(supplpath, 'hMRI_denoising_logfile.log');
+jobsubj.log.flags = struct('LogFile',struct('Enabled',true,'FileName','hMRI_denoising_logfile.log','LogDir',supplpath), ...
+    'PopUp',jobsubj.popup,'ComWin',true);
+flags = jobsubj.log.flags;
 flags.PopUp = false;
 hmri_log(sprintf('\t============ DENOISING MODULE - %s.m (%s) ============', mfilename, datetime('now')),flags);
 
 if newrespath
     hmri_log(sprintf(['WARNING: existing results from previous run(s) were found, \n' ...
-        'the output directory has been modified. It is now:\n%s\n'],outpath),job.subj.log.flags);
+        'the output directory has been modified. It is now:\n%s\n'],outpath),jobsubj.log.flags);
 else
     hmri_log(sprintf('INFO: the output directory is:\n%s\n',outpath),flags);
 end
 
 % check basic requirements and error if basic requirements fail
-check_params.mag_input = cellstr(char(spm_file(job.subj.denoisingtype.(dntype{1}).mag_input,'number','')));
-check_params.phase_input = cellstr(char(spm_file(job.subj.denoisingtype.(dntype{1}).phase_input,'number','')));
-check_params.phase_bool = any(~cellfun(@isempty, check_params.phase_input));
-check_params.mag_bool = any(~cellfun(@isempty, check_params.mag_input));
+check_params.mag_img = cellstr(char(spm_file(jobsubj.mag_img,'number','')));
+check_params.mag_bool = any(~cellfun(@isempty, check_params.mag_img));
+check_params.phase_img = cellstr(char(spm_file(jobsubj.phase_img,'number','')));
+check_params.phase_bool = any(~cellfun(@isempty, check_params.phase_img));
 
 % Issue an error and abort in cases of non-existent magnitude image data and
 % non-equal number of non-empty phase and magnitude images
-if ~check_params.mag_bool || ~isfield(job.subj.denoisingtype.(dntype{1}),'mag_input')
+if ~check_params.mag_bool || ~isfield(jobsubj,'mag_img')
     msg = 'No magnitude images were entered, aborting! Please check your input data and try again!';
     hmri_log(msg, flags);
     error(msg)
 end
 
-if check_params.phase_bool && (length(check_params.mag_input) ~= length(check_params.phase_input))
+if check_params.phase_bool && (length(check_params.mag_img) ~= length(check_params.phase_img))
     msg = 'The number of phase and magnitude images are different, please check your input data and try again!';
     hmri_log(msg, flags);
     error(msg)
@@ -95,32 +102,16 @@ end
 % save SPM version (slight differences may appear in the results depending
 % on the SPM version!)
 [v,r] = spm('Ver');
-job.SPMver = sprintf('%s (%s)', v, r);
+jobsubj.SPMver = sprintf('%s (%s)', v, r);
 
 % save original job to supplementary directory
-spm_jsonwrite(fullfile(supplpath,'hMRI_denoising_job.json'),job,struct('indent','\t'));
+spm_jsonwrite(fullfile(supplpath,'hMRI_denoising_job.json'),jobsubj,struct('indent','\t'));
 
 % run the denoising and collect the results
 hmri_log(sprintf('\t============ %s - %s.m (%s) ============',"APPLYING DENOISING", mfilename, datetime('now')),flags);
 
-% concatenate all contrasts into jobsubj.denoisingtype.(denoising_protocol).mag_img and phase_img
-contrasts = {'mtw','pdw','t1w'};
-jobsubj.denoisingtype.(dntype{1}).mag_img = {};
-jobsubj.denoisingtype.(dntype{1}).phase_img = {};
-for c = 1:length(contrasts)
-    con = contrasts{c};
-
-    jobsubj.denoisingtype.(dntype{1}).mag_img = 
-        [jobsubj.denoisingtype.(dntype{1}).mag_img;
-        jobsubj.denoisingtype.(dntype{1}).(con).mag_img];
-
-    jobsubj.denoisingtype.(dntype{1}).phase_img = 
-        [jobsubj.denoisingtype.(dntype{1}).phase_img;
-        jobsubj.denoisingtype.(dntype{1}).(con).phase_img];
-end
-
 % run the denoising
-[output_mag, output_phase] = hmri_denoising(job);
+[output_mag, output_phase] = hmri_denoising(jobsubj);
 
 % assign output dependencies to denoised output images of separate contrasts
 iMag = 1;
@@ -128,14 +119,14 @@ iPhase = 1;
 for c = 1:length(contrasts)
     con = contrasts{c};
 
-    nMag = length(jobsubj.denoisingtype.(dntype{1}).(con).mag_img);
+    nMag = length(jobsubj.(con).mag_img);
     idxstr = ['DenoisedMagnitude' con];
-    out.subj.(idxstr) = output_mag(iMag:iMag+nMag);
+    out.(idxstr) = output_mag(iMag:iMag+nMag-1);
     iMag = iMag + nMag;
     
-    nPhase = length(jobsubj.denoisingtype.(dntype{1}).(con).phase_img);
+    nPhase = length(jobsubj.(con).phase_img);
     idxstr = ['DenoisedPhase' con];
-    out.subj.(idxstr) = output_phase(iPhase:iPhase+nPhase);
+    out.(idxstr) = output_phase(iPhase:iPhase+nPhase-1);
     iPhase = iPhase + nPhase;
 end
 

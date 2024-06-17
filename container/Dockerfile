@@ -36,8 +36,7 @@ RUN wget --no-check-certificate --progress=bar:force -P /opt https://github.com/
  && unzip -q /opt/standalone-hMRItoolboxv0.6.1.zip -d /opt \
  && rm -f /opt/standalone-hMRItoolboxv0.6.1.zip \
  && /opt/standalone-hMRItoolboxv0.6.1/spm${SPM_VERSION} function exit \
- && chmod +x /opt/standalone-hMRItoolboxv0.6.1/spm${SPM_VERSION} \
- && chmod a+r /opt/standalone-hMRItoolboxv0.6.1 -R 
+ && chmod a+rx /opt/standalone-hMRItoolboxv0.6.1 -R 
 
 
 # Configure entry point

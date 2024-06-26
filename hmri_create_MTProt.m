@@ -1215,23 +1215,13 @@ if ~mpm_params.fullOLS
     end
 end
 
-% use all echoes unless full OLS is turned off, when only similar echoes can be used
-mpm_params.maxTEval4avg = inf; % use all echoes
-if ~mpm_params.fullOLS % echo times need to be the same for all contrasts
-    % find maximum echo time common to all available contrasts
-    for ccon = 1:mpm_params.ncon
-        mpm_params.maxTEval4avg = min(max(mpm_params.input(ccon).TE),mpm_params.maxTEval4avg);
-    end
-    nr_echoes4avg = nnz(mpm_params.input(1).TE<=mpm_params.maxTEval4avg);
-    hmri_log(sprintf('INFO: averaged PDw/T1w/MTw will be calculated based on the first %d echoes.',nr_echoes4avg),mpm_params.nopuflags);
-else % otherwise use all echoes
-    msg = 'INFO:';
-    for ccon = 1:mpm_params.ncon
-        nr_echoes4avg = length(mpm_params.input(ccon).TE);  
-        msg = sprintf('%saveraged %sw will be calculated based on the %d echoes\n',msg,mpm_params.input(ccon).tag,nr_echoes4avg);
-    end
-    hmri_log(msg,mpm_params.defflags);
+% find maximum echo time common to all available contrasts
+mpm_params.maxTEval4avg = inf; % initialise to use all echoes
+for ccon = 1:mpm_params.ncon
+    mpm_params.maxTEval4avg = min(max(mpm_params.input(ccon).TE),mpm_params.maxTEval4avg);
 end
+nr_echoes4avg = max(nnz(mpm_params.input(mpm_params.PDwidx).TE<=mpm_params.maxTEval4avg),1);
+hmri_log(sprintf('INFO: averaged PDw/T1w/MTw will be calculated based on the first %d echoes.',nr_echoes4avg),mpm_params.nopuflags);
 
 % parameter determining whether to use small flip angle assumption or not
 mpm_params.small_angle_approx = hmri_get_defaults('small_angle_approx');

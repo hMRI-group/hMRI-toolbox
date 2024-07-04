@@ -148,7 +148,7 @@ imdatavol = spm_vol(image_list{1});
 resolutions = sqrt(sum(imdatavol.mat(1:3,1:3).^2));
 imdatamatrix = spm_read_vols(imdatavol);
 dimensions = size(imdatamatrix);
-image_number = length(image_list)+1;
+image_number = length(image_list);
 
 % Set the image_number, dimensions and resolution for processing
 noiseObj.setImageNumber(image_number); % number of echoes

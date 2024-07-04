@@ -172,7 +172,7 @@ for echo = 1:length(image_list)
     datavol = spm_vol(image_list{echo});
     datamatrix = spm_read_vols(datavol);
     % place vol for denoising
-    noiseObj.setMagnitudeImageAt(echo, reshape(datamatrix, [1 numel(datamatrix)]));
+    noiseObj.setMagnitudeImageAt(echo-1, reshape(datamatrix, [1 numel(datamatrix)]));
 
     % Add phase images if they exist
     if phase_bool
@@ -180,7 +180,7 @@ for echo = 1:length(image_list)
         datavol = spm_vol(phase_list{echo});
         datamatrix = spm_read_vols(datavol);
         % place vol for denoising
-        noiseObj.setPhaseImageAt(echo, reshape(datamatrix, [1 numel(datamatrix)]));
+        noiseObj.setPhaseImageAt(echo-1, reshape(datamatrix, [1 numel(datamatrix)]));
     end
 end
 
@@ -227,7 +227,7 @@ idx_phase = 1;
 
 % Get the results for all echos and reshape
 for echo = 1:length(image_list)
-    datamatrix = noiseObj.getDenoisedMagnitudeImageAt(echo);
+    datamatrix = noiseObj.getDenoisedMagnitudeImageAt(echo-1);
     volumedata = reshape(datamatrix, dimensions);
 
     % Write the volume to .nii with an update to standard .nii header
@@ -274,7 +274,7 @@ for echo = 1:length(image_list)
 
     % Also write the phase images if applicable
     if phase_bool
-        datamatrix = noiseObj.getDenoisedPhaseImageAt(echo);
+        datamatrix = noiseObj.getDenoisedPhaseImageAt(echo-1);
         volumedata = reshape(datamatrix, dimensions);
 
         % Write the volume to .nii with an update to standard .nii header

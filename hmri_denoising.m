@@ -335,7 +335,7 @@ filename = strcat('dim_img','.nii');
 outfname = fullfile(supp_path{1}, filename);
 filehdr.fname = outfname;
 filehdr.descrip = 'local dimension map';
-spm_write_vol(supp_path{1}, dim_img);
+spm_write_vol(filehdr, dim_img);
 
 %get metadata from first echo of magnitude image and write residual maps as .nii
 err_img = reshape(noiseObj.getNoiseFitImage(), dimensions);
@@ -344,7 +344,7 @@ filename = strcat('err_img','.nii');
 outfname = fullfile(supp_path{1}, filename);
 filehdr.fname = outfname;
 filehdr.descrip = 'residual maps';
-spm_write_vol(supp_path{1}, err_img );
+spm_write_vol(filehdr, err_img );
 
 % Clear object and remove .jar from path properly
 clear("noiseObj")

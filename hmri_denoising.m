@@ -328,7 +328,7 @@ output_mag = out_mag;
 output_phase = out_phase;
 
 %%save estimated local dimensions and residuals (between input and denoised images)
-%get metadata from first echo of magnitude image and write local dims as .nii
+%get metadata from first echo of magnitude images and write local dims as .nii
 dim_img = reshape(noiseObj.getLocalDimensionImage(), dimensions);
 filehdr = spm_vol(image_list{1});
 filename = strcat('dim_img','.nii');
@@ -337,7 +337,7 @@ filehdr.fname = outfname;
 filehdr.descrip = 'local dimension map';
 spm_write_vol(filehdr, dim_img);
 
-%get metadata from first echo of magnitude image and write residual maps as .nii
+%get metadata from first echo of magnitude images and write residual maps as .nii
 err_img = reshape(noiseObj.getNoiseFitImage(), dimensions);
 filehdr = spm_vol(image_list{1});
 filename = strcat('err_img','.nii');

@@ -327,11 +327,24 @@ end
 output_mag = out_mag;
 output_phase = out_phase;
 
-% save estimated local dimensions and residuals (between input and denoised images)
+%%save estimated local dimensions and residuals (between input and denoised images)
+%get metadata from first echo of magnitude image and write local dims as .nii
 dim_img = reshape(noiseObj.getLocalDimensionImage(), dimensions);
-save(fullfile(supp_path{1}, 'dim_img.mat'), 'dim_img')
+filehdr = spm_vol(image_list{1});
+filename = strcat('dim_img','.nii');
+outfname = fullfile(supp_path{1}, filename);
+filehdr.fname = outfname;
+filehdr.descrip = 'local dimension map';
+spm_write_vol(supp_path{1}, dim_img);
+
+%get metadata from first echo of magnitude image and write residual maps as .nii
 err_img = reshape(noiseObj.getNoiseFitImage(), dimensions);
-save(fullfile(supp_path{1}, 'err_img.mat'), 'err_img')
+filehdr = spm_vol(image_list{1});
+filename = strcat('err_img','.nii');
+outfname = fullfile(supp_path{1}, filename);
+filehdr.fname = outfname;
+filehdr.descrip = 'residual maps';
+spm_write_vol(supp_path{1}, err_img );
 
 % Clear object and remove .jar from path properly
 clear("noiseObj")

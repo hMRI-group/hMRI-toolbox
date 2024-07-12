@@ -344,7 +344,7 @@ filename = strcat('err_img','.nii');
 outfname = fullfile(supp_path{1}, filename);
 filehdr.fname = outfname;
 filehdr.descrip = 'residual maps';
-spm_write_vol(filehdr, err_img );
+spm_write_vol(filehdr, err_img);
 
 % Clear object and remove .jar from path properly
 clear("noiseObj")

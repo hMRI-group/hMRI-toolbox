@@ -160,7 +160,7 @@ denoisinginput_mppca.help = {'Input images for Lcpca-denoising'
     ['Regarding processing parameters, you can either stick with metadata and standard ' ...
     'defaults parameters (recommended) or select your own [hmri_denoisinglocal_defaults_*.m] customised defaults file ' ...
     '(fallback for situations where no metadata are available).']};
-denoisinginput_mppca.val  = {mp_mask mp_ngbsize DNparameters};
+denoisinginput_mppca.val  = {DNparameters mp_ngbsize mp_mask};
 
 
 % ---------------------------------------------------------------------

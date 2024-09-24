@@ -447,7 +447,8 @@ for echo = 1:img_size(end)
 
 
 end
-
+output_mag = out_mag;
+output_phase= [];
 
 end
 

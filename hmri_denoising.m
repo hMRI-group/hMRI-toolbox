@@ -11,6 +11,10 @@ switch denoising_protocol
         [output_mag, output_phase] = hmri_calc_lcpcadenoise(denoising_params);
         varargout{1} = output_mag;
         varargout{2} = output_phase;
+    case 'mppca_denoise'
+        [output_mag, output_phase] = hmri_calc_mppcadenoise(denoisedout);
+        varargout{1} = output_mag;
+        varargout{2} = output_phase;
 end
 end
 

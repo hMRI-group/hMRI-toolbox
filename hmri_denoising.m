@@ -373,6 +373,15 @@ end
 window = [ngb_size ngb_size ngb_size];
 output_path = cellstr(mppcadenoiseparams.output_path);
 
+%Get params from 1st image and init variables
+fpath  = image_list;
+firstIm = fpath{1};  
+image = spm_vol(firstIm);
+imagevol = spm_read_vols(image);
+imsize = size(imagevol);
+imlen = length(fpath);
+fulldatamat = zeros(imsize(1), imsize(2), imsize(3), imlen);
+
 
 end
 

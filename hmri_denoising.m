@@ -349,6 +349,13 @@ end
 % Calculate MP-PCA-denoising
 %=================================================================================================%
 function [output_mag, output_phase] = hmri_calc_mppcadenoise(mppcadenoiseparams)
+
+%define the flag for log
+lcpcaflags = mppcadenoiseparams.defflags;
+lcpcaflags_nopopup = lcpcaflags;
+lcpcaflags_nopopup.PopUp = false;
+
+
 end
 
 %=========================================================================%

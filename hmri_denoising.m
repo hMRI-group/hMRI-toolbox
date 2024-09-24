@@ -348,6 +348,12 @@ end
 %===============================================================================================%
 % Calculate MP-PCA-denoising
 %=================================================================================================%
+%{
+MP-PCA-Denoising paper references:
+--Veraart et al., NeuroImage (2016) 142, p 394-406 (https://doi.org/10.1016/j.neuroimage.2016.08.016)
+--Does, et al., Evaluation of principal component analysis image denoising on multi‐exponential MRI relaxometry. Magn Reson Med. 2019; 81: 3503– 3514. https://doi.org/10.1002/mrm.27658
+%}
+
 function [output_mag, output_phase] = hmri_calc_mppcadenoise(mppcadenoiseparams)
 
 %define the flag for log

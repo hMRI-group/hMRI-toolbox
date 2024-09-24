@@ -401,6 +401,22 @@ json = hmri_get_defaults('json');
 idx_mag=1;
 %Get the results for all echos and reshape
 for echo = 1:img_size(end)
+    %get denoised volume
+    volumedata  = denoised_image(:,:,:,echo);
+    %Write the volume to .nii with an update to standard .nii header
+    firstfile = image_list{echo};
+    filehdr = spm_vol(image_list{echo});
+
+    [path,filename,ext] = fileparts(firstfile);
+    [~,mainfilename,~] = fileparts(firstfile);
+    filename = strcat('MppcaDenoised_',filename,'.nii');
+
+    outfname = fullfile(output_path{1}, filename);
+    filehdr.fname = outfname;
+    filehdr.descrip = strcat(filehdr.descrip, ' + mppca denoised');
+    spm_write_vol(filehdr, volumedata);
+
+    
 end
 
 

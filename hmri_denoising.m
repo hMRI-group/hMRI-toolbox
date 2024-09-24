@@ -422,6 +422,21 @@ for echo = 1:img_size(end)
     Output_hdr.history.output.imtype = 'Denoising (MP-PCA)';
      %add acquisition data if available (otherwise fields will be empty)
     jsonfilename = fullfile(path,strcat(mainfilename,'.json'));
+    if exist(jsonfilename, 'file') ==2
+        try
+    jsondata = spm_jsonread(jsonfilename);
+    data_RepetitionTime = get_metadata_val(jsondata,'RepetitionTime');
+    data_EchoTime = get_metadata_val(jsondata,'EchoTime' );
+    data_FlipAngle = get_metadata_val(jsondata, 'FlipAngle');
+    Output_hdr.acqpar = struct('RepetitionTime',data_RepetitionTime, ...
+                    'EchoTime',data_EchoTime,'FlipAngle',data_FlipAngle);
+        catch
+            hmri_log('Although json sidecar file were found, the writing of acquisition metadata failed', lcpcaflags_nopopup);  
+      
+       end
+    else
+      hmri_log('No json sidecar file were found, skipping the writing of acquisition metadata', lcpcaflags_nopopup);  
+    end
 
 
 end

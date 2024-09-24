@@ -123,6 +123,18 @@ pdw.help = {'Input Magnitude/Phase images from PDw data', ...
 pdw.val  = {pdw_mag_img phase_img};
 
 
+% ---------------------------------------------------------------------
+% MP-PCA Neighborhood Size
+% ---------------------------------------------------------------------
+mp_ngbsize         = cfg_entry;
+mp_ngbsize.tag     = 'ngbsize';
+mp_ngbsize.name    = 'Neighborhood size';
+mp_ngbsize.val     = {[4]};
+mp_ngbsize.strtype = 'e';
+mp_ngbsize.num     = [1 1];
+mp_ngbsize.help    = {['Specify the neghborhood size']};
+
+
 
 % ---------------------------------------------------------------------
 % MPPCA Denoising protocol

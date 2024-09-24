@@ -361,6 +361,11 @@ lcpcaflags = mppcadenoiseparams.defflags;
 lcpcaflags_nopopup = lcpcaflags;
 lcpcaflags_nopopup.PopUp = false;
 
+%Read from the input the processing parameters
+image_list = cellstr(mppcadenoiseparams.mag_input);
+ngb_size = mppcadenoiseparams.ngbsize;
+mask = mppcadenoiseparams.mask;
+
 
 end
 

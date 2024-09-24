@@ -366,6 +366,13 @@ image_list = cellstr(mppcadenoiseparams.mag_input);
 ngb_size = mppcadenoiseparams.ngbsize;
 mask = mppcadenoiseparams.mask;
 
+%define params
+if isempty(mask{1})
+    mask = [];
+end
+window = [ngb_size ngb_size ngb_size];
+output_path = cellstr(mppcadenoiseparams.output_path);
+
 
 end
 

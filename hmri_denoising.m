@@ -399,6 +399,9 @@ img_size = size(denoised_image);
 json = hmri_get_defaults('json');
 
 idx_mag=1;
+%Get the results for all echos and reshape
+for echo = 1:img_size(end)
+end
 
 
 end

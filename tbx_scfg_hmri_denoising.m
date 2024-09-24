@@ -124,6 +124,20 @@ pdw.val  = {pdw_mag_img phase_img};
 
 
 % ---------------------------------------------------------------------
+% MP-PCA Mask
+% ---------------------------------------------------------------------
+% This is the Mask to be applied. Default value is: mask = [] 
+mp_mask         = cfg_files;
+mp_mask.tag     = 'mask';
+mp_mask.name    = 'Mask';
+mp_mask.help    = {'Select the Mask'};
+mp_mask.filter  = 'image';
+mp_mask.ufilter = '.*';
+mp_mask.num     = [0 1];
+
+
+
+% ---------------------------------------------------------------------
 % MP-PCA Neighborhood Size
 % ---------------------------------------------------------------------
 mp_ngbsize         = cfg_entry;

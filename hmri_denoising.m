@@ -382,6 +382,14 @@ imsize = size(imagevol);
 imlen = length(fpath);
 fulldatamat = zeros(imsize(1), imsize(2), imsize(3), imlen);
 
+%Process and reformat images for MPPCA
+for ii = 1:imlen
+currentIm = fpath{ii};    
+image = spm_vol(currentIm);
+imagevol = spm_read_vols(image);
+fulldatamat(:,:,:,ii) = imagevol;
+end
+
 
 end
 

@@ -438,6 +438,13 @@ for echo = 1:img_size(end)
       hmri_log('No json sidecar file were found, skipping the writing of acquisition metadata', lcpcaflags_nopopup);  
     end
 
+    %Set all the metadata
+    set_metadata(outfname,Output_hdr,json);
+
+    %add image to the output list
+    out_mag{idx_mag} = outfname;
+    idx_mag = idx_mag +1;
+
 
 end
 

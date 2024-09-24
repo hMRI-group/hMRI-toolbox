@@ -395,6 +395,11 @@ end
 denoised_image = dn_image;
 img_size = size(denoised_image);
 
+%set the metadata mod
+json = hmri_get_defaults('json');
+
+idx_mag=1;
+
 
 end
 

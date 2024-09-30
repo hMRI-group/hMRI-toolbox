@@ -94,7 +94,6 @@ switch denoising_protocol
         hmri_log(sprintf('Lcpca Denoising Parameters:\n\n%s', ...
             printdnstruct),denoising_params.defflags);
         case 'mppca_denoise'
-        %denoising_params.mag_input = cellstr(char(spm_file(jobsubj.denoisingtype.(denoising_protocol).mag_input,'number','')));
         denoising_params.mask = jobsubj.denoisingtype.(denoising_protocol).mask;
         denoising_params.ngbsize = jobsubj.denoisingtype.(denoising_protocol).ngbsize;
 
@@ -369,7 +368,7 @@ mppcaflags_nopopup = mppcaflags;
 mppcaflags_nopopup.PopUp = false;
 
 %Read from the input the processing parameters
-image_list = cellstr(mppcadenoiseparams.mag_input);
+image_list = cellstr(mppcadenoiseparams.mag_img);
 ngb_size = mppcadenoiseparams.ngbsize;
 mask = mppcadenoiseparams.mask;
 

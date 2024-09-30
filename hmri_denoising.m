@@ -357,9 +357,9 @@ MP-PCA-Denoising paper references:
 function [output_mag, output_phase] = hmri_calc_mppcadenoise(mppcadenoiseparams)
 
 %define the flag for log
-lcpcaflags = mppcadenoiseparams.defflags;
-lcpcaflags_nopopup = lcpcaflags;
-lcpcaflags_nopopup.PopUp = false;
+mppcaflags = mppcadenoiseparams.defflags;
+mppcaflags_nopopup = mppcaflags;
+mppcaflags_nopopup.PopUp = false;
 
 %Read from the input the processing parameters
 image_list = cellstr(mppcadenoiseparams.mag_input);
@@ -431,11 +431,11 @@ for echo = 1:img_size(end)
     Output_hdr.acqpar = struct('RepetitionTime',data_RepetitionTime, ...
                     'EchoTime',data_EchoTime,'FlipAngle',data_FlipAngle);
         catch
-            hmri_log('Although json sidecar file were found, the writing of acquisition metadata failed', lcpcaflags_nopopup);  
+            hmri_log('Although json sidecar file were found, the writing of acquisition metadata failed', mppcaflags_nopopup);  
       
        end
     else
-      hmri_log('No json sidecar file were found, skipping the writing of acquisition metadata', lcpcaflags_nopopup);  
+      hmri_log('No json sidecar file were found, skipping the writing of acquisition metadata', mppcaflags_nopopup);  
     end
 
     %Set all the metadata

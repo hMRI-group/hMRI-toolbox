@@ -1,4 +1,4 @@
-function [denoised,S2,P] = denoise(image,window,mask)
+function [denoised,S2,P] = mppca_denoise(image,window,mask)
 %{
 REFERENCES:
 --Veraart et al., NeuroImage (2016) 142, p 394-406 (https://doi.org/10.1016/j.neuroimage.2016.08.016)  
@@ -25,7 +25,7 @@ dimsOld = size(image);
 if ~exist('mask','var')
     mask = [];
 end
-[image,mask] = imageAssert(image,mask);
+[image,mask] = mppca_imageAssert(image,mask);
 
 dims = size(image);
 assert(length(window)>1 && length(window)<4,'window must have 2 or 3 dimensions')
@@ -62,7 +62,7 @@ for index = 0:M*N*O-1
     end
 
     % denoise X
-    [X(:,maskX),s2,p] = denoiseMatrix(X(:,maskX));
+    [X(:,maskX),s2,p] = mppca_denoiseMatrix(X(:,maskX));
 
     % assign
     X(:,~maskX) = 0;

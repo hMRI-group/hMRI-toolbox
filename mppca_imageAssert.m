@@ -1,4 +1,4 @@
-function [image,mask] = imageAssert(image,mask)
+function [image,mask] = mppca_imageAssert(image,mask)
 %{
 REFERENCES:
 --Veraart et al., NeuroImage (2016) 142, p 394-406 (https://doi.org/10.1016/j.neuroimage.2016.08.016)  

@@ -5,7 +5,7 @@ REFERENCES:
 --https://github.com/Neurophysics-CFIN/MP-PCA-Denoising/tree/master
 %}
 % X: denoised matrix, s2: original noise variance, p: number of signal components, s2_after: noise variance after denoising
-function [X,s2,p,s2_after] = denoiseMatrix(X) 
+function [X,s2,p,s2_after] = mppca_denoiseMatrix(X) 
 M = size(X,1);
 N = size(X,2);
 if M<N

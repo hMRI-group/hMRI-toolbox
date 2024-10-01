@@ -12,7 +12,7 @@ switch denoising_protocol
         varargout{1} = output_mag;
         varargout{2} = output_phase;
     case 'mppca_denoise'
-        [output_mag, output_phase] = hmri_calc_mppcadenoise(denoisedout);
+        [output_mag, output_phase] = hmri_calc_mppcadenoise(denoising_params);
         varargout{1} = output_mag;
         varargout{2} = output_phase;
 end

@@ -124,10 +124,12 @@ for c = 1:length(contrasts)
     out.(idxstr) = output_mag(iMag:iMag+nMag-1);
     iMag = iMag + nMag;
     
+    if ~isempty(output_phase)
     nPhase = length(jobsubj.(con).phase_img);
     idxstr = ['DenoisedPhase' con];
     out.(idxstr) = output_phase(iPhase:iPhase+nPhase-1);
     iPhase = iPhase + nPhase;
+    end
 end
 
 hmri_log(sprintf('\t============ DENOISING MODULE: completed (%s) ============', datetime('now')),flags);

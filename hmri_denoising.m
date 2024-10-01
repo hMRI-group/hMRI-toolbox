@@ -397,7 +397,7 @@ fulldatamat(:,:,:,ii) = imagevol;
 end
 
 %apply mppca denoising take out and set variables
-[dn_image, S2, P] = denoise(fulldatamat, window, mask);
+[dn_image, S2, P] = mppca_denoise(fulldatamat, window, mask);
 denoised_image = dn_image;
 img_size = size(denoised_image);
 

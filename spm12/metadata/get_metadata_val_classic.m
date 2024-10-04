@@ -126,14 +126,12 @@ switch inParName
         % Valid for all vendors:
         % try EchoTime first
         [nFieldFound, fieldList] = find_field_name(mstruc, 'EchoTime', 'caseSens','sensitive','matchType','exact');
-        
-        % TerraX Acquisition with new Dicoms chosen:
-        % If EchoTime not found than first search for EffectiveEchoTime
-        % with same arguments in find_field_name
+        % TerraX acquisition with new Dicoms chosen:
+        % If EchoTime is not found than first search for EffectiveEchoTime
+        % with the same arguments to find_field_name as in EchoTime
         if ~nFieldFound
             [nFieldFound, fieldList] = find_field_name(mstruc,'EffectiveEchoTime', 'caseSens','sensitive','matchType','exact');
         end
-
         % Valid for all vendors:
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         if nFieldFound

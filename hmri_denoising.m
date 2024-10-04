@@ -338,7 +338,7 @@ filehdr.descrip = 'local dimension map';
 dt=[16 0];
 Ni_dim = hmri_create_nifti(outfname, filehdr, dt, filehdr.descrip);
 Ni_dim.dat(:,:,:)=dim_img;
-%spm_write_vol(filehdr, dim_img);
+
 
 %get metadata from first echo of magnitude images and write residual maps as .nii
 err_img = reshape(noiseObj.getNoiseFitImage(), dimensions);
@@ -350,7 +350,7 @@ filehdr.descrip = 'residual maps';
 dt=[16 0];
 Ni_err = hmri_create_nifti(outfname, filehdr, dt, filehdr.descrip);
 Ni_err.dat(:,:,:)=err_img;
-%spm_write_vol(filehdr, err_img);
+
 
 % Clear object and remove .jar from path properly
 clear("noiseObj")

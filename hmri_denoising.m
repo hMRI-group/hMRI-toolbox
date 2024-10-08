@@ -433,7 +433,8 @@ end
 
 %apply mppca denoising take out and set variables
 [dn_image, S2, P] = mppca_denoise(fulldatamat, window, mask);
-denoised_image = dn_image;
+denoised_image = dn_image(1:length(image_list));
+denoised_image_ph=dn_image(length(image_list)+1:end);
 img_size = size(denoised_image);
 
 %set the metadata mod

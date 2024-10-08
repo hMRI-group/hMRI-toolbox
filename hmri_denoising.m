@@ -401,9 +401,10 @@ for i = 1:2*length(mag)
         fullimlist{end+1}= imag(imglist{i});
     end
 end
+image_list = fullimlist;
 end
 
-image_list = fullimlist;
+
 ngb_size = mppcadenoiseparams.ngbsize;
 mask = mppcadenoiseparams.mask;
 
@@ -434,7 +435,6 @@ end
 %apply mppca denoising take out and set variables
 [dn_image, S2, P] = mppca_denoise(fulldatamat, window, mask);
 denoised_image = dn_image(1:length(image_list));
-denoised_image_ph=dn_image(length(image_list)+1:end);
 img_size = size(denoised_image);
 
 %set the metadata mod
@@ -490,7 +490,62 @@ for echo = 1:img_size(end)
 
 end
 output_mag = out_mag;
+
 output_phase= [];
+%process further if phase images are entered
+if ~isempty(phase_list{1})
+denoised_image_phase=dn_image(length(image_list)+1:end);
+idx_phase=1;
+%Get the results for all echos and reshape
+for echo = 1:img_size(end)
+    %get denoised volume
+    volumedata  = denoised_image_phase(:,:,:,echo);
+    %Write the volume to .nii with an update to standard .nii header
+    firstfile = image_list{echo};
+    filehdr = spm_vol(image_list{echo});
+
+    [path,filename,ext] = fileparts(firstfile);
+    [~,mainfilename,~] = fileparts(firstfile);
+    filename = strcat('MppcaDenoised_',filename,'.nii');
+
+    outfname = fullfile(output_path{1}, filename);
+    filehdr.fname = outfname;
+    filehdr.descrip = strcat(filehdr.descrip, ' + mppca denoised');
+    spm_write_vol(filehdr, volumedata);
+
+    %write metadata as extended header and sidecar json
+    Output_hdr = init_dn_output_metadata(image_list, mppcadenoiseparams);
+    Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (MP-PCA)'];
+    Output_hdr.history.output.imtype = 'Denoising (MP-PCA)';
+     %add acquisition data if available (otherwise fields will be empty)
+    jsonfilename = fullfile(path,strcat(mainfilename,'.json'));
+    if exist(jsonfilename, 'file') ==2
+        try
+    jsondata = spm_jsonread(jsonfilename);
+    data_RepetitionTime = get_metadata_val(jsondata,'RepetitionTime');
+    data_EchoTime = get_metadata_val(jsondata,'EchoTime' );
+    data_FlipAngle = get_metadata_val(jsondata, 'FlipAngle');
+    Output_hdr.acqpar = struct('RepetitionTime',data_RepetitionTime, ...
+                    'EchoTime',data_EchoTime,'FlipAngle',data_FlipAngle);
+        catch
+            hmri_log('Although json sidecar file were found, the writing of acquisition metadata failed', mppcaflags_nopopup);  
+      
+       end
+    else
+      hmri_log('No json sidecar file were found, skipping the writing of acquisition metadata', mppcaflags_nopopup);  
+    end
+
+    %Set all the metadata
+    set_metadata(outfname,Output_hdr,json);
+
+    %add image to the output list
+    out_phase{idx_phase} = outfname;
+    idx_phase = idx_phase +1;
+
+
+end
+output_phase =out_phase;
+end
 
 end
 

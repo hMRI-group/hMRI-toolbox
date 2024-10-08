@@ -408,6 +408,7 @@ imglist = {};
         end
     end
     fulldatamat=fullimlist;
+    image_list=cat(1,image_list,phase_list);
 else
     %Process and reformat images for MPPCA
     fulldatamat = zeros(imsize(1), imsize(2), imsize(3), imlen);

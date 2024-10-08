@@ -501,8 +501,8 @@ for echo = 1:img_size(end)
     %get denoised volume
     volumedata  = denoised_image_phase(:,:,:,echo);
     %Write the volume to .nii with an update to standard .nii header
-    firstfile = image_list{echo};
-    filehdr = spm_vol(image_list{echo});
+    firstfile = phase_list{echo};
+    filehdr = spm_vol(phase_list{echo});
 
     [path,filename,ext] = fileparts(firstfile);
     [~,mainfilename,~] = fileparts(firstfile);
@@ -514,7 +514,7 @@ for echo = 1:img_size(end)
     spm_write_vol(filehdr, volumedata);
 
     %write metadata as extended header and sidecar json
-    Output_hdr = init_dn_output_metadata(image_list, mppcadenoiseparams);
+    Output_hdr = init_dn_output_metadata(phase_list, mppcadenoiseparams);
     Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (MP-PCA)'];
     Output_hdr.history.output.imtype = 'Denoising (MP-PCA)';
      %add acquisition data if available (otherwise fields will be empty)

@@ -391,6 +391,16 @@ for i=1:length(image_list)
     complex_vol = mag_imgvol.*(exp((1i).*(phscale*phase_imgvol)));
     imglist{end+1}=complex_vol;
 end
+
+fullimlist = {};
+
+for i = 1:2*length(mag)
+    if i<= length(mag)
+        fullimlist{end+1}= real(imglist{i});
+    else
+        fullimlist{end+1}= imag(imglist{i});
+    end
+end
 end
 ngb_size = mppcadenoiseparams.ngbsize;
 mask = mppcadenoiseparams.mask;

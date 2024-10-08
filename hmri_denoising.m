@@ -367,9 +367,14 @@ mppcaflags = mppcadenoiseparams.defflags;
 mppcaflags_nopopup = mppcaflags;
 mppcaflags_nopopup.PopUp = false;
 
-%Read from the input the processing parameters
+%%Read from the input the processing parameters
 image_list = cellstr(mppcadenoiseparams.mag_img);
 firstIm= image_list{1};
+%Get params from 1st image and init variables
+image = spm_vol(firstIm);
+imagevol = spm_read_vols(image);
+imsize = size(imagevol);
+imlen = length(image_list);
 phase_list = cellstr(mppcadenoiseparams.phase_img);
 phscale=1;
 
@@ -382,27 +387,36 @@ if ~isempty(phase_list{1})
 %init cell array
 imglist = {};
 
-for i=1:length(image_list)
-    mag_imgstr = spm_vol(image_list{i});
-    mag_imgvol = spm_read_vols(mag_imgstr);
+    for i=1:length(image_list)
+        mag_imgstr = spm_vol(image_list{i});
+        mag_imgvol = spm_read_vols(mag_imgstr);
 
-    phase_imgstr = spm_vol(image_list{i});
-    phase_imgvol = spm_read_vols(phase_imgstr);
+        phase_imgstr = spm_vol(image_list{i});
+        phase_imgvol = spm_read_vols(phase_imgstr);
 
-    complex_vol = mag_imgvol.*(exp((1i).*(phscale*phase_imgvol)));
-    imglist{end+1}=complex_vol;
-end
-
-fullimlist = {};
-
-for i = 1:2*length(image_list)
-    if i<= length(image_list)
-        fullimlist{end+1}= real(imglist{i});
-    else
-        fullimlist{end+1}= imag(imglist{i-length(image_list)});
+        complex_vol = mag_imgvol.*(exp((1i).*(phscale*phase_imgvol)));
+        imglist{end+1}=complex_vol;
     end
-end
-image_list = fullimlist;
+
+    fullimlist = {};
+
+    for i = 1:2*length(image_list)
+        if i<= length(image_list)
+        fullimlist{end+1}= real(imglist{i});
+        else
+        fullimlist{end+1}= imag(imglist{i-length(image_list)});
+        end
+    end
+    fulldatamat=fullimlist;
+else
+    %Process and reformat images for MPPCA
+    fulldatamat = zeros(imsize(1), imsize(2), imsize(3), imlen);
+    for ii = 1:imlen
+    currentIm = image_list{ii};    
+    image = spm_vol(currentIm);
+    imagevol = spm_read_vols(image);
+    fulldatamat(:,:,:,ii) = imagevol;
+    end
 end
 
 
@@ -416,20 +430,6 @@ end
 window = [ngb_size ngb_size ngb_size];
 output_path = cellstr(mppcadenoiseparams.output_path);
 
-%Get params from 1st image and init variables
-image = spm_vol(firstIm);
-imagevol = spm_read_vols(image);
-imsize = size(imagevol);
-imlen = length(image_list);
-fulldatamat = zeros(imsize(1), imsize(2), imsize(3), imlen);
-
-%Process and reformat images for MPPCA
-for ii = 1:imlen
-currentIm = fullimlist{ii};    
-image = spm_vol(currentIm);
-imagevol = spm_read_vols(image);
-fulldatamat(:,:,:,ii) = imagevol;
-end
 
 %apply mppca denoising take out and set variables
 [dn_image, S2, P] = mppca_denoise(fulldatamat, window, mask);

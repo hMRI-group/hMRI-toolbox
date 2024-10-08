@@ -420,7 +420,7 @@ output_path = cellstr(mppcadenoiseparams.output_path);
 image = spm_vol(firstIm);
 imagevol = spm_read_vols(image);
 imsize = size(imagevol);
-imlen = length(fpath);
+imlen = length(image_list);
 fulldatamat = zeros(imsize(1), imsize(2), imsize(3), imlen);
 
 %Process and reformat images for MPPCA

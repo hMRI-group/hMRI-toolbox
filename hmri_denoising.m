@@ -402,6 +402,8 @@ for i = 1:2*length(mag)
     end
 end
 end
+
+image_list = fullimlist;
 ngb_size = mppcadenoiseparams.ngbsize;
 mask = mppcadenoiseparams.mask;
 

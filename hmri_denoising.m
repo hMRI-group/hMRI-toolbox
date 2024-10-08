@@ -369,6 +369,7 @@ mppcaflags_nopopup.PopUp = false;
 
 %Read from the input the processing parameters
 image_list = cellstr(mppcadenoiseparams.mag_img);
+phase_list = cellstr(mppcadenoiseparams.phase_img);
 ngb_size = mppcadenoiseparams.ngbsize;
 mask = mppcadenoiseparams.mask;
 

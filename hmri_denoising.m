@@ -394,11 +394,11 @@ end
 
 fullimlist = {};
 
-for i = 1:2*length(mag)
-    if i<= length(mag)
+for i = 1:2*length(image_list)
+    if i<= length(image_list)
         fullimlist{end+1}= real(imglist{i});
     else
-        fullimlist{end+1}= imag(imglist{i});
+        fullimlist{end+1}= imag(imglist{mod(i, length(image_list))});
     end
 end
 image_list = fullimlist;

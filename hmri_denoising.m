@@ -370,6 +370,27 @@ mppcaflags_nopopup.PopUp = false;
 %Read from the input the processing parameters
 image_list = cellstr(mppcadenoiseparams.mag_img);
 phase_list = cellstr(mppcadenoiseparams.phase_img);
+
+%if phase images are entered prepare images for further processing
+if ~isempty(phase_list{1})
+    %takes magnitude and phase images in
+%bundles them together realPart+complexPart into array
+%feeds them to mppca-denoising to get get output mag, phase images
+
+%init cell array
+imglist = {};
+
+for i=1:length(image_list)
+    mag_imgstr = spm_vol(image_list{i});
+    mag_imgvol = spm_read_vols(mag_imgstr);
+
+    phase_imgstr = spm_vol(image_list{i});
+    phase_imgvol = spm_read_vols(phase_imgstr);
+
+    complex_vol = mag_imgvol.*(exp((1i).*(phscale*phase_imgvol)));
+    imglist{end+1}=complex_vol;
+end
+end
 ngb_size = mppcadenoiseparams.ngbsize;
 mask = mppcadenoiseparams.mask;
 

@@ -370,6 +370,7 @@ mppcaflags_nopopup.PopUp = false;
 %Read from the input the processing parameters
 image_list = cellstr(mppcadenoiseparams.mag_img);
 phase_list = cellstr(mppcadenoiseparams.phase_img);
+phscale=1;
 
 %if phase images are entered prepare images for further processing
 if ~isempty(phase_list{1})

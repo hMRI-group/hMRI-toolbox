@@ -369,6 +369,7 @@ mppcaflags_nopopup.PopUp = false;
 
 %Read from the input the processing parameters
 image_list = cellstr(mppcadenoiseparams.mag_img);
+firstIm= image_list{1};
 phase_list = cellstr(mppcadenoiseparams.phase_img);
 phscale=1;
 
@@ -398,7 +399,7 @@ for i = 1:2*length(image_list)
     if i<= length(image_list)
         fullimlist{end+1}= real(imglist{i});
     else
-        fullimlist{end+1}= imag(imglist{mod(i, length(image_list))});
+        fullimlist{end+1}= imag(imglist{i-length(image_list)});
     end
 end
 image_list = fullimlist;
@@ -416,8 +417,6 @@ window = [ngb_size ngb_size ngb_size];
 output_path = cellstr(mppcadenoiseparams.output_path);
 
 %Get params from 1st image and init variables
-fpath  = image_list;
-firstIm = fpath{1};  
 image = spm_vol(firstIm);
 imagevol = spm_read_vols(image);
 imsize = size(imagevol);

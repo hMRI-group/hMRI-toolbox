@@ -11,6 +11,7 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 - spatial processing: add explicit mask creation and fix implicit mask (0 to NaN in float images)
 - update FIL seste seq parameters in get_metadata_val_classic
 - denoising module-first part: Java-Matlab interface for LCPCA denoising
+- read EffectiveEchoTime in new TerraX Dicom format
 
 ### Fixed
 - replace `datestr(now)` with `datetime('now')` in line with [MATLAB recommendation](https://mathworks.com/help/matlab/matlab_prog/replace-discouraged-instances-of-serial-date-numbers-and-date-strings.html)

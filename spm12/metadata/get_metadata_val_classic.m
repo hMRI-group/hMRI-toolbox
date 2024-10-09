@@ -126,9 +126,9 @@ switch inParName
         % Valid for all vendors:
         % try EchoTime first
         [nFieldFound, fieldList] = find_field_name(mstruc, 'EchoTime', 'caseSens','sensitive','matchType','exact');
-        % TerraX acquisition with new Dicoms chosen:
-        % If EchoTime is not found than first search for EffectiveEchoTime
-        % with the same arguments to find_field_name as in EchoTime
+        % In some sequences (e.g. the XA implementations of FLASH from Kerrin Pine) 
+        % the EffectiveEchoTime is populated instead of the EchoTime field in the DICOM.
+        % If EchoTime is not found than search for EffectiveEchoTime:
         if ~nFieldFound
             [nFieldFound, fieldList] = find_field_name(mstruc,'EffectiveEchoTime', 'caseSens','sensitive','matchType','exact');
         end

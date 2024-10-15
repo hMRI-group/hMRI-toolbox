@@ -328,7 +328,8 @@ output_mag = out_mag;
 output_phase = out_phase;
 
 %%save estimated local dimensions and residuals (between input and denoised images)
-%get metadata from first echo of magnitude images and write local dims as .nii
+%get metadata from first echo of magnitude images and write local dims as
+%nifti
 dim_img = reshape(noiseObj.getLocalDimensionImage(), dimensions);
 filehdr = spm_vol(image_list{1});
 filename = strcat('dim_img','.nii');
@@ -340,7 +341,8 @@ Ni_dim = hmri_create_nifti(outfname, filehdr, dt, filehdr.descrip);
 Ni_dim.dat(:,:,:)=dim_img;
 
 
-%get metadata from first echo of magnitude images and write residual maps as .nii
+%get metadata from first echo of magnitude images and write residual maps
+%as nifti
 err_img = reshape(noiseObj.getNoiseFitImage(), dimensions);
 filehdr = spm_vol(image_list{1});
 filename = strcat('err_img','.nii');

@@ -95,7 +95,7 @@ for ccon = 1:rfsens_params.ncon
     copyfile(qsensmap,fullfile(supplpath,spm_file(qsensmap,'filename')));
     try copyfile([spm_str_manip(qsensmap,'r') '.json'],fullfile(supplpath,[spm_file(qsensmap,'basename'), '.json'])); end %#ok<*TRYNC>
     % substitute the corrected maps to the output structure
-    jobsubj.raw_mpm.(rfsens_params.input(ccon).tag) = char(corrected_structurals);
+    jobsubj.raw_mpm.(rfsens_params.input(ccon).tag) = cellstr(char(corrected_structurals));
     
 end
 

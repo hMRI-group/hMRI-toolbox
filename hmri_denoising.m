@@ -440,7 +440,7 @@ if ~isempty(phase_list{1})
     mycomplex = dn_image(:,:,:,imlen+1:2*imlen);
     mycomplexim = myreal + mycomplex;
     magimg = abs(mycomplexim);
-    phimg = angles(mycomplexim);
+    phimg = angle(mycomplexim);
 else
     magimg= dn_image;
 end

@@ -434,17 +434,27 @@ output_path = cellstr(mppcadenoiseparams.output_path);
 
 %apply mppca denoising take out and set variables
 [dn_image, S2, P] = mppca_denoise(fulldatamat, window, mask);
-denoised_image = dn_image(1:length(image_list));
-img_size = size(denoised_image);
+%recalculate magnitude and phase images in case of phase input
+if ~isempty(phase_list{1})
+    myreal=dn_image(:,:,:,1:imlen);
+    mycomplex = dn_image(:,:,:,imlen+1:2*imlen);
+    mycomplexim = myreal + mycomplex;
+    magimg = abs(mycomplexim);
+    phimg = angles(mycomplexim);
+else
+    magimg= dn_image;
+end
+
+
 
 %set the metadata mod
 json = hmri_get_defaults('json');
 
 idx_mag=1;
 %Get the results for all echos and reshape
-for echo = 1:img_size(end)
+for echo = 1:imlen
     %get denoised volume
-    volumedata  = denoised_image(:,:,:,echo);
+    volumedata  = magimg(:,:,:,echo);
     %Write the volume to .nii with an update to standard .nii header
     firstfile = image_list{echo};
     filehdr = spm_vol(image_list{echo});
@@ -494,12 +504,11 @@ output_mag = out_mag;
 output_phase= [];
 %process further if phase images are entered
 if ~isempty(phase_list{1})
-denoised_image_phase=dn_image(length(image_list)+1:end);
 idx_phase=1;
 %Get the results for all echos and reshape
-for echo = 1:img_size(end)
+for echo = 1:imlen
     %get denoised volume
-    volumedata  = denoised_image_phase(:,:,:,echo);
+    volumedata  = phimg(:,:,:,echo);
     %Write the volume to .nii with an update to standard .nii header
     firstfile = phase_list{echo};
     filehdr = spm_vol(phase_list{echo});

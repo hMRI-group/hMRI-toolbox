@@ -398,16 +398,16 @@ imglist = {};
         imglist{end+1}=complex_vol;
     end
 
-    fullimlist = {};
+    fulldatamat=zeros(imsize(1), imsize(2), imsize(3), 2*imlen);
 
     for i = 1:2*length(image_list)
         if i<= length(image_list)
-        fullimlist{end+1}= real(imglist{i});
+        fulldatamat(:,:,:,i)= real(imglist{i});
         else
-        fullimlist{end+1}= imag(imglist{i-length(image_list)});
+        fulldatamat(:,:,:,i)= imag(imglist{i-length(image_list)});
         end
     end
-    fulldatamat=fullimlist;
+    
     image_list=cat(1,image_list,phase_list);
 else
     %Process and reformat images for MPPCA

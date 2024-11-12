@@ -391,7 +391,7 @@ imglist = zeros(imsize(1), imsize(2), imsize(3), imlen);;
         mag_imgstr = spm_vol(image_list{i});
         mag_imgvol = spm_read_vols(mag_imgstr);
 
-        phase_imgstr = spm_vol(image_list{i});
+        phase_imgstr = spm_vol(phase_list{i});
         phase_imgvol = spm_read_vols(phase_imgstr);
 
         complex_vol = mag_imgvol.*(exp((1i).*(phscale*phase_imgvol)));

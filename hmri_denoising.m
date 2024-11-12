@@ -384,8 +384,8 @@ if ~isempty(phase_list{1})
 %bundles them together realPart+complexPart into array
 %feeds them to mppca-denoising to get get output mag, phase images
 
-%init cell array
-imglist = {};
+%init array
+imglist = zeros(imsize(1), imsize(2), imsize(3), imlen);;
 
     for i=1:length(image_list)
         mag_imgstr = spm_vol(image_list{i});
@@ -395,19 +395,9 @@ imglist = {};
         phase_imgvol = spm_read_vols(phase_imgstr);
 
         complex_vol = mag_imgvol.*(exp((1i).*(phscale*phase_imgvol)));
-        imglist{end+1}=complex_vol;
+        imglist(:,:,:,i)=complex_vol;
     end
-
-    fulldatamat=zeros(imsize(1), imsize(2), imsize(3), 2*imlen);
-
-    for i = 1:2*length(image_list)
-        if i<= length(image_list)
-        fulldatamat(:,:,:,i)= real(imglist{i});
-        else
-        fulldatamat(:,:,:,i)= imag(imglist{i-length(image_list)});
-        end
-    end
-    
+    fulldatamat = imglist;
     image_list=cat(1,image_list,phase_list);
 else
     %Process and reformat images for MPPCA
@@ -436,11 +426,8 @@ output_path = cellstr(mppcadenoiseparams.output_path);
 [dn_image, S2, P] = mppca_denoise(fulldatamat, window, mask);
 %recalculate magnitude and phase images in case of phase input
 if ~isempty(phase_list{1})
-    myreal=dn_image(:,:,:,1:imlen);
-    mycomplex = dn_image(:,:,:,imlen+1:2*imlen);
-    mycomplexim = myreal + mycomplex;
-    magimg = abs(mycomplexim);
-    phimg = angle(mycomplexim);
+    magimg = abs(dn_image);
+    phimg = angle(dn_image);
 else
     magimg= dn_image;
 end

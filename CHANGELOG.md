@@ -12,6 +12,7 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 - update FIL seste seq parameters in get_metadata_val_classic
 - denoising module-first part: Java-Matlab interface for LCPCA denoising
 - read EffectiveEchoTime in new TerraX Dicom format
+- save LCPCA-denoising supplementary files as nifti instead of .mat
 
 ### Fixed
 - replace `datestr(now)` with `datetime('now')` in line with [MATLAB recommendation](https://mathworks.com/help/matlab/matlab_prog/replace-discouraged-instances-of-serial-date-numbers-and-date-strings.html)

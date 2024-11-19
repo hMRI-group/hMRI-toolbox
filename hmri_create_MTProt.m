@@ -666,6 +666,7 @@ for p = 1:dm(3)
             R1 = R1_unc;
         end
         
+        R1(R1<0) = 0;
         R1(isnan(R1)) = 0;
         scaleR1prethresh  = 1e6;  % thresholds are in 10^3 / s
         scaleR1postthresh = 1e-3; % output should be in / s

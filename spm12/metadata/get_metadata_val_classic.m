@@ -123,8 +123,16 @@ switch inParName
         end
         
     case 'EchoTime' % [ms]
-        % Valid for all vendors
+        % Valid for all vendors:
+        % try EchoTime first
         [nFieldFound, fieldList] = find_field_name(mstruc, 'EchoTime', 'caseSens','sensitive','matchType','exact');
+        % In some sequences (e.g. the XA implementations of FLASH from Kerrin Pine) 
+        % the EffectiveEchoTime is populated instead of the EchoTime field in the DICOM.
+        % If EchoTime is not found than search for EffectiveEchoTime:
+        if ~nFieldFound
+            [nFieldFound, fieldList] = find_field_name(mstruc,'EffectiveEchoTime', 'caseSens','sensitive','matchType','exact');
+        end
+        % Valid for all vendors:
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         if nFieldFound
             cRes = 1;

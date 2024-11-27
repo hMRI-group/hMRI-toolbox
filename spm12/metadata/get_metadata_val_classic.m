@@ -804,7 +804,10 @@ switch inParName
                         parValue{cRes} = 230:-10:0;
                     elseif contains(valMODELNAME,'7T','IgnoreCase',true)
                         parLocation{cRes} = [nam{1} '.adFree(3:4)'];
-                        parValue{cRes} = val{1}.adFree(3):-val{1}.adFree(4):0;      
+                        parValue{cRes} = val{1}.adFree(3):-val{1}.adFree(4):0;
+                    elseif contains(valMODELNAME,'TrioTim','IgnoreCase',true)
+                        parLocation{cRes} = [];
+                        parValue{cRes} = [];
                     else
                         parLocation{cRes}=[];
                     end

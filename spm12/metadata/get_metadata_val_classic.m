@@ -805,11 +805,8 @@ switch inParName
                     elseif contains(valMODELNAME,'7T','IgnoreCase',true)
                         parLocation{cRes} = [nam{1} '.adFree(3:4)'];
                         parValue{cRes} = val{1}.adFree(3):-val{1}.adFree(4):0;
-                    elseif contains(valMODELNAME,'TrioTim','IgnoreCase',true)
-                        parLocation{cRes} = [];
-                        parValue{cRes} = [];
                     else
-                        parLocation{cRes}=[];
+                        fprintf(1,'\nWARNING: B1mapping version unknown (%s/%s). Give up guessing FA values.\n', valSEQ, valPROT);
                     end
                 otherwise
                     fprintf(1,'\nWARNING: B1mapping version unknown (%s/%s). Give up guessing FA values.\n', valSEQ, valPROT);

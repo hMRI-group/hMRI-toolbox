@@ -147,6 +147,17 @@ paws_kstar.strtype = 'e';
 paws_kstar.num     = [1 1];
 paws_kstar.help    = {['Specify kstar parameter']};
 
+% ---------------------------------------------------------------------
+% patchsz
+% ---------------------------------------------------------------------
+paws_patchsize         = cfg_entry;
+paws_patchsize.tag     = 'patchsize';
+paws_patchsize.name    = 'patchsize parameter';
+paws_patchsize.val     = {[1]};
+paws_patchsize.strtype = 'e';
+paws_patchsize.num     = [1 1];
+paws_patchsize.help    = {['Specify patchsize parameter']};
+
 
 
 % ---------------------------------------------------------------------

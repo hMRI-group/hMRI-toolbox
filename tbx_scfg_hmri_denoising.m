@@ -122,6 +122,47 @@ pdw.help = {'Input Magnitude/Phase images from PDw data', ...
     'If you only have one kind of weighting, please put them here.'};
 pdw.val  = {pdw_mag_img phase_img};
 
+
+% ---------------------------------------------------------------------
+% MP-PCA Mask
+% ---------------------------------------------------------------------
+% This is the Mask to be applied. Default value is: mask = [] 
+mp_mask         = cfg_files;
+mp_mask.tag     = 'mask';
+mp_mask.name    = 'Mask';
+mp_mask.help    = {'Select the Mask'};
+mp_mask.filter  = 'image';
+mp_mask.ufilter = '.*';
+mp_mask.num     = [0 1];
+
+
+
+% ---------------------------------------------------------------------
+% MP-PCA Neighborhood Size
+% ---------------------------------------------------------------------
+mp_ngbsize         = cfg_entry;
+mp_ngbsize.tag     = 'ngbsize';
+mp_ngbsize.name    = 'Neighborhood size';
+mp_ngbsize.val     = {[4]};
+mp_ngbsize.strtype = 'e';
+mp_ngbsize.num     = [1 1];
+mp_ngbsize.help    = {['Specify the neghborhood size']};
+
+
+
+% ---------------------------------------------------------------------
+% MPPCA Denoising protocol
+% ---------------------------------------------------------------------
+denoisinginput_mppca      = cfg_branch;
+denoisinginput_mppca.tag  = 'mppca_denoise';
+denoisinginput_mppca.name = 'MP-PCA denoising';
+denoisinginput_mppca.help = {'Input images for Lcpca-denoising'
+    ['Regarding processing parameters, you can either stick with metadata and standard ' ...
+    'defaults parameters (recommended) or select your own [hmri_denoisinglocal_defaults_*.m] customised defaults file ' ...
+    '(fallback for situations where no metadata are available).']};
+denoisinginput_mppca.val  = {DNparameters mp_ngbsize mp_mask};
+
+
 % ---------------------------------------------------------------------
 % Standard deviation parameter
 % ---------------------------------------------------------------------
@@ -174,7 +215,7 @@ denoisingtype.help   = {'Choose the method for denoising.'
     ['- LC-PCA denoising: Bazin, et al. (2019) Denoising High-Field Multi-Dimensional MRI With Local'...
     'Complex PCA, Front. Neurosci. doi:10.3389/fnins.2019.01066']
     ' - No denoising:...'};
-denoisingtype.values = {denoisinginput_lcpca};
+denoisingtype.values = {denoisinginput_lcpca denoisinginput_mppca};
 denoisingtype.val    = {denoisinginput_lcpca};
 
 % ---------------------------------------------------------------------

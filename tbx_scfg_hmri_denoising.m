@@ -183,7 +183,7 @@ denoisinginput_paws.help = {'Input images for Adaptive-denoising'
     ['Regarding processing parameters, you can either stick with metadata and standard ' ...
     'defaults parameters (recommended) or select your own [hmri_denoisinglocal_defaults_*.m] customised defaults file ' ...
     '(fallback for situations where no metadata are available).']};
-denoisinginput_paws.val  = {DNparameters paws_kstar paws_patchsize paws_mask};
+denoisinginput_paws.val  = {DNparameters paws_kstar paws_patchsize paws_ladjust paws_mask};
 
 % ---------------------------------------------------------------------
 % MP-PCA Mask

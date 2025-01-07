@@ -122,6 +122,44 @@ pdw.help = {'Input Magnitude/Phase images from PDw data', ...
     'If you only have one kind of weighting, please put them here.'};
 pdw.val  = {pdw_mag_img phase_img};
 
+% ---------------------------------------------------------------------
+% adap-Mask
+% ---------------------------------------------------------------------
+% This is the Mask to be applied. Default value is: mask = [] 
+paws_mask         = cfg_files;
+paws_mask.tag     = 'mask';
+paws_mask.name    = 'Mask';
+paws_mask.help    = {'Select the Mask'};
+paws_mask.filter  = 'image';
+paws_mask.ufilter = '.*';
+paws_mask.num     = [0 1];
+
+
+
+% ---------------------------------------------------------------------
+% kstar
+% ---------------------------------------------------------------------
+paws_kstar         = cfg_entry;
+paws_kstar.tag     = 'kstar';
+paws_kstar.name    = 'kstar parameter';
+paws_kstar.val     = {[16]};
+paws_kstar.strtype = 'e';
+paws_kstar.num     = [1 1];
+paws_kstar.help    = {['Specify kstar parameter']};
+
+
+
+% ---------------------------------------------------------------------
+% MPPCA Denoising protocol
+% ---------------------------------------------------------------------
+denoisinginput_mppca      = cfg_branch;
+denoisinginput_mppca.tag  = 'mppca_denoise';
+denoisinginput_mppca.name = 'MP-PCA denoising';
+denoisinginput_mppca.help = {'Input images for Lcpca-denoising'
+    ['Regarding processing parameters, you can either stick with metadata and standard ' ...
+    'defaults parameters (recommended) or select your own [hmri_denoisinglocal_defaults_*.m] customised defaults file ' ...
+    '(fallback for situations where no metadata are available).']};
+denoisinginput_mppca.val  = {DNparameters mp_ngbsize mp_mask};
 
 % ---------------------------------------------------------------------
 % MP-PCA Mask

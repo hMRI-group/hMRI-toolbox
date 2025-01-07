@@ -150,16 +150,16 @@ paws_kstar.help    = {['Specify kstar parameter']};
 
 
 % ---------------------------------------------------------------------
-% MPPCA Denoising protocol
+% Denoising protocol
 % ---------------------------------------------------------------------
-denoisinginput_mppca      = cfg_branch;
-denoisinginput_mppca.tag  = 'mppca_denoise';
-denoisinginput_mppca.name = 'MP-PCA denoising';
-denoisinginput_mppca.help = {'Input images for Lcpca-denoising'
+denoisinginput_paws      = cfg_branch;
+denoisinginput_paws.tag  = 'paws_denoise';
+denoisinginput_paws.name = 'Adaptive denoising';
+denoisinginput_paws.help = {'Input images for Adaptive-denoising'
     ['Regarding processing parameters, you can either stick with metadata and standard ' ...
     'defaults parameters (recommended) or select your own [hmri_denoisinglocal_defaults_*.m] customised defaults file ' ...
     '(fallback for situations where no metadata are available).']};
-denoisinginput_mppca.val  = {DNparameters mp_ngbsize mp_mask};
+denoisinginput_paws.val  = {DNparameters paws_kstar paws_mask};
 
 % ---------------------------------------------------------------------
 % MP-PCA Mask

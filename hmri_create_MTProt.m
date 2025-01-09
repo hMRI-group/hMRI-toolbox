@@ -1,4 +1,4 @@
-function [fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw]  = hmri_create_MTProt(jobsubj) %#ok<*STOUT>
+function [fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw, PR2s_param_error]  = hmri_create_MTProt(jobsubj) %#ok<*STOUT>
 %==========================================================================
 % This is hmri_create_MTProt, part of the hMRI-Toolbox.
 %
@@ -27,7 +27,8 @@ function [fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw]  = hmri_create_MTProt(jobsubj) %
 %           defaults settings (PDproc & RF sensitivity bias correction)). 
 %   PPDw    average PD-weighted image filename (or OLS fit at TE=0 if fullOLS = true) 
 %   PT1w    average T1-weighted image filename (or OLS fit at TE=0 if fullOLS = true)  
-%   PMTw    average MT-weighted image filename (or OLS fit at TE=0 if fullOLS = true)  
+%   PMTw    average MT-weighted image filename (or OLS fit at TE=0 if fullOLS = true)
+%   PR2s_param_error    parameter error maps (if errormaps = true)
 %
 % OTHER USEFUL VARIABLES EXPLAINED
 %   P_mtw, P_pdw, P_t1w (from jobsubj.raw_mpm) are MTw, PDw, T1w series of
@@ -381,6 +382,11 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
         hmri_log(sprintf('\t-------- and fit to TE=0 for each contrast --------'),mpm_params.nopuflags);
  
         Nmap = nifti;
+        
+        if mpm_params.errormaps % Exp
+            NEmap = nifti;
+        end
+        
         Pte0 = cell(1,mpm_params.ncon);
         for ccon = 1:mpm_params.ncon
             % requires a minimum of neco4R2sfit echoes for a robust fit
@@ -407,9 +413,38 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
                 % been added, the offset has changed and must be updated before
                 % writing the data to the file!)
                 Nmap(ccon) = nifti(Pte0{ccon});
+                if mpm_params.errormaps
+                    PR2s_OLS_error{ccon}    = fullfile(calcpath,[outbasename '_' mpm_params.input(ccon).tag 'w_errorESTATICS' '.nii']);
+                    Ni = hmri_create_nifti(PR2s_OLS_error{ccon},V_pdw(1),dt,['Error map for ' mpm_params.input(ccon).tag 'w contrast']);
+                    NEmap(ccon) = Ni;
+                    
+                    % set metadata - just copied from above...
+                    input_files = mpm_params.input(ccon).fnam;
+                    Output_hdr = init_mpm_output_metadata(input_files, mpm_params);
+                    Output_hdr.history.output.imtype = Ni.descrip;
+                    Output_hdr.history.output.units = 'a.u.';
+                    set_metadata(PR2s_OLS_error{ccon},Output_hdr,mpm_params.json); 
+                    % re-load the updated NIFTI file (in case extended header has
+                    % been added, the offset has changed and must be updated before
+                    % writing the data to the file!)
+                    NEmap(ccon) = nifti(PR2s_OLS_error{ccon});
+                    
+                end
             else
                 Pte0{ccon} = '';
+                if mpm_params.errormaps
+                    PR2s_OLS_error{ccon} = '';
+                end
             end
+        end
+
+        % Since the error maps has been introduced for the "fullOLS" case,
+        % they are only available if fullOLS = TRUE.
+        if mpm_params.errormaps
+            ccon = ccon + 1;
+            PR2s_OLS_error{ccon}    = fullfile(calcpath,[outbasename '_' 'R2s_errorESTATICS' '.nii']);
+            Ni = hmri_create_nifti(PR2s_OLS_error{ccon},V_pdw(1),dt,'Error map for R2s contrast');
+            NEmap(ccon) = Ni;
         end
     end % init nifti objects for fullOLS case
     
@@ -448,8 +483,12 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
                 dataToFit(ccon).TE = mpm_params.input(ccon).TE;
             end   
         end
-        [R2s, intercepts] = hmri_calc_R2s(dataToFit,mpm_params.R2s_fit_method);
 
+        if mpm_params.errormaps
+            [R2s, intercepts, SError] = hmri_calc_R2s(dataToFit,mpm_params.R2s_fit_method);
+        else
+            [R2s, intercepts] = hmri_calc_R2s(dataToFit,mpm_params.R2s_fit_method);
+        end
         % Writes "fullOLS" images (OLS fit to TE=0 for each contrast)
         if mpm_params.fullOLS
             for ccon = 1:mpm_params.ncon
@@ -457,6 +496,12 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
                 if mpm_params.estaticsR2s(ccon)
                     Nmap(ccon).dat(:,:,p) = intercepts{ccon};
                 end
+                if mpm_params.errormaps
+                    NEmap(ccon).dat(:,:,p) = SError.weighted{ccon};
+                end
+            end
+            if mpm_params.errormaps
+                NEmap(mpm_params.ncon+1).dat(:,:,p) = SError.R2s;
             end
         end
                 
@@ -492,7 +537,11 @@ if mpm_params.fullOLS && all(mpm_params.estaticsR2s)
         Vavg(ccon) = spm_vol(Pavg{ccon});
     end
 end
-        
+if mpm_params.errormaps
+    for ccon = 1:mpm_params.ncon
+        Verror(ccon) = spm_vol(PR2s_OLS_error{ccon});
+    end
+end        
 
 %% =======================================================================%
 % Prepare output for R1, PD and MT maps
@@ -520,6 +569,46 @@ if (PDwidx && T1widx)
     end        
 end
 
+if mpm_params.errormaps
+    % set metadata are missing
+    if (PDwidx && T1widx)
+        % R1 error maps
+        PR2s_param_error.R1    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qR1).suffix '_param_error.nii']);
+        Ni = hmri_create_nifti(PR2s_param_error.R1,V_pdw(1),dt,['Error map for ' mpm_params.output(mpm_params.qR1).suffix 'param']);
+        NEpara.R1 = nifti;
+        NEpara.R1 = Ni;
+        
+        P_mSNRscore.R1    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qR1).suffix '_mSNR.nii']);
+        Ni = hmri_create_nifti(P_mSNRscore.R1,V_pdw(1),dt,['mSNR map ' mpm_params.output(mpm_params.qR1).suffix 'map']);
+        NSNRpara.R1 = nifti;
+        NSNRpara.R1 = Ni;
+        
+        % PD error maps
+        PR2s_param_error.PD    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qPD).suffix '_param_error.nii']);
+        Ni = hmri_create_nifti(PR2s_param_error.PD,V_pdw(1),dt,['Error map for ' mpm_params.output(mpm_params.qPD).suffix 'param']);
+        NEpara.PD = nifti;
+        NEpara.PD = Ni;
+        
+        P_mSNRscore.PD    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qPD).suffix '_mSNR.nii']);
+        Ni = hmri_create_nifti(P_mSNRscore.PD,V_pdw(1),dt,['mSNR map ' mpm_params.output(mpm_params.qPD).suffix 'map']);
+        NSNRpara.PD = nifti;
+        NSNRpara.PD = Ni;
+        if MTwidx
+            % MT error maps
+            PR2s_param_error.MT    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qMT).suffix '_param_error.nii']);
+            Ni = hmri_create_nifti(PR2s_param_error.MT,V_pdw(1),dt,['Error map for ' mpm_params.output(mpm_params.qMT).suffix 'param']);
+            NEpara.MT = nifti;
+            NEpara.MT = Ni;
+            
+            P_mSNRscore.MT    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qMT).suffix '_mSNR.nii']);
+            Ni = hmri_create_nifti(P_mSNRscore.MT,V_pdw(1),dt,['mSNR map ' mpm_params.output(mpm_params.qMT).suffix 'map']);
+            NSNRpara.MT = nifti;
+            NSNRpara.MT = Ni;
+        end
+    end
+else % ensure return value always exists
+    PR2s_param_error = struct();
+end
 
 %% =======================================================================%
 % Map calculation continued (R1, PD, MT) 
@@ -536,10 +625,10 @@ spm_progress_bar('Init',dm(3),'Calculating maps','planes completed');
 for p = 1:dm(3)
 
     % PDw images are always available, so this bit is always loaded:
-    PDw = hmri_read_vols(Vavg(PDwidx),Ni,p,mpm_params.interp);
+    PDw = hmri_read_vols(Vavg(PDwidx),V_ref,p,mpm_params.interp);
     
     if ~isempty(V_trans)
-        f_T = hmri_read_vols(V_trans(2,:),Ni,p,mpm_params.interp)/100; % divide by 100, since p.u. maps
+        f_T = hmri_read_vols(V_trans(2,:),V_ref,p,mpm_params.interp)/100; % divide by 100, since p.u. maps
     else
         f_T = [];
     end
@@ -548,7 +637,7 @@ for p = 1:dm(3)
     % only if trpd = trmt and fapd = famt and if PDw and MTw images are
     % available
     if (MTwidx && PDwidx)
-        MTw = hmri_read_vols(Vavg(MTwidx),Ni,p,mpm_params.interp);
+        MTw = hmri_read_vols(Vavg(MTwidx),V_ref,p,mpm_params.interp);
         if (TR_mtw == TR_pdw) && (fa_mtw == fa_pdw) % additional MTR image...
             MTR = (PDw-MTw)./(PDw+eps) * 100;
             % write MTR image
@@ -560,28 +649,57 @@ for p = 1:dm(3)
     % available:
     if T1widx
 
-        T1w = hmri_read_vols(Vavg(T1widx),Ni,p,mpm_params.interp);
+        T1w = hmri_read_vols(Vavg(T1widx),V_ref,p,mpm_params.interp);
         
         % Transmit bias corrected quantitative T1 values; if f_T empty then semi-quantitative
-        R1=hmri_calc_R1(struct('data',PDw,'fa',fa_pdw_rad,'TR',TR_pdw,'B1',f_T),...
+        R1_unc=hmri_calc_R1(struct('data',PDw,'fa',fa_pdw_rad,'TR',TR_pdw,'B1',f_T),...
             struct('data',T1w,'fa',fa_t1w_rad,'TR',TR_t1w,'B1',f_T),...
             mpm_params.small_angle_approx);
             
         if ISC.enabled&&~isempty(f_T)
             % MFC: We do have P2_a and P2_b parameters for this sequence
             % => T1 = A(B1) + B(B1)*T1app (see Preibisch 2009)
-            R1 = R1./(...
-                +(ISC.P2_a(1)*f_T.^2 + ISC.P2_a(2)*f_T + ISC.P2_a(3)).*R1 ...
-                +(ISC.P2_b(1)*f_T.^2 + ISC.P2_b(2)*f_T + ISC.P2_b(3)) ...
-                );
+            A_ISC=ISC.P2_a(1)*f_T.^2 + ISC.P2_a(2)*f_T + ISC.P2_a(3);
+            B_ISC=ISC.P2_b(1)*f_T.^2 + ISC.P2_b(2)*f_T + ISC.P2_b(3);
+            R1 = R1_unc./(A_ISC.*R1_unc+B_ISC);
+        else
+            R1 = R1_unc;
         end
         
-        R1 = R1*1e6;
         R1(R1<0) = 0;
-        tmp      = R1;
-        tmp(isnan(tmp)) = 0;
-        Nmap(mpm_params.qR1).dat(:,:,p) = min(max(tmp,-threshall.R1),threshall.R1)*1e-3; % truncating images
-                
+        R1(isnan(R1)) = 0;
+        scaleR1prethresh  = 1e6;  % thresholds are in 10^3 / s
+        scaleR1postthresh = 1e-3; % output should be in / s
+        R1 = min(max(R1*scaleR1prethresh,-threshall.R1),threshall.R1)*scaleR1postthresh;
+        Nmap(mpm_params.qR1).dat(:,:,p) = R1; % truncating images
+        
+        if mpm_params.errormaps
+            Edata.PDw = hmri_read_vols(Verror(PDwidx),V_ref,p,mpm_params.interp);
+            Edata.T1w = hmri_read_vols(Verror(T1widx),V_ref,p,mpm_params.interp);
+            
+            dR1 = hmri_calc_dR1(PDw,T1w,Edata.PDw,Edata.T1w,fa_pdw_rad,fa_t1w_rad,TR_pdw,TR_t1w,f_T,mpm_params.small_angle_approx);
+            
+            if ISC.enabled&&~isempty(f_T)
+                % Use chain rule to include the imperfect spoiling 
+                % correction: R1 error map multiplied by derivative of 
+                % correction factor with respect to uncorrected R1
+                dR1 = dR1.*abs(B_ISC./(A_ISC.*R1_unc+B_ISC).^2);
+            end
+            
+            % truncate R1 error maps
+            dR1(dR1<0) = 0;
+            dR1(isnan(dR1)) = 0;
+            dR1 = min(max(dR1*scaleR1prethresh,-threshall.R1),threshall.R1)*scaleR1postthresh;
+            NEpara.R1.dat(:,:,p) = dR1;
+        
+            % standardized maps
+            tmp = (R1./dR1);
+            tmp(dR1<=threshall.dR1) = 0;
+            tmp = max(min(tmp,threshall.SNR_R1),-threshall.SNR_R1);
+            tmp(abs(tmp)==threshall.SNR_R1) = 0;
+            tmp(isnan(tmp)) = 0;
+            NSNRpara.R1.dat(:,:,p) = tmp; 
+        end
     end
     spm_progress_bar('Set',p);
 end
@@ -612,21 +730,21 @@ spm_progress_bar('Init',dm(3),'Calculating maps (continued)','planes completed')
 for p = 1:dm(3)
 
     if ~isempty(V_trans)
-        f_T = hmri_read_vols(V_trans(2,:),Ni,p,mpm_params.interp)/100; % divide by 100, since p.u. maps
+        f_T = hmri_read_vols(V_trans(2,:),V_ref,p,mpm_params.interp)/100; % divide by 100, since p.u. maps
     elseif ~isempty(V_trans_unicort)
-        f_T = hmri_read_vols(V_trans_unicort(1,:),Ni,p,mpm_params.interp)/100; % divide by 100, since p.u. maps        
+        f_T = hmri_read_vols(V_trans_unicort(1,:),V_ref,p,mpm_params.interp)/100; % divide by 100, since p.u. maps        
     else
         f_T = [];
     end
     
     % PDw images are always available, so this bit is always loaded:
-    PDw = hmri_read_vols(Vavg(PDwidx),Ni,p,mpm_params.interp);
+    PDw = hmri_read_vols(Vavg(PDwidx),V_ref,p,mpm_params.interp);
     
     % T1 map and A/PD maps can only be calculated if T1w images are
     % available:
     if T1widx
 
-        T1w = hmri_read_vols(Vavg(T1widx),Ni,p,mpm_params.interp);
+        T1w = hmri_read_vols(Vavg(T1widx),V_ref,p,mpm_params.interp);
         
         % if "fullOLS" option enabled, use the OLS fit at TE=0 as
         % "T1w_forA"; otherwise use the average calculated earlier (by
@@ -634,7 +752,7 @@ for p = 1:dm(3)
         if mpm_params.fullOLS
             T1w_forA = T1w;
         else
-            T1w_forA = hmri_read_vols(VT1w_forA,Ni,p,mpm_params.interp);
+            T1w_forA = hmri_read_vols(VT1w_forA,V_ref,p,mpm_params.interp);
         end
                 
         % A values proportional to PD
@@ -654,16 +772,37 @@ for p = 1:dm(3)
                 mpm_params.small_angle_approx);
         end
         
+        % truncate PD maps
         tmp      = A;
-        tmp(isinf(tmp)) = 0;
         tmp(isnan(tmp)) = 0;
         Nmap(mpm_params.qPD).dat(:,:,p) = max(min(tmp,threshall.A),-threshall.A);
         % dynamic range increased to 10^5 to accommodate phased-array coils and symmetrical for noise distribution
 
+        if mpm_params.errormaps
+            Edata.PDw = hmri_read_vols(Verror(PDwidx),V_ref,p,mpm_params.interp);
+            Edata.T1w = hmri_read_vols(Verror(T1widx),V_ref,p,mpm_params.interp);
+            
+            dPD = hmri_calc_dPD(PDw,T1w,Edata.PDw,Edata.T1w,fa_pdw_rad,fa_t1w_rad,TR_pdw,TR_t1w,f_T,mpm_params.small_angle_approx);
+            
+            % truncate PD error maps
+            dPD(isinf(dPD)) = 0;
+            dPD(isnan(dPD)) = 0;
+            dPD = max(min(dPD,threshall.A),-threshall.A);
+            NEpara.PD.dat(:,:,p) = dPD;
+            
+            % truncate standarized PD maps
+            tmp = A./dPD;
+            tmp(dPD<=threshall.dPD) = 0;
+            tmp(isnan(tmp)) = 0;
+            tmp = max(min(tmp,threshall.SNR_PD),-threshall.SNR_PD);
+            tmp(abs(tmp)==threshall.SNR_PD) = 0;
+            NSNRpara.PD.dat(:,:,p) = tmp; % has to become a default
+        end
+        
         % for MT maps calculation, one needs MTw images on top of the T1w
         % and PDw ones...
         if MTwidx
-            MTw = hmri_read_vols(Vavg(MTwidx),Ni,p,mpm_params.interp);
+            MTw = hmri_read_vols(Vavg(MTwidx),V_ref,p,mpm_params.interp);
 
             switch mpm_params.MTsatB1CorrectionModel
                 case 'helms' 
@@ -693,11 +832,36 @@ for p = 1:dm(3)
             % - f_T has been calculated using UNICORT *AND* the UNICORT.MT flag
             % is enabled (advanced user only! method not validated yet!)
             if (~isempty(f_T))&&(~mpm_params.UNICORT.R1 || mpm_params.UNICORT.MT)
-                MT = hmri_correct_MTsat(MT,f_T,mpm_params.MTsatB1CorrectionModel,mpm_params.MTsatB1CorrectionC);
+                [MT,dMTsatcorr] = hmri_correct_MTsat(MT,f_T,mpm_params.MTsatB1CorrectionModel,mpm_params.MTsatB1CorrectionC);
             end
-
+            
+            % truncate MT maps
             MT(isnan(MT))=0;
             Nmap(mpm_params.qMT).dat(:,:,p) = max(min(MT,threshall.MT),-threshall.MT);
+
+            if mpm_params.errormaps
+                Edata.MTw = hmri_read_vols(Verror(MTwidx),V_ref,p,mpm_params.interp);
+                
+                dMT = hmri_calc_dMT(PDw,T1w,MTw,Edata.PDw,Edata.T1w,Edata.MTw,fa_pdw_rad,fa_t1w_rad,fa_mtw_rad,TR_pdw,TR_t1w,TR_mtw,mpm_params.small_angle_approx) * 100;
+                
+                if (~isempty(f_T))&&(~mpm_params.UNICORT.R1 || mpm_params.UNICORT.MT)
+                    % use chain rule to include MTsat B1 correction in error maps
+                    dMT = dMT.*abs(dMTsatcorr);
+                end
+                
+                % truncate MT error maps
+                dMT(isnan(dMT)) = 0;
+                dMT = max(min(dMT,threshall.MT),-threshall.MT);
+                NEpara.MT.dat(:,:,p) = dMT;  
+                
+                % truncate standarized MT maps
+                tmp = MT./(dMT);
+                tmp(dMT<=threshall.dMT) = 0;
+                tmp(isnan(tmp)) = 0;
+                tmp = max(min(tmp,threshall.SNR_MT),-threshall.SNR_MT);
+                tmp(abs(tmp)==threshall.SNR_MT) = 0;
+                NSNRpara.MT.dat(:,:,p) = tmp; % has to become a default
+            end
         end
     
     end
@@ -921,6 +1085,27 @@ if mpm_params.proc.R2sOLS && ~isempty(fR2s_OLS)
     fR2s = fR2s_OLS_final;
 end
 
+% move error maps to Results/Supplementary
+if mpm_params.errormaps
+    % R1, PD, MT error maps
+    outfields=fieldnames(PR2s_param_error)';
+    for ccon = 1:length(outfields)
+        errormap_final = fullfile(supplpath, spm_file(PR2s_param_error.(outfields{ccon}),'filename'));
+        copyfile(PR2s_param_error.(outfields{ccon}), errormap_final);
+        try copyfile([spm_str_manip(errormap_final,'r') '.json'],fullfile(supplpath, [spm_file(errormap_final,'basename') '.json'])); end
+        PR2s_param_error.(outfields{ccon}) = errormap_final;
+        
+        copyfile(P_mSNRscore.(outfields{ccon}), fullfile(supplpath, spm_file(P_mSNRscore.(outfields{ccon}),'filename')));
+        try copyfile([spm_str_manip(P_mSNRscore.(outfields{ccon}),'r') '.json'],fullfile(supplpath, [spm_file(P_mSNRscore.(outfields{ccon}),'basename') '.json'])); end
+    end
+    
+    % R2s error map and single contrast residuals
+    for ccon = 1:length(PR2s_OLS_error)
+        try copyfile([spm_str_manip(PR2s_OLS_error{ccon},'r') '.json'],fullfile(supplpath, [spm_file(PR2s_OLS_error{ccon},'basename') '.json'])); end
+        copyfile(PR2s_OLS_error{ccon}, fullfile(supplpath, spm_file(PR2s_OLS_error{ccon},'filename')));
+    end
+end
+
 if ~isempty(fMT)
     fMT_final = fullfile(respath, spm_file(fMT,'filename'));
     copyfile(fMT,fMT_final);
@@ -998,6 +1183,13 @@ maskedA(maskedA==threshA) = 0;
 maskedA(maskedA<0) = 0;
 spm_write_vol(V_maskedA,maskedA);
 
+if(mpm_params.errormaps)
+    outbasename = spm_file(mpm_params.input(mpm_params.PDwidx).fnam(1,:),'basename'); % for all output files
+    
+    % TODO: pass this filename to this function rather than generating it
+    PPD_error   = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qPD).suffix '_param_error.nii']);
+    PDerror     = spm_read_vols(spm_vol(PPD_error));
+end
 % Bias-field correction of masked A map
 % use unified segmentation with uniform defaults across the toolbox:
 job_bfcorr = hmri_get_defaults('segment');
@@ -1025,6 +1217,13 @@ Y = Y/mean(A_WM(A_WM~=0))*PDproc.WMval;
 hmri_log(sprintf(['INFO (PD calculation):\n\tmean White Matter intensity: %.1f\n' ...
     '\tSD White Matter intensity %.1f\n'],mean(A_WM(A_WM~=0)),std(A_WM(A_WM~=0))), mpm_params.defflags);
 Y(Y>200) = 0;
+
+% Rescale error maps to match PD scaling
+if mpm_params.errormaps 
+    PDerror = BF.*PDerror;
+    PDerror = abs(PDerror/mean(A_WM(A_WM~=0))*PDproc.WMval);
+end
+
 % MFC: Estimating Error for data set to catch bias field issues:
 errorEstimate = std(A_WM(A_WM > 0))./mean(A_WM(A_WM > 0));
 Vsave = spm_vol(fA);
@@ -1043,7 +1242,10 @@ if mpm_params.QA.enable
     spm_jsonwrite(mpm_params.QA.fnam,mpm_params.QA,struct('indent','\t'));
 end
 spm_write_vol(Vsave,Y);
-
+if(mpm_params.errormaps)
+    Vsave = spm_vol(PPD_error);
+    spm_write_vol(Vsave,PDerror);
+end
 end
 
 %% =======================================================================%
@@ -1616,6 +1818,24 @@ if size(mpm_params.input(mpm_params.PDwidx).fnam,1) > (mpm_params.neco4R2sfit-1)
 else
     mpm_params.qR2s = 0;
 end
+
+% Get error map parameters
+mpm_params.errormaps = hmri_get_defaults('errormaps');
+if mpm_params.errormaps % check we don't try to compute error maps without the necessary prerequisites
+    if ~mpm_params.fullOLS
+        hmri_log('WARNING: Error map creation has been disabled because full OLS correction is disabled (fullOLS=false).',mpm_params.defflags);
+        mpm_params.errormaps=false;
+    elseif ~all(mpm_params.estaticsR2s)
+        hmri_log('WARNING: Error map creation has been disabled because not all contrasts have sufficient data for R2* estimation.',mpm_params.defflags);
+        mpm_params.errormaps=false;
+    elseif numel(mpm_params.estaticsR2s)==1
+        hmri_log('WARNING: Error map creation has been disabled because only PDw volumes have been provided.',mpm_params.defflags);
+        mpm_params.errormaps=false;
+    else
+        hmri_log('Error maps will be created.',mpm_params.defflags);
+    end
+end
+
 
 % Summary of the output generated:
 LogMsg = 'SUMMARY OF THE MAPS CALCULATED';

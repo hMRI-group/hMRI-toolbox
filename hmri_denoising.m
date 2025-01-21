@@ -577,6 +577,11 @@ imagevol = spm_read_vols(image);
 imsize = size(imagevol);
 imlen = length(image_list);
 
+%%Read pawsdenoise params
+mask = pawsdenoiseparams.mask;
+kstar = pawsdenoiseparams.kstar;
+patchsize = pawsdenoiseparams.patchsize;
+ladjust = pawsdenoiseparams.ladjust;
 end
 
 %=========================================================================%

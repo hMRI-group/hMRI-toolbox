@@ -105,6 +105,9 @@ switch denoising_protocol
         denoising_params.supp_path = jobsubj.path.supplpath;
         case 'paws_denoise'
         denoising_params.mask = jobsubj.denoisingtype.(denoising_protocol).mask;
+        denoising_params.kstar = jobsubj.denoisingtype.(denoising_protocol).kstar;
+        denoising_params.patchsize = jobsubj.denoisingtype.(denoising_protocol).patchsize;
+        denoising_params.ladjust = jobsubj.denoisingtype.(denoising_protocol).ladjust;
         denoising_params.output_path = jobsubj.path.dnrespath;
         denoising_params.supp_path = jobsubj.path.supplpath;
 

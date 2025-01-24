@@ -31,7 +31,7 @@ These pages are work-in-progress and updated on a regular basis.
 
 For a reference on the scientific background, methods and concepts please use this [paper](https://doi.org/10.1016/j.neuroimage.2019.01.029) (formerly available as a [pre-print paper](http://dx.doi.org/10.20347/WIAS.PREPRINT.2527)) and cite it when publishing results compiled with the hMRI-toolbox. 
 
-A full example dataset is available [here](https://owncloud.gwdg.de/index.php/s/znxsMrPUB2TJsLz)(Alternative link if this link is broken: [AlternativeDemoData](https://mega.nz/folder/OnxDALZa#bFe0xKJTuuUeGXrYnlX8dA)) to try out the hMRI toolbox. The description of the example dataset is also available in this [paper](https://doi.org/10.1016/j.dib.2019.104132).
+A full example dataset can be `git clone`ed or downloaded from one of the following links: ([Github](https://github.com/hMRI-group/hMRI-toolbox-demodata) | [OwnCloud](https://owncloud.gwdg.de/index.php/s/znxsMrPUB2TJsLz) | [Mega](https://mega.nz/folder/OnxDALZa#bFe0xKJTuuUeGXrYnlX8dA)). The description of the example dataset is also available in this [paper](https://doi.org/10.1016/j.dib.2019.104132).
 
 ## Licence
 

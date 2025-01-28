@@ -106,22 +106,26 @@ Nweighted=numel(weighted_data);
 % default to classic ESTATICS
 if ~exist('famethod','var') || isempty(famethod), famethod='none'; end
 
+% Account for extra fitting parameter
+switch lower(famethod)
+    case 'none'
+        wBegin=2;
+    case 'linear'
+        wBegin=3;
+end
+
 %% Build regression arrays
 % Build design matrix
 D=[];
 for w=1:Nweighted
-    d=zeros(length(weighted_data(w).TE),Nweighted+1);
+    d=zeros(length(weighted_data(w).TE),Nweighted+wBegin-1);
     d(:,1)=-weighted_data(w).TE;
+    d(:,wBegin+w-1)=1;
     switch lower(famethod)
-        case 'none'
-            d(:,w+1)=1;
-            wBegin=2;
         case 'linear'
             assert(isfield(weighted_data(w),'fa'),'flip angle must be present in weighted_data.fa for each struct!')
             assert(isscalar(weighted_data(w).fa),'please specify weighted_data.fa as a scalar, i.e. the nominal flip angle')
             d(:,2)=d(:,1)*weighted_data(w).fa;
-            d(:,w+2)=1;
-            wBegin=3;
     end
     D=[D;d]; %#ok<AGROW>
 end

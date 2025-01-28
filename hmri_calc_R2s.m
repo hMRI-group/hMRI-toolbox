@@ -1,4 +1,4 @@
-function [R2s,extrapolated,SError]=hmri_calc_R2s(weighted_data,method)
+function [R2s,extrapolated,SError]=hmri_calc_R2s(weighted_data,fitmethod)
 % R2* estimation using an implementation of the ESTATICS
 % model (Weiskopf2014). Can utilise weighted least squares (WLS) instead of
 % the original ordinary least squares (OLS; Weiskopf2014) to account
@@ -19,16 +19,16 @@ function [R2s,extrapolated,SError]=hmri_calc_R2s(weighted_data,method)
 %    corresponding voxels from the input data or replacing zeroes with a
 %    small positive number.
 %
-%   method:
-%     string stating which log-linear estimation method to use.
+%   fitmethod:
+%     string stating which fitting method to use.
 %     -Options are: 'OLS'    (log-linear ordinary least squares estimate),
 %                   'WLS[N]' (log-linear weighted least squares estimate
 %                             with '[N]' iterations, where '[N]' is 1, 2 ,
 %                             or 3; uses OLS signal estimates for initial
 %                             weights),
 %                   'NLLS_[METHOD]' (non-linear least squares estimate,
-%                                    where [METHOD] is the method to be
-%                                    used for the initial guess of the
+%                                    where [METHOD] is the fitting method 
+%                                    to be used for the initial guess of the
 %                                    parameters, e.g. 'ols' or 'wls1'; note
 %                                    that while this is expected to be
 %                                    accurate, this method is very slow!)
@@ -82,8 +82,6 @@ function [R2s,extrapolated,SError]=hmri_calc_R2s(weighted_data,method)
 %     group level sensitivity." 
 %     https://doi.org/10.1016/j.neuroimage.2022.119529
 
-
-
 assert(isstruct(weighted_data),'hmri:structError',['inputs must be structs; see help ' mfilename])
 
 dims=size(weighted_data(1).data);
@@ -114,9 +112,9 @@ for w=1:Nweighted
     rData=reshape(weighted_data(w).data,Nvoxels,nTEs);
     
     % log(0) is not defined, so warn the user about zeroes in their data
-    % for methods involving a log transform.
+    % for fitting methods involving a log transform.
     % The warning can be disabled with "warning('off','hmri:zerosInInput')"
-    if any(rData(:)==0)&&~contains(lower(method),'nlls')
+    if any(rData(:)==0)&&~contains(lower(fitmethod),'nlls')
         warning('hmri:zerosInInput',[...
             'Zero values detected in some voxels in the input data. This ',...
             'will cause estimation to fail in these voxels due to the log ',...
@@ -134,14 +132,14 @@ end
 
 %% Estimate R2*
 
-switch lower(method)
+switch lower(fitmethod)
     case 'ols'
         beta=OLS(log(y),D);
         beta(2:end,:)=exp(beta(2:end,:));
     case {'wls1','wls2','wls3'}
         % Number of WLS iterations is specified using 'WLS[N]', where '[N]'
         % is a positive integer
-        r=regexp(lower(method),'^wls(\d+)$','tokens');
+        r=regexp(lower(fitmethod),'^wls(\d+)$','tokens');
         niter=str2double(r{1}{1});
         
         logy=log(y);
@@ -164,17 +162,20 @@ switch lower(method)
         ver_status = any(ismember(versionCell, 'Optimization Toolbox'));
         [license_status,~] = license('checkout', 'Optimization_toolbox');
         if ver_status==0 || license_status==0
-            error('hmri:NoOptimToolbox', "The methods 'nlls_ols','nlls_wls1','nlls_wls2','nlls_wls3' require Optimization Toolbox: either this toolbox and/or its license is missing." + ...
-                " Please use another method which does not need the Optimization Toolbox such as 'ols','wls1','wls2','wls3'. ")
+            error('hmri:NoOptimToolbox', join(["The fitting method '%s' requires the Optimization Toolbox,", ...
+                                                "but this toolbox and/or a license to use it is missing.", ...
+                                                "Please use another method which does not need the Optimization Toolbox,", ...
+                                                "such as 'ols', 'wls1', 'wls2' or 'wls3',", ...
+                                                "or make sure the Optimization Toolbox can be used"]), fitmethod);
         end
 
         % Check for NLLS case, where specification of the log-linear
         % initialisation method is in the method string following an
         % underscore
-        r=regexp(lower(method),'^nlls_(.*)$','tokens');
+        r=regexp(lower(fitmethod),'^nlls_(.*)$','tokens');
         initmethod=r{1}{1};
         
-        % Initial estimate using log-linear method
+        % Initial estimate using log-linear fitting method
         [R2s0,A0]=hmri_calc_R2s(weighted_data,initmethod);
         
         if ~exist('opt','var')
@@ -195,7 +196,7 @@ switch lower(method)
             beta(:,n)=lsqcurvefit(@(x,D)expDecay(x,D),beta0(:,n),D,y(:,n),[],[],opt);
         end
     otherwise
-        error(['method ' method ' not recognised'])
+        error("fitting method '%s' not recognised", fitmethod)
 end
 
 %% Output

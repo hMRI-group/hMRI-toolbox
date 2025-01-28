@@ -203,7 +203,7 @@ switch lower(fitmethod)
         initmethod=r{1}{1};
         
         % Initial estimate using log-linear fitting method
-        [R2s0,A0]=hmri_calc_R2s(weighted_data,initmethod,famethod);
+        [R2s0,A0,DeltaR2s0]=hmri_calc_R2s(weighted_data,initmethod,famethod);
         
         if ~exist('opt','var')
             opt=optimset('lsqcurvefit');
@@ -212,11 +212,15 @@ switch lower(fitmethod)
         
         beta0=zeros(Nweighted+1,Nvoxels);
         beta0(1,:)=R2s0(:);
+        switch lower(famethod)
+            case 'linear'
+                beta0(2,:)=DeltaR2s0(:);
+        end        
         for w=1:Nweighted
-            beta0(w+1,:)=A0{w}(:);
+            beta0(wBegin+w-1,:)=A0{w}(:);
         end
         
-        expDecay=@(x,D) (D(:,2:end)*x(2:end)).*exp(x(1)*D(:,1));
+        expDecay=@(x,D) (D(:,wBegin:end)*x(wBegin:end)).*exp(x(1)*D(:,1:wBegin-1)*x(1:wBegin-1));
       
         % Loop over voxels
         parfor n=1:size(y,2)

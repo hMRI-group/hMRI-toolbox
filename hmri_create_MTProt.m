@@ -1591,6 +1591,24 @@ if mpm_params.proc.R2sOLS
     hmri_log(outstring,mpm_params.defflags);
 end
 
+% whether to model the flip angle dependence of R2*
+mpm_params.R2s_flip_angle_dependence = hmri_get_defaults('R2s_flip_angle_dependence');
+if strcmp(mpm_params.R2s_flip_angle_dependence,'linear')
+    if mpm_params.MTwidx
+        outstring=['The model of a linear flip angle dependence of R2* is not compatible with MT-weighted data. ', ...
+            'Please either set R2s_flip_angle_dependence=''none'' in your hmri_local_defaults file ', ...
+            'or remove the MT-weighted data from the input batch.'];
+        hmri_log(outstring,mpm_params.defflags);
+        error(outstring)
+    end
+    if ~mpm_params.T1widx
+        outstring=['The model of a linear flip angle dependence of R2* requires both PD- and T1-weighted data. ', ...
+            'R2s_flip_angle_dependence has been set to ''none'''];
+        hmri_log(outstring,mpm_params.defflags);
+        mpm_params.R2s_flip_angle_dependence = 'none';
+    end
+end
+
 % check whether there are enough echoes (neco4R2sfit) to estimate R2*
 % (1) for basic R2* estimation, check only PDw images
 mpm_params.basicR2s = false;

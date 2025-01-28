@@ -112,6 +112,8 @@ switch lower(famethod)
         wBegin=2;
     case 'linear'
         wBegin=3;
+    otherwise
+        error("flip angle-dependence model '%s' unknown", famethod)
 end
 
 %% Build regression arrays

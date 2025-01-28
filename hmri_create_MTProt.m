@@ -726,6 +726,20 @@ hmri_log(sprintf('\t-------- Map calculation continued (MT, A/PD) --------'), mp
 
 spm_progress_bar('Init',dm(3),'Calculating maps (continued)','planes completed');
 
+% Determine B1_mtw based on f_T and B1 corr method
+switch mpm_params.MTsatB1CorrectionModel
+                case 'helms' 
+                    B1_mtw=1;
+                    if isempty(f_T)
+                        hmri_log('WARNING: MTsat B1-correction using the Helms model was selected but no B1 map data was found. MTsat will only be corrected with the quadratic model from Helms, et al. (MRM 2008).', mpm_params.defflags)
+                    end
+                case 'lipp'
+                    B1_mtw=f_T;
+                    if isempty(f_T)
+                        hmri_log('WARNING: MTsat B1-correction using the Lipp model was selected but no B1 map data was found. MTsat will not be B1 corrected.', mpm_params.defflags)
+                    end
+end
+
 % Then calculate MT & PD
 for p = 1:dm(3)
 
@@ -803,19 +817,6 @@ for p = 1:dm(3)
         % and PDw ones...
         if MTwidx
             MTw = hmri_read_vols(Vavg(MTwidx),V_ref,p,mpm_params.interp);
-
-            switch mpm_params.MTsatB1CorrectionModel
-                case 'helms' 
-                    B1_mtw=1;
-                    if isempty(f_T)
-                        hmri_log('WARNING: MTsat B1-correction using the Helms model was selected but no B1 map data was found. MTsat will only be corrected with the quadratic model from Helms, et al. (MRM 2008).', mpm_params.defflags)
-                    end
-                case 'lipp'
-                    B1_mtw=f_T;
-                    if isempty(f_T)
-                        hmri_log('WARNING: MTsat B1-correction using the Lipp model was selected but no B1 map data was found. MTsat will not be B1 corrected.', mpm_params.defflags)
-                    end
-            end
 
             % MT in [p.u.]
             A_forMT = hmri_calc_A(struct('data',PDw,'fa',fa_pdw_rad,'TR',TR_pdw,'B1',B1_mtw),...

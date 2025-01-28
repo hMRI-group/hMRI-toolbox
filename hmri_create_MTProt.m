@@ -414,7 +414,7 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
                 % writing the data to the file!)
                 Nmap(ccon) = nifti(Pte0{ccon});
                 if mpm_params.errormaps
-                    PR2s_OLS_error{ccon}    = fullfile(calcpath,[outbasename '_' mpm_params.input(ccon).tag 'w_errorESTATICS' '.nii']);
+                    PR2s_OLS_error{ccon} = fullfile(calcpath,[outbasename '_' mpm_params.input(ccon).tag 'w_errorESTATICS' '.nii']);
                     Ni = hmri_create_nifti(PR2s_OLS_error{ccon},V_pdw(1),dt,['Error map for ' mpm_params.input(ccon).tag 'w contrast']);
                     NEmap(ccon) = Ni;
                     
@@ -428,7 +428,6 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
                     % been added, the offset has changed and must be updated before
                     % writing the data to the file!)
                     NEmap(ccon) = nifti(PR2s_OLS_error{ccon});
-                    
                 end
             else
                 Pte0{ccon} = '';
@@ -448,9 +447,18 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
         end
     end % init nifti objects for fullOLS case
     
-    fR2s_OLS    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qR2s).suffix '_' mpm_params.R2s_fit_method '.nii']);
+    fR2s_OLS = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qR2s).suffix '_' mpm_params.R2s_fit_method '.nii']);
     Ni = hmri_create_nifti(fR2s_OLS, V_ref, dt, ...
         [mpm_params.R2s_fit_method ' R2* map [s-1]']);
+
+    %TODO: set all the metadata too
+    %TODO: make sure this file is copied to the output folder
+    %TODO: correct this output for B1
+    if strcmp(mpm_params.R2s_flip_angle_dependence,'linear')
+        fDeltaR2s = fullfile(calcpath,[outbasename '_Delta' mpm_params.output(mpm_params.qR2s).suffix '_' mpm_params.R2s_fit_method '.nii']);
+        NDeltaR2smap = hmri_create_nifti(fDeltaR2s, V_ref, dt, ...
+            [mpm_params.R2s_fit_method ' DeltaR2* map [s-1 rad-1]']);
+    end
     
     % Combine the data and echo times:
     nechoes = zeros(1,mpm_params.ncon);
@@ -485,9 +493,9 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
         end
 
         if mpm_params.errormaps
-            [R2s, intercepts, ~, SError] = hmri_calc_R2s(dataToFit,mpm_params.R2s_fit_method,mpm_params.R2s_flip_angle_dependence);
+            [R2s, intercepts, DeltaR2s, SError] = hmri_calc_R2s(dataToFit,mpm_params.R2s_fit_method,mpm_params.R2s_flip_angle_dependence);
         else
-            [R2s, intercepts] = hmri_calc_R2s(dataToFit,mpm_params.R2s_fit_method,mpm_params.R2s_flip_angle_dependence);
+            [R2s, intercepts, DeltaR2s] = hmri_calc_R2s(dataToFit,mpm_params.R2s_fit_method,mpm_params.R2s_flip_angle_dependence);
         end
         % Writes "fullOLS" images (OLS fit to TE=0 for each contrast)
         if mpm_params.fullOLS
@@ -502,6 +510,9 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
             end
             if mpm_params.errormaps
                 NEmap(mpm_params.ncon+1).dat(:,:,p) = SError.R2s;
+            end
+            if strcmp(mpm_params.R2s_flip_angle_dependence,'linear')
+                NDeltaR2smap(ccon).dat(:,:,p) = DeltaR2s;
             end
         end
                 

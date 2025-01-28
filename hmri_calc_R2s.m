@@ -247,8 +247,7 @@ if nargout>1
 end
 
 % residuals per contrast for error maps
-if nargout>2
-    
+if nargout>3
     % output is cell with element per contrast
     SError.weighted=cell(size(weighted_data));
     SError.R2s=zeros([dims(1:end-1),1]);

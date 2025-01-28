@@ -485,9 +485,9 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
         end
 
         if mpm_params.errormaps
-            [R2s, intercepts, [], SError] = hmri_calc_R2s(dataToFit,mpm_params.R2s_fit_method);
+            [R2s, intercepts, ~, SError] = hmri_calc_R2s(dataToFit,mpm_params.R2s_fit_method,mpm_params.R2s_flip_angle_dependence);
         else
-            [R2s, intercepts] = hmri_calc_R2s(dataToFit,mpm_params.R2s_fit_method);
+            [R2s, intercepts] = hmri_calc_R2s(dataToFit,mpm_params.R2s_fit_method,mpm_params.R2s_flip_angle_dependence);
         end
         % Writes "fullOLS" images (OLS fit to TE=0 for each contrast)
         if mpm_params.fullOLS

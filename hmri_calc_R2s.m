@@ -1,8 +1,9 @@
-function [R2s,extrapolated,SError]=hmri_calc_R2s(weighted_data,fitmethod)
+function [R2s,extrapolated,DeltaR2s,SError]=hmri_calc_R2s(weighted_data,fitmethod,famethod)
 % R2* estimation using an implementation of the ESTATICS
 % model (Weiskopf2014). Can utilise weighted least squares (WLS) instead of
 % the original ordinary least squares (OLS; Weiskopf2014) to account
 % for the heteroscedasticity of log transformed data (Edwards2022).
+% Can also estimate a linear flip angle dependence of R2* (Milotta2023).
 %
 % Input:
 %   array of structures (one per contrast) in the form:
@@ -18,16 +19,18 @@ function [R2s,extrapolated,SError]=hmri_calc_R2s(weighted_data,fitmethod)
 %    the user to decide how to handle this case, e.g. by removing the
 %    corresponding voxels from the input data or replacing zeroes with a
 %    small positive number.
+%   -For famethod 'linear', the structures should also have an 'fa' field
+%    giving the flip angle in radians.
 %
 %   fitmethod:
 %     string stating which fitting method to use.
 %     -Options are: 'OLS'    (log-linear ordinary least squares estimate),
 %                   'WLS[N]' (log-linear weighted least squares estimate
-%                             with '[N]' iterations, where '[N]' is 1, 2 ,
+%                             with '[N]' iterations, where '[N]' is 1, 2,
 %                             or 3; uses OLS signal estimates for initial
 %                             weights),
 %                   'NLLS_[METHOD]' (non-linear least squares estimate,
-%                                    where [METHOD] is the fitting method 
+%                                    where [METHOD] is the fitting method
 %                                    to be used for the initial guess of the
 %                                    parameters, e.g. 'ols' or 'wls1'; note
 %                                    that while this is expected to be
@@ -39,13 +42,21 @@ function [R2s,extrapolated,SError]=hmri_calc_R2s(weighted_data,fitmethod)
 %      small for typical MPM data, and so 'wls1' seems to be sufficient
 %      to improve R2* map quality over OLS (Edwards2022).
 %
+%   famethod:
+%     string stating whether to take into account the flip-angle
+%     dependence of R2*.
+%     -Options are: 'none'   (Weiskopf2014)
+%                   'linear' (Milotta2023)
+%
 % Outputs:
 %   R2s (NvoxelsX x NvoxelsY x ...): the voxelwise-estimated
 %       common R2* of the weightings.
 %   extrapolated: cell array containing data extrapolated to TE=0 in the
 %       same order as the input (e.g. matching contrast order).
-%   SError.weighted: Per contrast root mean square error of signal minus 
-%       fitted signal. Will be used for error maps.
+%   DeltaR2s (NvoxelsX x NvoxelsY x ...): the flip-angle dependent
+%       common R2* of the weightings (zero if famethod='none')
+%   SError.weighted: Per contrast root mean square error of signal minus
+%       fitted signal. Used for calculating error maps (Mohammadi2022).
 %   SError.R2s: Root mean square residual of R2* fit.
 %
 % Examples:
@@ -78,9 +89,13 @@ function [R2s,extrapolated,SError]=hmri_calc_R2s(weighted_data,fitmethod)
 %     efficient R2* estimation in human brain using log-linear weighted
 %     least squares"
 %   Mohammadi et al. NeuroImage (2022), "Error quantification in 
-%     multi-parameter mapping facilitates robust estimation and enhanced 
+%     multi-parameter mapping facilitates robust estimation and enhanced
 %     group level sensitivity." 
 %     https://doi.org/10.1016/j.neuroimage.2022.119529
+%   Milotta et al. Magn. Reson. Med. (2023), "Mitigating the impact of
+%     flip angle and orientation dependence in single compartment R2*
+%     estimates via 2-pool modeling."
+%     https://doi.org/10.1002/mrm.29428
 
 assert(isstruct(weighted_data),'hmri:structError',['inputs must be structs; see help ' mfilename])
 
@@ -88,13 +103,26 @@ dims=size(weighted_data(1).data);
 Nvoxels=prod(dims(1:end-1));
 Nweighted=numel(weighted_data);
 
+% default to classic ESTATICS
+if ~exist('famethod','var') || isempty(famethod), famethod='none'; end
+
 %% Build regression arrays
 % Build design matrix
 D=[];
 for w=1:Nweighted
     d=zeros(length(weighted_data(w).TE),Nweighted+1);
     d(:,1)=-weighted_data(w).TE;
-    d(:,w+1)=1;
+    switch lower(famethod)
+        case 'none'
+            d(:,w+1)=1;
+            wBegin=2;
+        case 'linear'
+            assert(isfield(weighted_data(w),'fa'),'flip angle must be present in weighted_data.fa for each struct!')
+            assert(isscalar(weighted_data(w).fa),'please specify weighted_data.fa as a scalar, i.e. the nominal flip angle')
+            d(:,2)=d(:,1)*weighted_data(w).fa;
+            d(:,w+2)=1;
+            wBegin=3;
+    end
     D=[D;d]; %#ok<AGROW>
 end
 
@@ -131,11 +159,10 @@ for w=1:Nweighted
 end
 
 %% Estimate R2*
-
 switch lower(fitmethod)
     case 'ols'
         beta=OLS(log(y),D);
-        beta(2:end,:)=exp(beta(2:end,:));
+        beta(wBegin:end,:)=exp(beta(wBegin:end,:));
     case {'wls1','wls2','wls3'}
         % Number of WLS iterations is specified using 'WLS[N]', where '[N]'
         % is a positive integer
@@ -151,7 +178,7 @@ switch lower(fitmethod)
         parfor n=1:size(y,2)
             beta(:,n)=WLS(logy(:,n),D,y0(:,n),niter);
         end
-        beta(2:end,:)=exp(beta(2:end,:));
+        beta(wBegin:end,:)=exp(beta(wBegin:end,:));
         
     case {'nlls_ols','nlls_wls1','nlls_wls2','nlls_wls3'}
         % lsqcurvefit uses optimization toolbox
@@ -162,11 +189,11 @@ switch lower(fitmethod)
         ver_status = any(ismember(versionCell, 'Optimization Toolbox'));
         [license_status,~] = license('checkout', 'Optimization_toolbox');
         if ver_status==0 || license_status==0
-            error('hmri:NoOptimToolbox', join(["The fitting method '%s' requires the Optimization Toolbox,", ...
-                                                "but this toolbox and/or a license to use it is missing.", ...
-                                                "Please use another method which does not need the Optimization Toolbox,", ...
-                                                "such as 'ols', 'wls1', 'wls2' or 'wls3',", ...
-                                                "or make sure the Optimization Toolbox can be used"]), fitmethod);
+            error('hmri:NoOptimToolbox', join(["Fitting method '%s' requires the Optimization Toolbox,", ...
+                                               "but this toolbox and/or a license to use it is missing.", ...
+                                               "Please use another method which does not need the Optimization Toolbox,", ...
+                                               "such as 'ols', 'wls1', 'wls2' or 'wls3',", ...
+                                               "or make sure the Optimization Toolbox can be used"]), fitmethod);
         end
 
         % Check for NLLS case, where specification of the log-linear
@@ -176,7 +203,7 @@ switch lower(fitmethod)
         initmethod=r{1}{1};
         
         % Initial estimate using log-linear fitting method
-        [R2s0,A0]=hmri_calc_R2s(weighted_data,initmethod);
+        [R2s0,A0]=hmri_calc_R2s(weighted_data,initmethod,famethod);
         
         if ~exist('opt','var')
             opt=optimset('lsqcurvefit');
@@ -203,11 +230,18 @@ end
 % extra unity in reshape argument avoids problems if size(dims)==2.
 R2s=reshape(beta(1,:),[dims(1:end-1),1]);
 
+switch lower(famethod)
+    case 'none'
+        DeltaR2s=zeros([dims(1:end-1),1]);
+    case 'linear'
+        DeltaR2s=reshape(beta(2,:),[dims(1:end-1),1]);
+end
+
 % Extrapolate weightings to TE=0
 if nargout>1
     extrapolated=cell(size(weighted_data)); % cell element per contrast
     for w=1:Nweighted
-        extrapolatedData=beta(w+1,:);
+        extrapolatedData=beta(wBegin+w-1,:);
         extrapolated{w}=reshape(extrapolatedData(:),[dims(1:end-1),1]);
     end
 end
@@ -222,13 +256,20 @@ if nargout>2
         dims=size(weighted_data(w).data);
         TEs=reshape(weighted_data(w).TE,[ones(1,length(dims)-1),dims(end)]);
         
+        switch lower(famethod)
+            case 'none'
+                fa = 0;
+            case 'linear'
+                fa = weighted_data(w).fa;
+        end
+        
         % per contrast residual
-        Ydiff=weighted_data(w).data-extrapolated{w}.*exp(-R2s.*TEs);
+        Ydiff=weighted_data(w).data-extrapolated{w}.*exp(-(R2s+DeltaR2s*fa).*TEs);
         SError.weighted{w} = rms(Ydiff,length(dims)); % rms along TE dimension
     end
     
-    % Original implementation of R2* error
-    SError.R2s = rms(log(y) - D*[beta(1,:);log(beta(2:end,:))],1);
+    % R2* error
+    SError.R2s = rms(log(y) - D*[beta(1:wBegin-1,:);log(beta(wBegin:end,:))],1);
     SError.R2s = reshape(SError.R2s,[dims(1:end-1),1]);
 end
 

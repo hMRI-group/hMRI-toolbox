@@ -489,6 +489,7 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
                 end
                 dataToFit(ccon).data = data;
                 dataToFit(ccon).TE = mpm_params.input(ccon).TE;
+                dataToFit(ccon).fa = mpm_params.input(ccon).fa;
             end   
         end
 

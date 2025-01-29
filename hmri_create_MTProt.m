@@ -584,34 +584,34 @@ if mpm_params.errormaps
     % set metadata are missing
     if (PDwidx && T1widx)
         % R1 error maps
-        PR2s_param_error.R1    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qR1).suffix '_param_error.nii']);
+        PR2s_param_error.R1 = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qR1).suffix '_param_error.nii']);
         Ni = hmri_create_nifti(PR2s_param_error.R1,V_pdw(1),dt,['Error map for ' mpm_params.output(mpm_params.qR1).suffix 'param']);
         NEpara.R1 = nifti;
         NEpara.R1 = Ni;
         
-        P_mSNRscore.R1    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qR1).suffix '_mSNR.nii']);
+        P_mSNRscore.R1 = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qR1).suffix '_mSNR.nii']);
         Ni = hmri_create_nifti(P_mSNRscore.R1,V_pdw(1),dt,['mSNR map ' mpm_params.output(mpm_params.qR1).suffix 'map']);
         NSNRpara.R1 = nifti;
         NSNRpara.R1 = Ni;
         
         % PD error maps
-        PR2s_param_error.PD    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qPD).suffix '_param_error.nii']);
+        PR2s_param_error.PD = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qPD).suffix '_param_error.nii']);
         Ni = hmri_create_nifti(PR2s_param_error.PD,V_pdw(1),dt,['Error map for ' mpm_params.output(mpm_params.qPD).suffix 'param']);
         NEpara.PD = nifti;
         NEpara.PD = Ni;
         
-        P_mSNRscore.PD    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qPD).suffix '_mSNR.nii']);
+        P_mSNRscore.PD = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qPD).suffix '_mSNR.nii']);
         Ni = hmri_create_nifti(P_mSNRscore.PD,V_pdw(1),dt,['mSNR map ' mpm_params.output(mpm_params.qPD).suffix 'map']);
         NSNRpara.PD = nifti;
         NSNRpara.PD = Ni;
         if MTwidx
             % MT error maps
-            PR2s_param_error.MT    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qMT).suffix '_param_error.nii']);
+            PR2s_param_error.MT = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qMT).suffix '_param_error.nii']);
             Ni = hmri_create_nifti(PR2s_param_error.MT,V_pdw(1),dt,['Error map for ' mpm_params.output(mpm_params.qMT).suffix 'param']);
             NEpara.MT = nifti;
             NEpara.MT = Ni;
             
-            P_mSNRscore.MT    = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qMT).suffix '_mSNR.nii']);
+            P_mSNRscore.MT = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qMT).suffix '_mSNR.nii']);
             Ni = hmri_create_nifti(P_mSNRscore.MT,V_pdw(1),dt,['mSNR map ' mpm_params.output(mpm_params.qMT).suffix 'map']);
             NSNRpara.MT = nifti;
             NSNRpara.MT = Ni;
@@ -653,7 +653,7 @@ for p = 1:dm(3)
             MTR = (PDw-MTw)./(PDw+eps) * 100;
             % write MTR image
             Nmap(mpm_params.qMTR).dat(:,:,p) = max(min(MTR,threshall.MTR),-threshall.MTR);
-        end          
+        end
     end
     
     % T1 map and A/PD maps can only be calculated if T1w images are
@@ -874,7 +874,15 @@ for p = 1:dm(3)
                 NSNRpara.MT.dat(:,:,p) = tmp; % has to become a default
             end
         end
-    
+
+        % correct DeltaR2s map for B1 inhomogeneity
+        %TODO: add metadata saying whether correction was performed or not
+        if strcmp(mpm_params.R2s_flip_angle_dependence,'linear')
+            % linear dependence on flip angle means can just divide out B1 in gradient
+            if ~isempty(f_T)
+                NDeltaR2smap(ccon).dat(:,:,p) = NDeltaR2smap(ccon).dat(:,:,p)./f_T;
+            end
+        end
     end
 
     spm_progress_bar('Set',p);

@@ -513,7 +513,7 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
                 NEmap(mpm_params.ncon+1).dat(:,:,p) = SError.R2s;
             end
             if strcmp(mpm_params.R2s_flip_angle_dependence,'linear')
-                NDeltaR2smap(ccon).dat(:,:,p) = DeltaR2s;
+                NDeltaR2smap.dat(:,:,p) = DeltaR2s;
             end
         end
                 
@@ -881,7 +881,7 @@ for p = 1:dm(3)
         if strcmp(mpm_params.R2s_flip_angle_dependence,'linear')
             % linear dependence on flip angle means can just divide out B1 in gradient
             if ~isempty(f_T)
-                NDeltaR2smap(ccon).dat(:,:,p) = NDeltaR2smap(ccon).dat(:,:,p)./f_T;
+                NDeltaR2smap.dat(:,:,p) = NDeltaR2smap.dat(:,:,p)./f_T;
             end
         end
     end

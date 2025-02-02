@@ -135,7 +135,7 @@ end
 
 % run hmri_create_MTProt to evaluate the parameter maps
 job.subj.b1_trans_input = P_trans;
-[fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw, Perror]  = hmri_create_MTProt(job.subj);
+[fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw, Perror, fDeltaR2s]  = hmri_create_MTProt(job.subj);
 
 % collect outputs:
 out_loc.subj.R1  = {fR1};

@@ -1,4 +1,4 @@
-function [fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw, PR2s_param_error]  = hmri_create_MTProt(jobsubj) %#ok<*STOUT>
+function [fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw, PR2s_param_error, fDeltaR2s]  = hmri_create_MTProt(jobsubj) %#ok<*STOUT>
 %==========================================================================
 % This is hmri_create_MTProt, part of the hMRI-Toolbox.
 %
@@ -29,6 +29,7 @@ function [fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw, PR2s_param_error]  = hmri_create
 %   PT1w    average T1-weighted image filename (or OLS fit at TE=0 if fullOLS = true)  
 %   PMTw    average MT-weighted image filename (or OLS fit at TE=0 if fullOLS = true)
 %   PR2s_param_error    parameter error maps (if errormaps = true)
+%   fDeltaR2s           gradient of R2* with respect to flip angle (if R2s_flip_angle_dependence = 'linear')
 %
 % OTHER USEFUL VARIABLES EXPLAINED
 %   P_mtw, P_pdw, P_t1w (from jobsubj.raw_mpm) are MTw, PDw, T1w series of
@@ -458,6 +459,8 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
         fDeltaR2s = fullfile(calcpath,[outbasename '_Delta' mpm_params.output(mpm_params.qR2s).suffix '_' mpm_params.R2s_fit_method '.nii']);
         NDeltaR2smap = hmri_create_nifti(fDeltaR2s, V_ref, dt, ...
             [mpm_params.R2s_fit_method ' DeltaR2* map [s-1 rad-1]']);
+    else
+        fDeltaR2s = '';
     end
     
     % Combine the data and echo times:

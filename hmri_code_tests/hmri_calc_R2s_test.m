@@ -1,8 +1,10 @@
 % Unit tests implemented:
 %   Multiple or single contrast weighting
+%   R2* linear flip angle dependence fitting
+%   OLS, WLS and NLLS fitting methods
 %   1, 2 and 3D datasets tests, via permutation along dimensions
 %   Zeros as input will return NaNs
-%   Higher tolerance with noise added
+%   Fitting with noise added is within a reasonable tolerance
 %   Checks that input must be a structure
 
 classdef hmri_calc_R2s_test < matlab.unittest.TestCase
@@ -68,6 +70,37 @@ classdef hmri_calc_R2s_test < matlab.unittest.TestCase
             [R2sEst,extrapolated]=hmri_calc_R2s([struct('data',signal1,'TE',TEs1),struct('data',signal2,'TE',TEs2)],'OLS');
             
             assertEqual(testCase,R2sEst,R2s,'AbsTol',testCase.tolerance)
+            assertEqual(testCase,extrapolated{1},signal1_TE0,'AbsTol',testCase.tolerance)
+            assertEqual(testCase,extrapolated{2},signal2_TE0,'AbsTol',testCase.tolerance)
+            
+        end
+
+        function testMultipleContrastFAdependent(testCase,sizes1,sizes2,sizes3)
+            
+            % Test on 3D simulated data that the calculated R2*, dR2*/dFA and contrast-specific
+            % intercepts are within a defined tolerance given multiple contrast input.
+            % Four outputs case is tested.
+            
+            dims=[sizes1,sizes2,sizes3];
+            R2s=100*rand(dims)+50; % in [50,150] / s
+            deltaR2s=15; % / s / rad
+            FAs=deg2rad([8,18]);
+            
+            TEs1=(2:2.5:20)*1e-3; % s
+            signal1_TE0=2000*rand(dims)+500; % [500, 2500]
+            signal1=hmri_test_utils.createDecaySignal(signal1_TE0,TEs1,R2s+deltaR2s*FAs(1));
+            signal1.fa=FAs(1);
+            
+            % First four TEs for second contrast
+            TEs2=TEs1(1:4); % s
+            signal2_TE0=1000*rand(dims)+100; % [100, 1100]
+            signal2=hmri_test_utils.createDecaySignal(signal2_TE0,TEs2,R2s+deltaR2s*FAs(2));
+            signal2.fa=FAs(2);
+            
+            [R2sEst,extrapolated,[],deltaR2sEst]=hmri_calc_R2s([struct('data',signal1,'TE',TEs1),struct('data',signal2,'TE',TEs2)],'OLS','linear');
+            
+            assertEqual(testCase,R2sEst,R2s,'AbsTol',testCase.tolerance)
+            assertEqual(testCase,deltaR2sEst,deltaR2s,'AbsTol',testCase.tolerance)
             assertEqual(testCase,extrapolated{1},signal1_TE0,'AbsTol',testCase.tolerance)
             assertEqual(testCase,extrapolated{2},signal2_TE0,'AbsTol',testCase.tolerance)
             

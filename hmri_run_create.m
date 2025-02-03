@@ -6,10 +6,11 @@ function out = hmri_run_create(job)
 % apply UNICORT.
 %==========================================================================
 
-out.R1  = {};
-out.R2s = {};
-out.A   = {};
-out.MT  = {};
+out.R1       = {};
+out.R2s      = {};
+out.MT       = {};
+out.A        = {};
+out.DeltaR2s = {};
 out.T1w = {};
 out.MTw = {};
 out.PDw = {};

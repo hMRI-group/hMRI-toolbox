@@ -455,7 +455,7 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
     if strcmp(mpm_params.R2s_flip_angle_dependence,'linear')
         fDeltaR2s = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qDeltaR2s).suffix '_' mpm_params.R2s_fit_method '.nii']);
         NDeltaR2smap = hmri_create_nifti(fDeltaR2s, V_ref, dt, ...
-            [mpm_params.R2s_fit_method ' dR2*/dFA map [s-1 rad-1]']);
+            [mpm_params.R2s_fit_method ' dR2*/dFA map [s-1 deg-1]']);
     else
         fDeltaR2s = '';
     end
@@ -513,7 +513,7 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
                 NEmap(mpm_params.ncon+1).dat(:,:,p) = SError.R2s;
             end
             if ~isempty(fDeltaR2s)
-                NDeltaR2smap.dat(:,:,p) = DeltaR2s;
+                NDeltaR2smap.dat(:,:,p) = DeltaR2s*1000;
             end
         end
                 
@@ -1872,8 +1872,8 @@ if strcmp(mpm_params.R2s_flip_angle_dependence,'linear')
         coutput = coutput+1;
         mpm_params.qDeltaR2s = coutput;
         mpm_params.output(coutput).suffix = 'DeltaR2s';
-        mpm_params.output(coutput).units = 's-1 rad-1';
-        mpm_params.output(coutput).descrip{1} = 'dR2*/dFA map [s-1 rad-1]';
+        mpm_params.output(coutput).units = 's-1 deg-1';
+        mpm_params.output(coutput).descrip{1} = 'dR2*/dFA map [s-1 deg-1]';
         switch B1transcorr{1}
             case 'no_B1_correction'
                 mpm_params.output(coutput).descrip{end+1} = '- no B1+ bias correction applied';

@@ -40,18 +40,6 @@
 global hmri_def
 
 %==========================================================================
-% Common processing parameters 
-%==========================================================================
-
-% cleanup temporary directories. If set to true, all temporary directories
-% are deleted at the end of map creation, only the "Results" directory and
-% "Supplementary" subdirectory are kept. Setting "cleanup" to "false" might
-% be convenient if one desires to have a closer look at intermediate
-% processing steps. Otherwise "cleanup = true" is recommended for saving
-% disk space.
-hmri_def.cleanup = false;
-
-%==========================================================================
 % R1/PD/R2s/MT map creation parameters
 %==========================================================================
 

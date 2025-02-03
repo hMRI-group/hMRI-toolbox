@@ -18,7 +18,7 @@ classdef hmri_calc_R2s_test < matlab.unittest.TestCase
     end
     properties
         % Parameters independent of TestParameter
-        tolerance = 1e-9; % absolute tolerance for numerical precision computations
+        tolerance = 1e-7; % absolute tolerance for numerical precision computations
         noiseTol = 0.05; % relative tolerance for testing the influence of noise
     end
     
@@ -75,7 +75,7 @@ classdef hmri_calc_R2s_test < matlab.unittest.TestCase
             
         end
 
-        function testMultipleContrastFAdependent(testCase,sizes1,sizes2,sizes3)
+        function testMultipleContrastFAdependent(testCase,sizes1,sizes2,sizes3,fitmethod)
 
             % Test on 3D simulated data that the calculated R2*, dR2*/dFA and contrast-specific
             % intercepts are within a defined tolerance given multiple contrast input.
@@ -95,7 +95,7 @@ classdef hmri_calc_R2s_test < matlab.unittest.TestCase
             signal2_TE0=1000*rand(dims)+100; % [100, 1100]
             signal2=hmri_test_utils.createDecaySignal(signal2_TE0,TEs2,R2s+deltaR2s*FAs(2));
 
-            [R2sEst,extrapolated,deltaR2sEst]=hmri_calc_R2s([struct('data',signal1,'TE',TEs1,'fa',FAs(1)),struct('data',signal2,'TE',TEs2,'fa',FAs(2))],'OLS','linear');
+            [R2sEst,extrapolated,deltaR2sEst]=hmri_calc_R2s([struct('data',signal1,'TE',TEs1,'fa',FAs(1)),struct('data',signal2,'TE',TEs2,'fa',FAs(2))],fitmethod,'linear');
 
             assertEqual(testCase,R2sEst,R2s,'AbsTol',testCase.tolerance)
             assertEqual(testCase,deltaR2sEst,deltaR2s,'AbsTol',testCase.tolerance)

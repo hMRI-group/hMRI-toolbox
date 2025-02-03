@@ -194,7 +194,7 @@ hmri_def.R2s_fit_method = 'OLS';
 
 % Choose model of flip-angle dependence of R2*
 % - 'none': classic ESTATICS model assuming constant R2* between contrasts
-% - 'linear': method from Melotti, et al. (MRM 2023). Note that this model
+% - 'linear': method from Milotta, et al. (MRM 2023). Note that this model
 %             is not compatible with MT-weighted data.
 hmri_def.R2s_flip_angle_dependence = 'none';
 

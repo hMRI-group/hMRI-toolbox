@@ -232,7 +232,7 @@ end
 
 % Average T1w image for PD calculation 
 % (average over PDproc.nr_echoes_forA echoes, see hmri_defaults):
-% @TODO - ensure reference volume is always consistent, e.g. V v's V_pdw to
+% @TODO - ensure reference volume is always consistent, e.g. V vs V_pdw to
 % ensure we are always in the same reference space of the PDw volume.
 if (PDwidx && T1widx)
     PT1w_forA = fullfile(calcpath,[outbasename '_T1w_forA.nii']);
@@ -452,11 +452,10 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
     Ni = hmri_create_nifti(fR2s_OLS, V_ref, dt, ...
         [mpm_params.R2s_fit_method ' R2* map [s-1]']);
 
-    %TODO: set all the metadata too
     if strcmp(mpm_params.R2s_flip_angle_dependence,'linear')
-        fDeltaR2s = fullfile(calcpath,[outbasename '_Delta' mpm_params.output(mpm_params.qR2s).suffix '_' mpm_params.R2s_fit_method '.nii']);
+        fDeltaR2s = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qDeltaR2s).suffix '_' mpm_params.R2s_fit_method '.nii']);
         NDeltaR2smap = hmri_create_nifti(fDeltaR2s, V_ref, dt, ...
-            [mpm_params.R2s_fit_method ' DeltaR2* map [s-1 rad-1]']);
+            [mpm_params.R2s_fit_method ' dR2*/dFA map [s-1 rad-1]']);
     else
         fDeltaR2s = '';
     end
@@ -513,7 +512,7 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
             if mpm_params.errormaps
                 NEmap(mpm_params.ncon+1).dat(:,:,p) = SError.R2s;
             end
-            if strcmp(mpm_params.R2s_flip_angle_dependence,'linear')
+            if ~isempty(fDeltaR2s)
                 NDeltaR2smap.dat(:,:,p) = DeltaR2s;
             end
         end
@@ -535,6 +534,13 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
     Output_hdr.history.output.imtype = mpm_params.output(mpm_params.qR2s).descrip;
     Output_hdr.history.output.units = mpm_params.output(mpm_params.qR2s).units;
     set_metadata(fR2s_OLS,Output_hdr,mpm_params.json);
+
+    if ~isempty(fDeltaR2s)
+        Output_hdr = init_mpm_output_metadata(input_files, mpm_params);
+        Output_hdr.history.output.imtype = mpm_params.output(mpm_params.qDeltaR2s).descrip;
+        Output_hdr.history.output.units = mpm_params.output(mpm_params.qDeltaR2s).units;
+        set_metadata(fDeltaR2s,Output_hdr,mpm_params.json);
+    end
    
 else
     hmri_log(sprintf('INFO: No R2* map will be calculated using the ESTATICS model. \nInsufficient number of echoes.'), mpm_params.defflags);
@@ -878,7 +884,6 @@ for p = 1:dm(3)
         end
 
         % correct DeltaR2s map for B1 inhomogeneity
-        %TODO: add metadata saying whether correction was performed or not
         if ~isempty(fDeltaR2s)
             % linear dependence on flip angle means can just divide out B1 in gradient
             if ~isempty(f_T)
@@ -1618,24 +1623,6 @@ if mpm_params.proc.R2sOLS
     hmri_log(outstring,mpm_params.defflags);
 end
 
-% whether to model the flip angle dependence of R2*
-mpm_params.R2s_flip_angle_dependence = hmri_get_defaults('R2s_flip_angle_dependence');
-if strcmp(mpm_params.R2s_flip_angle_dependence,'linear')
-    if mpm_params.MTwidx
-        outstring=['The model of a linear flip angle dependence of R2* is not compatible with MT-weighted data. ', ...
-            'Please either set R2s_flip_angle_dependence=''none'' in your hmri_local_defaults file ', ...
-            'or remove the MT-weighted data from the input batch.'];
-        hmri_log(outstring,mpm_params.defflags);
-        error(outstring)
-    end
-    if ~mpm_params.T1widx
-        outstring=['The model of a linear flip angle dependence of R2* requires both PD- and T1-weighted data. ', ...
-            'R2s_flip_angle_dependence has been set to ''none'''];
-        hmri_log(outstring,mpm_params.defflags);
-        mpm_params.R2s_flip_angle_dependence = 'none';
-    end
-end
-
 % check whether there are enough echoes (neco4R2sfit) to estimate R2*
 % (1) for basic R2* estimation, check only PDw images
 mpm_params.basicR2s = false;
@@ -1845,10 +1832,10 @@ if size(mpm_params.input(mpm_params.PDwidx).fnam,1) > (mpm_params.neco4R2sfit-1)
     mpm_params.qR2s = coutput;
     mpm_params.output(coutput).suffix = 'R2s';
     mpm_params.output(coutput).descrip{1} = 'R2* map [s-1]';
-    mpm_params.output(coutput).units = '[s-1]';
+    mpm_params.output(coutput).units = 's-1';
     if mpm_params.proc.R2sOLS
         mpm_params.output(coutput).descrip{end+1} = '- ESTATICS model (R2* map calculation)';
-    end   
+    end
     mpm_params.output(coutput).descrip{end+1} = '- B1+ bias correction does not apply';
     switch RFsenscorr{1}
         case 'RF_none'
@@ -1864,6 +1851,50 @@ else
     mpm_params.qR2s = 0;
 end
 
+% DeltaR2* map output: requires PDw and T1w input and optional B1 transmit (or
+% UNICORT) and RF sensitivity maps for bias correction, as well as linear 
+% flip angle modelling to be turned on and no MTw input:
+mpm_params.R2s_flip_angle_dependence = hmri_get_defaults('R2s_flip_angle_dependence');
+mpm_params.qDeltaR2s = 0; % default
+if strcmp(mpm_params.R2s_flip_angle_dependence,'linear')
+    if mpm_params.MTwidx
+        outstring=['The model of a linear flip angle dependence of R2* is not compatible with MT-weighted data. ', ...
+            'Please either set R2s_flip_angle_dependence=''none'' in your hmri_local_defaults file ', ...
+            'or remove the MT-weighted data from the input batch.'];
+        hmri_log(outstring,mpm_params.defflags);
+        error(outstring)
+    elseif ~mpm_params.T1widx
+        outstring=['The model of a linear flip angle dependence of R2* requires both PD- and T1-weighted data. ', ...
+            'R2s_flip_angle_dependence has been set to ''none'''];
+        hmri_log(outstring,mpm_params.defflags);
+        mpm_params.R2s_flip_angle_dependence = 'none';
+    else
+        coutput = coutput+1;
+        mpm_params.qDeltaR2s = coutput;
+        mpm_params.output(coutput).suffix = 'DeltaR2s';
+        mpm_params.output(coutput).units = 's-1 rad-1';
+        mpm_params.output(coutput).descrip{1} = 'dR2*/dFA map [s-1 rad-1]';
+        switch B1transcorr{1}
+            case 'no_B1_correction'
+                mpm_params.output(coutput).descrip{end+1} = '- no B1+ bias correction applied';
+            case 'UNICORT'
+                mpm_params.output(coutput).descrip{end+1} = '- B1+ bias correction using UNICORT';
+            otherwise
+                mpm_params.output(coutput).descrip{end+1} = sprintf('- B1+ bias correction using provided B1 map (%s)',B1transcorr{1});
+        end
+        switch RFsenscorr{1}
+            case 'RF_none'
+                mpm_params.output(coutput).descrip{end+1} = '- no RF sensitivity bias correction';
+            case 'RF_us' % Unified Segmentation only applies to PD maps
+                mpm_params.output(coutput).descrip{end+1} = '- no RF sensitivity bias correction';
+            case 'RF_once'
+                mpm_params.output(coutput).descrip{end+1} = '- RF sensitivity bias correction based on a single sensitivity measurement';
+            case 'RF_per_contrast'
+                mpm_params.output(coutput).descrip{end+1} = '- RF sensitivity bias correction based on a per-contrast sensitivity measurement';
+        end
+    end
+end
+
 % Get error map parameters
 mpm_params.errormaps = hmri_get_defaults('errormaps');
 if mpm_params.errormaps % check we don't try to compute error maps without the necessary prerequisites
@@ -1873,7 +1904,7 @@ if mpm_params.errormaps % check we don't try to compute error maps without the n
     elseif ~all(mpm_params.estaticsR2s)
         hmri_log('WARNING: Error map creation has been disabled because not all contrasts have sufficient data for R2* estimation.',mpm_params.defflags);
         mpm_params.errormaps=false;
-    elseif numel(mpm_params.estaticsR2s)==1
+    elseif isscalar(mpm_params.estaticsR2s)
         hmri_log('WARNING: Error map creation has been disabled because only PDw volumes have been provided.',mpm_params.defflags);
         mpm_params.errormaps=false;
     else

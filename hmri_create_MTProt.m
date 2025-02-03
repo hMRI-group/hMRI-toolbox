@@ -453,8 +453,6 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
         [mpm_params.R2s_fit_method ' R2* map [s-1]']);
 
     %TODO: set all the metadata too
-    %TODO: make sure this file is copied to the output folder
-    %TODO: correct this output for B1
     if strcmp(mpm_params.R2s_flip_angle_dependence,'linear')
         fDeltaR2s = fullfile(calcpath,[outbasename '_Delta' mpm_params.output(mpm_params.qR2s).suffix '_' mpm_params.R2s_fit_method '.nii']);
         NDeltaR2smap = hmri_create_nifti(fDeltaR2s, V_ref, dt, ...
@@ -881,7 +879,7 @@ for p = 1:dm(3)
 
         % correct DeltaR2s map for B1 inhomogeneity
         %TODO: add metadata saying whether correction was performed or not
-        if strcmp(mpm_params.R2s_flip_angle_dependence,'linear')
+        if ~isempty(fDeltaR2s)
             % linear dependence on flip angle means can just divide out B1 in gradient
             if ~isempty(f_T)
                 NDeltaR2smap.dat(:,:,p) = NDeltaR2smap.dat(:,:,p)./f_T;
@@ -1053,7 +1051,6 @@ if PDproc.T2scorr && (~isempty(fR2s)||~isempty(fR2s_OLS))
    
     NiR2scorr4A.dat(:,:,:) = R2scorr4A;
     
-     
     % apply correction
     fAcorr = spm_file(fA,'suffix','_R2scorr');
     NiAcorr = hmri_create_nifti(fAcorr, V_ref, dt, ...
@@ -1127,6 +1124,13 @@ if mpm_params.errormaps
         try copyfile([spm_str_manip(PR2s_OLS_error{ccon},'r') '.json'],fullfile(supplpath, [spm_file(PR2s_OLS_error{ccon},'basename') '.json'])); end
         copyfile(PR2s_OLS_error{ccon}, fullfile(supplpath, spm_file(PR2s_OLS_error{ccon},'filename')));
     end
+end
+
+if ~isempty(fDeltaR2s)
+    fDeltaR2s_final = fullfile(respath, spm_file(fDeltaR2s,'filename'));
+    copyfile(fDeltaR2s,fDeltaR2s_final);
+    try copyfile([spm_str_manip(fDeltaR2s,'r') '.json'],[spm_str_manip(fDeltaR2s_final,'r') '.json']); end
+    fDeltaR2s = fDeltaR2s_final;
 end
 
 if ~isempty(fMT)

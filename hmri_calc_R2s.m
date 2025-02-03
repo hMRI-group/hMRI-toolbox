@@ -218,15 +218,12 @@ switch lower(fitmethod)
         
         beta0=zeros(Nweighted+1,Nvoxels);
         beta0(1,:)=R2s0(:);
-        switch lower(famethod)
-            case 'linear'
-                beta0(2,:)=DeltaR2s0(:);
-        end        
+        beta0(2,:)=DeltaR2s0(:);
         for w=1:Nweighted
             beta0(wBegin+w-1,:)=A0{w}(:);
         end
         
-        expDecay=@(x,D) (D(:,wBegin:end)*x(wBegin:end)).*exp(x(1)*D(:,1:wBegin-1)*x(1:wBegin-1));
+        expDecay=@(x,D) (D(:,wBegin:end)*x(wBegin:end)).*exp(D(:,1:wBegin-1)*x(1:wBegin-1));
       
         % Loop over voxels
         parfor n=1:size(y,2)

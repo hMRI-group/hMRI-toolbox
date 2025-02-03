@@ -23,10 +23,11 @@ for in=1:numel(job.subj)
     local_job.subj = job.subj(in);
     out_temp       = hmri_create_local(local_job);
     out.subj(in)   = out_temp.subj(1);
-    out.R1{end+1}  = out.subj(in).R1{1};
-    out.R2s{end+1} = out.subj(in).R2s{1};
-    out.MT{end+1}  = out.subj(in).MT{1};
-    out.A{end+1}   = out.subj(in).A{1};
+    out.R1{end+1}       = out.subj(in).R1{1};
+    out.R2s{end+1}      = out.subj(in).R2s{1};
+    out.MT{end+1}       = out.subj(in).MT{1};
+    out.A{end+1}        = out.subj(in).A{1};
+    out.DeltaR2s{end+1} = out.subj(in).DeltaR2s{1};
     out.T1w{end+1} = out.subj(in).T1w{1};
     out.MTw{end+1} = out.subj(in).MTw{1};
     out.PDw{end+1} = out.subj(in).PDw{1};
@@ -138,13 +139,14 @@ job.subj.b1_trans_input = P_trans;
 [fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw, Perror, fDeltaR2s]  = hmri_create_MTProt(job.subj);
 
 % collect outputs:
-out_loc.subj.R1  = {fR1};
-out_loc.subj.R2s = {fR2s};
-out_loc.subj.MT  = {fMT};
-out_loc.subj.A   = {fA};
-out_loc.subj.T1w = {PT1w};
-out_loc.subj.MTw = {PMTw};
-out_loc.subj.PDw = {PPDw};
+out_loc.subj.R1       = {fR1};
+out_loc.subj.R2s      = {fR2s};
+out_loc.subj.MT       = {fMT};
+out_loc.subj.A        = {fA};
+out_loc.subj.DeltaR2s = {fDeltaR2s};
+out_loc.subj.T1w      = {PT1w};
+out_loc.subj.MTw      = {PMTw};
+out_loc.subj.PDw      = {PPDw};
 
 % collect error map output:
 if isfield(Perror,'R1')

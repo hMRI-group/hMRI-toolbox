@@ -807,7 +807,7 @@ switch inParName
                         parValue{cRes} = val{1}.adFree(3):-val{1}.adFree(4):0;
                     else
                         %Ensure B1 mapping falls back to defaults if scanner not recognised
-                        fprintf(1,'\nWARNING: B1mapping version unknown (%s/%s). Give up guessing FA values.\n', valSEQ, valPROT);
+                        fprintf(1,'\nWARNING: B1mapping version (%s/%s) unknown for scanner %s. Give up guessing FA values.\n', valSEQ, valPROT, valMODELNAME);
                     end
                 otherwise
                     fprintf(1,'\nWARNING: B1mapping version unknown (%s/%s). Give up guessing FA values.\n', valSEQ, valPROT);

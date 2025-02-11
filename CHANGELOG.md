@@ -24,6 +24,7 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 - Modify the filenames as files are copied to RFsensCalc to prevent overwriting in further processing
 - batch interface now enforces the number of B1 input images correctly for B1 mapping methods which only need two images
 - more informative error if optimization toolbox not present during NLLS R2* calculation
+- fix 3D-EPI B1 mapping not using b1defaults for Triotim scanner
 
 ## [v0.6.1]
 ### Fixed

@@ -181,6 +181,7 @@ switch lower(fitmethod)
         y0=exp(D*OLS(logy,D));
         
         % Loop over voxels
+        beta=zeros(size(D,2),Nvoxels);
         parfor n=1:size(y,2)
             beta(:,n)=WLS(logy(:,n),D,y0(:,n),niter);
         end
@@ -226,6 +227,7 @@ switch lower(fitmethod)
         expDecay=@(x,D) (D(:,wBegin:end)*x(wBegin:end)).*exp(D(:,1:wBegin-1)*x(1:wBegin-1));
       
         % Loop over voxels
+        beta=zeros(size(beta0));
         parfor n=1:size(y,2)
             beta(:,n)=lsqcurvefit(@(x,D)expDecay(x,D),beta0(:,n),D,y(:,n),[],[],opt);
         end

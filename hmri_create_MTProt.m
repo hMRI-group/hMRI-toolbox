@@ -875,7 +875,7 @@ for p = 1:dm(3)
                 
                 dMT = hmri_calc_dMT(PDw,T1w,MTw,Edata.PDw,Edata.T1w,Edata.MTw,fa_pdw_rad,fa_t1w_rad,fa_mtw_rad,TR_pdw,TR_t1w,TR_mtw,mpm_params.small_angle_approx) * 100;
                 
-                if (~isempty(f_T))&&(~mpm_params.UNICORT.R1 || mpm_params.UNICORT.MT)
+                if (~isempty(f_T_MT))&&(~mpm_params.UNICORT.R1 || mpm_params.UNICORT.MT)
                     % use chain rule to include MTsat B1 correction in error maps
                     dMT = dMT.*abs(dMTsatcorr);
                 end

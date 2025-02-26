@@ -334,7 +334,7 @@ function dep = vout_create(job)
 % outputs are calculated.
 
 k=1;
-cdep(1,5*numel(job.subj)) = cfg_dep;
+cdep(1,10*numel(job.subj)) = cfg_dep;
 for i=1:numel(job.subj)
     
     cdep(k)            = cfg_dep;
@@ -382,6 +382,27 @@ for i=1:numel(job.subj)
     cdep(k)            = cfg_dep;
     cdep(k).sname      = sprintf('PDw_subj%d',i);
     cdep(k).src_output = substruct('.','subj','()',{i},'.','PDw','()',{':'});
+    cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
+    
+    k=k+1;
+
+    cdep(k)            = cfg_dep;
+    cdep(k).sname      = sprintf('R1error_subj%d',i);
+    cdep(k).src_output = substruct('.','subj','()',{i},'.','R1error','()',{':'});
+    cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
+    
+    k=k+1;
+
+    cdep(k)            = cfg_dep;
+    cdep(k).sname      = sprintf('MTerror_subj%d',i);
+    cdep(k).src_output = substruct('.','subj','()',{i},'.','MTerror','()',{':'});
+    cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
+    
+    k=k+1;
+
+    cdep(k)            = cfg_dep;
+    cdep(k).sname      = sprintf('Aerror_subj%d',i);
+    cdep(k).src_output = substruct('.','subj','()',{i},'.','Aerror','()',{':'});
     cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
     
     k=k+1;

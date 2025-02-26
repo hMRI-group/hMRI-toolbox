@@ -864,7 +864,7 @@ for p = 1:dm(3)
             % - f_T has been calculated using UNICORT *AND* the UNICORT.MT flag
             % is enabled (advanced user only! method not validated yet!)
             if (~isempty(f_T_MT))&&(~mpm_params.UNICORT.R1 || mpm_params.UNICORT.MT)
-                MT = hmri_correct_MTsat(MT,f_T_MT,mpm_params.MTsatB1CorrectionModel,mpm_params.MTsatB1CorrectionC);
+                [MT,dMTsatcorr] = hmri_correct_MTsat(MT,f_T_MT,mpm_params.MTsatB1CorrectionModel,mpm_params.MTsatB1CorrectionC);
             end
 
             MT(isnan(MT))=0;

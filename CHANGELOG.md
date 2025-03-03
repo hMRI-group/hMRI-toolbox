@@ -7,7 +7,7 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 ## [unreleased]
 ### Added
 - option to choose different models and parameters for B1-correction of MTsat
-- set default WM percent value in hmri_defaults
+- set default WM percent value in `hmri_defaults`
 - spatial processing: add explicit mask creation and fix implicit mask (0 to NaN in float images)
 - update FIL seste seq parameters in get_metadata_val_classic
 - denoising module-first part: Java-Matlab interface for LCPCA denoising
@@ -15,21 +15,21 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 - save LCPCA-denoising supplementary files as nifti instead of .mat
 - parameter error maps
 - robust combination of two runs using error maps
-
+- option to use a separate B1 map for B1 correction of MTsat; useful if pTx used for excitation pulses and CP mode for the MT pulse
 
 ### Fixed
 - replace `datestr(now)` with `datetime('now')` in line with [MATLAB recommendation](https://mathworks.com/help/matlab/matlab_prog/replace-discouraged-instances-of-serial-date-numbers-and-date-strings.html)
 - fix crash if input images have different matrix sizes, and warn
 - make B1-map creation using 3DEPI SE/STE and AFI methods fall back to defaults without sidecar files, rather than crash
-- Modify the filenames as files are copied to RFsensCalc to prevent overwriting in further processing
+- modify the filenames as files are copied to RFsensCalc to prevent overwriting in further processing
 - batch interface now enforces the number of B1 input images correctly for B1 mapping methods which only need two images
 - more informative error if optimization toolbox not present during NLLS R2* calculation
 - fix 3D-EPI B1 mapping not using b1defaults for Triotim scanner
-- use cell- instead of char- array to accommodate filenames of unequal length in RFsens
+- use cell- instead of char-array to accommodate filenames of unequal length in RFsens
 
 ## [v0.6.1]
 ### Fixed
-- The local config files have been converted to scripts for compatibility with compiled version
+- local config files have been converted to scripts for compatibility with compiled version
 - function-evaluate SPM-struct (preproc8.val) for SPM development version compatibility
 - copy acquisition metadata to TE=0 volumes in Results/Supplementary folder after map creation so they can be used as input to the toolbox if needed
 

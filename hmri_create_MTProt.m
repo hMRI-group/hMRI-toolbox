@@ -866,7 +866,8 @@ for p = 1:dm(3)
             if (~isempty(f_T_MT))&&(~mpm_params.UNICORT.R1 || mpm_params.UNICORT.MT)
                 [MT,dMTsatcorr] = hmri_correct_MTsat(MT,f_T_MT,mpm_params.MTsatB1CorrectionModel,mpm_params.MTsatB1CorrectionC);
             end
-
+            
+            % truncate MT maps
             MT(isnan(MT))=0;
             Nmap(mpm_params.qMT).dat(:,:,p) = max(min(MT,threshall.MT),-threshall.MT);
 

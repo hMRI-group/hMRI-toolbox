@@ -1,4 +1,4 @@
-function MTsat = hmri_correct_MTsat(MTsat, B1, model, C)
+function [MTsat,dMTsatcorr] = hmri_correct_MTsat(MTsat, B1, model, C)
 %hmri_correct_MTsat Correct MTsat using B1 and a heuristic model.
 % 
 % Input:
@@ -8,7 +8,8 @@ function MTsat = hmri_correct_MTsat(MTsat, B1, model, C)
 %   C     (parameter of heuristic model)
 %
 % Output:
-%   MTsat (in p.u.)
+%   MTsat (B1 bias corrected MTsat in p.u.)
+%   dMTsatcorr (derivative of correction with respect to MTsat)
 %
 % Examples:
 %   If using the Helms, et al. (2021) model, then the input MTsat needs to have been computed with B1=1:
@@ -38,9 +39,11 @@ function MTsat = hmri_correct_MTsat(MTsat, B1, model, C)
 
 switch model
     case 'helms'
-        MTsat = MTsat .* (1 - C) ./ (1 - C * B1);
+        dMTsatcorr = (1 - C) ./ (1 - C * B1);
+        MTsat = MTsat .* dMTsatcorr;
     case 'lipp'
-        MTsat = MTsat ./ (1 + C * (B1 - 1));
+        dMTsatcorr = 1 ./ (1 + C * (B1 - 1));
+        MTsat = MTsat .* dMTsatcorr;
     otherwise
         error('unknown MTsat correction model ''%s''. Allowed models are ''helms'' and ''lipp''',model)
 end

@@ -123,8 +123,16 @@ switch inParName
         end
         
     case 'EchoTime' % [ms]
-        % Valid for all vendors
+        % Valid for all vendors:
+        % try EchoTime first
         [nFieldFound, fieldList] = find_field_name(mstruc, 'EchoTime', 'caseSens','sensitive','matchType','exact');
+        % In some sequences (e.g. the XA implementations of FLASH from Kerrin Pine) 
+        % the EffectiveEchoTime is populated instead of the EchoTime field in the DICOM.
+        % If EchoTime is not found than search for EffectiveEchoTime:
+        if ~nFieldFound
+            [nFieldFound, fieldList] = find_field_name(mstruc,'EffectiveEchoTime', 'caseSens','sensitive','matchType','exact');
+        end
+        % Valid for all vendors:
         [val,nam] = get_val_nam_list(mstruc, nFieldFound, fieldList);
         if nFieldFound
             cRes = 1;
@@ -796,9 +804,10 @@ switch inParName
                         parValue{cRes} = 230:-10:0;
                     elseif contains(valMODELNAME,'7T','IgnoreCase',true)
                         parLocation{cRes} = [nam{1} '.adFree(3:4)'];
-                        parValue{cRes} = val{1}.adFree(3):-val{1}.adFree(4):0;      
+                        parValue{cRes} = val{1}.adFree(3):-val{1}.adFree(4):0;
                     else
-                        parLocation{cRes}=[];
+                        %Ensure B1 mapping falls back to defaults if scanner not recognised
+                        fprintf(1,'\nWARNING: B1mapping version (%s/%s) unknown for scanner %s. Give up guessing FA values.\n', valSEQ, valPROT, valMODELNAME);
                     end
                 otherwise
                     fprintf(1,'\nWARNING: B1mapping version unknown (%s/%s). Give up guessing FA values.\n', valSEQ, valPROT);

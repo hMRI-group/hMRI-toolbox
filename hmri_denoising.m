@@ -100,6 +100,12 @@ switch denoising_protocol
         denoising_params.output_path = jobsubj.path.dnrespath;
         denoising_params.supp_path = jobsubj.path.supplpath;
 
+        % Print mppca denoising parameters 
+        print_mppca_params.ngbsize = denoising_params.ngbsize;
+        printdnstruct = printstruct(print_mppca_params);
+        hmri_log(sprintf('MP-PCA Denoising Parameters:\n\n%s', ...
+            printdnstruct),denoising_params.defflags);
+
 end
 
 end

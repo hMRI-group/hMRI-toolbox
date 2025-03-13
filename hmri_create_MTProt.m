@@ -807,12 +807,12 @@ for p = 1:dm(3)
             switch mpm_params.MTsatB1CorrectionModel
                 case 'helms' 
                     B1_mtw=1;
-                    if isempty(f_T)
+                    if isempty(f_T) && p==1 % only print to the log the first time
                         hmri_log('WARNING: MTsat B1-correction using the Helms model was selected but no B1 map data was found. MTsat will only be corrected with the quadratic model from Helms, et al. (MRM 2008).', mpm_params.defflags)
                     end
                 case 'lipp'
                     B1_mtw=f_T;
-                    if isempty(f_T)
+                    if isempty(f_T) && p==1 % only print to the log the first time
                         hmri_log('WARNING: MTsat B1-correction using the Lipp model was selected but no B1 map data was found. MTsat will not be B1 corrected.', mpm_params.defflags)
                     end
             end

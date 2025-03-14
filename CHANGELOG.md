@@ -15,7 +15,7 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 - save LCPCA-denoising supplementary files as nifti instead of .mat
 - parameter error maps
 - robust combination of two runs using error maps
-
+- option to fit linear dependence of R2* on flip angle
 
 ### Fixed
 - replace `datestr(now)` with `datetime('now')` in line with [MATLAB recommendation](https://mathworks.com/help/matlab/matlab_prog/replace-discouraged-instances-of-serial-date-numbers-and-date-strings.html)

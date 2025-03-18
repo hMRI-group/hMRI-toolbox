@@ -381,26 +381,26 @@ end
 %===============================================================================================%
 % Calculate MP-PCA-denoising
 %=================================================================================================%
-%{
-MP-PCA-Denoising paper references:
---Veraart et al., NeuroImage (2016) 142, p 394-406 (https://doi.org/10.1016/j.neuroimage.2016.08.016)
---Does, et al., Evaluation of principal component analysis image denoising on multi‐exponential MRI relaxometry. Magn Reson Med. 2019; 81: 3503– 3514. https://doi.org/10.1002/mrm.27658
-%}
+
+% MP-PCA-Denoising paper references:
+% --Veraart et al., NeuroImage (2016) 142, p 394-406 (https://doi.org/10.1016/j.neuroimage.2016.08.016)
+% --Does, et al., Evaluation of principal component analysis image denoising on multi‐exponential MRI relaxometry. Magn Reson Med. 2019; 81: 3503– 3514. https://doi.org/10.1002/mrm.27658
+
 
 function [output_mag, output_phase] = hmri_calc_mppcadenoise(mppcadenoiseparams)
 
-%define the flag for log
+% define the flag for log
 mppcaflags = mppcadenoiseparams.defflags;
 mppcaflags_nopopup = mppcaflags;
 mppcaflags_nopopup.PopUp = false;
 
-%set the metadata mod
+% set the metadata mod
 json = hmri_get_defaults('json');
 
-%%Read from the input the processing parameters
+% read from the input the processing parameters
 image_list = cellstr(mppcadenoiseparams.mag_img);
 firstIm= image_list{1};
-%Get params from 1st image and init variables
+% get params from 1st image and init variables
 image = spm_vol(firstIm);
 imagevol = spm_read_vols(image);
 imsize = size(imagevol);
@@ -408,13 +408,13 @@ imlen = length(image_list);
 phase_list = cellstr(mppcadenoiseparams.phase_img);
 phscale=1;
 
-%if phase images are entered prepare images for further processing
+% if phase images are entered prepare images for further processing
 if ~isempty(phase_list{1})
-    %takes magnitude and phase images in
-%bundles them together realPart+complexPart into array
-%feeds them to mppca-denoising to get get output mag, phase images
+% takes magnitude and phase images in
+% bundles them together realPart+complexPart into array
+% feeds them to mppca-denoising to get get output mag, phase images
 
-%init array
+% init array
 imglist = zeros(imsize(1), imsize(2), imsize(3), imlen);;
 
     for i=1:length(image_list)
@@ -430,7 +430,7 @@ imglist = zeros(imsize(1), imsize(2), imsize(3), imlen);;
     fulldatamat = imglist;
     image_list=cat(1,image_list,phase_list);
 else
-    %Process and reformat images for MPPCA
+    % Process and reformat images for MPPCA
     fulldatamat = zeros(imsize(1), imsize(2), imsize(3), imlen);
     for ii = 1:imlen
     currentIm = image_list{ii};    
@@ -444,7 +444,7 @@ end
 ngb_size = mppcadenoiseparams.ngbsize;
 mask = mppcadenoiseparams.mask;
 
-%define params
+% define params
 if isempty(mask{1})
     mask = [];
 end
@@ -452,9 +452,9 @@ window = [ngb_size ngb_size ngb_size];
 output_path = cellstr(mppcadenoiseparams.output_path);
 
 
-%apply mppca denoising take out and set variables
+% apply mppca denoising take out and set variables
 [dn_image, S2, P] = mppca_denoise(fulldatamat, window, mask);
-%recalculate magnitude and phase images in case of phase input
+% recalculate magnitude and phase images in case of phase input
 if ~isempty(phase_list{1})
     magimg = abs(dn_image);
     phimg = angle(dn_image);
@@ -468,9 +468,9 @@ idx_mag=1;
 
 % get the results for all echos and reshape
 for echo = 1:imlen
-    %get denoised volume
+    % get denoised volume
     volumedata  = magimg(:,:,:,echo);
-    %Write the volume to .nii with an update to standard .nii header
+    % Write the volume to .nii with an update to standard .nii header
     firstfile = image_list{echo};
     filehdr = spm_vol(image_list{echo});
 
@@ -483,11 +483,11 @@ for echo = 1:imlen
     filehdr.descrip = strcat(filehdr.descrip, ' + mppca denoised');
     spm_write_vol(filehdr, volumedata);
 
-    %write metadata as extended header and sidecar json
+    % write metadata as extended header and sidecar json
     Output_hdr = init_dn_output_metadata(image_list, mppcadenoiseparams);
     Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (MP-PCA)'];
     Output_hdr.history.output.imtype = 'Denoising (MP-PCA)';
-     %add acquisition data if available (otherwise fields will be empty)
+    % add acquisition data if available (otherwise fields will be empty)
     jsonfilename = fullfile(path,strcat(mainfilename,'.json'));
     if exist(jsonfilename, 'file') ==2
         try
@@ -505,10 +505,10 @@ for echo = 1:imlen
       hmri_log('No json sidecar file were found, skipping the writing of acquisition metadata', mppcaflags_nopopup);  
     end
 
-    %Set all the metadata
+    % set all the metadata
     set_metadata(outfname,Output_hdr,json);
 
-    %add image to the output list
+    % add image to the output list
     out_mag{idx_mag} = outfname;
     idx_mag = idx_mag +1;
 
@@ -517,14 +517,14 @@ end
 output_mag = out_mag;
 
 output_phase= [];
-%process further if phase images are entered
+% process further if phase images are entered
 if ~isempty(phase_list{1})
 idx_phase=1;
-%Get the results for all echos and reshape
+% get the results for all echos and reshape
 for echo = 1:imlen
-    %get denoised volume
+    % get denoised volume
     volumedata  = phimg(:,:,:,echo);
-    %Write the volume to .nii with an update to standard .nii header
+    % write the volume to .nii with an update to standard .nii header
     firstfile = phase_list{echo};
     filehdr = spm_vol(phase_list{echo});
 
@@ -537,11 +537,11 @@ for echo = 1:imlen
     filehdr.descrip = strcat(filehdr.descrip, ' + mppca denoised');
     spm_write_vol(filehdr, volumedata);
 
-    %write metadata as extended header and sidecar json
+    % write metadata as extended header and sidecar json
     Output_hdr = init_dn_output_metadata(phase_list, mppcadenoiseparams);
     Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (MP-PCA)'];
     Output_hdr.history.output.imtype = 'Denoising (MP-PCA)';
-     %add acquisition data if available (otherwise fields will be empty)
+    % add acquisition data if available (otherwise fields will be empty)
     jsonfilename = fullfile(path,strcat(mainfilename,'.json'));
     if exist(jsonfilename, 'file') ==2
         try
@@ -559,10 +559,10 @@ for echo = 1:imlen
       hmri_log('No json sidecar file were found, skipping the writing of acquisition metadata', mppcaflags_nopopup);  
     end
 
-    %Set all the metadata
+    % set all the metadata
     set_metadata(outfname,Output_hdr,json);
 
-    %add image to the output list
+    % add image to the output list
     out_phase{idx_phase} = outfname;
     idx_phase = idx_phase +1;
 

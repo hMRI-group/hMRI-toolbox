@@ -394,6 +394,9 @@ mppcaflags = mppcadenoiseparams.defflags;
 mppcaflags_nopopup = mppcaflags;
 mppcaflags_nopopup.PopUp = false;
 
+%set the metadata mod
+json = hmri_get_defaults('json');
+
 %%Read from the input the processing parameters
 image_list = cellstr(mppcadenoiseparams.mag_img);
 firstIm= image_list{1};
@@ -460,12 +463,10 @@ else
 end
 
 
-
-%set the metadata mod
-json = hmri_get_defaults('json');
-
+% init index
 idx_mag=1;
-%Get the results for all echos and reshape
+
+% get the results for all echos and reshape
 for echo = 1:imlen
     %get denoised volume
     volumedata  = magimg(:,:,:,echo);

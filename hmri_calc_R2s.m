@@ -199,7 +199,7 @@ switch lower(method)
         end
     otherwise
         hmri_log([' ERROR: ' 'method ' method ' not recognised'],hmri_popupFlag);
-        error(['method ' method ' not recognised'])
+        error('hmri:MissingR2Method', ['method ' method ' not recognised'])
 end
 
 %% Output

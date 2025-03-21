@@ -450,10 +450,11 @@ if isempty(mask{1})
 end
 window = [ngb_size ngb_size ngb_size];
 output_path = cellstr(mppcadenoiseparams.output_path);
+supp_path = cellstr(mppcadenoiseparams.supp_path);
 
 
 % apply mppca denoising take out and set variables
-[dn_image, S2, P] = mppca_denoise(fulldatamat, window, mask);
+[dn_image, map_noise_var, P] = mppca_denoise(fulldatamat, window, mask);
 % recalculate magnitude and phase images in case of phase input
 if ~isempty(phase_list{1})
     magimg = abs(dn_image);
@@ -570,6 +571,16 @@ for echo = 1:imlen
 end
 output_phase =out_phase;
 end
+
+% save map_noise_var (map of estimated noise variance) as a nifti image to Results/Supplemtary
+filehdr = spm_vol(firstIm);
+filename = strcat('map_noise_var','.nii');
+outfname = fullfile(supp_path{1}, filename);
+filehdr.fname = outfname;
+filehdr.descrip = 'map of estimated noise variance';
+dt=[16 0];
+Ni_dim = hmri_create_nifti(outfname, filehdr, dt, filehdr.descrip);
+Ni_dim.dat(:,:,:)=map_noise_var;
 
 end
 

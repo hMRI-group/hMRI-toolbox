@@ -572,7 +572,7 @@ end
 output_phase =out_phase;
 end
 
-% save map_noise_var (map of estimated noise variance) as a nifti image to Results/Supplemtary
+% save map_noise_var (map of estimated noise variance) as a nifti image to Results/Supplementary
 filehdr = spm_vol(firstIm);
 filename = strcat('map_noise_var','.nii');
 outfname = fullfile(supp_path{1}, filename);

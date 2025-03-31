@@ -39,8 +39,8 @@ D           = job.tissue_params.D_um2_per_ms;   % [um^2/ms]
 % are calculated correctly
 for n=2:-1:1 % go backwards to avoid matlab warning about preallocation
     diff(n).D      = D*1e-9;
-    diff(n).G      = [Gamp(:),0];
-    diff(n).tau    = [Gdur(:),TR(n)-sum(Gdur)];
+    diff(n).G      = [Gamp(:);0];
+    diff(n).tau    = [Gdur(:);TR(n)-sum(Gdur)];
 end
 
 %% Run EPG simulation

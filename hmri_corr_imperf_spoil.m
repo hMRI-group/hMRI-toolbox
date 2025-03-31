@@ -24,11 +24,10 @@ TR      =   job.seq_params.TR_ms;               % [ms]
 Phi0    =   job.seq_params.Phi0_deg;            % [deg]
 B1range =   job.seq_params.B1range_percent/100; % convert such that 100% = 1
 Gdur    =   job.seq_params.Gdur_ms;             % [ms]
-Gamp    =   job.seq_params.Gamp_mT_per_m;       % [[mT/m]
+Gamp    =   job.seq_params.Gamp_mT_per_m;       % [mT/m]
 
-if length(Gdur)~= length (Gamp)
-    error('The vectors of gradient durations and amplitudes must have the same length!')
-end
+assert(length(Gdur) == length(Gamp), 'The vectors of gradient durations and amplitudes must have the same length!')
+assert(all(sum(Gdur)<=TR), 'The total duration of the gradients cannot exceed TR!')
 
 %% Get tissue parameters
 T1range     = job.tissue_params.T1range_ms;     %[ms]
@@ -36,10 +35,13 @@ T2range     = job.tissue_params.T2range_ms;     % [ms]
 D           = job.tissue_params.D_um2_per_ms;   % [um^2/ms]
 
 %% Build structure "diff" to account for diffusion effect
-diff        = struct;
-diff.D      = D*1e-9;
-diff.G      = Gamp;
-diff.tau    = Gdur;
+% Note we include any deadtime during each TR so that diffusion effects
+% are calculated correctly
+for n=2:-1:1 % go backwards to avoid matlab warning about preallocation
+    diff(n).D      = D*1e-9;
+    diff(n).G      = [Gamp(:),0];
+    diff(n).tau    = [Gdur(:),TR(n)-sum(Gdur)];
+end
 
 %% Run EPG simulation
 nT1 = length(T1range);
@@ -67,10 +69,10 @@ for T1val = 1 : nT1 % loop over T1 values, can use parfor for speed
             % Calculate signals via EPG:
             
             %PDw
-            F0 = EPG_GRE(alpha_train1, phi_train, TR(1), T1, T2, 'diff', diff);
+            F0 = EPG_GRE(alpha_train1, phi_train, TR(1), T1, T2, 'diff', diff(1));
             S1(T1val,T2val,B1val) = (abs(F0(end)));
             %T1w
-            F0 = EPG_GRE(alpha_train2, phi_train, TR(2), T1, T2, 'diff', diff);
+            F0 = EPG_GRE(alpha_train2, phi_train, TR(2), T1, T2, 'diff', diff(2));
             S2(T1val,T2val,B1val) = (abs(F0(end)));
             
         end

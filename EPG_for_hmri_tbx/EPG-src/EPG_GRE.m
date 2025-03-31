@@ -119,8 +119,8 @@ end
     
 
 %%% Composite relax-shift
-ES=E*S;
-ES=sparse(ES);
+SE=S*E;
+SE=sparse(SE);
 
 %%% Pre-allocate RF matrix
 T = zeros(N,N);
@@ -178,7 +178,7 @@ for jj=1:np
     end
     
     %%% Now deal with evolution
-    FF(kidx) = ES(kidx,kidx)*F(kidx,jj)+b(kidx);
+    FF(kidx) = SE(kidx,kidx)*F(kidx,jj)+b(kidx);
     
     % Deal with complex conjugate after shift
     FF(1)=conj(FF(1)); %<---- F0 comes from F-1 so conjugate 

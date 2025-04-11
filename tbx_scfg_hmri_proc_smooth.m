@@ -58,7 +58,7 @@ vols_mwc.num     = [1 Inf];
 % ---------------------------------------------------------------------
 m_MWCs            = cfg_repeat;
 m_MWCs.tag        = 'm_MWCs';
-m_MWCs.name       = 'Modulated warped tissue segements';
+m_MWCs.name       = 'Modulated warped tissue segments';
 m_MWCs.values     = {vols_mwc };
 m_MWCs.val        = {vols_mwc };
 m_MWCs.num = [1 Inf];

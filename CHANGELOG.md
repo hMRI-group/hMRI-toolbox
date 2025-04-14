@@ -16,6 +16,7 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 - parameter error maps
 - robust combination of two runs using error maps
 - add .orig file extension to .gitignore to prevent merge artifacts to be pushed
+- update GUI code to enhance documentation for Proc. Smoothing
 
 
 ### Fixed

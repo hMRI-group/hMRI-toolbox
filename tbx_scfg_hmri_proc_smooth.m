@@ -23,7 +23,7 @@ vols_pm         = cfg_files;
 vols_pm.tag     = 'vols_pm';
 vols_pm.name    = 'Volumes';
 vols_pm.help    = {['Select whole brain parameter maps (e.g. MT, R2*, ',...
-    'FA etc) warped into MNI space.']};
+    'FA etc) warped into MNI space']};
 vols_pm.filter  = 'image';
 vols_pm.ufilter = '^w.*';
 vols_pm.num     = [1 Inf];
@@ -38,7 +38,8 @@ m_pams.values     = {vols_pm };
 m_pams.val        = {vols_pm };
 m_pams.num = [1 Inf];
 m_pams.help       = {['Select whole brain parameter maps (e.g. MT, ',...
-    'R2*, FA etc) warped into MNI space.']};
+    'R2*, FA etc) warped into MNI space: replicate the volumes as number of times as contrasts '],...
+    ['and enter the corresponding contrast of each subject to the associated Volumes entry.']};
 
 % ---------------------------------------------------------------------
 % vols_mwc Modulated warped tissue segement volumes
@@ -57,15 +58,16 @@ vols_mwc.num     = [1 Inf];
 % ---------------------------------------------------------------------
 m_MWCs            = cfg_repeat;
 m_MWCs.tag        = 'm_MWCs';
-m_MWCs.name       = 'Modulated warped tissue segements';
+m_MWCs.name       = 'Modulated warped tissue segments';
 m_MWCs.values     = {vols_mwc };
 m_MWCs.val        = {vols_mwc };
 m_MWCs.num = [1 Inf];
 m_MWCs.help       = {['Select the modulated warped tissue segments ',...
-    'of interest from all subjects.'], ...
-    ['For the typical case of GM and WM, you would selectall the mwc1* images ', ...
-    'in one set of ''mwc_images'' and the mwc2* ones in second set of ', ...
-    '''mwc_images''!']};
+    'of interest from all subjects: replicate the entries as number of times as tissue types '], ...
+    ['and enter the corresponding tissue type of each subject to the associated entry.'],...
+    ['For the typical case of GM and WM, you would replicate once and enter the mwc1* images of all subjects ', ...
+    'to the first replication ''mwc_images(1)'' and the mwc2* images to the second replication ', ...
+    '''mwc_images(2)''!']};
 
 % ---------------------------------------------------------------------
 % tpm Tissue Probability Maps

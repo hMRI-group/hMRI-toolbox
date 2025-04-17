@@ -11,6 +11,10 @@ switch denoising_protocol
         [output_mag, output_phase] = hmri_calc_lcpcadenoise(denoising_params);
         varargout{1} = output_mag;
         varargout{2} = output_phase;
+    case 'mppca_denoise'
+        [output_mag, output_phase] = hmri_calc_mppcadenoise(denoising_params);
+        varargout{1} = output_mag;
+        varargout{2} = output_phase;
 end
 end
 
@@ -89,6 +93,12 @@ switch denoising_protocol
         printdnstruct = printstruct(print_lcpca_params);
         hmri_log(sprintf('Lcpca Denoising Parameters:\n\n%s', ...
             printdnstruct),denoising_params.defflags);
+        case 'mppca_denoise'
+        denoising_params.mask = jobsubj.denoisingtype.(denoising_protocol).mask;
+        denoising_params.ngbsize = jobsubj.denoisingtype.(denoising_protocol).ngbsize;
+
+        denoising_params.output_path = jobsubj.path.dnrespath;
+        denoising_params.supp_path = jobsubj.path.supplpath;
 
 end
 
@@ -359,6 +369,113 @@ clear("noiseObj")
 javarmpath(jarcommons)
 javarmpath(jarmipav)
 javarmpath(jarlcpca)
+
+end
+
+%===============================================================================================%
+% Calculate MP-PCA-denoising
+%=================================================================================================%
+%{
+MP-PCA-Denoising paper references:
+--Veraart et al., NeuroImage (2016) 142, p 394-406 (https://doi.org/10.1016/j.neuroimage.2016.08.016)
+--Does, et al., Evaluation of principal component analysis image denoising on multi‐exponential MRI relaxometry. Magn Reson Med. 2019; 81: 3503– 3514. https://doi.org/10.1002/mrm.27658
+%}
+
+function [output_mag, output_phase] = hmri_calc_mppcadenoise(mppcadenoiseparams)
+
+%define the flag for log
+mppcaflags = mppcadenoiseparams.defflags;
+mppcaflags_nopopup = mppcaflags;
+mppcaflags_nopopup.PopUp = false;
+
+%Read from the input the processing parameters
+image_list = cellstr(mppcadenoiseparams.mag_img);
+ngb_size = mppcadenoiseparams.ngbsize;
+mask = mppcadenoiseparams.mask;
+
+%define params
+if isempty(mask{1})
+    mask = [];
+end
+window = [ngb_size ngb_size ngb_size];
+output_path = cellstr(mppcadenoiseparams.output_path);
+
+%Get params from 1st image and init variables
+fpath  = image_list;
+firstIm = fpath{1};  
+image = spm_vol(firstIm);
+imagevol = spm_read_vols(image);
+imsize = size(imagevol);
+imlen = length(fpath);
+fulldatamat = zeros(imsize(1), imsize(2), imsize(3), imlen);
+
+%Process and reformat images for MPPCA
+for ii = 1:imlen
+currentIm = fpath{ii};    
+image = spm_vol(currentIm);
+imagevol = spm_read_vols(image);
+fulldatamat(:,:,:,ii) = imagevol;
+end
+
+%apply mppca denoising take out and set variables
+[dn_image, S2, P] = mppca_denoise(fulldatamat, window, mask);
+denoised_image = dn_image;
+img_size = size(denoised_image);
+
+%set the metadata mod
+json = hmri_get_defaults('json');
+
+idx_mag=1;
+%Get the results for all echos and reshape
+for echo = 1:img_size(end)
+    %get denoised volume
+    volumedata  = denoised_image(:,:,:,echo);
+    %Write the volume to .nii with an update to standard .nii header
+    firstfile = image_list{echo};
+    filehdr = spm_vol(image_list{echo});
+
+    [path,filename,ext] = fileparts(firstfile);
+    [~,mainfilename,~] = fileparts(firstfile);
+    filename = strcat('MppcaDenoised_',filename,'.nii');
+
+    outfname = fullfile(output_path{1}, filename);
+    filehdr.fname = outfname;
+    filehdr.descrip = strcat(filehdr.descrip, ' + mppca denoised');
+    spm_write_vol(filehdr, volumedata);
+
+    %write metadata as extended header and sidecar json
+    Output_hdr = init_dn_output_metadata(image_list, mppcadenoiseparams);
+    Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (MP-PCA)'];
+    Output_hdr.history.output.imtype = 'Denoising (MP-PCA)';
+     %add acquisition data if available (otherwise fields will be empty)
+    jsonfilename = fullfile(path,strcat(mainfilename,'.json'));
+    if exist(jsonfilename, 'file') ==2
+        try
+    jsondata = spm_jsonread(jsonfilename);
+    data_RepetitionTime = get_metadata_val(jsondata,'RepetitionTime');
+    data_EchoTime = get_metadata_val(jsondata,'EchoTime' );
+    data_FlipAngle = get_metadata_val(jsondata, 'FlipAngle');
+    Output_hdr.acqpar = struct('RepetitionTime',data_RepetitionTime, ...
+                    'EchoTime',data_EchoTime,'FlipAngle',data_FlipAngle);
+        catch
+            hmri_log('Although json sidecar file were found, the writing of acquisition metadata failed', mppcaflags_nopopup);  
+      
+       end
+    else
+      hmri_log('No json sidecar file were found, skipping the writing of acquisition metadata', mppcaflags_nopopup);  
+    end
+
+    %Set all the metadata
+    set_metadata(outfname,Output_hdr,json);
+
+    %add image to the output list
+    out_mag{idx_mag} = outfname;
+    idx_mag = idx_mag +1;
+
+
+end
+output_mag = out_mag;
+output_phase= [];
 
 end
 

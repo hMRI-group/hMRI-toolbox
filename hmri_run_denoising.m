@@ -107,8 +107,20 @@ jobsubj.SPMver = sprintf('%s (%s)', v, r);
 % save original job to supplementary directory
 spm_jsonwrite(fullfile(supplpath,'hMRI_denoising_job.json'),jobsubj,struct('indent','\t'));
 
+% filter protocol name from struct and form corresponding log text
+dntypename = fieldnames(jobsubj.denoisingtype);
+denoising_protocol = dntypename{1};
+
+switch  denoising_protocol
+    case 'lcpca_denoise'
+        protocol_text = 'LCPCA'
+    case 'mppca_denoise'
+        protocol_text = 'MPPCA'
+end
+log_text = sprintf("APPLYING %s DENOISING", protocol_text)
+
 % run the denoising and collect the results
-hmri_log(sprintf('\t============ %s - %s.m (%s) ============',"APPLYING DENOISING", mfilename, datetime('now')),flags);
+hmri_log(sprintf('\t============ %s - %s.m (%s) ============',log_text, mfilename, datetime('now')),flags);
 
 % run the denoising
 [output_mag, output_phase] = hmri_denoising(jobsubj);

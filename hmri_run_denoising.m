@@ -113,11 +113,11 @@ denoising_protocol = dntypename{1};
 
 switch  denoising_protocol
     case 'lcpca_denoise'
-        protocol_text = 'LCPCA'
+        protocol_text = 'LCPCA';
     case 'mppca_denoise'
-        protocol_text = 'MPPCA'
+        protocol_text = 'MPPCA';
 end
-log_text = sprintf("APPLYING %s DENOISING", protocol_text)
+log_text = sprintf("APPLYING %s DENOISING", protocol_text);
 
 % run the denoising and collect the results
 hmri_log(sprintf('\t============ %s - %s.m (%s) ============',log_text, mfilename, datetime('now')),flags);

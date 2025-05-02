@@ -361,6 +361,7 @@ for ccon = 1:mpm_params.ncon
 end
 hmri_log(LogMsg, mpm_params.nopuflags);
 
+fDeltaR2s = ''; % if OLS is off then this should be empty
 if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
     if length(mpm_params.input(PDwidx).TE)<6 
         hmri_log(sprintf(['GENERAL WARNING: deriving R2* map from echo trains including ' ...
@@ -453,11 +454,10 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
         [mpm_params.R2s_fit_method ' R2* map [s-1]']);
 
     if strcmp(mpm_params.R2s_flip_angle_dependence,'linear')
+        % fDeltaR2s was set to empty above; define filename if OLS fit enabled and R2* flip angle dependence is linear
         fDeltaR2s = fullfile(calcpath,[outbasename '_' mpm_params.output(mpm_params.qDeltaR2s).suffix '_' mpm_params.R2s_fit_method '.nii']);
         NDeltaR2smap = hmri_create_nifti(fDeltaR2s, V_ref, dt, ...
             [mpm_params.R2s_fit_method ' dR2*/dFA map [s-1 deg-1]']);
-    else
-        fDeltaR2s = '';
     end
     
     % Combine the data and echo times:

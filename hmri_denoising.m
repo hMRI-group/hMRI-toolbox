@@ -415,7 +415,7 @@ if ~isempty(phase_list{1})
 % bundles them together realPart+complexPart into array
 % feeds them to mppca-denoising to get get output mag, phase images
 
-% init array
+% init image list for further processing
 imglist = zeros(imsize(1), imsize(2), imsize(3), imlen);;
 
     for i=1:length(image_list)
@@ -431,7 +431,7 @@ imglist = zeros(imsize(1), imsize(2), imsize(3), imlen);;
     fulldatamat = imglist;
     image_list=cat(1,image_list,phase_list);
 else
-    % Process and reformat images for MPPCA
+    % process and reformat images for MPPCA
     fulldatamat = zeros(imsize(1), imsize(2), imsize(3), imlen);
     for ii = 1:imlen
     currentIm = image_list{ii};    
@@ -441,7 +441,7 @@ else
     end
 end
 
-
+% get and set mppca denoising params
 ngb_size = mppcadenoiseparams.ngbsize;
 mask = mppcadenoiseparams.mask;
 

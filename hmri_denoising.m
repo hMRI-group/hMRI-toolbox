@@ -444,8 +444,6 @@ end
 % get and set mppca denoising params
 ngb_size = mppcadenoiseparams.ngbsize;
 mask = mppcadenoiseparams.mask;
-
-% define params
 if isempty(mask{1})
     mask = [];
 end

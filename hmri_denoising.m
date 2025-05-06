@@ -383,8 +383,8 @@ end
 %=================================================================================================%
 
 % MP-PCA-Denoising paper references:
-% --Veraart et al., NeuroImage (2016) 142, p 394-406 (https://doi.org/10.1016/j.neuroimage.2016.08.016)
-% --Does, et al., Evaluation of principal component analysis image denoising on multi‐exponential MRI relaxometry. Magn Reson Med. 2019; 81: 3503– 3514. https://doi.org/10.1002/mrm.27658
+% Veraart, Jelle, et al. "Denoising of diffusion MRI using random matrix theory." Neuroimage 142 (2016): 394-406.
+% Does, Mark D., et al. "Evaluation of principal component analysis image denoising on multi‐exponential MRI relaxometry." Magnetic resonance in medicine 81.6 (2019): 3503-3514.
 
 
 function [output_mag, output_phase] = hmri_calc_mppcadenoise(mppcadenoiseparams)

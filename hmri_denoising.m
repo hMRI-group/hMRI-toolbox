@@ -389,7 +389,7 @@ end
 
 function [output_mag, output_phase] = hmri_calc_mppcadenoise(mppcadenoiseparams)
 
-% define the flag for log
+% define the flag for hmri log
 mppcaflags = mppcadenoiseparams.defflags;
 mppcaflags_nopopup = mppcaflags;
 mppcaflags_nopopup.PopUp = false;
@@ -400,6 +400,7 @@ json = hmri_get_defaults('json');
 % read from the input the processing parameters
 image_list = cellstr(mppcadenoiseparams.mag_img);
 firstIm= image_list{1};
+
 % get params from 1st image and init variables
 image = spm_vol(firstIm);
 imagevol = spm_read_vols(image);

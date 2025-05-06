@@ -470,7 +470,7 @@ idx_mag=1;
 for echo = 1:imlen
     % get denoised volume
     volumedata  = magimg(:,:,:,echo);
-    % Write the volume to .nii with an update to standard .nii header
+    % write the volume to .nii with an update to standard .nii header
     firstfile = image_list{echo};
     filehdr = spm_vol(image_list{echo});
 
@@ -514,6 +514,7 @@ for echo = 1:imlen
 
 
 end
+% set output
 output_mag = out_mag;
 
 output_phase= [];
@@ -568,6 +569,8 @@ for echo = 1:imlen
 
 
 end
+
+% set output
 output_phase =out_phase;
 end
 

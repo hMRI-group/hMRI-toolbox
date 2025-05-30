@@ -29,6 +29,7 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 - fix 3D-EPI B1 mapping not using b1defaults for Triotim scanner
 - use cell- instead of char- array to accommodate filenames of unequal length in RFsens
 - prevent missing B1 map for MTsat spamming the log
+- fix when no TE provided in 3DEPI SE/STE B1 mapping data
 
 ## [v0.6.1]
 ### Fixed

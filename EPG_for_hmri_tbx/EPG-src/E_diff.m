@@ -9,6 +9,8 @@ function E = E_diff(E,diff,kmax,N)
 %              G    - Gradient amplitude(s)
 %              tau  - Gradient durations(s)
 %              D    - Diffusion coeff m^2/s (i.e. expect 10^-9)
+%       Attention: Periods of G = 0 must also be listed! In other words, sum(tau) = TR.
+%       This is because diffusion happens even if gradients are switched off.
 %
 % Shaihan Malik July 2017
 

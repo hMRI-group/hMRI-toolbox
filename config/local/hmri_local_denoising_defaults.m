@@ -18,3 +18,8 @@ hmri_def.denoising.lcpca_denoise.unwrap = true; % whether to unwrap the phase da
 hmri_def.denoising.lcpca_denoise.rescale_phs = true; % whether to rescale the phase data or keep it as is, assuming radians
 hmri_def.denoising.lcpca_denoise.process_2d = false; % whether to denoise in 2D, for instance when acquiring a thin slab of data
 hmri_def.denoising.lcpca_denoise.use_rmt = false; % whether to use random matrix theory rather than noise fitting to estimate the noise threshold
+
+
+% The default values for mppca denoising protocol
+% add any mppca denoising defaults here
+hmri_def.denoising.mppca_denoise = [];

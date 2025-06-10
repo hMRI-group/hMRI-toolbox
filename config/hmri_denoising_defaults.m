@@ -43,4 +43,8 @@ hmri_def.denoising.lcpca_denoise.rescale_phs = true; % whether to rescale the ph
 hmri_def.denoising.lcpca_denoise.process_2d = false; % whether to denoise in 2D, for instance when acquiring a thin slab of data
 hmri_def.denoising.lcpca_denoise.use_rmt = false; % whether to use random matrix theory rather than noise fitting to estimate the noise threshold
 
+% The default values for mppca denoising protocol
+% add any mppca denoising defaults here
+hmri_def.denoising.mppca_denoise = [];
+
 end

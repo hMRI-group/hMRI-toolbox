@@ -239,9 +239,10 @@ for echo = 1:length(image_list)
     filename = strcat('LcpcaDenoised_',filename,'.nii');
 
     outfname = fullfile(output_path{1}, filename);
-    filehdr.fname = outfname;
-    filehdr.descrip = strcat(filehdr.descrip, ' + lcpca denoised');
-    spm_write_vol(filehdr, volumedata);
+    dt = filehdr.dt;
+    updated_descrip = strcat(filehdr.descrip, ' + lcpca denoised');
+    denoised_nifti = hmri_create_nifti(outfname, filehdr, dt, updated_descrip);
+    denoised_nifti.dat(:,:,:) = volumedata;
 
     % write metadata as extended header and sidecar json
     Output_hdr = init_dn_output_metadata(fullim_list, lcpcadenoiseparams);
@@ -286,9 +287,10 @@ for echo = 1:length(image_list)
         filename = strcat('LcpcaDenoised_',filename,'.nii');
 
         outfname = fullfile(output_path{1}, filename);
-        filehdr.fname = outfname;
-        filehdr.descrip = strcat(filehdr.descrip, ' + lcpca denoised');
-        spm_write_vol(filehdr, volumedata);
+        dt = filehdr.dt;
+        updated_descrip = strcat(filehdr.descrip, ' + lcpca denoised');
+        denoised_nifti = hmri_create_nifti(outfname, filehdr, dt, updated_descrip);
+        denoised_nifti.dat(:,:,:)=volumedata;
 
         % write metadata as extended header and sidecar json
         Output_hdr = init_dn_output_metadata(fullim_list, lcpcadenoiseparams);

@@ -36,11 +36,12 @@ D           = job.tissue_params.D_um2_per_ms;   % [um^2/ms]
 
 %% Build structure "diff" to account for diffusion effect
 % Note we include any deadtime during each TR so that diffusion effects
-% are calculated correctly
+% are calculated correctly. Deadtime is added at the beginning of the TR, 
+% so that the spoiler gradients are played at the end of each TR
 for n=2:-1:1 % go backwards to avoid matlab warning about preallocation
     diff(n).D      = D*1e-9;
-    diff(n).G      = [Gamp(:);0];
-    diff(n).tau    = [Gdur(:);TR(n)-sum(Gdur)];
+    diff(n).G      = [0; Gamp(:)];
+    diff(n).tau    = [TR(n)-sum(Gdur); Gdur(:)];
 end
 
 %% Run EPG simulation

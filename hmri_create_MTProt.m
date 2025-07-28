@@ -493,6 +493,10 @@ if mpm_params.proc.R2sOLS && any(mpm_params.estaticsR2s)
             end   
         end
 
+        % Fit R2* map
+        % Note that if we calculate DeltaR2s (i.e. mpm_params.R2s_flip_angle_dependence='linear'),
+        % this is not corrected for flip angle inhomogeneity here as we do not have B1 maps yet;
+        % it will be corrected below after calculation of PD and R1.
         if mpm_params.errormaps
             [R2s, intercepts, DeltaR2s, SError] = hmri_calc_R2s(dataToFit,mpm_params.R2s_fit_method,mpm_params.R2s_flip_angle_dependence);
         else
@@ -883,7 +887,8 @@ for p = 1:dm(3)
             end
         end
 
-        % correct DeltaR2s map for B1 inhomogeneity
+        % correct DeltaR2s map for B1 inhomogeneity as we could not do it above
+        % as we had not loaded the B1 maps yet
         if ~isempty(fDeltaR2s)
             % linear dependence on flip angle means can just divide out B1 in gradient
             if ~isempty(f_T)

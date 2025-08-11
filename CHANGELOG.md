@@ -15,6 +15,9 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 - save LCPCA-denoising supplementary files as nifti instead of .mat
 - parameter error maps
 - robust combination of two runs using error maps
+- add .orig file extension to .gitignore to prevent merge artifacts to be pushed
+- update GUI code to enhance documentation for Proc. Smoothing
+- denoising module (lcpca): set mat_intent fields to input file values instead of spm_create_vol setting of 'aligned'
 
 
 ### Fixed
@@ -26,6 +29,10 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 - more informative error if optimization toolbox not present during NLLS R2* calculation
 - fix 3D-EPI B1 mapping not using b1defaults for Triotim scanner
 - use cell- instead of char- array to accommodate filenames of unequal length in RFsens
+- prevent missing B1 map for MTsat spamming the log
+- fix when no TE provided in 3DEPI SE/STE B1 mapping data
+- fixes compatibility with spm/spm required due to refactoring that removed TEMPLATE field
+- do not log ISC-applied to R1 in case of no-B1-corr and UNICORT
 
 ## [v0.6.1]
 ### Fixed

@@ -46,8 +46,10 @@ IP.uflags.pad = pm_defs.PAD;
 IP.uflags.ws = pm_defs.WS;
 IP.uflags.etd = IP.et{2}-IP.et{1};
 
-% default brain extraction parameters (mflags) 
-IP.mflags.template = pm_defs.MFLAGS.TEMPLATE;
+% default brain extraction parameters (mflags)
+if isfield(pm_defs.MFLAGS,'TEMPLATE') % 'TEMPLATE' field no longer defined in pm_defs in the spm25 FieldMap toolbox
+    IP.mflags.template = pm_defs.MFLAGS.TEMPLATE;
+end
 IP.mflags.fwhm = pm_defs.MFLAGS.FWHM; 
 IP.mflags.nerode = pm_defs.MFLAGS.NERODE;
 IP.mflags.ndilate = pm_defs.MFLAGS.NDILATE;

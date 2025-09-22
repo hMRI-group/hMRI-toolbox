@@ -777,12 +777,12 @@ for p = 1:dm(3)
             switch mpm_params.MTsatB1CorrectionModel
                 case 'helms' 
                     B1_mtw=1;
-                    if isempty(f_T)
+                    if isempty(f_T) && p==1 % only print to the log the first time
                         hmri_log('WARNING: MTsat B1-correction using the Helms model was selected but no B1 map data was found. MTsat will only be corrected with the quadratic model from Helms, et al. (MRM 2008).', mpm_params.defflags)
                     end
                 case 'lipp'
                     B1_mtw=f_T;
-                    if isempty(f_T)
+                    if isempty(f_T) && p==1 % only print to the log the first time
                         hmri_log('WARNING: MTsat B1-correction using the Lipp model was selected but no B1 map data was found. MTsat will not be B1 corrected.', mpm_params.defflags)
                     end
             end
@@ -1627,7 +1627,9 @@ if (mpm_params.T1widx && mpm_params.PDwidx)
     mpm_params.output(coutput).suffix = 'R1';
     mpm_params.output(coutput).units = 's-1';  
     mpm_params.output(coutput).descrip{1} = 'R1 map [s-1]';
-    if mpm_params.proc.ISC.enabled
+    % ISC not applied in case of no_B1_correction and UNICORT
+    % Therefore do not log ISC-applied to R1 in those cases
+    if mpm_params.proc.ISC.enabled && ~strcmp(B1transcorr{1}, 'no_B1_correction') && ~strcmp(B1transcorr{1}, 'UNICORT')
         mpm_params.output(coutput).descrip{end+1} = '- Imperfect Spoiling Correction applied';
     else
         mpm_params.output(coutput).descrip{end+1} = '- no Imperfect Spoiling Correction applied';

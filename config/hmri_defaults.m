@@ -159,7 +159,7 @@ hmri_def.coreg_bias_flags.fwhm = [7 7];
 %--------------------------------------------------------------------------
 % Decide whether to use small angle approximation when computing R1 and PD
 %--------------------------------------------------------------------------
-hmri_def.small_angle_approx = true;
+hmri_def.small_angle_approx = false;
 
 %--------------------------------------------------------------------------
 % Which model to use for B1-correction of MTsat
@@ -190,7 +190,7 @@ hmri_def.R2sOLS = 1;
 %                            estimates; very slow, even with
 %                            parallelization over voxels. Recommend WLS1
 %                            instead)
-hmri_def.R2s_fit_method = 'OLS';
+hmri_def.R2s_fit_method = 'WLS1';
 
 % Minimum number of echoes to calculate R2s map. Strictly speaking, the
 % minimum is 2. For a robust estimation, the minimum number of echoes

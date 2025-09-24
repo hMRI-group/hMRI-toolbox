@@ -782,7 +782,7 @@ for p = 1:dm(3)
                     end
                 case 'lipp'
                     B1_mtw=f_T;
-                    if isempty(f_T)
+                    if isempty(f_T) && p==1 % only print to the log the first time
                         hmri_log('WARNING: MTsat B1-correction using the Lipp model was selected but no B1 map data was found. MTsat will not be B1 corrected.', mpm_params.defflags)
                     end
             end

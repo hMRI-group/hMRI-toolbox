@@ -47,9 +47,19 @@ end
 assert(all(size(PDw.data)==size(T1w.data)),'hmri:inputArraySize','PDw.data and T1w.data must be the same size!')
 
 % Sanity check TR
-% Use "isAlways" so that hmri_calc_R1.m can be called using symbolic variables
-assert(isAlways(PDw.TR>0),'hmri:TR','PDw.TR must be positive!')
-assert(isAlways(T1w.TR>0),'hmri:TR','T1w.TR must be positive!')
+% Compatible with both symbolic and numeric inputs
+if isa(PDw.TR, 'sym')
+    assert(isAlways(PDw.TR > 0), 'hmri:TR', 'PDw.TR must be positive!')
+else
+    assert(PDw.TR > 0, 'hmri:TR', 'PDw.TR must be positive!')
+end
+
+if isa(T1w.TR, 'sym')
+    assert(isAlways(T1w.TR > 0), 'hmri:TR', 'T1w.TR must be positive!')
+else
+    assert(T1w.TR > 0, 'hmri:TR', 'T1w.TR must be positive!')
+end
+
 
 R1=0.5*( PDw.data.*PDw.t/PDw.TR - T1w.data.*T1w.t/T1w.TR )...
     ./( T1w.data./T1w.t - PDw.data./PDw.t );

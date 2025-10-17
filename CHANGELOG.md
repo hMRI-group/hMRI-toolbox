@@ -16,6 +16,9 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 - parameter error maps
 - robust combination of two runs using error maps
 - add .orig file extension to .gitignore to prevent merge artifacts to be pushed
+- update GUI code to enhance documentation for Proc. Smoothing
+- denoising module (lcpca): set mat_intent fields to input file values instead of spm_create_vol setting of 'aligned'
+- denoising module-second part: MPPCA denoising
 - added imperfect spoiling correction coefficients for common FIL protocols (3T and 7T).
   Note that these coefficients are computed without the small angle approximation.
 
@@ -29,12 +32,15 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 - fix 3D-EPI B1 mapping not using b1defaults for Triotim scanner
 - use cell- instead of char- array to accommodate filenames of unequal length in RFsens
 - prevent missing B1 map for MTsat spamming the log
+- fix when no TE provided in 3DEPI SE/STE B1 mapping data
+- fixes compatibility with spm/spm required due to refactoring that removed TEMPLATE field
+- do not log ISC-applied to R1 in case of no-B1-corr and UNICORT
 - account for diffusion while gradients are off when calculating imperfect spoiling correction parameters
 - apply shift and diffusion operators in the correct order when calculating imperfect spoiling correction parameters
 
 ### Breaking changes
 - Old, unused imperfect spoiling correction coefficients have been removed and replaced with new ones.
-If you need the old coefficients, you will need to add them back using a local defaults file.
+  If you need the old coefficients, you will need to add them back using a local defaults file.
 
 ## [v0.6.1]
 ### Fixed

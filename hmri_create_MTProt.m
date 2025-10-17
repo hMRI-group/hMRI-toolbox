@@ -1653,7 +1653,9 @@ if (mpm_params.T1widx && mpm_params.PDwidx)
     mpm_params.output(coutput).suffix = 'R1';
     mpm_params.output(coutput).units = 's-1';  
     mpm_params.output(coutput).descrip{1} = 'R1 map [s-1]';
-    if mpm_params.proc.ISC.enabled
+    % ISC not applied in case of no_B1_correction and UNICORT
+    % Therefore do not log ISC-applied to R1 in those cases
+    if mpm_params.proc.ISC.enabled && ~strcmp(B1transcorr{1}, 'no_B1_correction') && ~strcmp(B1transcorr{1}, 'UNICORT')
         mpm_params.output(coutput).descrip{end+1} = '- Imperfect Spoiling Correction applied';
     else
         mpm_params.output(coutput).descrip{end+1} = '- no Imperfect Spoiling Correction applied';

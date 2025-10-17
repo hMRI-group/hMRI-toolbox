@@ -160,7 +160,7 @@ hmri_def.coreg_bias_flags.fwhm = [7 7];
 %--------------------------------------------------------------------------
 % Decide whether to use small angle approximation when computing R1 and PD
 %--------------------------------------------------------------------------
-hmri_def.small_angle_approx = true;
+hmri_def.small_angle_approx = false;
 
 %--------------------------------------------------------------------------
 % Which model to use for B1-correction of MTsat
@@ -191,7 +191,7 @@ hmri_def.R2sOLS = true;
 %                            estimates; very slow, even with
 %                            parallelization over voxels. Recommend WLS1
 %                            instead)
-hmri_def.R2s_fit_method = 'OLS';
+hmri_def.R2s_fit_method = 'WLS1';
 
 % Minimum number of echoes to calculate R2s map. Strictly speaking, the
 % minimum is 2. For a robust estimation, the minimum number of echoes
@@ -238,13 +238,6 @@ hmri_def.PDproc.WBMaskTh = 0.1;  % Threshold for calculation of whole-brain mask
 hmri_def.PDproc.WMMaskTh = 0.95; % Threshold for calculation of white-matter mask from TPMs
 hmri_def.PDproc.biasreg  = 10^(-5);
 hmri_def.PDproc.biasfwhm = 50;
-hmri_def.PDproc.nr_echoes_forA = 6; % NOTE: in order to minimize R2* bias 
-    % on the PD estimates and gain in robustness for bias-field
-    % correction, the number of echoes should be minimum ("average"
-    % calculated over the first echo only) for PD calculation. However,
-    % with T2*-weighting bias correction (see below), a higher number of
-    % echoes is preferred in order to provide good SNR. Note that when
-    % "fullOLS = true", this parameter has no impact whatsovever.
 hmri_def.PDproc.T2scorr = 1; % to correct A map for T2*-weighting bias 
     % before PD map calculation. The correction is not required when
     % "fullOLS = true" (TE=0 fit) and will be automatically disabled.

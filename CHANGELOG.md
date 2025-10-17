@@ -5,6 +5,8 @@ This changelog documents all notable changes to the hMRI-toolbox.
 Most recent version numbers *should* follow the [Semantic Versioning](https://semver.org/spec/v2.0.0.html) principles (e.g. bug fixes: x.x.1 > x.x.2, new feature with backward compatibility: x.2.x > x.3.0, major release affecting the way data are handled and processed: 1.x.x > 2.0.0).
 
 ## [unreleased]
+
+## [beta-v1.0.0]
 ### Added
 - option to choose different models and parameters for B1-correction of MTsat
 - set default WM percent value in hmri_defaults
@@ -21,6 +23,7 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 - denoising module-second part: MPPCA denoising
 - added imperfect spoiling correction coefficients for common FIL protocols (3T and 7T).
   Note that these coefficients are computed without the small angle approximation.
+- Update defaults with new recommended options: no more small angle approximation, and using weighted least squares R2* fitting
 
 ### Fixed
 - replace `datestr(now)` with `datetime('now')` in line with [MATLAB recommendation](https://mathworks.com/help/matlab/matlab_prog/replace-discouraged-instances-of-serial-date-numbers-and-date-strings.html)
@@ -41,6 +44,8 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 ### Breaking changes
 - Old, unused imperfect spoiling correction coefficients have been removed and replaced with new ones.
   If you need the old coefficients, you will need to add them back using a local defaults file.
+- Fix inconsistency between new implementation of PD and old T2* weighting removal method
+- Update imperfect spoiling correction with upstream bugfixes in EPG-X so computed coefficients will be different
 
 ## [v0.6.1]
 ### Fixed

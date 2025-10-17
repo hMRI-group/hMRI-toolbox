@@ -16,7 +16,8 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 - parameter error maps
 - robust combination of two runs using error maps
 - add .orig file extension to .gitignore to prevent merge artifacts to be pushed
-
+- added imperfect spoiling correction coefficients for common FIL protocols (3T and 7T).
+  Note that these coefficients are computed without the small angle approximation.
 
 ### Fixed
 - replace `datestr(now)` with `datetime('now')` in line with [MATLAB recommendation](https://mathworks.com/help/matlab/matlab_prog/replace-discouraged-instances-of-serial-date-numbers-and-date-strings.html)
@@ -28,6 +29,12 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 - fix 3D-EPI B1 mapping not using b1defaults for Triotim scanner
 - use cell- instead of char- array to accommodate filenames of unequal length in RFsens
 - prevent missing B1 map for MTsat spamming the log
+- account for diffusion while gradients are off when calculating imperfect spoiling correction parameters
+- apply shift and diffusion operators in the correct order when calculating imperfect spoiling correction parameters
+
+### Breaking changes
+- Old, unused imperfect spoiling correction coefficients have been removed and replaced with new ones.
+If you need the old coefficients, you will need to add them back using a local defaults file.
 
 ## [v0.6.1]
 ### Fixed

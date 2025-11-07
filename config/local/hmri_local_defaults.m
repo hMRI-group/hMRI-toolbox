@@ -291,9 +291,9 @@ hmri_def.qMRI_maps_thresh.MT       = 5;    % [p.u.]
 % the toolbox from your data, the following values should be adapted in the
 % local defaults file. 
 % ADVANCED USER ONLY
-hmri_def.MPMacq.TE_mtw = [2.34:2.34:14.04]'; %#ok<*NBRAK> % [ms] defined as column vector!
-hmri_def.MPMacq.TE_t1w = [2.34:2.34:18.72]'; % [ms]
-hmri_def.MPMacq.TE_pdw = [2.34:2.34:18.72]'; % [ms]
+hmri_def.MPMacq.TE_mtw = (2.34:2.34:14.04)'; % [ms] defined as column vector!
+hmri_def.MPMacq.TE_t1w = (2.34:2.34:18.72)'; % [ms]
+hmri_def.MPMacq.TE_pdw = (2.34:2.34:18.72)'; % [ms]
 hmri_def.MPMacq.TR_mtw = 24.5; % [ms]
 hmri_def.MPMacq.TR_t1w = 24.5; % [ms]
 hmri_def.MPMacq.TR_pdw = 24.5; % [ms]
@@ -302,7 +302,7 @@ hmri_def.MPMacq.fa_t1w = 21;   % [deg]
 hmri_def.MPMacq.fa_pdw = 6;    % [deg]
 hmri_def.MPMacq.tag    = 'v2k';
 
-% IMPREFECT RF SPOILING CORRECTION PARAMETERS 
+% IMPERFECT RF SPOILING CORRECTION PARAMETERS 
 % (Preibisch and Deichmann, MRM 61:125-135 (2009))
 % No run-time calculation of the correction parametes is currently
 % performed in the toolbox. They've been calculated and stored here for a
@@ -323,55 +323,28 @@ hmri_def.MPMacq.tag    = 'v2k';
 % as these names are used to define a structure fieldname with the protocol 
 % parameters.
 %
-% 1) classic FIL protocol (Weiskopf et al., Neuroimage 2011):
-% PD-weighted: TR=23.7ms; a=6deg; T1-weighted: TR=18.7ms; a=20deg
-hmri_def.MPMacq_set.names{1} = 'Classic FIL protocol';
-hmri_def.MPMacq_set.tags{1}  = 'ClassicFIL';
-hmri_def.MPMacq_set.vals{1}  = [23.7 18.7 6 20];
-% 2) new FIL/Helms protocol
-% PD-weighted: TR=24.5ms; a=5deg; T1-weighted: TR=24.5ms; a=29deg
-hmri_def.MPMacq_set.names{2} = 'New FIL/Helms protocol';
-hmri_def.MPMacq_set.tags{2}  = 'NewFILHelms';
-hmri_def.MPMacq_set.vals{2}  = [24.5 24.5 5 29];
-% 3) Siemens product sequence protocol used in Lausanne (G Krueger)
-% PD-weighted: TR=24ms; a=6deg; T1-weighted: TR=19ms; a=20deg
-hmri_def.MPMacq_set.names{3} = 'Siemens product Lausanne (GK) protocol';
-hmri_def.MPMacq_set.tags{3}  = 'SiemPrLausGK';
-hmri_def.MPMacq_set.vals{3}  = [24.0 19.0 6 20];
-% 4) High-res (0.8mm) FIL protocol:
-% PD-weighted: TR=23.7ms; a=6deg; T1-weighted: TR=23.7ms; a=28deg
-hmri_def.MPMacq_set.names{4} = 'High-res FIL protocol';
-hmri_def.MPMacq_set.tags{4}  = 'HResFIL';
-hmri_def.MPMacq_set.vals{4}  = [23.7 23.7 6 28];
-% 5)NEW  High-res (0.8mm) FIL protocol:
-% PD-weighted: TR=25.25ms; a=5deg; T1-weighted: TR=TR=25.25ms; a=29deg
-hmri_def.MPMacq_set.names{5} = 'New High-res FIL protocol';
-hmri_def.MPMacq_set.tags{5}  = 'NHResFIL';
-hmri_def.MPMacq_set.vals{5}  = [25.25 25.25 5 29];
-% 6)NEW  1mm protocol - seq version v2k:
-% PD-weighted: TR=24.5ms; a=6deg; T1-weighted: TR=24.5ms; a=21deg
-hmri_def.MPMacq_set.names{6} = 'v2k protocol';
-hmri_def.MPMacq_set.tags{6}  = 'v2k';
-hmri_def.MPMacq_set.vals{6}  = [24.5 24.5 6 21];
-% 7) 800um protocol - seq version v3* released used by MEG group:
+% 1) 800um 3T protocol - seq version v3* used by the FIL MEG group:
 % TR = 25ms for all volumes; flipAngles = [6, 21 deg] for PDw and T1w
-% Correction parameters below were determined via Bloch-Torrey 
-% simulations but end result agrees well with EPG-derived correction 
-% for this RF spoiling increment of 137 degrees.
-% See: Callaghan et al. ISMRM, 2015, #1694
-hmri_def.MPMacq_set.names{7} = 'v3star protocol';
-hmri_def.MPMacq_set.tags{7}  = 'v3star';
-hmri_def.MPMacq_set.vals{7}  = [25 25 6 21];
+hmri_def.MPMacq_set.names{1} = 'FIL v3star protocol';
+hmri_def.MPMacq_set.tags{1}  = 'FIL_v3star';
+hmri_def.MPMacq_set.vals{1}  = [25 25 6 21];
+
+% 2) 600um 7T protocol - released by the FIL Physics group in 2021:
+% TR = 19.5ms for all volumes; flipAngles = [6, 24 deg] for PDw and T1w
+hmri_def.MPMacq_set.names{2} = 'FIL_600um_2021';
+hmri_def.MPMacq_set.tags{2}  = 'FIL_600um_2021';
+hmri_def.MPMacq_set.vals{2}  = [19.5 19.5 6 24];
 
 % B) Defining the imperfect spoiling correction parameters for the
 % different protocols 
 %--------------------------------------------------------------------------
-% Antoine Lutti 15/01/09
-% The following correction parameters are based on 
-% [Preibisch and Deichmann, Magn Reson Med 61:125-135 (2009)]. The values
-% for P2_a and P2_b below were obtained using the code supplied by R.
-% Deichmann with the experimental parameters used for the standard MPM
-% protocol and assuming T2 = 64 ms at 3T.
+% The following correction parameters are based on the method from
+%   Preibisch and Deichmann, Magn Reson Med 61:125-135 (2009), 
+%   https://doi.org/10.1002/mrm.21776
+% The values for P2_a and P2_b below were obtained using hmri_corr_imperf_spoil;
+% for implementation details see
+%   Corbin and Callaghan, Magn Reson Med 86:693–708 (2021), 
+%   https://doi.org/10.1002/mrm.28720
 
 % Given the possible confusion and resulting mistake (imperfect spoiling
 % correction applied to the wrong sequence), when TR and FA values match
@@ -381,48 +354,20 @@ hmri_def.MPMacq_set.vals{7}  = [25 25 6 21];
 % the protocol used!
 hmri_def.imperfectSpoilCorr.enabled = false;
 
-% 1) classic FIL protocol (Weiskopf et al., Neuroimage 2011):
-hmri_def.imperfectSpoilCorr.ClassicFIL.tag = 'Classic FIL protocol';
-hmri_def.imperfectSpoilCorr.ClassicFIL.P2_a = [78.9228195006542,-101.113338489192,47.8783287525126];
-hmri_def.imperfectSpoilCorr.ClassicFIL.P2_b = [-0.147476233142129,0.126487385091045,0.956824374979504];
-hmri_def.imperfectSpoilCorr.ClassicFIL.small_angle_approx = true;
-hmri_def.imperfectSpoilCorr.ClassicFIL.enabled = hmri_def.imperfectSpoilCorr.enabled;
-% 2) new FIL/Helms protocol
-hmri_def.imperfectSpoilCorr.NewFILHelms.tag = 'New FIL/Helms protocol';
-hmri_def.imperfectSpoilCorr.NewFILHelms.P2_a = [93.455034845930480,-120.5752858196904,55.911077913369060];
-hmri_def.imperfectSpoilCorr.NewFILHelms.P2_b = [-0.167301931434861,0.113507432776106,0.961765216743606];
-hmri_def.imperfectSpoilCorr.NewFILHelms.small_angle_approx = true;
-hmri_def.imperfectSpoilCorr.NewFILHelms.enabled = hmri_def.imperfectSpoilCorr.enabled;
-% 3) Siemens product sequence protocol used in Lausanne (G Krueger)
-hmri_def.imperfectSpoilCorr.SiemPrLausGK.tag = 'Siemens product Lausanne (GK) protocol';
-hmri_def.imperfectSpoilCorr.SiemPrLausGK.P2_a = [67.023102027100880,-86.834117103841540,43.815818592349870];
-hmri_def.imperfectSpoilCorr.SiemPrLausGK.P2_b = [-0.130876849571103,0.117721807209409,0.959180058389875];
-hmri_def.imperfectSpoilCorr.SiemPrLausGK.small_angle_approx = true;
-hmri_def.imperfectSpoilCorr.SiemPrLausGK.enabled = hmri_def.imperfectSpoilCorr.enabled;
-% 4) High-res (0.8mm) FIL protocol:
-hmri_def.imperfectSpoilCorr.HResFIL.tag = 'High-res FIL protocol';
-hmri_def.imperfectSpoilCorr.HResFIL.P2_a = [1.317257319014170e+02,-1.699833074433892e+02,73.372595677371650];
-hmri_def.imperfectSpoilCorr.HResFIL.P2_b = [-0.218804328507184,0.178745853134922,0.939514554747592];
-hmri_def.imperfectSpoilCorr.HResFIL.small_angle_approx = true;
-hmri_def.imperfectSpoilCorr.HResFIL.enabled = hmri_def.imperfectSpoilCorr.enabled;
-% 5)NEW  High-res (0.8mm) FIL protocol:
-hmri_def.imperfectSpoilCorr.NHResFIL.tag = 'New High-res FIL protocol';
-hmri_def.imperfectSpoilCorr.NHResFIL.P2_a = [88.8623036106612,-114.526218941363,53.8168602253166];
-hmri_def.imperfectSpoilCorr.NHResFIL.P2_b = [-0.132904017579521,0.113959390779008,0.960799295622202];
-hmri_def.imperfectSpoilCorr.NHResFIL.small_angle_approx = true;
-hmri_def.imperfectSpoilCorr.NHResFIL.enabled = hmri_def.imperfectSpoilCorr.enabled;
-% 6)NEW  1mm protocol - seq version v2k:
-hmri_def.imperfectSpoilCorr.v2k.tag = 'v2k protocol';
-hmri_def.imperfectSpoilCorr.v2k.P2_a = [71.2817617982844,-92.2992876164017,45.8278193851731];
-hmri_def.imperfectSpoilCorr.v2k.P2_b = [-0.137859046784839,0.122423212397157,0.957642744668469];
-hmri_def.imperfectSpoilCorr.v2k.small_angle_approx = true;
-hmri_def.imperfectSpoilCorr.v2k.enabled = hmri_def.imperfectSpoilCorr.enabled;
-% 7) 800um protocol - seq version v3* released used by MEG group:
-hmri_def.imperfectSpoilCorr.v3star.tag = 'v3star protocol';
-hmri_def.imperfectSpoilCorr.v3star.P2_a = [57.427573706259864,-79.300742898810441,39.218584751863879];
-hmri_def.imperfectSpoilCorr.v3star.P2_b = [-0.121114060111119,0.121684347499374,0.955987357483519];
-hmri_def.imperfectSpoilCorr.v3star.small_angle_approx = true;
-hmri_def.imperfectSpoilCorr.v3star.enabled = hmri_def.imperfectSpoilCorr.enabled;
+% 1) 800um 3T protocol - seq version v3* used by the FIL MEG group
+hmri_def.imperfectSpoilCorr.FIL_v3star.tag = 'FIL_v3star';
+hmri_def.imperfectSpoilCorr.FIL_v3star.P2_a = [19.6072 -26.8305 13.7302];
+hmri_def.imperfectSpoilCorr.FIL_v3star.P2_b = [-0.0485   0.0496  0.982];
+hmri_def.imperfectSpoilCorr.FIL_v3star.small_angle_approx = false;
+hmri_def.imperfectSpoilCorr.FIL_v3star.enabled = hmri_def.imperfectSpoilCorr.enabled;
+
+% 2) 600um 7T protocol - released by the FIL Physics group in 2021
+hmri_def.imperfectSpoilCorr.FIL_600um_2021.tag = 'FIL_600um_2021';
+hmri_def.imperfectSpoilCorr.FIL_600um_2021.P2_a = [21.8584 -28.7113 9.1151];
+hmri_def.imperfectSpoilCorr.FIL_600um_2021.P2_b = [-0.0452   0.0534 0.9845];
+hmri_def.imperfectSpoilCorr.FIL_600um_2021.small_angle_approx = false;
+hmri_def.imperfectSpoilCorr.FIL_600um_2021.enabled = hmri_def.imperfectSpoilCorr.enabled;
+
 % Unknown protocol
 hmri_def.imperfectSpoilCorr.Unknown.tag = 'Unknown protocol. No spoiling correction defined.';
 hmri_def.imperfectSpoilCorr.Unknown.enabled = false;

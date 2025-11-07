@@ -21,8 +21,9 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 - update GUI code to enhance documentation for Proc. Smoothing
 - denoising module (lcpca): set mat_intent fields to input file values instead of spm_create_vol setting of 'aligned'
 - denoising module-second part: MPPCA denoising
+- added imperfect spoiling correction coefficients for common FIL protocols (3T and 7T).
+  Note that these coefficients are computed without the small angle approximation.
 - Update defaults with new recommended options: no more small angle approximation, and using weighted least squares R2* fitting
-
 
 ### Fixed
 - replace `datestr(now)` with `datetime('now')` in line with [MATLAB recommendation](https://mathworks.com/help/matlab/matlab_prog/replace-discouraged-instances-of-serial-date-numbers-and-date-strings.html)
@@ -37,8 +38,14 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 - fix when no TE provided in 3DEPI SE/STE B1 mapping data
 - fixes compatibility with spm/spm required due to refactoring that removed TEMPLATE field
 - do not log ISC-applied to R1 in case of no-B1-corr and UNICORT
-- (breaking change-changed Results) Fix inconsistency between new implementation of PD and old T2* weighting removal method
-- (breaking change-changed Results) Update imperfect spoiling correction with upstream bugfixes in EPG-X
+- account for diffusion while gradients are off when calculating imperfect spoiling correction parameters
+- apply shift and diffusion operators in the correct order when calculating imperfect spoiling correction parameters
+
+### Breaking changes
+- Old, unused imperfect spoiling correction coefficients have been removed and replaced with new ones.
+  If you need the old coefficients, you will need to add them back using a local defaults file.
+- Fix inconsistency between new implementation of PD and old T2* weighting removal method
+- Update imperfect spoiling correction with upstream bugfixes in EPG-X so computed coefficients will be different
 
 ## [v0.6.1]
 ### Fixed

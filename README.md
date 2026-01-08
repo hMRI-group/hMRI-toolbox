@@ -114,8 +114,12 @@ Please also cite the relevant references for the methods that are implemented in
 - EB received funding from the European Structural and Investment Fund / European Regional Development Fund & the Belgian Walloon Government, project BIOMED-HUB (programme 2014-2020). 
 - NW received funding from the European Research Council under the European Union's Seventh Framework Programme (FP7/2007-2013) / ERC grant agreement No 616905. This project has received funding from the European Union's Horizon 2020 research and innovation programme under the grant agreement No 681094, and is supported by the Swiss State Secretariat for Education, Research and Innovation (SERI) under contract number 15.0137. 
 - SM received funding from the European Union's Horizon 2020 research and innovation programme under the Marie Sklodowska-Curie grant agreement No 658589. 
-- NW and SM received funding from the BMBF (01EW1711A and B) in the framework of ERA-NET NEURON. BD is supported by the Swiss National Science Foundation (NCCR Synapsy, project grant Nr 32003B_159780) and Foundation Synapsis. LREN is very grateful to the Roger De Spoelberch and Partridge Foundations for their generous financial support. 
-- MFC is supported by the MRC and Spinal Research Charity through the ERA-NET Neuron joint call (MR/R000050/1). 
+- NW and SM received funding from the BMBF (01EW1711A and B) in the framework of ERA-NET NEURON. 
+- SM has received funding from the European Union by ERC grant (Acronym: MRStain, Grant agreement ID: 101089218, DOI: 10.3030/101089218). Views and opinions expressed are, however, those of the author(s) only and do not necessarily reflect those of the European Union or the European Research Council Executive Agency. Neither the European Union nor the granting authority can be held responsible for them.
+- SM supported by the German Research Foundation (DFG Priority Program 2041 “Computational Connectomics”, [MO 2397/5-1, MO 2397/5-2, MO 2249/3-1, MO 2249/3-2], by the Emmy Noether Stipend: MO 2397/4-1; MO 2397/4-2). Funded by the Deutsche Forschungsgemeinschaft (DFG, German Research Foundation) - project no. 347592254 (WE 5046/4-2).
+- BD is supported by the Swiss National Science Foundation (NCCR Synapsy, project grant Nr 32003B_159780) and Foundation Synapsis. LREN is very grateful to the Roger De Spoelberch and Partridge Foundations for their generous financial support. 
+- MFC is supported by the MRC and Spinal Research Charity through the ERA-NET Neuron joint call (MR/R000050/1).
+- AL is supported by the Swiss National Science Foundation (project grant Nr CR00I5-235940). 
 - The Wellcome Centre for Human Neuroimaging is supported by core funding from the Wellcome [203147/Z/16/Z]. 
 - CP is supported by the [F.R.S.-FNRS](http://www.fnrs.be/en/), Belgium. 
 - The hMRI Toolbox project is supported by the Max Planck Society.

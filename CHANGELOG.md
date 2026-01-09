@@ -40,12 +40,14 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 - do not log ISC-applied to R1 in case of no-B1-corr and UNICORT
 - account for diffusion while gradients are off when calculating imperfect spoiling correction parameters
 - apply shift and diffusion operators in the correct order when calculating imperfect spoiling correction parameters
+- Default AFI TR2/TR1 value now matches typical sequence order
 
 ### Breaking changes
 - Old, unused imperfect spoiling correction coefficients have been removed and replaced with new ones.
   If you need the old coefficients, you will need to add them back using a local defaults file.
 - Fix inconsistency between new implementation of PD and old T2* weighting removal method
 - Update imperfect spoiling correction with upstream bugfixes in EPG-X so computed coefficients will be different
+- Default AFI TR2/TR1 value now based on the second input image having the longer TR, which may not be the case for older data
 
 ## [v0.6.1]
 ### Fixed

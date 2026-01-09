@@ -29,11 +29,9 @@ function A=hmri_calc_A(PDw,T1w,small_angle_approx)
 %       https://doi.org/10.1002/mrm.21542
 %
 %   If you use small_angle_approx=false:
-%       Edwards et al.  Magn. Reson. Mater. Phy. (2021), "Rational 
-%           approximation of the Ernst equation for dual angle R1 mapping 
-%           revisited: beyond the small flip-angle assumption" in Book of 
-%           Abstracts ESMRMB 2021, 
-%           https://doi.org/10.1007/s10334-021-00947-8
+%   Edwards et al. Magn. Reson. Med. (2026), "Analytical Dual Flip
+%       Angle R1 Calculation Outside the Small-Angle Regime",
+%       https://doi.org/10.1002/mrm.70174
 
 if isempty(PDw.B1), PDw.B1=1; end
 if isempty(T1w.B1), T1w.B1=1; end

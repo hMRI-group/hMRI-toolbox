@@ -54,7 +54,7 @@ The development of the hMRI toolbox is an international collaborative effort inc
 
 - Baris E. Ugurcan, Tobias Leutritz, Enrico Reimer, Nikolaus Weiskopf (Max Planck Institute for Human Cognitive and Brain Sciences, Leipzig, Germany)
 - Luke J. Edwards (Cognitive Neuroscience, Faculty of Psychology and Neuroscience, Maastricht University - Maastricht - The Netherlands / Department of Neurophysics, Max Planck Institute for Human Cognitive and Brain Sciences - Leipzig - Germany) 
-- Evelyne Balteau, Christophe Phillips ([University of Li&eacutege](https://www.giga.uliege.be), Li&eacutege, Belgium) 
+- Evelyne Balteau, Christophe Phillips ([University of Liège](https://www.giga.uliege.be), Liège, Belgium) 
 - Siawoosh Mohammadi (Medical Center Hamburg-Eppendorf, Hamburg, Germany) 
 - Martina F. Callaghan, John Ashburner (University College London, London, United Kingdom)
 - Karsten Tabelow (Weierstrass Institute for Applied Analysis and Stochastics, Berlin, Germany)

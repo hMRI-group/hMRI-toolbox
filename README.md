@@ -39,22 +39,22 @@ The hMRI toolbox is free but copyright software, distributed under the terms of 
 
 ## Download
 
-The latest release (and previous releases and pre-releases) of the hMRI-toolbox Matlab code 
-can be downloaded as a zip archive from the [releases page](https://github.com/hMRI-group/hMRI-toolbox/releases). 
+The latest release (as well as the previous- and pre-releases) of the hMRI-toolbox Matlab code 
+can be downloaded as a zip archive (.zip) or a Tarball (.tar.gz) from the [releases page](https://github.com/hMRI-group/hMRI-toolbox/releases). 
 
 ## E-Mail List
 
 We have created an e-mail list for users of the hMRI-toolbox: HMRI-TOOLBOX@JISCMAIL.AC.UK. 
 [Registered users](https://www.jiscmail.ac.uk/cgi-bin/webadmin?SUBED1=HMRI-TOOLBOX&amp;A=1) can login 
-to view the message archive on the [list Home Page](https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=HMRI-TOOLBOX).
+to view the message archive on the [list homepage](https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=HMRI-TOOLBOX).
 
 ## Developers of the hMRI-toolbox
 
-The development of the hMRI toolbox is an international collaborative effort including the following sites and developers: 
+The development of the hMRI toolbox is an international collaborative effort including the following developers and sites: 
 
 - Baris E. Ugurcan, Tobias Leutritz, Enrico Reimer, Nikolaus Weiskopf (Max Planck Institute for Human Cognitive and Brain Sciences, Leipzig, Germany)
 - Luke J. Edwards (Cognitive Neuroscience, Faculty of Psychology and Neuroscience, Maastricht University - Maastricht - The Netherlands / Department of Neurophysics, Max Planck Institute for Human Cognitive and Brain Sciences - Leipzig - Germany) 
-- Evelyne Balteau, Christophe Phillips ([University of Liege](https://www.giga.uliege.be), Liege, Belgium) 
+- Evelyne Balteau, Christophe Phillips ([University of Li&eacutege](https://www.giga.uliege.be), Li&eacutege, Belgium) 
 - Siawoosh Mohammadi (Medical Center Hamburg-Eppendorf, Hamburg, Germany) 
 - Martina F. Callaghan, John Ashburner (University College London, London, United Kingdom)
 - Karsten Tabelow (Weierstrass Institute for Applied Analysis and Stochastics, Berlin, Germany)

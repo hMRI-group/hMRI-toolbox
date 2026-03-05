@@ -156,6 +156,8 @@ hmri_def.coreg_flags.fwhm = [7 7];
 hmri_def.coreg_bias_flags.sep=[4 2];
 hmri_def.coreg_bias_flags.cost_fun = 'nmi';
 hmri_def.coreg_bias_flags.fwhm = [7 7];
+hmri_def.coreg_bias_flags.mask_options.domask = false; % whether to mask the B1ref image before registration
+hmri_def.coreg_bias_flags.mask_options.flags = []; % mask creation options; see hmri_create_pm_brain_mask
 
 %--------------------------------------------------------------------------
 % Decide whether to use small angle approximation when computing R1 and PD

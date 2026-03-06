@@ -26,7 +26,7 @@ assert(~isempty(P_src), 'P_src must not be empty');
 % Transformation estimation:
 VG = spm_vol(P_ref);
 VF = spm_vol(P_src(1,:));
-if flags.mask_options.domask
+if isfield(flags, 'mask_options') && flags.mask_options.domask
     bmask = hmri_create_pm_brain_mask(VF, flags.mask_options.flags);
     if spm_type(VF.dtype, 'nanrep')
         % hack for replacing 0 in mask with nan

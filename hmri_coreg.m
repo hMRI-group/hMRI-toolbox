@@ -27,15 +27,15 @@ assert(~isempty(P_src), 'P_src must not be empty');
 VG = spm_vol(P_ref);
 VF = spm_vol(P_src(1,:));
 if isfield(flags, 'mask_options') && flags.mask_options.domask
-    bmask = hmri_create_pm_brain_mask(VF, flags.mask_options.flags);
-    if spm_type(VF.dt, 'nanrep')
+    [~,Vmask] = hmri_create_pm_brain_mask(VF, flags.mask_options.flags);
+    if spm_type(VF.dt(1), 'nanrep')
         % hack for replacing 0 in mask with nan
         f = 'i1.*(i2/i2)';
     else
         % zero-out voxels outside the mask
         f = 'i1.*i2';
     end
-    VF = spm_imcalc([VF, bmask], spm_file(VF.fname, 'suffix', 'mask'), f, struct('dtype', VF.dt));
+    VF = spm_imcalc([VF, Vmask], spm_file(VF.fname, 'suffix', 'mask'), f, struct('dtype', VF.dt(1)));
 else % use unmasked source image for registration
     VF = spm_vol(P_src(1,:));
 end

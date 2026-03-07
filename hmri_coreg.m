@@ -35,7 +35,7 @@ if isfield(flags, 'mask_options') && flags.mask_options.domask
         % zero-out voxels outside the mask
         f = 'i1.*i2';
     end
-    VF = spm_imcalc([VF, Vmask], spm_file(VF.fname, 'suffix', 'mask'), f, struct('dtype', VF.dt(1)));
+    VF = spm_imcalc([VF, Vmask], spm_file(VF.fname, 'suffix', '_masked'), f, struct('dtype', VF.dt(1)));
 else % use unmasked source image for registration
     VF = spm_vol(P_src(1,:));
 end

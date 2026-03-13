@@ -30,7 +30,7 @@ if isfield(flags, 'mask_options') && flags.mask_options.domask
     [~,Vmask] = hmri_create_pm_brain_mask(VF, flags.mask_options.flags);
     if spm_type(VF.dt(1), 'nanrep')
         % hack for replacing 0 in mask with nan
-        f = 'i1.*(i2/i2)';
+        f = 'i1.*(i2./i2)';
     else
         % zero-out voxels outside the mask
         f = 'i1.*i2';

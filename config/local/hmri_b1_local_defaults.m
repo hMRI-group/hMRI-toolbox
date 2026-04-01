@@ -69,6 +69,8 @@ hmri_def.b1map.i3D_AFI.b1mask.nerode = 2;
 hmri_def.b1map.i3D_AFI.b1mask.ndilate = 4;
 hmri_def.b1map.i3D_AFI.b1mask.thresh = 0.5;
 hmri_def.b1map.i3D_AFI.b1proc.B1FWHM = 8; % For smoothing of B1 map. FWHM in mm; set to 0 to disable smoothing
+hmri_def.b1map.i3D_AFI.b1proc.match_vdm = 1;
+hmri_def.b1map.i3D_AFI.b1proc.b0maskbrain = 1;
 
 % 'DAM'
 hmri_def.b1map.DAM.b1type = 'DAM';

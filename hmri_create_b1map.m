@@ -178,7 +178,7 @@ B1map_norm = real(FAmap)*100/alphanom;
 %-----------------------------------------------------------------------
 % since B0 data will be coregistered and resliced with the B1 data, we copy
 % them into the calcpath directory to avoid altering the the raw data:
-if b0avail
+if b1map_params.b0avail
     b0input = b1map_params.b0input; % B0 data - 3 volumes
 
     Qtmp = cell(size(b0input,1),1);
@@ -189,6 +189,13 @@ if b0avail
     end
     b0input = char(Qtmp);
 
+    % save warped B1 map
+    VB1 = V1;
+    VB1.pinfo(1) = max(B1map_norm(:))/spm_type(VB1.dt(1),'maxval');
+    VB1.descrip = sprintf('warped normalised B1+ map (p.u.) - AFI protocol');
+    VB1.fname = fullfile(outpath, [sname '_desc-warped_B1map.nii']);
+    spm_write_vol(VB1,B1map_norm);
+
     % magnitude image
     % NOTE: must strip the ',1' (at the end of the file extension '.nii,1')!!
     magfnam = spm_file(b0input(1,:),'number','');
@@ -197,9 +204,9 @@ if b0avail
     % both fieldmap images
     fmfnam = char(phasefnam,magfnam);
     % image to be corrected ("anatomical" reference = SSQ image)
-    anatfnam = X_save.fname;
+    anatfnam = B1ref;
     % other images to be corrected (distorted B1 map)
-    otherfnam{1} = V_save.fname;
+    otherfnam{1} = fullfile(outpath, [sname '_desc-warped_B1map.nii']);
 
     % unwarp
     [fmap_img,unwarp_img] = hmri_create_B1Map_unwarp(fmfnam, anatfnam, otherfnam, b1map_params);

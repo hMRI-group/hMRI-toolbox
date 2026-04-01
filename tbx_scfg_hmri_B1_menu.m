@@ -80,11 +80,12 @@ b0raw         = cfg_files;
 b0raw.tag     = 'b0input';
 b0raw.name    = 'B0 input';
 b0raw.help    = {'Select B0 field map input images.' ...
-    'Only required for distortion correction of EPI-based B1 maps.' ...
+    'Only used for distortion correction of B1 maps.' ...
     'Select both magnitude images and the presubtracted phase image, in that order.'};
 b0raw.filter  = 'image';
 b0raw.ufilter = '.*';
-b0raw.num     = [3 3];
+b0raw.num     = [0 3];
+b0raw.val     = {''};
 
 % ---------------------------------------------------------------------
 % pre-calculated B1 map - including potential rescaling factor
@@ -164,7 +165,7 @@ b1_input_3DAFI.help = {'3D Actual Flip Angle Imaging (AFI) protocol.' ...
     ['Regarding processing parameters, you can either stick with metadata and standard ' ...
     'defaults parameters (recommended) or select your own [hmri_b1_local_defaults_*.m] customised defaults file ' ...
     '(fallback for situations where no metadata are available).']};
-b1_input_3DAFI.val  = {b1raw b1parameters};
+b1_input_3DAFI.val  = {b1raw b0raw b1parameters};
 
 
 % ---------------------------------------------------------------------

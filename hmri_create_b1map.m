@@ -162,10 +162,10 @@ if nnz(imag(FAmap))>nnz(imag(FAfun(1./r,n)))
 
     % avoid printing both matlab warning and log message to command window
     local_defflags = b1map_params.defflags;
-    local_defflags.ComWin = 0;    
+    local_defflags.ComWin = 0;
     hmri_log(['WARNING: ',warn_message],local_defflags);
 
-    warning('hmri:afiTooManyImag',warn_message) %#ok<SPWRN> 
+    warning('hmri:afiTooManyImag',warn_message) %#ok<SPWRN>
 end
 
 % normalise B1 map
@@ -173,6 +173,79 @@ end
 % should only appear in background voxels. Too many would be a sign of
 % incorrect file order.
 B1map_norm = real(FAmap)*100/alphanom;
+
+%-B0 undistortion
+%-----------------------------------------------------------------------
+% since B0 data will be coregistered and resliced with the B1 data, we copy
+% them into the calcpath directory to avoid altering the the raw data:
+if b0avail
+    b0input = b1map_params.b0input; % B0 data - 3 volumes
+
+    Qtmp = cell(size(b0input,1),1);
+    for i=1:size(b0input,1)
+        Qtmp{i} = fullfile(outpath, spm_file(b0input(i,:), 'filename'));
+        copyfile(deblank(b0input(i,:)), Qtmp{i});
+        try copyfile([spm_str_manip(deblank(b0input(i,:)),'r') '.json'],[spm_str_manip(Qtmp{i},'r') '.json']); end %#ok<*TRYNC>
+    end
+    b0input = char(Qtmp);
+
+    % magnitude image
+    % NOTE: must strip the ',1' (at the end of the file extension '.nii,1')!!
+    magfnam = spm_file(b0input(1,:),'number','');
+    % phase image
+    phasefnam = spm_file(b0input(end,:),'number','');
+    % both fieldmap images
+    fmfnam = char(phasefnam,magfnam);
+    % image to be corrected ("anatomical" reference = SSQ image)
+    anatfnam = X_save.fname;
+    % other images to be corrected (distorted B1 map)
+    otherfnam{1} = V_save.fname;
+
+    % unwarp
+    [fmap_img,unwarp_img] = hmri_create_B1Map_unwarp(fmfnam, anatfnam, otherfnam, b1map_params);
+    B1ref = unwarp_img{1}.fname;
+    ub1_img = unwarp_img{2}.fname;
+    B1map_norm = spm_read_vols(spm_vol({ub1_img}));
+
+    % set metadata for unwrapped output images
+    % define generic header for B0-unwarp process
+    scphasefnam = fullfile(b1map_params.outpath, spm_file(spm_file(fmfnam(2,:),'prefix','sc'),'filename'));
+    % relate outputs to inputs remaining visible after cleanup! i.e. original
+    % B1 and B0 mapping images (not to the intermediate images created
+    % during B1 calculation):
+    % input_files = cat(1,{anatfnam},{fmfnam(1,:)},{fmfnam(2,:)},otherfnam{1},otherfnam{2});
+    input_files = char(b1map_params.b1input,b1map_params.b0input);
+    Output_hdr = init_b1_output_metadata(input_files, b1map_params);
+    Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (EPI SE/STE protocol)'];
+
+    % set metadata for unwarped B1 image
+    Output_hdr.history.output.imtype = '3D AFI B1 mapping - Unwarped B1 map';
+    Output_hdr.history.output.units = 'p.u.';
+    set_metadata(ub1_img,Output_hdr,json);
+    unwarped_str = ' unwarped,';
+
+    % set metadata for unwarped SSQ map
+    Output_hdr.history.output.imtype = '3D AFI B1 mapping - Unwarped SSQ image for anatomical reference';
+    Output_hdr.history.output.units = 'a.u.';
+    set_metadata(B1ref,Output_hdr,json);
+
+    % set metadata for phase-unwrapped regularised field map (Hz) (fpm_* file)
+    Output_hdr.history.output.imtype = '3D AFI B1 mapping - Phase-unwrapped regularised field map';
+    Output_hdr.history.output.units = 'Hz';
+    set_metadata(fmap_img{1}.fname,Output_hdr,json);
+
+    % set metadata for Voxel Displacement Map (vdm5_* file)
+    Output_hdr.history.output.imtype = '3D AFI B1 mapping - Voxel displacement map';
+    Output_hdr.history.output.units = 'Vx';
+    set_metadata(fmap_img{2}.fname,Output_hdr,json);
+
+    % set metadata for phase map scaled between +/-pi (sc* file)
+    Output_hdr.history.output.imtype = '3D AFI B1 mapping - Phase map rescaled between [-pi, pi]';
+    Output_hdr.history.output.units = 'Radians';
+    set_metadata(scphasefnam,Output_hdr,json);
+else
+    unwarped_str = '';
+end
 
 % masking; mask is written out to folder of B1ref
 mask = mask_for_B1(spm_vol(B1ref),b1map_params.b1mask);
@@ -183,7 +256,7 @@ smB1map_norm = smoothB1(V1,B1map_norm,b1map_params.b1proc.B1FWHM,mask);
 % save output images
 VB1 = V1;
 VB1.pinfo(1) = max(smB1map_norm(:))/spm_type(VB1.dt(1),'maxval');
-VB1.descrip = ['B1+ map - smoothed ( ' sprintf('%d ',b1map_params.b1proc.B1FWHM) 'mm ) and normalised (p.u.) - AFI protocol'];
+VB1.descrip = sprintf('B1+ map -%s smoothed (%d mm)%s and normalised (p.u.) - AFI protocol',unwarped_str,b1map_params.b1proc.B1FWHM);
 VB1.fname = fullfile(outpath, [sname '_B1map.nii']);
 spm_write_vol(VB1,smB1map_norm);
 
@@ -445,7 +518,7 @@ b0input = char(Qtmp);
 % NOTE: must strip the ',1' (at the end of the file extension '.nii,1')!!
 magfnam = spm_file(b0input(1,:),'number','');
 % phase image
-phasefnam = spm_file(b0input(3,:),'number','');
+phasefnam = spm_file(b0input(end,:),'number','');
 % both fieldmap images
 fmfnam = char(phasefnam,magfnam);
 % image to be corrected ("anatomical" reference = SSQ image)
@@ -667,16 +740,18 @@ end
 % (NB: if a 'b0input' field is present, it may be empty)
 if isfield(jobsubj.b1_type.(b1_protocol),'b0input')
     b1map_params.b0input = char(spm_file(jobsubj.b1_type.(b1_protocol).b0input,'number',''));
-    if isempty(b1map_params.b0input)
+    if isempty(b1map_params.b0input) && strcmp(b1_protocol, 'i3D_EPI')
         % hmri_log(sprintf(['WARNING: expected B0 fieldmap not available for EPI undistortion.\n' ...
         %     '\tNo fieldmap correction will be applied.']),b1map_params.defflags);
-        % b1map_params.b0avail = false;
         hmri_log(sprintf(['WARNING: expected B0 fieldmap not available for EPI undistortion.\n' ...
             '\tThe current implementation does not allow you to apply EPI-based B1 bias \n' ...
             '\tcorrection without phase unwrapping. Switching to "no B1 correction" mode.\n' ...
             '\tIf you meant to apply B1 bias correction, check your data and re-run the batch.']),b1map_params.defflags);
         b1_protocol = 'no_B1_correction';
         b1map_params = hmri_get_defaults('b1map.no_B1_correction');
+        b1map_params.b0avail = false;
+    else
+        b1map_params.b0avail = true;
     end
 end
 
@@ -701,7 +776,7 @@ switch b1_protocol
     case 'i3D_EPI'
         if ~isempty(b1map_params.b1input)
             hmri_log(sprintf('SE/STE EPI protocol selected ...'),b1map_params.nopuflags);
-            
+
             b1hdrFile = b1map_params.b1input(1,:);
 
             V = spm_vol(b1map_params.b1input);
@@ -1058,7 +1133,7 @@ end
 %=========================================================================%
 function smB1map_norm = smoothB1(V,B1map_norm,B1FWHM,mask)
 
-assert(numel(B1FWHM)==1||numel(B1FWHM)==3,...
+assert(isscalar(B1FWHM)||numel(B1FWHM)==3,...
     ['FWHM of B1 smoothing kernel (B1FWHM) must have either one element ' ...
     '(isotropic smoothing) or three elements (3d anisotropic smoothing)']);
 

@@ -3,7 +3,7 @@ function hmri_b1_standard_defaults
 %!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 % DON'T MODIFY THIS FILE, IT CONTAINS B1 PROCESSING DEFAULTS PARAMETERS.
 % Please refer to hMRI-Toolbox\config\local\hmri_b1_local_defaults.m to
-% customise B1 processing parameters.  
+% customise B1 processing parameters.
 %!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 %
 % FORMAT hmri_b1_standard_defaults
@@ -21,7 +21,7 @@ function hmri_b1_standard_defaults
 % WARNING
 % Modification of the defaults parameters may impair the the integrity of
 % the toolbox, leading to unexpected behaviour. Only recommended for expert
-% users. 
+% users.
 %
 %__________________________________________________________________________
 % Written by E. Balteau, 2017.
@@ -29,10 +29,10 @@ function hmri_b1_standard_defaults
 %__________________________________________________________________________
 
 % Global hmri_def variable used across the whole toolbox
-global hmri_def
+global hmri_def %#ok<GVMIS>
 
 %--------------------------------------------------------------------------
-% B1 mapping processing parameters 
+% B1 mapping processing parameters
 %--------------------------------------------------------------------------
 % Default parameters are set below for each type of B1 processing.
 % For acquisition parameters, default values are a fallback solution for B1
@@ -41,11 +41,20 @@ global hmri_def
 % appropriate data handling and processing.
 
 % 'i3D_AFI'
-hmri_def.b1map.i3D_AFI.b1type = 'i3D_AFI'; 
-hmri_def.b1map.i3D_AFI.b1avail = true; 
-hmri_def.b1map.i3D_AFI.procreq = true; 
+hmri_def.b1map.i3D_AFI.b1type = 'i3D_AFI';
+hmri_def.b1map.i3D_AFI.b1avail = true;
+hmri_def.b1map.i3D_AFI.procreq = true;
+% b1-acquisition
 hmri_def.b1map.i3D_AFI.b1acq.TR2TR1ratio = 0.2; % TR of second input volume over TR of first input volume
 hmri_def.b1map.i3D_AFI.b1acq.alphanom = 60;
+hmri_def.b1map.i3D_AFI.b1acq.tert = 1e3/425; % length of readout = 1e3/BandwidthPerPixel ms
+hmri_def.b1map.i3D_AFI.b1acq.blipDIR = 1;
+hmri_def.b1map.i3D_AFI.b1acq.distortedDIR = 'z'; % distortions in readout direction
+% b0-acquisition
+hmri_def.b1map.i3D_AFI.b0acq.shortTE = 10; % ms
+hmri_def.b1map.i3D_AFI.b0acq.longTE = 12.46; % ms
+hmri_def.b1map.i3D_AFI.b0acq.iformat = 'PM'; % ms
+% b1-processing
 hmri_def.b1map.i3D_AFI.b1mask.domask = false; % whether to mask using hmri_create_pm_brain_mask.m
 hmri_def.b1map.i3D_AFI.b1mask.fwhm = 5; % options for hmri_create_pm_brain_mask.m
 hmri_def.b1map.i3D_AFI.b1mask.nerode = 2;
@@ -54,7 +63,7 @@ hmri_def.b1map.i3D_AFI.b1mask.thresh = 0.5;
 hmri_def.b1map.i3D_AFI.b1proc.B1FWHM = 8; % For smoothing of B1 map. FWHM in mm; set to 0 to disable smoothing
 
 % 'DAM'
-hmri_def.b1map.DAM.b1type = 'DAM'; 
+hmri_def.b1map.DAM.b1type = 'DAM';
 hmri_def.b1map.DAM.b1avail = true;
 hmri_def.b1map.DAM.procreq = true;
 hmri_def.b1map.DAM.b1acq.alphanom = 60;
@@ -66,7 +75,7 @@ hmri_def.b1map.DAM.b1mask.thresh = 0.5;
 hmri_def.b1map.DAM.b1proc.B1FWHM = 8; % For smoothing of B1 map. FWHM in mm; set to 0 to disable smoothing
 
 % 'pre_processed_B1'
-hmri_def.b1map.pre_processed_B1.b1type = 'pre_processed_B1'; 
+hmri_def.b1map.pre_processed_B1.b1type = 'pre_processed_B1';
 hmri_def.b1map.pre_processed_B1.b1avail   = true;
 hmri_def.b1map.pre_processed_B1.procreq = false;
 hmri_def.b1map.pre_processed_B1.b1mask.domask = false; % whether to mask using hmri_create_pm_brain_mask.m
@@ -77,12 +86,12 @@ hmri_def.b1map.pre_processed_B1.b1mask.thresh = 0.5;
 hmri_def.b1map.pre_processed_B1.b1proc.B1FWHM = 0; % For smoothing of B1 map. FWHM in mm; set to 0 to disable smoothing
 
 % 'no_B1_correction'
-hmri_def.b1map.no_B1_correction.b1type = 'no_B1_correction'; 
+hmri_def.b1map.no_B1_correction.b1type = 'no_B1_correction';
 hmri_def.b1map.no_B1_correction.b1avail = false;
 hmri_def.b1map.no_B1_correction.procreq = false;
 
 % UNICORT
-hmri_def.b1map.UNICORT.b1type = 'UNICORT'; 
+hmri_def.b1map.UNICORT.b1type = 'UNICORT';
 hmri_def.b1map.UNICORT.b1avail = false;
 hmri_def.b1map.UNICORT.procreq = true;
 hmri_def.b1map.UNICORT.procpar.reg = 10^-3;
@@ -90,9 +99,9 @@ hmri_def.b1map.UNICORT.procpar.FWHM = 60;
 hmri_def.b1map.UNICORT.procpar.thr = 5;
 
 % 'i3D_EPI'
-hmri_def.b1map.i3D_EPI.b1type = 'i3D_EPI'; 
-hmri_def.b1map.i3D_EPI.b1avail = true; 
-hmri_def.b1map.i3D_EPI.procreq = true; 
+hmri_def.b1map.i3D_EPI.b1type = 'i3D_EPI';
+hmri_def.b1map.i3D_EPI.b1avail = true;
+hmri_def.b1map.i3D_EPI.procreq = true;
 % b0&b1-processing
 hmri_def.b1map.i3D_EPI.b1proc.T1 = 1192; % ms, strictly valid only at 3T
 hmri_def.b1map.i3D_EPI.b1proc.eps = 0.0001;
@@ -113,15 +122,16 @@ hmri_def.b1map.i3D_EPI.b1acq.beta = 115:-5:65;
 hmri_def.b1map.i3D_EPI.b1acq.TM = 31.2;
 hmri_def.b1map.i3D_EPI.b1acq.tert = 540e-3*24; % EchoSpacing * numberPElines
 hmri_def.b1map.i3D_EPI.b1acq.blipDIR = 1;
+hmri_def.b1map.i3D_EPI.b1acq.distortedDIR = 'x';
 % b0-acquisition
 hmri_def.b1map.i3D_EPI.b0acq.shortTE = 10; % ms
 hmri_def.b1map.i3D_EPI.b0acq.longTE = 12.46; % ms
 hmri_def.b1map.i3D_EPI.b0acq.iformat = 'PM'; % ms
 
 % 'tfl_b1_map'
-hmri_def.b1map.tfl_b1_map.b1type = 'tfl_b1_map'; 
-hmri_def.b1map.tfl_b1_map.b1avail = true; 
-hmri_def.b1map.tfl_b1_map.procreq = true; 
+hmri_def.b1map.tfl_b1_map.b1type = 'tfl_b1_map';
+hmri_def.b1map.tfl_b1_map.b1avail = true;
+hmri_def.b1map.tfl_b1_map.procreq = true;
 hmri_def.b1map.tfl_b1_map.b1mask.domask = false; % whether to mask using hmri_create_pm_brain_mask.m
 hmri_def.b1map.tfl_b1_map.b1mask.fwhm = 5; % options for hmri_create_pm_brain_mask.m
 hmri_def.b1map.tfl_b1_map.b1mask.nerode = 2;
@@ -130,9 +140,9 @@ hmri_def.b1map.tfl_b1_map.b1mask.thresh = 0.5;
 hmri_def.b1map.tfl_b1_map.b1proc.B1FWHM = 8; % For smoothing of B1 map. FWHM in mm; set to 0 to disable smoothing
 
 % 'rf_map'
-hmri_def.b1map.rf_map.b1type = 'rf_map'; 
-hmri_def.b1map.rf_map.b1avail = true; 
-hmri_def.b1map.rf_map.procreq = true; 
+hmri_def.b1map.rf_map.b1type = 'rf_map';
+hmri_def.b1map.rf_map.b1avail = true;
+hmri_def.b1map.rf_map.procreq = true;
 hmri_def.b1map.rf_map.b1mask.domask = false; % whether to mask using hmri_create_pm_brain_mask.m
 hmri_def.b1map.rf_map.b1mask.fwhm = 5; % options for hmri_create_pm_brain_mask.m
 hmri_def.b1map.rf_map.b1mask.nerode = 2;

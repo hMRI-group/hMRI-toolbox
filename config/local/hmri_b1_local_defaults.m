@@ -56,7 +56,7 @@ hmri_def.b1map.i3D_AFI.procreq = true;
 hmri_def.b1map.i3D_AFI.b1acq.TR2TR1ratio = 0.2; % TR of second input volume over TR of first input volume
 hmri_def.b1map.i3D_AFI.b1acq.alphanom = 60;
 hmri_def.b1map.i3D_AFI.b1acq.tert = 1e3/425; % length of readout = 1e3/BandwidthPerPixel ms
-hmri_def.b1map.i3D_AFI.b1acq.blipDIR = 1;
+hmri_def.b1map.i3D_AFI.b1acq.blipDIR = +1;
 hmri_def.b1map.i3D_AFI.b1acq.distortedDIR = 'z'; % distortions in readout direction
 % b0-acquisition
 hmri_def.b1map.i3D_AFI.b0acq.shortTE = 10; % ms
@@ -69,8 +69,8 @@ hmri_def.b1map.i3D_AFI.b1mask.nerode = 2;
 hmri_def.b1map.i3D_AFI.b1mask.ndilate = 4;
 hmri_def.b1map.i3D_AFI.b1mask.thresh = 0.5;
 hmri_def.b1map.i3D_AFI.b1proc.B1FWHM = 8; % For smoothing of B1 map. FWHM in mm; set to 0 to disable smoothing
-hmri_def.b1map.i3D_AFI.b1proc.match_vdm = 1;
-hmri_def.b1map.i3D_AFI.b1proc.b0maskbrain = 1;
+hmri_def.b1map.i3D_AFI.b1proc.match_vdm = true; % Whether to register voxel displacement map from B0 to B1 map
+hmri_def.b1map.i3D_AFI.b1proc.b0maskbrain = false;
 
 % 'DAM'
 hmri_def.b1map.DAM.b1type = 'DAM';

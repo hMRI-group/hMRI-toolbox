@@ -34,6 +34,7 @@ IP.et{2} = b1map_params.b0acq.longTE;
 IP.maskbrain = b1map_params.b1proc.b0maskbrain;
 IP.ajm = pm_defs.DO_JACOBIAN_MODULATION;
 IP.blipdir = b1map_params.b1acq.blipDIR;
+assert(any(IP.blipdir==[+1,-1]), 'blipdir must be +1 or -1!')
 IP.tert = b1map_params.b1acq.tert;
 %IP.epifm = 0; % already in the default IP
 
@@ -131,12 +132,6 @@ end
 [IP.vdm, IP.vdmP] = FieldMap('FM2VDM',IP);
 
 %--------------------------------------------------------------------------
-% Match voxel displacement map to distorted anatomical image
-% Outputs -> mag_NAME-OF-FIRST-INPUT-IMAGE.nii
-%--------------------------------------------------------------------------
-% To DO!!!
-
-%--------------------------------------------------------------------------
 % Match voxel displacement map to distorted anatomical image and 
 % then unwarp the distorted anatomical image
 %--------------------------------------------------------------------------
@@ -156,7 +151,6 @@ unwarp_img{1} = FieldMap('Write',IP.epiP,IP.uepiP.dat,'u',IP.epiP.dt(1),unwarp_i
 
 % set second fmap_img output to the coregistered VDM
 fmap_img{2} = IP.vdmP;
-
 
 %----------------------------------------------------------------------
 % Unwarp the other images, assumed to be in same space as anatomical

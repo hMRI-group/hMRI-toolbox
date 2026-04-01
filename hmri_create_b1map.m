@@ -212,7 +212,7 @@ if b1map_params.b0avail
     [fmap_img,unwarp_img] = hmri_create_B1Map_unwarp(fmfnam, anatfnam, otherfnam, b1map_params);
     B1ref = unwarp_img{1}.fname;
     ub1_img = unwarp_img{2}.fname;
-    B1map_norm = spm_read_vols(spm_vol({ub1_img}));
+    B1map_norm = spm_read_vols(spm_vol(ub1_img));
 
     % set metadata for unwrapped output images
     % define generic header for B0-unwarp process

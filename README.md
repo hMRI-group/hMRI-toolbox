@@ -122,5 +122,6 @@ Please also cite the relevant references for the methods that are implemented in
 - M.F.C.'s research was funded in whole or in part by the Discovery Research Platform for Naturalistic Neuroimaging funded by the Wellcome [226793/Z/22/Z].
 - A.L. is supported by the Swiss National Science Foundation (project grant Nr CR00I5-235940). 
 - The Wellcome Centre for Human Neuroimaging is supported by core funding from the Wellcome [203147/Z/16/Z]. 
-- C.P. is supported by the [F.R.S.-FNRS](http://www.fnrs.be/en/), Belgium. 
+- C.P. is supported by the [F.R.S.-FNRS](http://www.fnrs.be/en/), Belgium.
+- F.K. is funded by the European Union’s Horizon Europe research and innovation programme under grant agreement No 101095384 (PHASE IV AI), by the European Union’s Horizon 2020 research and innovation programme under grant agreement No 871643 (MORPHEMIC), and by Collaborative Research on Science and Society 2026 (CROSS 2026) UNIL-EPFL. 
 - The hMRI Toolbox project is supported by the Max Planck Society.

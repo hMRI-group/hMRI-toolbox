@@ -6,7 +6,7 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 
 ## [unreleased]
 
-## [beta-v1.0.0]
+## [v1.0.0]
 ### Added
 - option to choose different models and parameters for B1-correction of MTsat
 - set default WM percent value in hmri_defaults

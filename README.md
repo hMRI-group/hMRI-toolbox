@@ -39,23 +39,24 @@ The hMRI toolbox is free but copyright software, distributed under the terms of 
 
 ## Download
 
-The latest release (and previous releases and pre-releases) of the hMRI-toolbox Matlab code 
-can be downloaded as a zip archive from the [releases page](https://github.com/hMRI-group/hMRI-toolbox/releases). 
+The latest release (as well as the previous- and pre-releases) of the hMRI-toolbox Matlab code 
+can be downloaded as a zip archive (.zip) or a Tarball (.tar.gz) from the [releases page](https://github.com/hMRI-group/hMRI-toolbox/releases). 
 
 ## E-Mail List
 
 We have created an e-mail list for users of the hMRI-toolbox: HMRI-TOOLBOX@JISCMAIL.AC.UK. 
 [Registered users](https://www.jiscmail.ac.uk/cgi-bin/webadmin?SUBED1=HMRI-TOOLBOX&amp;A=1) can login 
-to view the message archive on the [list Home Page](https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=HMRI-TOOLBOX).
+to view the message archive on the [list homepage](https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=HMRI-TOOLBOX).
 
 ## Developers of the hMRI-toolbox
 
-The development of the hMRI toolbox is an international collaborative effort including the following sites and developers: 
+The development of the hMRI toolbox is an international collaborative effort including the following developers and sites: 
 
-- Luke J Edwards, Tobias Leutritz, Enrico Reimer, Baris Evren Ugurcan, Nikolaus Weiskopf (Max Planck Institute for Human Cognitive and Brain Sciences, Leipzig, Germany) 
-- Evelyne Balteau, Christophe Phillips ([University of Liege](https://www.giga.uliege.be), Liege, Belgium) 
+- Baris E. Ugurcan, Tobias Leutritz, Enrico Reimer, Nikolaus Weiskopf (Max Planck Institute for Human Cognitive and Brain Sciences, Leipzig, Germany)
+- Luke J. Edwards (Cognitive Neuroscience, Faculty of Psychology and Neuroscience, Maastricht University - Maastricht - The Netherlands / Department of Neurophysics, Max Planck Institute for Human Cognitive and Brain Sciences - Leipzig - Germany) 
+- Evelyne Balteau, Christophe Phillips ([University of Liège](https://www.giga.uliege.be), Liège, Belgium) 
 - Siawoosh Mohammadi (Medical Center Hamburg-Eppendorf, Hamburg, Germany) 
-- Martina F Callaghan, John Ashburner (University College London, London, United Kingdom)
+- Martina F. Callaghan, John Ashburner (University College London, London, United Kingdom)
 - Karsten Tabelow (Weierstrass Institute for Applied Analysis and Stochastics, Berlin, Germany)
 - Bogdan Draganski, Ferath Kerif, Antoine Lutti  (LREN, DNC - CHUV, University Lausanne, Lausanne, Switzerland)
 - Maryam Seif (University of Zurich, Zurich, Switzerland) 
@@ -111,11 +112,16 @@ Please also cite the relevant references for the methods that are implemented in
 
 ## Acknowledgments and Funding
 
-- EB received funding from the European Structural and Investment Fund / European Regional Development Fund & the Belgian Walloon Government, project BIOMED-HUB (programme 2014-2020). 
-- NW received funding from the European Research Council under the European Union's Seventh Framework Programme (FP7/2007-2013) / ERC grant agreement No 616905. This project has received funding from the European Union's Horizon 2020 research and innovation programme under the grant agreement No 681094, and is supported by the Swiss State Secretariat for Education, Research and Innovation (SERI) under contract number 15.0137. 
-- SM received funding from the European Union's Horizon 2020 research and innovation programme under the Marie Sklodowska-Curie grant agreement No 658589. 
-- NW and SM received funding from the BMBF (01EW1711A and B) in the framework of ERA-NET NEURON. BD is supported by the Swiss National Science Foundation (NCCR Synapsy, project grant Nr 32003B_159780) and Foundation Synapsis. LREN is very grateful to the Roger De Spoelberch and Partridge Foundations for their generous financial support. 
-- MFC is supported by the MRC and Spinal Research Charity through the ERA-NET Neuron joint call (MR/R000050/1). 
+- E.B. received funding from the European Structural and Investment Fund / European Regional Development Fund & the Belgian Walloon Government, project BIOMED-HUB (programme 2014-2020). 
+- N.W. received funding from the European Research Council under the European Union's Seventh Framework Programme (FP7/2007-2013) / ERC grant agreement No 616905. This project has received funding from the European Union's Horizon 2020 research and innovation programme under the grant agreement No 681094, and is supported by the Swiss State Secretariat for Education, Research and Innovation (SERI) under contract number 15.0137. 
+- S.M. received funding from the European Union's Horizon 2020 research and innovation programme under the Marie Sklodowska-Curie grant agreement No 658589. 
+- N.W. and S.M. received funding from the BMBF (01EW1711A and B) in the framework of ERA-NET NEURON. 
+- S.M. has received funding from the European Union by ERC grant (Acronym: MRStain, Grant agreement ID: 101089218, DOI: 10.3030/101089218). Views and opinions expressed are, however, those of the author(s) only and do not necessarily reflect those of the European Union or the European Research Council Executive Agency. Neither the European Union nor the granting authority can be held responsible for them.
+- S.M. supported by the German Research Foundation (DFG Priority Program 2041 “Computational Connectomics”, [MO 2397/5-1, MO 2397/5-2], by the Emmy Noether Stipend: MO 2397/4-1; MO 2397/4-2).
+- B.D. is supported by the Swiss National Science Foundation (project grant no. 213595, 32003B_135679, 32003B_159780, 324730_192755 and CRSK-3_190185), InnoSuisse Flagship Swiss brAInHealth project, ERA_NET NEURON JTC2020: iSEE and JTC2023-ELSA: BrainTree projects. 
+- M.F.C.'s research was funded in whole or in part by the Discovery Research Platform for Naturalistic Neuroimaging funded by the Wellcome [226793/Z/22/Z].
+- A.L. is supported by the Swiss National Science Foundation (project grant Nr CR00I5-235940). 
 - The Wellcome Centre for Human Neuroimaging is supported by core funding from the Wellcome [203147/Z/16/Z]. 
-- CP is supported by the [F.R.S.-FNRS](http://www.fnrs.be/en/), Belgium. 
+- C.P. is supported by the [F.R.S.-FNRS](http://www.fnrs.be/en/), Belgium.
+- F.K. is funded by the European Union’s Horizon Europe research and innovation programme under grant agreement No 101095384 (PHASE IV AI), by the European Union’s Horizon 2020 research and innovation programme under grant agreement No 871643 (MORPHEMIC), and by Collaborative Research on Science and Society 2026 (CROSS 2026) UNIL-EPFL. 
 - The hMRI Toolbox project is supported by the Max Planck Society.

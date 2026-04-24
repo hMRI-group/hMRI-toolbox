@@ -29,11 +29,9 @@ function A=hmri_calc_A(PDw,T1w,small_angle_approx)
 %       https://doi.org/10.1002/mrm.21542
 %
 %   If you use small_angle_approx=false:
-%       Edwards et al.  Magn. Reson. Mater. Phy. (2021), "Rational 
-%           approximation of the Ernst equation for dual angle R1 mapping 
-%           revisited: beyond the small flip-angle assumption" in Book of 
-%           Abstracts ESMRMB 2021, 
-%           https://doi.org/10.1007/s10334-021-00947-8
+%   Edwards et al. Magn. Reson. Med. (2026), "Analytical Dual Flip
+%       Angle R1 Calculation Outside the Small-Angle Regime",
+%       https://doi.org/10.1002/mrm.70174
 
 if isempty(PDw.B1), PDw.B1=1; end
 if isempty(T1w.B1), T1w.B1=1; end
@@ -49,9 +47,19 @@ end
 assert(all(size(PDw.data)==size(T1w.data)),'hmri:inputArraySize','PDw.data and T1w.data must be the same size!')
 
 % Sanity check TR
-% Use "isAlways" so that hmri_calc_A.m can be called using symbolic variables
-assert(isAlways(PDw.TR>0),'hmri:TR','PDw.TR must be positive!')
-assert(isAlways(T1w.TR>0),'hmri:TR','T1w.TR must be positive!')
+% Compatible with both symbolic and numeric inputs
+if isa(PDw.TR, 'sym')
+    assert(isAlways(PDw.TR > 0), 'hmri:TR', 'PDw.TR must be positive!')
+else
+    assert(PDw.TR > 0, 'hmri:TR', 'PDw.TR must be positive!')
+end
+
+if isa(T1w.TR, 'sym')
+    assert(isAlways(T1w.TR > 0), 'hmri:TR', 'T1w.TR must be positive!')
+else
+    assert(T1w.TR > 0, 'hmri:TR', 'T1w.TR must be positive!')
+end
+
 
 A=T1w.data.*PDw.data.*( T1w.TR.*PDw.t./T1w.t - PDw.TR.*T1w.t./PDw.t )...
     ./ ( PDw.data.*T1w.TR.*PDw.t - T1w.data.*PDw.TR.*T1w.t );

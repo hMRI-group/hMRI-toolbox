@@ -31,7 +31,7 @@ popup.val = {true};
 DNdefaults         = cfg_files;
 DNdefaults.tag     = 'DNdefaults';
 DNdefaults.name    = 'Customised denoising defaults file';
-DNdefaults.help    = {['Select the hmri_*denoising*_defaults_*.m file containing ' ...
+DNdefaults.help    = {['Select your defaults (e.g. hmri_local_denoising_defaults.m) file containing ' ...
     'the parameters to process the denoising.'], ...
     ['Please make sure that the modified denoising (optional) parameters ' ...
     'are correct for your data. To create your own customised defaults file, ' ...
@@ -122,6 +122,51 @@ pdw.help = {'Input Magnitude/Phase images from PDw data', ...
     'If you only have one kind of weighting, please put them here.'};
 pdw.val  = {pdw_mag_img phase_img};
 
+
+% ---------------------------------------------------------------------
+% MP-PCA Mask
+% ---------------------------------------------------------------------
+% This is the Mask to be applied. Default value is: mask = [] 
+mp_mask         = cfg_files;
+mp_mask.tag     = 'mask';
+mp_mask.name    = 'Mask';
+mp_mask.val     = {['']};
+mp_mask.help    = {['As default, no masking is used: select the mask as a nifti file for masked processing. ' ...
+    'If the mask contains NaN values, these will be converted to zero during processing.']};
+mp_mask.filter  = 'image';
+mp_mask.ufilter = '.*';
+mp_mask.num     = [0 1];
+
+
+
+% ---------------------------------------------------------------------
+% MP-PCA Neighborhood Size
+% ---------------------------------------------------------------------
+mp_ngbsize         = cfg_entry;
+mp_ngbsize.tag     = 'ngbsize';
+mp_ngbsize.name    = 'Neighborhood size';
+mp_ngbsize.val     = {[4]};
+mp_ngbsize.strtype = 'e';
+mp_ngbsize.num     = [1 1];
+mp_ngbsize.help    = {['Specify the neghborhood size']...
+    ['As examples, we used 4 for hMRI toolbox demodata, in Veraart et al.,' ...
+    ' NeuroImage (2016) 142, p 394-406 also 5 and 7 are used for different cases.']};
+
+
+
+% ---------------------------------------------------------------------
+% MPPCA Denoising protocol
+% ---------------------------------------------------------------------
+denoisinginput_mppca      = cfg_branch;
+denoisinginput_mppca.tag  = 'mppca_denoise';
+denoisinginput_mppca.name = 'MPPCA denoising';
+denoisinginput_mppca.help = {'Input images for MPPCA denoising'
+    ['Regarding processing parameters, you can either stick with metadata and standard ' ...
+    'defaults parameters (recommended) or select your own [hmri_denoisinglocal_defaults_*.m] customised defaults file ' ...
+    '(fallback for situations where no metadata are available).']};
+denoisinginput_mppca.val  = {DNparameters mp_ngbsize mp_mask};
+
+
 % ---------------------------------------------------------------------
 % Standard deviation parameter
 % ---------------------------------------------------------------------
@@ -156,7 +201,7 @@ ngbsize.help    = {'Specify the neghborhood size', ['This parameter' ...
 denoisinginput_lcpca      = cfg_branch;
 denoisinginput_lcpca.tag  = 'lcpca_denoise';
 denoisinginput_lcpca.name = 'LCPCA denoising';
-denoisinginput_lcpca.help = {'Input Magnitude/Phase images for Lcpca-denoising'
+denoisinginput_lcpca.help = {'Input Magnitude/Phase images for LCPCA denoising'
     ['Regarding processing parameters, you can either stick with metadata and standard ' ...
     'defaults parameters (recommended) or select your own hmri_denoising_local_defaults_*.m customised defaults file.']};
 denoisinginput_lcpca.val  = {DNparameters std ngbsize};
@@ -171,10 +216,11 @@ denoisingtype.help   = {'Choose the method for denoising.'
     ['Various types of denoising methods can be handled by the hMRI ' ...
     'toolbox. See list below for a ' ...
     'brief description of each type.']
-    ['- LC-PCA denoising: Bazin, et al. (2019) Denoising High-Field Multi-Dimensional MRI With Local'...
+    ['- LCPCA denoising: Bazin, et al. (2019) Denoising High-Field Multi-Dimensional MRI With Local'...
     'Complex PCA, Front. Neurosci. doi:10.3389/fnins.2019.01066']
-    ' - No denoising:...'};
-denoisingtype.values = {denoisinginput_lcpca};
+    ['- MPPCA denoising: Veraart et al., NeuroImage (2016) 142, p 394-406 '...  
+    'Does, MD al. Magn Reson Med. 2019; 81: 3503– 3514.']};
+denoisingtype.values = {denoisinginput_lcpca denoisinginput_mppca};
 denoisingtype.val    = {denoisinginput_lcpca};
 
 % ---------------------------------------------------------------------

@@ -804,9 +804,10 @@ switch inParName
                         parValue{cRes} = 230:-10:0;
                     elseif contains(valMODELNAME,'7T','IgnoreCase',true)
                         parLocation{cRes} = [nam{1} '.adFree(3:4)'];
-                        parValue{cRes} = val{1}.adFree(3):-val{1}.adFree(4):0;      
+                        parValue{cRes} = val{1}.adFree(3):-val{1}.adFree(4):0;
                     else
-                        parLocation{cRes}=[];
+                        %Ensure B1 mapping falls back to defaults if scanner not recognised
+                        fprintf(1,'\nWARNING: B1mapping version (%s/%s) unknown for scanner %s. Give up guessing FA values.\n', valSEQ, valPROT, valMODELNAME);
                     end
                 otherwise
                     fprintf(1,'\nWARNING: B1mapping version unknown (%s/%s). Give up guessing FA values.\n', valSEQ, valPROT);

@@ -78,7 +78,7 @@ raws.val        = {raws1 raws2 raws3};
 % ---------------------------------------------------------------------
 % menu b1_type
 % ---------------------------------------------------------------------
-[b1_type,b1parameters] = tbx_scfg_hmri_B1_menu;
+[b1_type_orig,b1parameters] = tbx_scfg_hmri_B1_menu;
 
 % ---------------------------------------------------------------------
 % New B1 mapping methods should be added to tbx_scfg_hmri_B1_menu.m
@@ -113,6 +113,7 @@ b1_input_noB1.val     = {'noB1'};
 % Add extra B1 mapping methods which cannot be run independently of the
 % MPM map creation to the menu
 % ---------------------------------------------------------------------
+b1_type = b1_type_orig;
 b1_type.values  = [b1_type.values {b1_input_UNICORT, b1_input_noB1}];
 b1_type.help=[b1_type.help; {...
     [' - UNICORT: Use this option when B1 maps not available. ' ...
@@ -121,6 +122,34 @@ b1_type.help=[b1_type.help; {...
     'WARNING: the correction only applies to R1 maps.']
     [' - no B1 correction: This option is *not* recommended when computing R1 maps. ' ...
     'Consider using UNICORT instead.']
+    }];
+
+% ---------------------------------------------------------------------
+% Separate B1 map for MT pulse
+% ---------------------------------------------------------------------
+% potentially separate B1 map type for MT pulse (no UNICORT option)
+b1_type_MT = b1_type_orig;
+b1_type_MT.values  = [b1_type_MT.values {b1_input_noB1}];
+b1_type_MT.help=[b1_type_MT.help; {...
+    ' - no B1 correction: This option should only be used when there is no matching B1 mapping data. '}];
+b1_type_MT.name = 'MT pulse B1 mapping method';
+b1_type_MT.tag = 'b1_type_MT';
+
+b1_MT      = cfg_branch;
+b1_MT.tag  = 'b1_MT';
+b1_MT.name = 'Separate excitation and MT pulse B1 maps';
+b1_MT.help = {['One set of B1 mapping data is acquired for the excitation pulse ' ...
+    'and another for the MT pulse.']};
+b1_MT.val  = {setfield(b1_type,'name','Excitation pulse B1 mapping method') b1_type_MT}; %#ok<SFLD> 
+
+% ---------------------------------------------------------------------
+% Add separate B1 mapping for MT pulse to the menu
+% ---------------------------------------------------------------------
+b1_type.values  = [b1_type.values {b1_MT}];
+b1_type.help=[b1_type.help; {...
+    [' - separate excitation and MT pulse B1 maps: This option should be used ' ...
+     'when the excitation and MT pulses have different B1 inhomogeneities, e.g. ' ...
+     'due to the use of pTx ']
     }];
 
 % ---------------------------------------------------------------------

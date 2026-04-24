@@ -88,6 +88,8 @@ if ~exist(supplpath,'dir'); mkdir(supplpath); end
 % define other (temporary) paths for processing data
 b1path = fullfile(outpath, 'B1mapCalc');
 if ~exist(b1path,'dir'); mkdir(b1path); end
+b1_MT_path = fullfile(outpath, 'B1mapCalc_MT');
+if ~exist(b1_MT_path,'dir'); mkdir(b1_MT_path); end
 rfsenspath = fullfile(outpath, 'RFsensCalc');
 if ~exist(rfsenspath,'dir'); mkdir(rfsenspath); end
 mpmpath = fullfile(outpath, 'MPMCalc');
@@ -95,6 +97,7 @@ if ~exist(mpmpath,'dir'); mkdir(mpmpath); end
 
 % save all these paths in the job.subj structure
 job.subj.path.b1path = b1path;
+job.subj.path.b1_MT_path = b1_MT_path;
 job.subj.path.b1respath = supplpath; % copy B1 maps to supplementary folder
 job.subj.path.rfsenspath = rfsenspath;
 job.subj.path.mpmpath = mpmpath;
@@ -125,7 +128,25 @@ job.SPMver = sprintf('%s (%s)', v, r);
 spm_jsonwrite(fullfile(supplpath,'hMRI_map_creation_job_create_maps.json'),job,struct('indent','\t'));
 
 % run B1 map calculation for B1 bias correction
-P_trans = hmri_create_b1map(job.subj);
+if isfield(job.subj.b1_type,'b1_MT')
+    % excitation pulse B1 map
+    tmpsub = job.subj;
+    tmpsub.b1_suffix = '';
+    tmpsub.b1_type = job.subj.b1_type.b1_MT.b1_type;
+    job.subj.b1_trans_input = hmri_create_b1map(tmpsub);
+
+    % MT pulse B1 map
+    tmpsub = job.subj;
+    tmpsub.b1_suffix = '_MT';
+    tmpsub.path.b1path = b1_MT_path;
+    tmpsub.b1_type = job.subj.b1_type.b1_MT.b1_type_MT;
+    job.subj.b1_MT_trans_input = hmri_create_b1map(tmpsub);
+else
+    tmpsub = job.subj;
+    tmpsub.b1_suffix = '';
+    tmpsub.b1_type = job.subj.b1_type;
+    job.subj.b1_trans_input = hmri_create_b1map(tmpsub);
+end
 
 % check, if RF sensitivity profile was acquired and do the recalculation
 % accordingly
@@ -134,7 +155,6 @@ if isfield(job.subj.sensitivity,'RF_once') || isfield(job.subj.sensitivity,'RF_p
 end
 
 % run hmri_create_MTProt to evaluate the parameter maps
-job.subj.b1_trans_input = P_trans;
 [fR1, fR2s, fMT, fA, PPDw, PT1w, PMTw, Perror]  = hmri_create_MTProt(job.subj);
 
 % collect outputs:
@@ -166,6 +186,7 @@ end
 % clean after if required
 if hmri_get_defaults('cleanup')
     rmdir(job.subj.path.b1path,'s');
+    rmdir(job.subj.path.b1_MT_path,'s');
     rmdir(job.subj.path.rfsenspath,'s');
     rmdir(job.subj.path.mpmpath,'s');
 end

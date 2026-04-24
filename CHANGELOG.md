@@ -6,8 +6,12 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 
 ## [unreleased]
 ### Added
+- option to use a separate B1 map for B1 correction of MTsat; useful if pTx used for excitation pulses and CP mode for the MT pulse
+
+## [v1.0.0]
+### Added
 - option to choose different models and parameters for B1-correction of MTsat
-- set default WM percent value in `hmri_defaults`
+- set default WM percent value in hmri_defaults
 - spatial processing: add explicit mask creation and fix implicit mask (0 to NaN in float images)
 - update FIL seste seq parameters in get_metadata_val_classic
 - denoising module-first part: Java-Matlab interface for LCPCA denoising
@@ -15,21 +19,41 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 - save LCPCA-denoising supplementary files as nifti instead of .mat
 - parameter error maps
 - robust combination of two runs using error maps
-- option to use a separate B1 map for B1 correction of MTsat; useful if pTx used for excitation pulses and CP mode for the MT pulse
+- add .orig file extension to .gitignore to prevent merge artifacts to be pushed
+- update GUI code to enhance documentation for Proc. Smoothing
+- denoising module (lcpca): set mat_intent fields to input file values instead of spm_create_vol setting of 'aligned'
+- denoising module-second part: MPPCA denoising
+- added imperfect spoiling correction coefficients for common FIL protocols (3T and 7T).
+  Note that these coefficients are computed without the small angle approximation.
+- Update defaults with new recommended options: no more small angle approximation, and using weighted least squares R2* fitting
 
 ### Fixed
 - replace `datestr(now)` with `datetime('now')` in line with [MATLAB recommendation](https://mathworks.com/help/matlab/matlab_prog/replace-discouraged-instances-of-serial-date-numbers-and-date-strings.html)
 - fix crash if input images have different matrix sizes, and warn
 - make B1-map creation using 3DEPI SE/STE and AFI methods fall back to defaults without sidecar files, rather than crash
-- modify the filenames as files are copied to RFsensCalc to prevent overwriting in further processing
+- Modify the filenames as files are copied to RFsensCalc to prevent overwriting in further processing
 - batch interface now enforces the number of B1 input images correctly for B1 mapping methods which only need two images
 - more informative error if optimization toolbox not present during NLLS R2* calculation
 - fix 3D-EPI B1 mapping not using b1defaults for Triotim scanner
-- use cell- instead of char-array to accommodate filenames of unequal length in RFsens
+- use cell- instead of char- array to accommodate filenames of unequal length in RFsens
+- prevent missing B1 map for MTsat spamming the log
+- fix when no TE provided in 3DEPI SE/STE B1 mapping data
+- fixes compatibility with spm/spm required due to refactoring that removed TEMPLATE field
+- do not log ISC-applied to R1 in case of no-B1-corr and UNICORT
+- account for diffusion while gradients are off when calculating imperfect spoiling correction parameters
+- apply shift and diffusion operators in the correct order when calculating imperfect spoiling correction parameters
+- Default AFI TR2/TR1 value now matches typical sequence order
+
+### Breaking changes
+- Old, unused imperfect spoiling correction coefficients have been removed and replaced with new ones.
+  If you need the old coefficients, you will need to add them back using a local defaults file.
+- Fix inconsistency between new implementation of PD and old T2* weighting removal method
+- Update imperfect spoiling correction with upstream bugfixes in EPG-X so computed coefficients will be different
+- Default AFI TR2/TR1 value now based on the second input image having the longer TR, which may not be the case for older data
 
 ## [v0.6.1]
 ### Fixed
-- local config files have been converted to scripts for compatibility with compiled version
+- The local config files have been converted to scripts for compatibility with compiled version
 - function-evaluate SPM-struct (preproc8.val) for SPM development version compatibility
 - copy acquisition metadata to TE=0 volumes in Results/Supplementary folder after map creation so they can be used as input to the toolbox if needed
 
@@ -41,7 +65,7 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 - issue #5: fixed version check for compiled toolbox
 - QUIQI check: dependence on stats toolbox
 - issue #14 (Spatial processing: Inverse deformation field moved along with forward deformation field to requested folder)
-- issue #59: both the [qform and the sform](https://nifti.nimh.nih.gov/nifti-1/documentation/nifti1fields/nifti1fields_pages/qsform.html) of the first PD-weighted image are now propagated to the quantitative maps, rather than just the sform
+- issue #59: both the [qform and the sform](https://web.archive.org/web/20231204061721/https://nifti.nimh.nih.gov/nifti-1/documentation/nifti1fields/nifti1fields_pages/qsform.html) of the first PD-weighted image are now propagated to the quantitative maps, rather than just the sform
 - Add OSF interface to download test files directly from the online storage
 
 ### Breaking changes

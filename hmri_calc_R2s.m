@@ -1,9 +1,13 @@
-function [R2s,extrapolated,DeltaR2s,SError]=hmri_calc_R2s(weighted_data,fitmethod,famethod,fT)
+function [R2s,extrapolated,DeltaR2s,SError]=hmri_calc_R2s(weighted_data,fitmethod,famethod)
 % R2* estimation using an implementation of the ESTATICS
 % model (Weiskopf2014). Can utilise weighted least squares (WLS) instead of
 % the original ordinary least squares (OLS; Weiskopf2014) to account
 % for the heteroscedasticity of log transformed data (Edwards2022).
-% Can also estimate a linear flip angle dependence of R2* (Milotta2023).
+%
+% We can also fit a linear flip angle dependence of R2* (Milotta2023)
+% by setting famethod='linear'. This will make R2s much less sensitive to
+% B1 inhomogeneity, but the estimated DeltaR2s will still be B1 sensitive;
+% this can be corrected for using hmri_correct_DeltaR2s.
 %
 % Input:
 %   array of structures (one per contrast) in the form:
@@ -48,19 +52,15 @@ function [R2s,extrapolated,DeltaR2s,SError]=hmri_calc_R2s(weighted_data,fitmetho
 %     -Options are: 'none'   (Weiskopf2014)
 %                   'linear' (Milotta2023)
 %
-%   fT:
-%     a relative flip angle map (FAactual/FAnominal) to correct DeltaR2s
-%     for local flip angle inhomogeneities. Only relevant if famethod='linear'
-%
 % Outputs:
 %   R2s (NvoxelsX x NvoxelsY x ...): the voxelwise-estimated
 %       common R2* of the weightings.
 %   extrapolated: cell array containing data extrapolated to TE=0 in the
 %       same order as the input (e.g. matching contrast order).
 %   DeltaR2s (NvoxelsX x NvoxelsY x ...): the flip-angle dependent
-%       common R2* of the weightings (zero if famethod='none'). Will be
-%       corrected for local flip angle inhomogeneity if fT is provided,
-%       otherwise this will need to be done outside this function.
+%       common R2* of the weightings (zero if famethod='none'). This is not
+%       corrected for transmit B1 inhomogeneity; see hmri_correct_DeltaR2s
+%       for more details.
 %   SError.weighted: Per contrast root mean square error of signal minus
 %       fitted signal. Used for calculating error maps (Mohammadi2022).
 %   SError.R2s: Root mean square residual of R2* fit.
@@ -111,6 +111,9 @@ Nweighted=numel(weighted_data);
 
 % default to classic ESTATICS
 if ~exist('famethod','var') || isempty(famethod), famethod='none'; end
+
+% cannot do linear fitting with only one flip angle
+if Nweighted==1, famethod='none'; end
 
 % Account for extra fitting parameter
 switch lower(famethod)
@@ -250,13 +253,6 @@ switch lower(famethod)
         DeltaR2s=zeros([dims(1:end-1),1]);
     case 'linear'
         DeltaR2s=reshape(beta(2,:),[dims(1:end-1),1]);
-
-        % correct for local flip angle inhomogeneity if fT map provided;
-        % linear dependence on flip angle means can just divide out the 
-        % inhomogeneity
-        if exist('fT','var') && ~isempty(fT)
-            DeltaR2s = DeltaR2s./fT;
-        end
 end
 
 % Extrapolate weightings to TE=0

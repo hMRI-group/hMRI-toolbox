@@ -862,7 +862,7 @@ for p = 1:dm(3)
         if ~isempty(fDeltaR2s)
             % linear dependence on flip angle means can just divide out B1 in gradient
             if ~isempty(f_T)
-                NDeltaR2smap.dat(:,:,p) = NDeltaR2smap.dat(:,:,p)./f_T;
+                NDeltaR2smap.dat(:,:,p) = hmri_correct_DeltaR2s(NDeltaR2smap.dat(:,:,p), f_T);
             end
         end
     end

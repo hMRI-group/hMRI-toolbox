@@ -6,8 +6,11 @@ function [R2s,extrapolated,DeltaR2s,SError]=hmri_calc_R2s(weighted_data,fitmetho
 %
 % We can also fit a linear flip angle dependence of R2* (Milotta2023)
 % by setting famethod='linear'. This will make R2s much less sensitive to
-% B1 inhomogeneity, but the estimated DeltaR2s will still be B1 sensitive;
-% this can be corrected for using hmri_correct_DeltaR2s.
+% myelin water. Note that the estimated DeltaR2s will be B1 proportional
+% to the local B1 inhomogeneity; this can be corrected for using
+% hmri_correct_DeltaR2s. MT-weighted data should not be used with
+% famethod='linear' because effects arising from the MT pulse are not
+% accounted for.
 %
 % Input:
 %   array of structures (one per contrast) in the form:
@@ -23,7 +26,7 @@ function [R2s,extrapolated,DeltaR2s,SError]=hmri_calc_R2s(weighted_data,fitmetho
 %    the user to decide how to handle this case, e.g. by removing the
 %    corresponding voxels from the input data or replacing zeroes with a
 %    small positive number.
-%   -For famethod 'linear', the structures should also have an 'fa' field
+%   -For famethod='linear', the structures should also have an 'fa' field
 %    giving the flip angle in radians.
 %
 %   fitmethod:
@@ -76,15 +79,21 @@ function [R2s,extrapolated,DeltaR2s,SError]=hmri_calc_R2s(weighted_data,fitmetho
 %   parameters:
 %       R2s = hmri_calc_R2s(struct('data',PDw,'TE',PDwTE),'NLLS_OLS');
 %
-%   ESTATICS estimate of common R2* of PD, T1, and MT-weighted data,
+%   ESTATICS estimate of common R2* of PD-, T1-, and MT-weighted data,
 %   along with estimates of the extrapolation of the input data to TE=0:
 %       [R2s,extrapolated] = hmri_calc_R2s([struct('data',PDw,'TEs',PDwTE),...
 %           struct('data',T1w,'TE',T1wTE), struct('data',MTw,'TEs',MTwTE)],'OLS');
 %
-%   WLS-ESTATICS estimate of common R2* of PD, T1, and MT-weighted data
+%   WLS-ESTATICS estimate of common R2* of PD-, T1-, and MT-weighted data
 %   with 1 iteration:
 %       R2s = hmri_calc_R2s([struct('data',PDw,'TE',PDwTE),...
 %           struct('data',T1w,'TE',T1wTE), struct('data',MTw,'TE',MTwTE)],'WLS1');
+%
+%   ESTATICS estimate of common R2* of PD- and T1-weighted data accounting
+%   for a linear flip angle dependence of the common R2*:
+%       [R2s,~,DeltaR2s] = hmri_calc_R2s([struct('data',PDw,'TEs',PDwTE),...
+%           struct('data',T1w,'TE',T1wTE), struct('data',MTw,'TEs',MTwTE)],'OLS','linear');
+%       DeltaR2s = hmri_correct_DeltaR2s(DeltaR2s, f_T); % f_T is a map of flip angle inhomogeneity
 %
 % References:
 %   Weiskopf et al. Front. Neurosci. (2014), "Estimating the apparent

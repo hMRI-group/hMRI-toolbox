@@ -36,7 +36,7 @@
 %__________________________________________________________________________
 
 % Global hmri_def variable used across the whole toolbox
-global hmri_def %#ok<GVMIS>
+global hmri_def
 
 %--------------------------------------------------------------------------
 % B1 mapping processing parameters
@@ -53,7 +53,7 @@ hmri_def.b1map.i3D_AFI.b1type = 'i3D_AFI';
 hmri_def.b1map.i3D_AFI.b1avail = true;
 hmri_def.b1map.i3D_AFI.procreq = true;
 % b1-acquisition
-hmri_def.b1map.i3D_AFI.b1acq.TR2TR1ratio = 0.2; % TR of second input volume over TR of first input volume
+hmri_def.b1map.i3D_AFI.b1acq.TR2TR1ratio = 5; % TR of second input volume over TR of first input volume
 hmri_def.b1map.i3D_AFI.b1acq.alphanom = 60;
 hmri_def.b1map.i3D_AFI.b1acq.tert = 1e3/425; % length of readout = 1e3/BandwidthPerPixel ms
 hmri_def.b1map.i3D_AFI.b1acq.blipDIR = +1;
@@ -86,7 +86,7 @@ hmri_def.b1map.DAM.b1proc.B1FWHM = 8; % For smoothing of B1 map. FWHM in mm; set
 
 % 'pre_processed_B1'
 hmri_def.b1map.pre_processed_B1.b1type = 'pre_processed_B1';
-hmri_def.b1map.pre_processed_B1.b1avail   = true;
+hmri_def.b1map.pre_processed_B1.b1avail = true;
 hmri_def.b1map.pre_processed_B1.procreq = false;
 hmri_def.b1map.pre_processed_B1.b1mask.domask = false; % whether to mask using hmri_create_pm_brain_mask.m
 hmri_def.b1map.pre_processed_B1.b1mask.fwhm = 5; % options for hmri_create_pm_brain_mask.m

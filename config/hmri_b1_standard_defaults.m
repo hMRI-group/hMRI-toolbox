@@ -3,7 +3,7 @@ function hmri_b1_standard_defaults
 %!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 % DON'T MODIFY THIS FILE, IT CONTAINS B1 PROCESSING DEFAULTS PARAMETERS.
 % Please refer to hMRI-Toolbox\config\local\hmri_b1_local_defaults.m to
-% customise B1 processing parameters.
+% customise B1 processing parameters.  
 %!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 %
 % FORMAT hmri_b1_standard_defaults
@@ -29,7 +29,7 @@ function hmri_b1_standard_defaults
 %__________________________________________________________________________
 
 % Global hmri_def variable used across the whole toolbox
-global hmri_def %#ok<GVMIS>
+global hmri_def
 
 %--------------------------------------------------------------------------
 % B1 mapping processing parameters
@@ -45,7 +45,7 @@ hmri_def.b1map.i3D_AFI.b1type = 'i3D_AFI';
 hmri_def.b1map.i3D_AFI.b1avail = true;
 hmri_def.b1map.i3D_AFI.procreq = true;
 % b1-acquisition
-hmri_def.b1map.i3D_AFI.b1acq.TR2TR1ratio = 0.2; % TR of second input volume over TR of first input volume
+hmri_def.b1map.i3D_AFI.b1acq.TR2TR1ratio = 5; % TR of second input volume over TR of first input volume
 hmri_def.b1map.i3D_AFI.b1acq.alphanom = 60;
 hmri_def.b1map.i3D_AFI.b1acq.tert = 1e3/425; % length of readout = 1e3/BandwidthPerPixel ms
 hmri_def.b1map.i3D_AFI.b1acq.blipDIR = +1;

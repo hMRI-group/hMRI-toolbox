@@ -6,7 +6,7 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 
 ## [unreleased]
 
-## [beta-v1.0.0]
+## [v1.0.0]
 ### Added
 - option to choose different models and parameters for B1-correction of MTsat
 - set default WM percent value in hmri_defaults
@@ -40,12 +40,14 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 - do not log ISC-applied to R1 in case of no-B1-corr and UNICORT
 - account for diffusion while gradients are off when calculating imperfect spoiling correction parameters
 - apply shift and diffusion operators in the correct order when calculating imperfect spoiling correction parameters
+- Default AFI TR2/TR1 value now matches typical sequence order
 
 ### Breaking changes
 - Old, unused imperfect spoiling correction coefficients have been removed and replaced with new ones.
   If you need the old coefficients, you will need to add them back using a local defaults file.
 - Fix inconsistency between new implementation of PD and old T2* weighting removal method
 - Update imperfect spoiling correction with upstream bugfixes in EPG-X so computed coefficients will be different
+- Default AFI TR2/TR1 value now based on the second input image having the longer TR, which may not be the case for older data
 
 ## [v0.6.1]
 ### Fixed
@@ -61,7 +63,7 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 - issue #5: fixed version check for compiled toolbox
 - QUIQI check: dependence on stats toolbox
 - issue #14 (Spatial processing: Inverse deformation field moved along with forward deformation field to requested folder)
-- issue #59: both the [qform and the sform](https://nifti.nimh.nih.gov/nifti-1/documentation/nifti1fields/nifti1fields_pages/qsform.html) of the first PD-weighted image are now propagated to the quantitative maps, rather than just the sform
+- issue #59: both the [qform and the sform](https://web.archive.org/web/20231204061721/https://nifti.nimh.nih.gov/nifti-1/documentation/nifti1fields/nifti1fields_pages/qsform.html) of the first PD-weighted image are now propagated to the quantitative maps, rather than just the sform
 - Add OSF interface to download test files directly from the online storage
 
 ### Breaking changes

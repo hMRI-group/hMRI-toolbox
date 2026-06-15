@@ -747,16 +747,17 @@ end
 % (NB: if a 'b0input' field is present, it may be empty)
 if isfield(jobsubj.b1_type.(b1_protocol),'b0input')
     b1map_params.b0input = char(spm_file(jobsubj.b1_type.(b1_protocol).b0input,'number',''));
-    if isempty(b1map_params.b0input) && strcmp(b1_protocol, 'i3D_EPI')
-        % hmri_log(sprintf(['WARNING: expected B0 fieldmap not available for EPI undistortion.\n' ...
-        %     '\tNo fieldmap correction will be applied.']),b1map_params.defflags);
-        hmri_log(sprintf(['WARNING: expected B0 fieldmap not available for EPI undistortion.\n' ...
-            '\tThe current implementation does not allow you to apply EPI-based B1 bias \n' ...
-            '\tcorrection without phase unwrapping. Switching to "no B1 correction" mode.\n' ...
-            '\tIf you meant to apply B1 bias correction, check your data and re-run the batch.']),b1map_params.defflags);
-        b1_protocol = 'no_B1_correction';
-        b1map_params = hmri_get_defaults('b1map.no_B1_correction');
+    if isempty(b1map_params.b0input)
         b1map_params.b0avail = false;
+        if strcmp(b1_protocol, 'i3D_EPI')
+            hmri_log(sprintf(['WARNING: expected B0 fieldmap not available for EPI undistortion.\n' ...
+                '\tThe current implementation does not allow you to apply EPI-based B1 bias \n' ...
+                '\tcorrection without phase unwrapping. Switching to "no B1 correction" mode.\n' ...
+                '\tIf you meant to apply B1 bias correction, check your data and re-run the batch.']),b1map_params.defflags);
+            b1_protocol = 'no_B1_correction';
+            b1map_params = hmri_get_defaults('b1map.no_B1_correction');
+            b1map_params.b0avail = false;
+        end
     else
         b1map_params.b0avail = true;
     end

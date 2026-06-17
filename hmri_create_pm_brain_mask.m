@@ -9,7 +9,6 @@ function [bmask,OP] = hmri_create_pm_brain_mask(P,flags)
 % P - is a single pointer to a single image
 %
 % flags - structure containing various options
-%         template - which template for segmentation
 %         fwhm     - fwhm of smoothing kernel for generating mask
 %         nerode   - number of erosions
 %         thresh   - threshold for smoothed mask 
@@ -36,13 +35,13 @@ function [bmask,OP] = hmri_create_pm_brain_mask(P,flags)
 % $Id: pm_brain_mask.m 5014 2012-10-24 10:56:28Z guillaume $
 
 if nargin < 2 || isempty(flags)
-   flags.template=fullfile(spm('Dir'),'toolbox','FieldMap','T1.nii');
+   %flags.template=fullfile(spm('Dir'),'toolbox','FieldMap','T1.nii');
    flags.fwhm=5;
    flags.nerode=2;
    flags.ndilate=4;
    flags.thresh=0.5;
-   flags.reg = 0.02;
-   flags.graphics=0;
+   %flags.reg = 0.02;
+   %flags.graphics=0;
 end
 
 disp('Segmenting and extracting brain...');

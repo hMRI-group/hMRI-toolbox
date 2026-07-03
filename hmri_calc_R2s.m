@@ -82,7 +82,8 @@ function [R2s,extrapolated,SError]=hmri_calc_R2s(weighted_data,method)
 %     group level sensitivity." 
 %     https://doi.org/10.1016/j.neuroimage.2022.119529
 
-
+% init global popup flag to get access to it
+global hmri_popupFlag;
 
 assert(isstruct(weighted_data),'hmri:structError',['inputs must be structs; see help ' mfilename])
 
@@ -164,8 +165,10 @@ switch lower(method)
         ver_status = any(ismember(versionCell, 'Optimization Toolbox'));
         [license_status,~] = license('checkout', 'Optimization_toolbox');
         if ver_status==0 || license_status==0
-            error('hmri:NoOptimToolbox', "The methods 'nlls_ols','nlls_wls1','nlls_wls2','nlls_wls3' require Optimization Toolbox: either this toolbox and/or its license is missing." + ...
-                " Please use another method which does not need the Optimization Toolbox such as 'ols','wls1','wls2','wls3'. ")
+            err_string= "The methods 'nlls_ols','nlls_wls1','nlls_wls2','nlls_wls3' require Optimization Toolbox: either this toolbox and/or its license is missing." + ...
+                " Please use another method which does not need the Optimization Toolbox such as 'ols','wls1','wls2','wls3'. ";
+            hmri_log(char(strcat("ERROR: ", err_string)),hmri_popupFlag);
+            error('hmri:NoOptimToolbox', err_string)
         end
 
         % Check for NLLS case, where specification of the log-linear
@@ -195,7 +198,8 @@ switch lower(method)
             beta(:,n)=lsqcurvefit(@(x,D)expDecay(x,D),beta0(:,n),D,y(:,n),[],[],opt);
         end
     otherwise
-        error(['method ' method ' not recognised'])
+        hmri_log([' ERROR: ' 'method ' method ' not recognised'],hmri_popupFlag);
+        error('hmri:MissingR2Method', ['method ' method ' not recognised'])
 end
 
 %% Output

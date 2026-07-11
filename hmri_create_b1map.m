@@ -178,7 +178,7 @@ B1map_norm = real(FAmap)*100/alphanom;
 mask = mask_for_B1(spm_vol(B1ref),b1map_params.b1mask);
 
 % smoothed map
-smB1map_norm = smoothB1(V1,B1map_norm,b1map_params.b1proc.B1FWHM,mask);
+smB1map_norm = smoothB1(V1,B1map_norm,b1map_params.b1proc.B1FWHM,b1map_params.b1proc.B1filtertype,mask);
 
 % save output images
 VB1 = V1;
@@ -240,7 +240,7 @@ B1map_norm = real(B1map)*100;
 mask = mask_for_B1(spm_vol(B1ref),b1map_params.b1mask);
 
 % smoothed map
-smB1map_norm = smoothB1(V1,B1map_norm,b1map_params.b1proc.B1FWHM,mask);
+smB1map_norm = smoothB1(V1,B1map_norm,b1map_params.b1proc.B1FWHM,b1map_params.b1proc.B1filtertype,mask);
 
 % save output images
 VB1 = V1;
@@ -573,7 +573,7 @@ B1map_norm = (abs(Vol1)+offset)*scaling;
 mask = mask_for_B1(V2,b1map_params.b1mask);
 
 % smoothed map
-smB1map_norm = smoothB1(V1,B1map_norm,b1map_params.b1proc.B1FWHM,mask);
+smB1map_norm = smoothB1(V1,B1map_norm,b1map_params.b1proc.B1FWHM,b1map_params.b1proc.B1filtertype,mask);
 
 % Save B1map in OUTPUT dir
 %-----------------------------------------------------------------------
@@ -1056,9 +1056,9 @@ end
 %=========================================================================%
 % To smooth B1 map calculation output.
 %=========================================================================%
-function smB1map_norm = smoothB1(V,B1map_norm,B1FWHM,mask)
+function smB1map_norm = smoothB1(V,B1map_norm,B1FWHM,B1filtertype,mask)
 
-assert(numel(B1FWHM)==1||numel(B1FWHM)==3,...
+assert(isscalar(B1FWHM)||numel(B1FWHM)==3,...
     ['FWHM of B1 smoothing kernel (B1FWHM) must have either one element ' ...
     '(isotropic smoothing) or three elements (3d anisotropic smoothing)']);
 
@@ -1069,14 +1069,30 @@ if any(B1FWHM>0)
     smB1map_norm = zeros(size(B1map_norm));
     pxs = sqrt(sum(V.mat(1:3,1:3).^2)); % Voxel resolution
     smth = B1FWHM./pxs;
-    spm_smooth(mask.*B1map_norm,smB1map_norm,smth);
 
-    % Renormalise so that we are not biased by zeroed background voxels
-    if numel(mask)>1 % i.e. mask is not a scalar
-        norm_factor = zeros(size(B1map_norm));
-        spm_smooth(double(mask),norm_factor,smth);
-        smB1map_norm(norm_factor~=0)=smB1map_norm(norm_factor~=0)./norm_factor(norm_factor~=0);
+    switch lower(B1filtertype)
+        case 'gaussian'
+            spm_smooth(mask.*B1map_norm,smB1map_norm,smth);
+
+            % Renormalise so that we are not biased by zeroed background
+            % voxels which were other masked out or for which there is no
+            % B1 estimate
+            norm_factor = zeros(size(B1map_norm));
+            spm_smooth(double(mask),norm_factor,smth);
+            smB1map_norm(norm_factor~=0) = smB1map_norm(norm_factor~=0) ...
+                ./ norm_factor(norm_factor~=0);
+
+        case 'median'
+            if all(ceil(smth)==1)
+                hmri_log('WARNING: median smoothing filter size is less than or equal to the voxel size: no smoothing will be performed!', b1map_params.defflags);
+            end
+            % Median over smoothing kernel omitting NaN and zero values
+            smB1map_norm = nlfilter3(B1map_norm, ceil(smth), @(x) median(x(x>0), 'all', 'omitmissing'));
+
+        otherwise
+            error('hmri:unknownb1filter', 'unknown B1 filter type %s', B1filtertype);
     end
+
 else % skip calculation if kernel width is zero
     smB1map_norm = B1map_norm;
 end
@@ -1092,6 +1108,47 @@ if flags.domask
     bmask=hmri_create_pm_brain_mask(Vanat,flags);
 else
     bmask=true; % return a scalar
+end
+
+end
+
+%=========================================================================%
+% Function to apply a nonlinear filter function in 3D
+%=========================================================================%
+function B = nlfilter3(A, n, Afun)
+% Similar to nlfilter.m but for a 3D array "A".
+%
+% Arguments:
+%   A:    3D array to be filtered
+%   n:    filter kernel width (scalar integer or 3 element vector
+%         of integers)
+%   Afun: function to apply to the values within the filter kernel
+
+% Allow convenient specification of isotropic filter size
+if isscalar(n)
+    n = [n n n];
+elseif length(n)==3
+    % do nothing
+else
+    error("n should be of length 1 or 3; was length %i",length(n))
+end
+
+% Deal with edges
+Apad = padarray(A, floor(n/2), 'replicate', 'both');
+
+% There are probably more efficient ways to do this,
+% but this works for now
+dims = size(A);
+B = zeros(dims);
+for i=1:dims(1)
+    for j=1:dims(2)
+        for k=1:dims(3)
+            iidx = i:i+n(1)-1;
+            jidx = j:j+n(2)-1;
+            kidx = k:k+n(3)-1;
+            B(i,j,k) = Afun(Apad(iidx,jidx,kidx));
+        end
+    end
 end
 
 end

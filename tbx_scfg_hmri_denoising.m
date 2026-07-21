@@ -122,6 +122,65 @@ pdw.help = {'Input Magnitude/Phase images from PDw data', ...
     'If you only have one kind of weighting, please put them here.'};
 pdw.val  = {pdw_mag_img phase_img};
 
+% ---------------------------------------------------------------------
+% adap-Mask
+% ---------------------------------------------------------------------
+% This is the Mask to be applied. Default value is: mask = [] 
+paws_mask         = cfg_files;
+paws_mask.tag     = 'mask';
+paws_mask.name    = 'Mask';
+paws_mask.help    = {'Select the Mask'};
+paws_mask.filter  = 'image';
+paws_mask.ufilter = '.*';
+paws_mask.num     = [0 1];
+
+
+
+% ---------------------------------------------------------------------
+% kstar
+% ---------------------------------------------------------------------
+paws_kstar         = cfg_entry;
+paws_kstar.tag     = 'kstar';
+paws_kstar.name    = 'Kstar parameter';
+paws_kstar.val     = {[16]};
+paws_kstar.strtype = 'e';
+paws_kstar.num     = [1 1];
+paws_kstar.help    = {['Specify kstar parameter']};
+
+% ---------------------------------------------------------------------
+% patchsz
+% ---------------------------------------------------------------------
+paws_patchsize         = cfg_entry;
+paws_patchsize.tag     = 'patchsize';
+paws_patchsize.name    = 'Patchsize parameter';
+paws_patchsize.val     = {[1]};
+paws_patchsize.strtype = 'e';
+paws_patchsize.num     = [1 1];
+paws_patchsize.help    = {['Specify patchsize parameter']};
+
+% ---------------------------------------------------------------------
+% ladjust
+% ---------------------------------------------------------------------
+paws_ladjust         = cfg_entry;
+paws_ladjust.tag     = 'ladjust';
+paws_ladjust.name    = 'Ladjust parameter';
+paws_ladjust.val     = {[1]};
+paws_ladjust.strtype = 'e';
+paws_ladjust.num     = [1 1];
+paws_ladjust.help    = {['Specify ladjust parameter']};
+
+
+% ---------------------------------------------------------------------
+% Denoising protocol
+% ---------------------------------------------------------------------
+denoisinginput_paws      = cfg_branch;
+denoisinginput_paws.tag  = 'paws_denoise';
+denoisinginput_paws.name = 'Adaptive denoising';
+denoisinginput_paws.help = {'Input images for Adaptive-denoising'
+    ['Regarding processing parameters, you can either stick with metadata and standard ' ...
+    'defaults parameters (recommended) or select your own [hmri_denoisinglocal_defaults_*.m] customised defaults file ' ...
+    '(fallback for situations where no metadata are available).']};
+denoisinginput_paws.val  = {DNparameters paws_kstar paws_patchsize paws_ladjust paws_mask};
 
 % ---------------------------------------------------------------------
 % MP-PCA Mask
@@ -218,9 +277,11 @@ denoisingtype.help   = {'Choose the method for denoising.'
     'brief description of each type.']
     ['- LCPCA denoising: Bazin, et al. (2019) Denoising High-Field Multi-Dimensional MRI With Local'...
     'Complex PCA, Front. Neurosci. doi:10.3389/fnins.2019.01066']
-    ['- MPPCA denoising: Veraart et al., NeuroImage (2016) 142, p 394-406 '...  
-    'Does, MD al. Magn Reson Med. 2019; 81: 3503– 3514.']};
-denoisingtype.values = {denoisinginput_lcpca denoisinginput_mppca};
+    ['- MPPCA denoising: Veraart et al., NeuroImage (2016) 142, p 394-406. '...
+    'Does, MD al., Magn Reson Med. (2019) 81,p 3503– 3514.']
+    ['- Adaptive denoising: Mohammadi, et al. WIAS preprint (2017). '...
+    'Polzehl et al. Magnetic Resonance Brain Imaging 2nd edition (2023)']};
+denoisingtype.values = {denoisinginput_lcpca denoisinginput_mppca denoisinginput_paws};
 denoisingtype.val    = {denoisinginput_lcpca};
 
 % ---------------------------------------------------------------------

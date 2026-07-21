@@ -15,6 +15,10 @@ switch denoising_protocol
         [output_mag, output_phase] = hmri_calc_mppcadenoise(denoising_params);
         varargout{1} = output_mag;
         varargout{2} = output_phase;
+    case 'paws_denoise'
+        [output_mag, output_phase] = hmri_calc_pawsdenoise(denoising_params);
+        varargout{1} = output_mag;
+        varargout{2} = output_phase;
 end
 end
 
@@ -97,6 +101,13 @@ switch denoising_protocol
         denoising_params.mask = jobsubj.denoisingtype.(denoising_protocol).mask;
         denoising_params.ngbsize = jobsubj.denoisingtype.(denoising_protocol).ngbsize;
 
+        denoising_params.output_path = jobsubj.path.dnrespath;
+        denoising_params.supp_path = jobsubj.path.supplpath;
+        case 'paws_denoise'
+        denoising_params.mask = jobsubj.denoisingtype.(denoising_protocol).mask;
+        denoising_params.kstar = jobsubj.denoisingtype.(denoising_protocol).kstar;
+        denoising_params.patchsize = jobsubj.denoisingtype.(denoising_protocol).patchsize;
+        denoising_params.ladjust = jobsubj.denoisingtype.(denoising_protocol).ladjust;
         denoising_params.output_path = jobsubj.path.dnrespath;
         denoising_params.supp_path = jobsubj.path.supplpath;
 
@@ -617,6 +628,34 @@ dt=[spm_type('float32'),spm_platform('bigend')];
 Ni_dim = hmri_create_nifti(outfname, filehdr, dt, filehdr.descrip);
 Ni_dim.dat(:,:,:)=num_pc;
 
+end
+
+
+%===============================================================================================%
+% Calculate adaptive-denoising
+%=================================================================================================%
+
+function [output_mag, output_phase] = hmri_calc_pawsdenoise(pawsdenoiseparams)
+
+%define the flag for log
+pawsflags = pawsdenoiseparams.defflags;
+pawsflags_nopopup = pawsflags;
+pawsflags_nopopup.PopUp = false;
+
+%%Read from the input the processing parameters
+image_list = cellstr(pawsdenoiseparams.mag_img);
+firstIm= image_list{1};
+%Get params from 1st image and init variables
+image = spm_vol(firstIm);
+imagevol = spm_read_vols(image);
+imsize = size(imagevol);
+imlen = length(image_list);
+
+%%Read pawsdenoise params
+mask = pawsdenoiseparams.mask;
+kstar = pawsdenoiseparams.kstar;
+patchsize = pawsdenoiseparams.patchsize;
+ladjust = pawsdenoiseparams.ladjust;
 end
 
 %=========================================================================%

@@ -1,0 +1,39 @@
+{
+	"Input": {
+		"outdir": ["hMRI-toolbox\\EPG_for_hmri_tbx"],
+		"prot_name": "FIL_600um_2021",
+		"seq_params": {
+			"FA_deg": [6,24],
+			"TR_ms": [19.5,19.5],
+			"Phi0_deg": 144,
+			"B1range_percent": [40,70,100,130,160],
+			"Gdur_ms": [2.27,2.27,2.27,2.27,2.27,2.27,1.52],
+			"Gamp_mT_per_m": [18.35,-18.35,18.35,-18.35,18.35,-18.35,-37.73]
+		},
+		"tissue_params": {
+			"T1range_ms": [750,1000,1250,1500,1750,2000],
+			"T2range_ms": 40,
+			"D_um2_per_ms": 0.8
+		},
+		"small_angle_approx": false
+	},
+	"Output": {
+		"P2_a": [21.8584,-28.7113,9.1151],
+		"P2_b": [-0.0452,0.0534,0.9845],
+		"small_angle_approx": false,
+		"RMSE_percent": {
+			"T1app": 1.636,
+			"T1corr": 0.109
+		}
+	},
+	"ToCopy": [
+		"hmri_def.MPMacq_set.names{NN} = 'FIL_600um_2021';",
+		"hmri_def.MPMacq_set.tags{NN}  = 'FIL_600um_2021';",
+		"hmri_def.MPMacq_set.vals{NN}  = [19.5         19.5            6           24];",
+		"hmri_def.imperfectSpoilCorr.FIL_600um_2021.tag = 'FIL_600um_2021';",
+		"hmri_def.imperfectSpoilCorr.FIL_600um_2021.P2_a = [21.8584     -28.7113       9.1151];",
+		"hmri_def.imperfectSpoilCorr.FIL_600um_2021.P2_b = [-0.0452      0.0534      0.9845];",
+		"hmri_def.imperfectSpoilCorr.FIL_600um_2021.small_angle_approx = false;",
+		"hmri_def.imperfectSpoilCorr.FIL_600um_2021.enabled = hmri_def.imperfectSpoilCorr.enabled;"
+	]
+}

@@ -1,0 +1,39 @@
+{
+	"Input": {
+		"outdir": ["hMRI-toolbox\\EPG_for_hmri_tbx"],
+		"prot_name": "FIL_v3star",
+		"seq_params": {
+			"FA_deg": [6,21],
+			"TR_ms": [25,25],
+			"Phi0_deg": 137,
+			"B1range_percent": [70,75,80,85,90,95,100,105,110,115,120,125,130],
+			"Gdur_ms": 3.3876,
+			"Gamp_mT_per_m": 26
+		},
+		"tissue_params": {
+			"T1range_ms": [500,600,700,800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800,1900,2000],
+			"T2range_ms": 70,
+			"D_um2_per_ms": 0.8
+		},
+		"small_angle_approx": false
+	},
+	"Output": {
+		"P2_a": [19.6072,-26.8305,13.7302],
+		"P2_b": [-0.0485,0.0496,0.982],
+		"small_angle_approx": false,
+		"RMSE_percent": {
+			"T1app": 1.433,
+			"T1corr": 0.075
+		}
+	},
+	"ToCopy": [
+		"hmri_def.MPMacq_set.names{NN} = 'FIL_v3star';",
+		"hmri_def.MPMacq_set.tags{NN}  = 'FIL_v3star';",
+		"hmri_def.MPMacq_set.vals{NN}  = [25  25   6  21];",
+		"hmri_def.imperfectSpoilCorr.FIL_v3star.tag = 'FIL_v3star';",
+		"hmri_def.imperfectSpoilCorr.FIL_v3star.P2_a = [19.6072     -26.8305      13.7302];",
+		"hmri_def.imperfectSpoilCorr.FIL_v3star.P2_b = [-0.0485      0.0496       0.982];",
+		"hmri_def.imperfectSpoilCorr.FIL_v3star.small_angle_approx = false;",
+		"hmri_def.imperfectSpoilCorr.FIL_v3star.enabled = hmri_def.imperfectSpoilCorr.enabled;"
+	]
+}

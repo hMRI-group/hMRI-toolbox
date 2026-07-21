@@ -98,24 +98,26 @@ switch denoising_protocol
         hmri_log(sprintf('Lcpca Denoising Parameters:\n\n%s', ...
             printdnstruct),denoising_params.defflags);
         case 'mppca_denoise'
+
         denoising_params.mask = jobsubj.denoisingtype.(denoising_protocol).mask;
         denoising_params.ngbsize = jobsubj.denoisingtype.(denoising_protocol).ngbsize;
 
         denoising_params.output_path = jobsubj.path.dnrespath;
         denoising_params.supp_path = jobsubj.path.supplpath;
+        % Print mppca denoising parameters 
+        print_mppca_params.ngbsize = denoising_params.ngbsize;
+        printdnstruct = printstruct(print_mppca_params);
+        hmri_log(sprintf('MP-PCA Denoising Parameters:\n\n%s', ...
+            printdnstruct),denoising_params.defflags);
+
         case 'paws_denoise'
+            
         denoising_params.mask = jobsubj.denoisingtype.(denoising_protocol).mask;
         denoising_params.kstar = jobsubj.denoisingtype.(denoising_protocol).kstar;
         denoising_params.patchsize = jobsubj.denoisingtype.(denoising_protocol).patchsize;
         denoising_params.ladjust = jobsubj.denoisingtype.(denoising_protocol).ladjust;
         denoising_params.output_path = jobsubj.path.dnrespath;
         denoising_params.supp_path = jobsubj.path.supplpath;
-
-        % Print mppca denoising parameters 
-        print_mppca_params.ngbsize = denoising_params.ngbsize;
-        printdnstruct = printstruct(print_mppca_params);
-        hmri_log(sprintf('MP-PCA Denoising Parameters:\n\n%s', ...
-            printdnstruct),denoising_params.defflags);
 
 end
 

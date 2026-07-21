@@ -116,6 +116,8 @@ switch  denoising_protocol
         protocol_text = 'LCPCA';
     case 'mppca_denoise'
         protocol_text = 'MPPCA';
+    case 'paws_denoise'
+        protocol_text = 'Adaptive denoising';
 end
 log_text = sprintf("APPLYING %s DENOISING", protocol_text);
 

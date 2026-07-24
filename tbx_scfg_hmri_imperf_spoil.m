@@ -32,14 +32,14 @@ prot_name.tag     = 'prot_name';
 prot_name.name    = 'Protocol Name ';
 prot_name.val     = {'Unit_Test_Protocol'};
 prot_name.strtype = 's';
-prot_name.help    = {['Specify the name of the protocol']};
+prot_name.help    = {'Specify the name of the protocol'};
 % ---------------------------------------------------------------------
 % T1 range [ms]
 % ---------------------------------------------------------------------
 T1range        = cfg_entry;
 T1range.tag     = 'T1range_ms';
 T1range.name    = 'T1 range (ms)';
-T1range.val     = {[500:100:2000]};
+T1range.val     = {500:100:2000};
 T1range.strtype = 'e';
 T1range.num     = [1 Inf];
 T1range.help    = {['Specify the range of T1 times over which the ',...
@@ -53,7 +53,7 @@ T1range.help    = {['Specify the range of T1 times over which the ',...
 B1range         = cfg_entry;
 B1range.tag     = 'B1range_percent';
 B1range.name    = 'Expected B1+ range (%)';
-B1range.val     = {[70 : 5 : 130]};
+B1range.val     = {70:5:130};
 B1range.strtype = 'e';
 B1range.num     = [1 Inf];
 B1range.help    = {['Specify the range of transmit field efficiency (B1+) over which the ',...
@@ -70,7 +70,7 @@ T2.name    = 'T2 range (ms)';
 T2.val     = {[70]};
 T2.strtype = 'r';
 T2.num     = [1 Inf];
-T2.help    = {['Specify an estimate of the T2 time in ms, or an array of values']};
+T2.help    = {'Specify an estimate of the T2 time in ms, or an array of values'};
 
 
 % ---------------------------------------------------------------------
@@ -79,10 +79,10 @@ T2.help    = {['Specify an estimate of the T2 time in ms, or an array of values'
 D        = cfg_entry;
 D.tag     = 'D_um2_per_ms';
 D.name    = 'D (um^2/ms)';
-D.val     = {[0.8]};
+D.val     = {0.8};
 D.strtype = 'r';
 D.num     = [1 1];
-D.help    = {['Specify an estimate of the diffusion coeffcient (D) in um^2/ms']};
+D.help    = {'Specify an estimate of the diffusion coefficient (D) in um^2/ms'};
 
 % ---------------------------------------------------------------------
 % Readout gradient amplitude [ms] 
@@ -95,7 +95,8 @@ Gdur.strtype = 'e';
 Gdur.num     = [1 Inf];
 Gdur.help    = {['Specify the duration (in ms) of the spoiler gradient  ',...
                 'of the FLASH acquisitions. Note here a vector could be '...
-                'included to account for the full effect of the readout, e.g. multiple echoes ']};
+                'included to account for the full effect of the readout, e.g. multiple echoes. '...
+                'Gradients will be played out at the end of each TR']};
 % ---------------------------------------------------------------------
 % Spoiler gradient amplitude [ms] 
 % ---------------------------------------------------------------------
@@ -130,7 +131,7 @@ Phi0.name    = 'RF spoiling increment';
 Phi0.val     = {[137]};
 Phi0.strtype = 'w';
 Phi0.num     = [1 1];
-Phi0.help    = {['Specify the RF SPoiling increment (in deg) of the FLASH acquisitions']};
+Phi0.help    = {'Specify the RF spoiling increment (in deg) of the FLASH acquisitions'};
 
 % ---------------------------------------------------------------------
 % Flip angles [deg]
@@ -171,7 +172,7 @@ small_angle_approx.name   = 'Small angle approximation';
 small_angle_approx.help   = {'Should the small angle approximation be used to compute T1? This can lead to significant differences in the computed parameters.'};
 small_angle_approx.labels = { 'yes', 'no' };
 small_angle_approx.values = { true false };
-small_angle_approx.val    = { true };
+small_angle_approx.val    = { false };
 
 % ---------------------------------------------------------------------
 % Compute correction factors for imperfect spoiling

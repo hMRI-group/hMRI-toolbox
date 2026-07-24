@@ -20,6 +20,33 @@ for c = 1:length(contrasts)
     jobsubj.phase_img = [jobsubj.phase_img; jobsubj.(con).phase_img];
 end
 
+% error and inform user at the beginning if duplicate input filenames
+mag_duplicate=check_filenames(jobsubj.mag_img);
+ph_duplicate=check_filenames(jobsubj.phase_img);
+magph_duplicate=check_filenames([jobsubj.mag_img jobsubj.phase_img]);
+
+if mag_duplicate && ph_duplicate
+    error(sprintf(['Both magnitude and phase images contain same filenames in different image directories! \n' ...
+        'Please make sure all file names across different input directories are distinct and try again.']))
+end
+
+if mag_duplicate 
+    error(sprintf(['Magnitude images contain same filenames in different image directories! \n' ...
+        'Please make sure all file names across different input directories are distinct and try again.']))
+end
+
+if ph_duplicate 
+    error(sprintf(['Phase images contain same filenames in different image directories! \n' ...
+        'Please make sure all file names across different input directories are distinct and try again.']))
+end
+
+if magph_duplicate
+    error(sprintf(['At least one magnitude and one phase image share the same names! \n' ...
+        'Please make sure all file names across different input directories are distinct and try again.']))
+end
+
+
+
 % Case indir versus outdir
 try
     outpath = jobsubj.output.outdir{1}; % case outdir
@@ -145,4 +172,22 @@ for c = 1:length(contrasts)
 end
 
 hmri_log(sprintf('\t============ DENOISING MODULE: completed (%s) ============', datetime('now')),flags);
+end
+
+function duplicate_filename = check_filenames(filepaths)
+
+    if isempty(filepaths)
+        duplicate_filename = 0;
+        return
+    end
+
+    n = numel(filepaths);
+    filenames = cell(n,1);
+
+    for i = 1:n
+        [~, name, ext] = fileparts(filepaths{i});
+        filenames{i} = [name ext];  
+    end
+
+    duplicate_filename = numel(unique(filenames)) < n;
 end

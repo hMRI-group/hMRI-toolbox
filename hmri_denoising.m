@@ -74,6 +74,10 @@ denoising_params.phase_img = cellstr(char(spm_file(jobsubj.phase_img,'number',''
 denoising_params.phase_bool = any(~cellfun(@isempty, denoising_params.phase_img));
 denoising_params.mag_bool = any(~cellfun(@isempty, denoising_params.mag_img));
 
+% Load contrast tags
+denoising_params.mag_img_cotags= jobsubj.mag_img_cotags;
+denoising_params.phase_img_cotags= jobsubj.phase_img_cotags;
+
 % processing can continue if only magnitude images were entered but
 % only warn that optional phase img are missing
 if ~denoising_params.phase_bool || ~isfield(jobsubj,'phase_img')

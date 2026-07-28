@@ -133,6 +133,11 @@ switch denoising_protocol
             denoising_params.(con) = full_mag_img(con_filter);
         end
 
+        % Get TE for further processing
+        denoising_params.t1w_te = get_te(char(denoising_params.t1w));
+        denoising_params.pdw_te = get_te(char(denoising_params.pdw));
+        denoising_params.mtw_te = get_te(char(denoising_params.mtw));
+
 end
 
 end
@@ -701,4 +706,21 @@ fntmp = fieldnames(struc);
 for cf = 1:length(fntmp)
     s = sprintf('%s %16s: %s\n', s, fntmp{cf}, num2str(struc.(fntmp{cf})));
 end
+end
+
+%% =======================================================================%
+% modify get_trtefa to get TE values
+% To extract the TE values out of the descriptor field of 
+% the nifti header or the extended header/JSON metadata.
+%=========================================================================%
+function p = get_te(P)
+
+N = nifti(P);
+nN = numel(N);
+p(nN) = struct('te',[]);
+
+for ii = 1:numel(N)
+    p(ii).te = get_metadata_val(P(ii,:),'EchoTime');
+end
+
 end

@@ -75,8 +75,8 @@ denoising_params.phase_bool = any(~cellfun(@isempty, denoising_params.phase_img)
 denoising_params.mag_bool = any(~cellfun(@isempty, denoising_params.mag_img));
 
 % Load contrast tags
-denoising_params.mag_img_cotags= jobsubj.mag_img_cotags;
-denoising_params.phase_img_cotags= jobsubj.phase_img_cotags;
+denoising_params.mag_img_cotags= string(jobsubj.mag_img_cotags);
+denoising_params.phase_img_cotags= string(jobsubj.phase_img_cotags);
 
 % processing can continue if only magnitude images were entered but
 % only warn that optional phase img are missing
@@ -122,6 +122,16 @@ switch denoising_protocol
         denoising_params.ladjust = jobsubj.denoisingtype.(denoising_protocol).ladjust;
         denoising_params.output_path = jobsubj.path.dnrespath;
         denoising_params.supp_path = jobsubj.path.supplpath;
+
+        % Get separate contrasts
+        contrasts = {"pdw","t1w","mtw"};
+        cotags= denoising_params.mag_img_cotags;
+        full_mag_img=denoising_params.mag_img;
+        for c = 1:length(contrasts)
+            con = contrasts{c};
+            con_filter = (cotags==con);
+            denoising_params.(con) = full_mag_img(con_filter);
+        end
 
 end
 

@@ -16,7 +16,7 @@ switch denoising_protocol
         varargout{1} = output_mag;
         varargout{2} = output_phase;
     case 'paws_denoise'
-        [output_mag, output_phase] = hmri_calc_pawsdenoise(denoising_params);
+        [output_mag, output_phase] = hmri_calc_adaptivedenoising(denoising_params);
         varargout{1} = output_mag;
         varargout{2} = output_phase;
 end

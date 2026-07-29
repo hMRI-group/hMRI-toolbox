@@ -656,15 +656,15 @@ end
 % Calculate adaptive-denoising
 %=================================================================================================%
 
-function [output_mag, output_phase] = hmri_calc_pawsdenoise(pawsdenoiseparams)
+function [output_mag, output_phase] = hmri_calc_adaptivedenoising(denoising_params)
 
 %define the flag for log
-pawsflags = pawsdenoiseparams.defflags;
+pawsflags = denoising_params.defflags;
 pawsflags_nopopup = pawsflags;
 pawsflags_nopopup.PopUp = false;
 
 %%Read from the input the processing parameters
-image_list = cellstr(pawsdenoiseparams.mag_img);
+image_list = cellstr(denoising_params.mag_img);
 firstIm= image_list{1};
 %Get params from 1st image and init variables
 image = spm_vol(firstIm);
@@ -673,10 +673,10 @@ imsize = size(imagevol);
 imlen = length(image_list);
 
 %%Read pawsdenoise params
-mask = pawsdenoiseparams.mask;
-kstar = pawsdenoiseparams.kstar;
-patchsize = pawsdenoiseparams.patchsize;
-ladjust = pawsdenoiseparams.ladjust;
+mask = denoising_params.mask;
+kstar = denoising_params.kstar;
+patchsize = denoising_params.patchsize;
+ladjust = denoising_params.ladjust;
 end
 
 %=========================================================================%

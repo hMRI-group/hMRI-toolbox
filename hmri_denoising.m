@@ -675,9 +675,9 @@ wghts = sqrt(sum(image.mat(1:3,1:3).^2));
 
 %%Read pawsdenoise params
 mask = denoising_params.mask;
-kstar = denoising_params.kstar;
-patchsize = denoising_params.patchsize;
-ladjust = denoising_params.ladjust;
+kstar = double(denoising_params.kstar);
+patchsize = double(denoising_params.patchsize);
+ladjust = double(denoising_params.ladjust);
 
 alpha= denoising_params.alpha;
 fit_method = denoising_params.fit_method;

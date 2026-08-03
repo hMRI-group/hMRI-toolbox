@@ -671,6 +671,7 @@ image = spm_vol(firstIm);
 imagevol = spm_read_vols(image);
 imsize = size(imagevol);
 imlen = length(image_list);
+wghts = sqrt(sum(image.mat(1:3,1:3).^2));
 
 %%Read pawsdenoise params
 mask = denoising_params.mask;

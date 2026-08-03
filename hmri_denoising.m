@@ -688,21 +688,37 @@ corr_fac_patchsize = denoising_params.corr_fac_patchsize;
 
 % prepare weighted_data for further processing
 
-weighted_data(1).data = zeros(imsize(1),imsize(2),imsize(3),len(length(denoising_params.pdw)))
-weighted_data(1).TE = denoising_params.pdw_te.te
+weighted_data(1).data = zeros(imsize(1),imsize(2),imsize(3),length(denoising_params.t1w));
+TE_array = [denoising_params.t1w_te.te];
+weighted_data(1).TE = TE_array;
+
+
+for img=1:length(denoising_params.t1w)
+    im_str = spm_vol(denoising_params.t1w(img));
+    im_vol = spm_read_vols(im_str{1}); 
+    weighted_data(1).data(:,:,:,img) = im_vol;
+
+end
+
+weighted_data(2).data = zeros(imsize(1),imsize(2),imsize(3),length(denoising_params.mtw));
+TE_array = [denoising_params.mtw_te.te];
+weighted_data(2).TE = TE_array;
+
+for img=1:length(denoising_params.mtw)
+    im_str = spm_vol(denoising_params.mtw(img));
+    im_vol = spm_read_vols(im_str{1}); 
+    weighted_data(2).data(:,:,:,img) = im_vol;
+
+end
+
+weighted_data(3).data = zeros(imsize(1),imsize(2),imsize(3),length(denoising_params.pdw));
+TE_array = [denoising_params.pdw_te.te];
+weighted_data(3).TE = TE_array;
 
 for img=1:length(denoising_params.pdw)
     im_str = spm_vol(denoising_params.pdw(img));
-    im_vol = spm_read_vols(im_str); 
-    weighted_data(1).data(:,:,:,img) = im_vol;
-end
-
-for img=1:length(denoising_params.t1w)
-
-end
-
-for img=1:length(denoising_params.mtw)
-
+    im_vol = spm_read_vols(im_str{1}); 
+    weighted_data(3).data(:,:,:,img) = im_vol;
 end
 
 end

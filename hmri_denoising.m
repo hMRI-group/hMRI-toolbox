@@ -686,6 +686,10 @@ spmin = denoising_params.spmin;
 lambda0 = denoising_params.lambda0;
 corr_fac_patchsize = denoising_params.corr_fac_patchsize;
 
+% ── Mask for testing───────────────────────────────────────────────────────
+mask = logical(ones(imsize));
+
+
 % prepare weighted_data for further processing
 
 weighted_data(1).data = zeros(imsize(1),imsize(2),imsize(3),length(denoising_params.t1w));
@@ -720,6 +724,208 @@ for img=1:length(denoising_params.pdw)
     im_vol = spm_read_vols(im_str{1}); 
     weighted_data(3).data(:,:,:,img) = im_vol;
 end
+
+  % ══ Step 1: mimic estimateESTATICS ════════════════════════════════════════
+  %
+  % estimateESTATICS fits S_k = A_k * exp(-R2* * TE) via NLS per voxel and
+  % collects modelCoeff [nv x nvoxel], invCov [nv x nv x nvoxel], rsigma.
+  % We use hmri_calc_R2s (log-linear OLS) as an approximation, then build
+  % modelCoeff and a signal-space invCov from its output.
+
+  [R2s, extrapolated, SError] = hmri_calc_R2s(weighted_data, fit_method);
+
+  % Derived dimensions
+  numcon       = numel(weighted_data);      % number of contrasts
+  nvec         = numcon + 1;                % R2s + one intercept per contrast
+  [n1, n2, n3] = size(R2s);
+  nechos       = sum(arrayfun(@(w) numel(w.TE), weighted_data));
+
+  % modelCoeff [nvec x nmask]: R2s in row 1, signal at TE=0 in rows 2..nvec.
+  modelCoeff      = zeros(nvec, nnz(mask));
+  modelCoeff(1,:) = R2s(mask);
+  for w = 1:numcon
+    modelCoeff(w+1,:) = extrapolated{w}(mask);
+  end
+
+  % ══ Step 2: mimic smoothESTATICS ══════════════════════════════════════════
+  %
+  % Build invCov from the NLS signal-model Jacobian, consistent with
+  % signal-space modelCoeff = [R2s, A_1, ..., A_ncon].
+  %
+  % Jacobian of S_k = A_{c(k)} * exp(-R2s * TE_k) w.r.t. [R2s, A_1,...]:
+  %   J[k, 1]   = -A_{c(k)} * TE_k * exp(-R2s * TE_k)
+  %   J[k, w+1] =  exp(-R2s * TE_k)  for echo k in contrast w, else 0
+  %
+  % invCov(v) = J(v)' J(v) / sigma2_signal(v), stored in lower-triangular
+  % row-major order matching KLdistsi (element order: (1,1),(2,1),(2,2),...).
+
+  % Signal-space residual variance per voxel [n1 x n2 x n3].
+  % SError.weighted{w} = rms of signal residuals for contrast w (per voxel).
+  sigma2_NLS = zeros(n1, n2, n3);
+  for w = 1:numcon
+    nTE_w      = numel(weighted_data(w).TE);
+    sigma2_NLS = sigma2_NLS + nTE_w * SError.weighted{w}.^2;
+  end
+  sigma2_NLS = sigma2_NLS / (nechos - nvec);
+
+  % Optional spatial stabilisation of sigma2 (mirrors rsdx/rsdhat in R).
+  if mscbw > 0 && exist('medianFilter3D', 'file')
+    sigma2_s        = medianFilter3D(sigma2_NLS, mscbw, mask);
+    sigma2_s(~mask) = mean(sigma2_s(mask));
+  else
+    sigma2_s = sigma2_NLS;
+  end
+
+  % Compute J'J blocks vectorised over masked voxels.
+  nmask  = nnz(mask);
+  R2s_v  = R2s(mask)';          % [1 x nmask]
+  JtJ_11 = zeros(1, nmask);     % (R2s,  R2s ) block
+  JtJ_w1 = zeros(numcon, nmask);% (A_w,  R2s ) blocks
+  JtJ_ww = zeros(numcon, nmask);% (A_w,  A_w ) diagonal blocks
+
+  for w = 1:numcon
+    TEs_w  = weighted_data(w).TE(:);           % [nTE_w x 1]
+    A_w_v  = extrapolated{w}(mask)';           % [1 x nmask]
+    exp2   = exp(-2 * TEs_w .* R2s_v);        % [nTE_w x nmask]
+    JtJ_11    = JtJ_11 + A_w_v.^2 .* sum(TEs_w.^2 .* exp2, 1);
+    JtJ_w1(w,:) =      - A_w_v    .* sum(TEs_w    .* exp2, 1);
+    JtJ_ww(w,:) =                    sum(             exp2, 1);
+  end
+
+  sigma2_v = sigma2_s(mask)';   % [1 x nmask]
+
+  % Assemble invCov [nvd x nmask] in KLdistsi lower-triangular row-major order:
+  % (1,1),(2,1),(2,2),(3,1),(3,2),(3,3),... Cross-contrast off-diagonals are 0.
+  nvd    = nvec * (nvec + 1) / 2;
+  invCov = zeros(nvd, nmask);
+  idx    = 0;
+  for row = 1:nvec
+    for col = 1:row
+      idx = idx + 1;
+      if row == 1 && col == 1
+        invCov(idx,:) = JtJ_11 ./ sigma2_v;
+      elseif col == 1
+        invCov(idx,:) = JtJ_w1(row-1,:) ./ sigma2_v;
+      elseif row == col
+        invCov(idx,:) = JtJ_ww(row-1,:) ./ sigma2_v;
+      end
+    end
+  end
+
+  % mpmData [nechos x nmask] — raw echo data restricted to mask.
+  mpmData  = zeros(nechos, nnz(mask));
+  echo_idx = 1;
+  for w = 1:numcon
+    nTE    = numel(weighted_data(w).TE);
+    data_w = reshape(weighted_data(w).data, [], nTE);   % [nvoxel x nTE]
+    mpmData(echo_idx:echo_idx+nTE-1, :) = data_w(mask(:), :)';
+    echo_idx = echo_idx + nTE;
+  end
+
+  % ══ PAWS Smoothing ═════════════════════════
+
+  % modelCoeff : nvec x nmask double matrix of model parameters (mask-restricted)
+  % mpmData    : nechos x nmask double matrix of raw echo data (mask-restricted)
+  % invCov     : nvec*(nvec+1)/2 x nmask double matrix, lower-triangular inverse covariance (mask-restricted)
+  % mask       : n1 x n2 x n3 logical array
+  % nechos     : total number of echoes across all contrasts
+  % nvec       : number of model parameters
+  % wghts      : 3-element voxel-size ratio vector [wx, wy, wz], or [] for isotropic
+  % kstar      : number of smoothing iterations
+  % patchsize  : patch radius (0, 1, or 2)
+  % ladjust    : adaptation bandwidth adjustment factor (default 1)
+  % alpha      : significance level for the adaptive test (default 0.025)
+  %              supported values: 0.5, 0.1, 0.05, 0.025, 0.01
+
+  % wghts: default to isotropic, then convert 3-element [wx,wy,wz] to
+  % 2-element ratio vector [wx/wy, wx/wz] as expected by the C functions
+  if isempty(wghts)
+    wghts = [1, 1, 1];
+  end
+  wghts = wghts(1) ./ wghts(2:3);
+  
+  % spatial dims from mask
+  [n1, n2, n3] = size(mask);
+
+  % ── Spatial Dimensions ────────────────────────────────────────────────────
+  % patch size in each dimension (1 when that dimension is flat)
+  np1 = 2 * patchsize + 1;
+  if n2 > 1, np2 = 2 * patchsize + 1; else np2 = 1; end
+  if n3 > 1, np3 = 2 * patchsize + 1; else np3 = 1; end
+
+  hmax   = 1.25 ^ (kstar / 3);
+  lambda = ladjust * 2 * nvec * qf(nvec, nechos - nvec, alpha) * corr_fac_patchsize(patchsize + 1);
+
+  fprintf('PAWS: kstar=%d, patchsize=%d, lambda=%.4f\n', kstar, patchsize, lambda);
+
+  % ── Mask Position Array ───────────────────────────────────────────────────
+  % position array: 0 outside mask, 1..nmask inside mask (int32 for MEX)
+  position = zeros(n1, n2, n3, 'int32');
+  position(mask > 0) = int32(1:nnz(mask));
+
+  % ── Smoothing State Variables ─────────────────────────────────────────────
+  % initialise adaptation weights and current estimate
+  bi    = ones(1, nnz(mask));
+  theta = modelCoeff;
+
+  % ── PAWS Smoothing Iteration ──────────────────────────────────────────────
+  k = 1;
+  while k <= kstar
+
+    hakt    = gethani(1, 1.25 * hmax, 2, 1.25 ^ k, wghts, 1e-4);
+    dlw     = 2 * floor(hakt ./ [1, wghts]) + 1;
+    lwghtSz = prod(dlw);  % scalar size of the lwght scratch buffer
+
+    fprintf('PAWS: iteration %d/%d  hakt=%.3f  lambda0=%.4g\n', k, kstar, hakt, lambda0);
+
+    if k == kstar && ~isempty(mpmData)
+
+      [bi, theta, smoothedmpmData] = pvawslast(modelCoeff, ...
+                                               mpmData, ...
+                                               position, ...
+                                               nvec, ...
+                                               nvec * (nvec + 1) / 2, ...
+                                               nechos, ...
+                                               n1, n2, n3, ...
+                                               hakt, lambda0, ...
+                                               theta, bi, invCov, ...
+                                               1, ...
+                                               spmin, wghts, lwghtSz, ...
+                                               np1, np2, np3);
+
+    else
+
+      [bi, theta] = pvaws(modelCoeff, ...
+                          position, ...
+                          nvec, ...
+                          nvec * (nvec + 1) / 2, ...
+                          n1, n2, n3, ...
+                          hakt, lambda0, ...
+                          theta, bi, invCov, ...
+                          1, ...
+                          spmin, wghts, lwghtSz, ...
+                          np1, np2, np3);
+
+    end
+
+    lambda0 = lambda;
+    k = k + 1;
+  end
+
+  % ── Reconstruct denoised weighted_data ────────────────────────────────────
+  denoised_weighted_data = weighted_data;
+  echo_idx = 1;
+  for w = 1:numcon
+    nTE      = numel(weighted_data(w).TE);
+    data_out = zeros(n1, n2, n3, nTE);
+    for e = 1:nTE
+      vol       = zeros(n1, n2, n3);
+      vol(mask) = smoothedmpmData(echo_idx + e - 1, :);
+      data_out(:,:,:,e) = vol;
+    end
+    denoised_weighted_data(w).data = data_out;
+    echo_idx = echo_idx + nTE;
+  end
 
 end
 

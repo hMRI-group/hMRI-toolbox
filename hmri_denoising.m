@@ -663,6 +663,9 @@ pawsflags = denoising_params.defflags;
 pawsflags_nopopup = pawsflags;
 pawsflags_nopopup.PopUp = false;
 
+% set the metadata mod
+json = hmri_get_defaults('json');
+
 %%Read from the input the processing parameters
 image_list = cellstr(denoising_params.mag_img);
 firstIm= image_list{1};
@@ -692,38 +695,40 @@ mask = logical(ones(imsize));
 
 % prepare weighted_data for further processing
 
-weighted_data(1).data = zeros(imsize(1),imsize(2),imsize(3),length(denoising_params.t1w));
-TE_array = [denoising_params.t1w_te.te];
+weighted_data(1).data = zeros(imsize(1),imsize(2),imsize(3),length(denoising_params.pdw));
+TE_array = [denoising_params.pdw_te.te];
 weighted_data(1).TE = TE_array;
+
+for img=1:length(denoising_params.pdw)
+    im_str = spm_vol(denoising_params.pdw(img));
+    im_vol = spm_read_vols(im_str{1}); 
+    weighted_data(1).data(:,:,:,img) = im_vol;
+end
+
+weighted_data(2).data = zeros(imsize(1),imsize(2),imsize(3),length(denoising_params.t1w));
+TE_array = [denoising_params.t1w_te.te];
+weighted_data(2).TE = TE_array;
 
 
 for img=1:length(denoising_params.t1w)
     im_str = spm_vol(denoising_params.t1w(img));
     im_vol = spm_read_vols(im_str{1}); 
-    weighted_data(1).data(:,:,:,img) = im_vol;
-
-end
-
-weighted_data(2).data = zeros(imsize(1),imsize(2),imsize(3),length(denoising_params.mtw));
-TE_array = [denoising_params.mtw_te.te];
-weighted_data(2).TE = TE_array;
-
-for img=1:length(denoising_params.mtw)
-    im_str = spm_vol(denoising_params.mtw(img));
-    im_vol = spm_read_vols(im_str{1}); 
     weighted_data(2).data(:,:,:,img) = im_vol;
 
 end
 
-weighted_data(3).data = zeros(imsize(1),imsize(2),imsize(3),length(denoising_params.pdw));
-TE_array = [denoising_params.pdw_te.te];
+weighted_data(3).data = zeros(imsize(1),imsize(2),imsize(3),length(denoising_params.mtw));
+TE_array = [denoising_params.mtw_te.te];
 weighted_data(3).TE = TE_array;
 
-for img=1:length(denoising_params.pdw)
-    im_str = spm_vol(denoising_params.pdw(img));
+for img=1:length(denoising_params.mtw)
+    im_str = spm_vol(denoising_params.mtw(img));
     im_vol = spm_read_vols(im_str{1}); 
     weighted_data(3).data(:,:,:,img) = im_vol;
+
 end
+
+
 
   % ══ Step 1: mimic estimateESTATICS ════════════════════════════════════════
   %
@@ -925,6 +930,172 @@ end
     end
     denoised_weighted_data(w).data = data_out;
     echo_idx = echo_idx + nTE;
+  end
+
+
+  data_out = denoised_weighted_data(1).data;
+  data_size = size(data_out);
+  data_len = data_size(4);
+  output_path = cellstr(denoising_params.output_path);
+  supp_path = cellstr(denoising_params.supp_path);
+  idx_mag = 1;
+  image_list = denoising_params.pdw;
+  for echo = 1:data_len
+      % get denoised volume
+      volumedata  = data_out(:,:,:,echo);
+      % write the volume to .nii with an update to standard .nii header
+      firstfile = image_list{echo};
+      filehdr = spm_vol(image_list{echo});
+
+      [path,filename,ext] = fileparts(firstfile);
+      [~,mainfilename,~] = fileparts(firstfile);
+      filename = strcat('AdaptiveDenoised_',filename,'.nii');
+
+      outfname = fullfile(output_path{1},filename);
+      dt = filehdr.dt;
+      updated_descrip = strcat(filehdr.descrip, ' + adaptive denoised');
+      denoised_nifti = hmri_create_nifti(outfname, filehdr, dt, updated_descrip);
+      denoised_nifti.dat(:,:,:) = volumedata;
+
+      % write metadata as extended header and sidecar json
+      Output_hdr = init_dn_output_metadata(image_list, denoising_params);
+      Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (ADAPTIVE)'];
+      Output_hdr.history.output.imtype = 'Denoising (ADAPTIVE)';
+      % add acquisition data if available (otherwise fields will be empty)
+      jsonfilename = fullfile(path,strcat(mainfilename,'.json'));
+      if exist(jsonfilename, 'file') ==2
+          try
+              jsondata = spm_jsonread(jsonfilename);
+              data_RepetitionTime = get_metadata_val(jsondata,'RepetitionTime');
+              data_EchoTime = get_metadata_val(jsondata,'EchoTime' );
+              data_FlipAngle = get_metadata_val(jsondata, 'FlipAngle');
+              Output_hdr.acqpar = struct('RepetitionTime',data_RepetitionTime, ...
+                  'EchoTime',data_EchoTime,'FlipAngle',data_FlipAngle);
+          catch
+              hmri_log('Although json sidecar file were found, the writing of acquisition metadata failed', mppcaflags_nopopup);  
+
+          end
+      else
+          hmri_log('No json sidecar file were found, skipping the writing of acquisition metadata', mppcaflags_nopopup);  
+      end
+
+      % set all the metadata
+      set_metadata(outfname,Output_hdr,json);
+
+      % add image to the output list
+      out_mag{idx_mag} = outfname;
+      idx_mag = idx_mag +1;
+
+
+  end
+
+
+  data_out = denoised_weighted_data(2).data;
+  data_size = size(data_out);
+  data_len = data_size(4);
+  idx_mag = 1;
+  image_list = denoising_params.t1w;
+  for echo = 1:data_len
+      % get denoised volume
+      volumedata  = data_out(:,:,:,echo);
+      % write the volume to .nii with an update to standard .nii header
+      firstfile = image_list{echo};
+      filehdr = spm_vol(image_list{echo});
+
+      [path,filename,ext] = fileparts(firstfile);
+      [~,mainfilename,~] = fileparts(firstfile);
+      filename = strcat('AdaptiveDenoised_',filename,'.nii');
+
+      outfname = fullfile(output_path{1},filename);
+      dt = filehdr.dt;
+      updated_descrip = strcat(filehdr.descrip, ' + adaptive denoised');
+      denoised_nifti = hmri_create_nifti(outfname, filehdr, dt, updated_descrip);
+      denoised_nifti.dat(:,:,:) = volumedata;
+
+      % write metadata as extended header and sidecar json
+      Output_hdr = init_dn_output_metadata(image_list, denoising_params);
+      Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (ADAPTIVE)'];
+      Output_hdr.history.output.imtype = 'Denoising (ADAPTIVE)';
+      % add acquisition data if available (otherwise fields will be empty)
+      jsonfilename = fullfile(path,strcat(mainfilename,'.json'));
+      if exist(jsonfilename, 'file') ==2
+          try
+              jsondata = spm_jsonread(jsonfilename);
+              data_RepetitionTime = get_metadata_val(jsondata,'RepetitionTime');
+              data_EchoTime = get_metadata_val(jsondata,'EchoTime' );
+              data_FlipAngle = get_metadata_val(jsondata, 'FlipAngle');
+              Output_hdr.acqpar = struct('RepetitionTime',data_RepetitionTime, ...
+                  'EchoTime',data_EchoTime,'FlipAngle',data_FlipAngle);
+          catch
+              hmri_log('Although json sidecar file were found, the writing of acquisition metadata failed', mppcaflags_nopopup);  
+
+          end
+      else
+          hmri_log('No json sidecar file were found, skipping the writing of acquisition metadata', mppcaflags_nopopup);  
+      end
+
+      % set all the metadata
+      set_metadata(outfname,Output_hdr,json);
+
+      % add image to the output list
+      out_mag{idx_mag} = outfname;
+      idx_mag = idx_mag +1;
+
+
+  end
+
+  data_out = denoised_weighted_data(3).data;
+  data_size = size(data_out);
+  data_len = data_size(4);
+  idx_mag = 1;
+  image_list = denoising_params.mtw;
+  for echo = 1:data_len
+      % get denoised volume
+      volumedata  = data_out(:,:,:,echo);
+      % write the volume to .nii with an update to standard .nii header
+      firstfile = image_list{echo};
+      filehdr = spm_vol(image_list{echo});
+
+      [path,filename,ext] = fileparts(firstfile);
+      [~,mainfilename,~] = fileparts(firstfile);
+      filename = strcat('AdaptiveDenoised_',filename,'.nii');
+
+      outfname = fullfile(output_path{1},filename);
+      dt = filehdr.dt;
+      updated_descrip = strcat(filehdr.descrip, ' + adaptive denoised');
+      denoised_nifti = hmri_create_nifti(outfname, filehdr, dt, updated_descrip);
+      denoised_nifti.dat(:,:,:) = volumedata;
+
+      % write metadata as extended header and sidecar json
+      Output_hdr = init_dn_output_metadata(image_list, denoising_params);
+      Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (ADAPTIVE)'];
+      Output_hdr.history.output.imtype = 'Denoising (ADAPTIVE)';
+      % add acquisition data if available (otherwise fields will be empty)
+      jsonfilename = fullfile(path,strcat(mainfilename,'.json'));
+      if exist(jsonfilename, 'file') ==2
+          try
+              jsondata = spm_jsonread(jsonfilename);
+              data_RepetitionTime = get_metadata_val(jsondata,'RepetitionTime');
+              data_EchoTime = get_metadata_val(jsondata,'EchoTime' );
+              data_FlipAngle = get_metadata_val(jsondata, 'FlipAngle');
+              Output_hdr.acqpar = struct('RepetitionTime',data_RepetitionTime, ...
+                  'EchoTime',data_EchoTime,'FlipAngle',data_FlipAngle);
+          catch
+              hmri_log('Although json sidecar file were found, the writing of acquisition metadata failed', mppcaflags_nopopup);  
+
+          end
+      else
+          hmri_log('No json sidecar file were found, skipping the writing of acquisition metadata', mppcaflags_nopopup);  
+      end
+
+      % set all the metadata
+      set_metadata(outfname,Output_hdr,json);
+
+      % add image to the output list
+      out_mag{idx_mag} = outfname;
+      idx_mag = idx_mag +1;
+
+
   end
 
 end

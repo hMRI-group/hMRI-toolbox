@@ -47,4 +47,13 @@ hmri_def.denoising.lcpca_denoise.use_rmt = false; % whether to use random matrix
 % add any mppca denoising defaults here
 hmri_def.denoising.mppca_denoise = [];
 
+% The default parameters for adaptive denoising
+hmri_def.denoising.paws_denoise.alpha = 0.025;
+hmri_def.denoising.paws_denoise.fit_method = 'OLS';
+hmri_def.denoising.paws_denoise.mscbw = 5;
+
+hmri_def.denoising.paws_denoise.spmin  = 0.25;
+hmri_def.denoising.paws_denoise.lambda0 = 1e32;
+hmri_def.denoising.paws_denoise.corr_fac_patchsize = [1, 2.77, 3.46];
+
 end

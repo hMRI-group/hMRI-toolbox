@@ -677,6 +677,14 @@ mask = denoising_params.mask;
 kstar = denoising_params.kstar;
 patchsize = denoising_params.patchsize;
 ladjust = denoising_params.ladjust;
+
+alpha= denoising_params.alpha;
+fit_method = denoising_params.fit_method;
+mscbw = denoising_params.mscbw;
+spmin = denoising_params.spmin;
+lambda0 = denoising_params.lambda0;
+corr_fac_patchsize = denoising_params.corr_fac_patchsize;
+
 end
 
 %=========================================================================%

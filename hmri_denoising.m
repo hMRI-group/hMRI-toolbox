@@ -686,7 +686,28 @@ spmin = denoising_params.spmin;
 lambda0 = denoising_params.lambda0;
 corr_fac_patchsize = denoising_params.corr_fac_patchsize;
 
+% prepare weighted_data for further processing
+
+weighted_data(1).data = zeros(imsize(1),imsize(2),imsize(3),len(length(denoising_params.pdw)))
+weighted_data(1).TE = denoising_params.pdw_te.te
+
+for img=1:length(denoising_params.pdw)
+    im_str = spm_vol(denoising_params.pdw(img));
+    im_vol = spm_read_vols(im_str); 
+    weighted_data(1).data(:,:,:,img) = im_vol;
 end
+
+for img=1:length(denoising_params.t1w)
+
+end
+
+for img=1:length(denoising_params.mtw)
+
+end
+
+end
+
+
 
 %=========================================================================%
 % To arrange the metadata structure for denoising output.

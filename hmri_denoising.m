@@ -993,7 +993,6 @@ end
   data_out = denoised_weighted_data(2).data;
   data_size = size(data_out);
   data_len = data_size(4);
-  idx_mag = idx_mag +1;
   image_list = denoising_params.t1w;
   for echo = 1:data_len
       % get denoised volume
@@ -1047,7 +1046,6 @@ end
   data_out = denoised_weighted_data(3).data;
   data_size = size(data_out);
   data_len = data_size(4);
-  idx_mag = idx_mag +1;
   image_list = denoising_params.mtw;
   for echo = 1:data_len
       % get denoised volume

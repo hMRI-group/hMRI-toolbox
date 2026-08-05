@@ -27,10 +27,11 @@ function dR1 = hmri_calc_dR1(SPD,ST1,dSPD,dST1,alpha_PD,alpha_T1,TRPD,TRT1,f_T,s
 if(~isempty(f_T))
     alpha_PD = alpha_PD.*f_T;
     alpha_T1 = alpha_T1.*f_T;
-    if ~small_angle_approximation
-        alpha_PD=2*tan(alpha_PD/2);
-        alpha_T1=2*tan(alpha_T1/2);
-    end
+end
+
+if ~small_angle_approximation
+    alpha_PD=2*tan(alpha_PD/2);
+    alpha_T1=2*tan(alpha_T1/2);
 end
 
 % dR1 calculation is symmetric with respect to the two weighted contrasts

@@ -861,7 +861,8 @@ end
   hmax   = 1.25 ^ (kstar / 3);
   lambda = ladjust * 2 * nvec * qf(nvec, nechos - nvec, alpha) * corr_fac_patchsize(patchsize + 1);
 
-  fprintf('PAWS: kstar=%d, patchsize=%d, lambda=%.4f\n', kstar, patchsize, lambda);
+  paws_params = sprintf('PAWS: kstar=%d, patchsize=%d, ladjust=%d, lambda=%.4f\n', kstar, patchsize,ladjust, lambda);
+  hmri_log(paws_params,pawsflags);
 
   % ── Mask Position Array ───────────────────────────────────────────────────
   % position array: 0 outside mask, 1..nmask inside mask (int32 for MEX)
@@ -881,7 +882,8 @@ end
     dlw     = 2 * floor(hakt ./ [1, wghts]) + 1;
     lwghtSz = prod(dlw);  % scalar size of the lwght scratch buffer
 
-    fprintf('PAWS: iteration %d/%d  hakt=%.3f  lambda0=%.4g\n', k, kstar, hakt, lambda0);
+    iteration_params = sprintf('PAWS: iteration %d/%d  hakt=%.3f  lambda0=%.4g\n', k, kstar, hakt, lambda0);
+    hmri_log(iteration_params,pawsflags);
 
     if k == kstar && ~isempty(mpmData)
 

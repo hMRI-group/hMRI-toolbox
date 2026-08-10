@@ -682,6 +682,9 @@ kstar = double(denoising_params.kstar);
 patchsize = double(denoising_params.patchsize);
 ladjust = double(denoising_params.ladjust);
 
+adaptive_params_check = sprintf('Adaptive denoising input parameters: kstar=%d, patchsize=%d, ladjust=%d \n', kstar, patchsize,ladjust);
+hmri_log(adaptive_params_check,pawsflags);
+
 alpha= denoising_params.alpha;
 fit_method = denoising_params.fit_method;
 mscbw = denoising_params.mscbw;
@@ -873,7 +876,7 @@ end
   lambda = ladjust * 2 * nvec * qf(nvec, nechos - nvec, alpha) * corr_fac_patchsize(patchsize + 1);
 
   paws_params = sprintf('PAWS: kstar=%d, patchsize=%d, ladjust=%d, lambda=%.4f\n', kstar, patchsize,ladjust, lambda);
-  hmri_log(paws_params,pawsflags);
+  hmri_log(paws_params,pawsflags_nopopup);
 
   % ── Mask Position Array ───────────────────────────────────────────────────
   % position array: 0 outside mask, 1..nmask inside mask (int32 for MEX)
@@ -894,7 +897,7 @@ end
     lwghtSz = prod(dlw);  % scalar size of the lwght scratch buffer
 
     iteration_params = sprintf('PAWS: iteration %d/%d  hakt=%.3f  lambda0=%.4g\n', k, kstar, hakt, lambda0);
-    hmri_log(iteration_params,pawsflags);
+    hmri_log(iteration_params,pawsflags_nopopup);
 
     if k == kstar && ~isempty(mpmData)
 

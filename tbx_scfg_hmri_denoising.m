@@ -129,7 +129,9 @@ pdw.val  = {pdw_mag_img phase_img};
 paws_mask         = cfg_files;
 paws_mask.tag     = 'mask';
 paws_mask.name    = 'Mask';
-paws_mask.help    = {'Select the Mask'};
+paws_mask.val     = {['']};
+paws_mask.help    = {['As default, no masking is used: select the mask as a nifti file for masked processing. ' ...
+    'If the mask contains NaN values, these will be converted to zero during processing.']};
 paws_mask.filter  = 'image';
 paws_mask.ufilter = '.*';
 paws_mask.num     = [0 1];

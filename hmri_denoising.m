@@ -689,8 +689,19 @@ spmin = denoising_params.spmin;
 lambda0 = denoising_params.lambda0;
 corr_fac_patchsize = denoising_params.corr_fac_patchsize;
 
-% ── Mask for testing───────────────────────────────────────────────────────
-mask = logical(ones(imsize));
+% ──Pre-process mask input as .nii───────────────────────────────────────────────────────
+if (iscell(mask) && isempty(mask{1})) || isempty(mask)
+    mask = logical(ones(imsize));
+else
+    mask_str = spm_vol(mask);
+    mask_vols = spm_read_vols(mask_str{1});
+    dims= size(mask_vols);
+    premask = true([dims 1]);
+    premask(:,:,:,1)= mask_vols;
+    premask = logical(premask);
+    mask = premask;
+end
+
 
 
 % prepare weighted_data for further processing

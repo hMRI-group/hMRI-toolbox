@@ -92,9 +92,15 @@ Please also cite the relevant references for the methods that are implemented in
 ### Group analysis / statistical methods
 - Draganski, B., Ashburner, J., Hutton, C., Kherif, F., Frackowiak, R.S.J., Helms, G., Weiskopf, N., 2011. “Regional specificity of MRI contrast parameter changes in normal ageing revealed by voxel-based quantification (VBQ).” Neuroimage 55, 1423-1434. (https://doi.org/10.1016/j.neuroimage.2011.01.052).
 
+### Denoising
+- Veraart et al., 2016. “Denoising of diffusion MRI using random matrix theory.” Neuroimage 142, p 394–406 (https://doi.org/10.1016/j.neuroimage.2016.08.016)
+- Does MD, Olesen JL, Harkins KD, et al. 2019. “Evaluation of principal component analysis image denoising on multi-exponential MRI relaxometry.” Magn Reson Med. 2019; 81:3503–3514. (https://doi.org/10.1002/mrm.27658)
+- Bazin P-L, Alkemade A, van der Zwaag W, Caan M, Mulder M and Forstmann BU, 2019. “Denoising High-Field Multi-Dimensional MRI With Local Complex PCA.” Front. Neurosci. 13:1066. (https://doi.org/10.3389/fnins.2019.01066)
+- Herthum H, Hetzer S. 2024. “Tensor denoising of quantitative multi-parameter mapping.” Magn Reson Med. 92:145–157. (https://doi.org/10.1002/mrm.30050)
+
 ### Applications
 - Mohammadi, S., Carey, D., Dick, F., Diedrichsen, J., Sereno, M.I., Reisert, M., Callaghan, M.F., Weiskopf, N., 2015. “Whole-Brain In-vivo Measurements of the Axonal G-Ratio in a Group of 37 Healthy Volunteers.” Front Neurosci 9, 441. (https://doi.org/10.3389/fnins.2015.00441).
-- Callaghan, Martina F. et al. 2014. “Widespread Age-Related Differences in the Human Brain Microstructure Revealed by Quantitative Magnetic Resonance Imaging.” Neurobiology of Aging 35:1862–72. (http://linkinghub.elsevier.com/retrieve/pii/S0197458014002000).
+- Callaghan, Martina F. et al. 2014. “Widespread Age-Related Differences in the Human Brain Microstructure Revealed by Quantitative Magnetic Resonance Imaging.” Neurobiology of Aging 35:1862–72. (https://doi.org/10.1016/j.neurobiolaging.2014.02.008).
 
 ### Reviews
 - Weiskopf, N., Mohammadi, S., Lutti, A., Callaghan, M.F., 2015. “Advances in MRI-based computational neuroanatomy: from morphometry to in-vivo histology.” Curr. Opin. Neurol. 28, 313-322. (https://doi.org/10.1097/WCO.0000000000000222).
@@ -102,6 +108,7 @@ Please also cite the relevant references for the methods that are implemented in
 
 ### Datasets
 - Callaghan, M. F., Lutti, A., Ashburner, J., Balteau, E., Corbin, N., Draganski, B., Helms, G., Kherif, F., Leutritz, T., Mohammadi, S., Phillips, C., Reimer, E., Ruthotto, L., Seif, M., Tabelow, K., Ziegler, G., Weiskopf, N., 2019. “Example dataset for the hMRI toolbox.” Data in Brief 25, 104132. (https://doi.org/10.1016/j.dib.2019.104132).
+- Karakuzu, A., Whitaker, K. J., de Hollander, G., Lazari, A., Phillips, C., Khan, A., & Gau, R. 2023. “qMRI-BIDS example dataset.” (https://doi.org/10.17605/OSF.IO/K4BS5)
 
 
 ## Acknowledgments and Funding

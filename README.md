@@ -70,27 +70,32 @@ The development of the hMRI toolbox is an international collaborative effort inc
 ## Toolbox Reference
 
 Please cite this key reference when you use the toolbox:
-- Tabelow, K., Balteau, E., Ashburner, J., Callaghan, M. F., Draganski, B., Helms, G., Kherif, F., Leutritz, T., Lutti, A., Phillips, C., Reimer, E., Ruthotto, L., Seif, M., Weiskopf, N., Ziegler, G., Mohammadi, S., 2019. hMRI – A toolbox for quantitative MRI in neuroscience and clinical research. Neuroimage 194, 191-210. (https://doi.org/10.1016/j.neuroimage.2019.01.029).
+- Tabelow, K., Balteau, E., Ashburner, J., Callaghan, M. F., Draganski, B., Helms, G., Kherif, F., Leutritz, T., Lutti, A., Phillips, C., Reimer, E., Ruthotto, L., Seif, M., Weiskopf, N., Ziegler, G., Mohammadi, S., 2019. hMRI – A toolbox for quantitative MRI in neuroscience and clinical research. Neuroimage 194, 191-210. (https://doi.org/10.1016/j.neuroimage.2019.01.029)
 
 ## Additional References:
 Please also cite the relevant references for the methods that are implemented in the toolbox detailed below:
 
 ### Quantitative map creation
-- Helms, Gunther, Henning Dathe, and Peter Dechent. 2008. “Quantitative FLASH MRI at 3T Using a Rational Approximation of the Ernst Equation.” Magnetic Resonance in Medicine 59(3):667–72. (https://doi.org/10.1002/mrm.21542).
-- Helms, Gunther, Henning Dathe, Kai Kallenberg, and Peter Dechent. 2008. “High-Resolution Maps of Magnetization Transfer with Inherent Correction for RF Inhomogeneity and T1 Relaxation Obtained from 3D FLASH MRI.” Magnetic Resonance in Medicine 60(6):1396–1407. (https://doi.org/10.1002/mrm.21732).
-- Weiskopf, Nikolaus, Martina F. Callaghan, Oliver Josephs, Antoine Lutti, and Siawoosh Mohammadi. 2014. “Estimating the Apparent Transverse Relaxation Time (R2*) from Images with Different Contrasts (ESTATICS) Reduces Motion Artifacts.” Frontiers in Neuroscience 8(September):1–10. (https://doi.org/10.3389/fnins.2014.00278).
-- Weiskopf, N., Suckling, J., Williams, G., Correia, M.M., Inkster, B., Tait, R., Ooi, C., Bullmore, E.T., Lutti, A., 2013. Quantitative multi-parameter mapping of R1, PD*, MT, and R2* at 3T: a multi-center validation. Front. Neurosci. 7, 95. (https://doi.org/10.3389/fnins.2013.00095).
-- Leutritz, Tobias et al. 2020. “Multiparameter Mapping of Relaxation (R1, R2*), Proton Density and Magnetization Transfer Saturation at 3 T: A Multicenter Dual-Vendor Reproducibility and Repeatability Study.” Human Brain Mapping 41(15):4232–47. (https://doi.org/10.1002/hbm.25122).
+- Helms, Gunther, Henning Dathe, and Peter Dechent. 2008. “Quantitative FLASH MRI at 3T Using a Rational Approximation of the Ernst Equation.” Magnetic Resonance in Medicine 59(3):667–72. (https://doi.org/10.1002/mrm.21542)
+- Helms, Gunther, Henning Dathe, Kai Kallenberg, and Peter Dechent. 2008. “High-Resolution Maps of Magnetization Transfer with Inherent Correction for RF Inhomogeneity and T1 Relaxation Obtained from 3D FLASH MRI.” Magnetic Resonance in Medicine 60(6):1396–1407. (https://doi.org/10.1002/mrm.21732)
+- Weiskopf, Nikolaus, Martina F. Callaghan, Oliver Josephs, Antoine Lutti, and Siawoosh Mohammadi. 2014. “Estimating the Apparent Transverse Relaxation Time (R2*) from Images with Different Contrasts (ESTATICS) Reduces Motion Artifacts.” Frontiers in Neuroscience 8(September):1–10. (https://doi.org/10.3389/fnins.2014.00278)
+- Edwards, LJ Pine, KJ, Lipp, I et al. “Analytical Dual Flip Angle R1 Calculation Outside the Small-Angle Regime.” Magnetic Resonance in Medicine 95.4:2420–2428. (https://doi.org/10.1002/mrm.70174)
+- Weiskopf, N., Suckling, J., Williams, G., Correia, M.M., Inkster, B., Tait, R., Ooi, C., Bullmore, E.T., Lutti, A., 2013. Quantitative multi-parameter mapping of R1, PD*, MT, and R2* at 3T: a multi-center validation. Front. Neurosci. 7, 95. (https://doi.org/10.3389/fnins.2013.00095)
+- Leutritz, Tobias et al. 2020. “Multiparameter Mapping of Relaxation (R1, R2*), Proton Density and Magnetization Transfer Saturation at 3 T: A Multicenter Dual-Vendor Reproducibility and Repeatability Study.” Human Brain Mapping 41(15):4232–47. (https://doi.org/10.1002/hbm.25122)
 
 ### Artefact correction
 - Lutti, Antoine et al. 2012. “Robust and Fast Whole Brain Mapping of the RF Transmit Field B1 at 7T.” PloS one 7(3):e32379. (https://doi.org/10.1371/journal.pone.0032379).
-- Lutti, Antoine, Chloe Hutton, Jürgen Finsterbusch, Gunther Helms, and Nikolaus Weiskopf. 2010. “Optimization and Validation of Methods for Mapping of the Radiofrequency Transmit Field at 3T.” Magnetic Resonance in Medicine 64(1):229–38. (https://doi.org/10.1002/mrm.22421).
-- Weiskopf, Nikolaus et al. 2011. “Unified Segmentation Based Correction of R1 Brain Maps for RF Transmit Field Inhomogeneities (UNICORT).” NeuroImage 54(3):2116–24. (https://doi.org/10.1016/j.neuroimage.2010.10.023).
-- Papp, Daniel, Martina F. Callaghan, Heiko Meyer, Craig Buckley, and Nikolaus Weiskopf. 2016. “Correction of Inter-Scan Motion Artifacts in Quantitative R1 Mapping by Accounting for Receive Coil Sensitivity Effects.” Magnetic Resonance in Medicine 76(5):1478–85. (https://doi.org/10.1002/mrm.26058).
-- Corbin, Nadège and Martina F. Callaghan. 2021. “Imperfect Spoiling in Variable Flip Angle T1 Mapping at 7T: Quantifying and Minimizing Impact.” Magnetic Resonance in Medicine 86(2):693–708. (https://doi.org/10.1002/mrm.28720).
+- Lutti, Antoine, Chloe Hutton, Jürgen Finsterbusch, Gunther Helms, and Nikolaus Weiskopf. 2010. “Optimization and Validation of Methods for Mapping of the Radiofrequency Transmit Field at 3T.” Magnetic Resonance in Medicine 64(1):229–38. (https://doi.org/10.1002/mrm.22421)
+- Weiskopf, Nikolaus et al. 2011. “Unified Segmentation Based Correction of R1 Brain Maps for RF Transmit Field Inhomogeneities (UNICORT).” NeuroImage 54(3):2116–24. (https://doi.org/10.1016/j.neuroimage.2010.10.023)
+- Papp, Daniel, Martina F. Callaghan, Heiko Meyer, Craig Buckley, and Nikolaus Weiskopf. 2016. “Correction of Inter-Scan Motion Artifacts in Quantitative R1 Mapping by Accounting for Receive Coil Sensitivity Effects.” Magnetic Resonance in Medicine 76(5):1478–85. (https://doi.org/10.1002/mrm.26058)
+- Balbastre Y, Aghaeifar A, Corbin N, Brudfors M, Ashburner J, Callaghan MF. 2022. “Correcting inter-scan motion artifacts in quantitative R1 mapping at 7T.” Magn Reson Med. 88:280-291. (https://doi.org/10.1002/mrm.29216)
+- Corbin, Nadège and Martina F. Callaghan. 2021. “Imperfect Spoiling in Variable Flip Angle T1 Mapping at 7T: Quantifying and Minimizing Impact.” Magnetic Resonance in Medicine 86(2):693–708. (https://doi.org/10.1002/mrm.28720)
 
 ### Group analysis / statistical methods
-- Draganski, B., Ashburner, J., Hutton, C., Kherif, F., Frackowiak, R.S.J., Helms, G., Weiskopf, N., 2011. “Regional specificity of MRI contrast parameter changes in normal ageing revealed by voxel-based quantification (VBQ).” Neuroimage 55, 1423-1434. (https://doi.org/10.1016/j.neuroimage.2011.01.052).
+- Draganski, B., Ashburner, J., Hutton, C., Kherif, F., Frackowiak, R.S.J., Helms, G., Weiskopf, N., 2011. “Regional specificity of MRI contrast parameter changes in normal ageing revealed by voxel-based quantification (VBQ).” Neuroimage 55, 1423-1434. (https://doi.org/10.1016/j.neuroimage.2011.01.052)
+- Mohammadi, Siawoosh et al. 2022. “Error quantification in multi-parameter mapping facilitates robust estimation and enhanced group level sensitivity.” NeuroImage. (https://doi.org/10.1016/j.neuroimage.2022.119529)
+- Lutti, A., Corbin, N., Ashburner, J., Ziegler, G., Draganski, B., Phillips, C., Kherif, F., Callaghan, M. F., & Di Domenicantonio, G. 2022. “Restoring statistical validity in group analyses of motion-corrupted MRI data.” Human Brain Mapping, 43(6), 1973–1983. (https://doi.org/10.1002/hbm.25767)
+- Corbin, Nadège, Rita Oliveira, Quentin Raynaud, Giulia Di Domenicantonio, Bogdan Draganski, Ferath Kherif, Martina F. Callaghan, Antoine Lutti. 2023. “Statistical analyses of motion-corrupted MRI relaxometry data computed from multiple scans.” Journal of Neuroscience Methods. (https://doi.org/10.1016/j.jneumeth.2023.109950)
 
 ### Denoising
 - Veraart et al., 2016. “Denoising of diffusion MRI using random matrix theory.” Neuroimage 142, p 394–406 (https://doi.org/10.1016/j.neuroimage.2016.08.016)
@@ -99,15 +104,15 @@ Please also cite the relevant references for the methods that are implemented in
 - Herthum H, Hetzer S. 2024. “Tensor denoising of quantitative multi-parameter mapping.” Magn Reson Med. 92:145–157. (https://doi.org/10.1002/mrm.30050)
 
 ### Applications
-- Mohammadi, S., Carey, D., Dick, F., Diedrichsen, J., Sereno, M.I., Reisert, M., Callaghan, M.F., Weiskopf, N., 2015. “Whole-Brain In-vivo Measurements of the Axonal G-Ratio in a Group of 37 Healthy Volunteers.” Front Neurosci 9, 441. (https://doi.org/10.3389/fnins.2015.00441).
-- Callaghan, Martina F. et al. 2014. “Widespread Age-Related Differences in the Human Brain Microstructure Revealed by Quantitative Magnetic Resonance Imaging.” Neurobiology of Aging 35:1862–72. (https://doi.org/10.1016/j.neurobiolaging.2014.02.008).
+- Mohammadi, S., Carey, D., Dick, F., Diedrichsen, J., Sereno, M.I., Reisert, M., Callaghan, M.F., Weiskopf, N., 2015. “Whole-Brain In-vivo Measurements of the Axonal G-Ratio in a Group of 37 Healthy Volunteers.” Front Neurosci 9, 441. (https://doi.org/10.3389/fnins.2015.00441)
+- Callaghan, Martina F. et al. 2014. “Widespread Age-Related Differences in the Human Brain Microstructure Revealed by Quantitative Magnetic Resonance Imaging.” Neurobiology of Aging 35:1862–72. (https://doi.org/10.1016/j.neurobiolaging.2014.02.008)
 
 ### Reviews
-- Weiskopf, N., Mohammadi, S., Lutti, A., Callaghan, M.F., 2015. “Advances in MRI-based computational neuroanatomy: from morphometry to in-vivo histology.” Curr. Opin. Neurol. 28, 313-322. (https://doi.org/10.1097/WCO.0000000000000222).
-- N. Weiskopf, L. Edwards, G. Helms, S. Mohammadi, and E. Kirilina. 2021. “Quantitative Magnetic Resonance Imaging of Brain Anatomy: Towards in-Vivo Histology.” Nature Reviews Physics. (http://dx.doi.org/10.1038/s42254-021-00326-1).
+- Weiskopf, N., Mohammadi, S., Lutti, A., Callaghan, M.F., 2015. “Advances in MRI-based computational neuroanatomy: from morphometry to in-vivo histology.” Curr. Opin. Neurol. 28, 313-322. (https://doi.org/10.1097/WCO.0000000000000222)
+- N. Weiskopf, L. Edwards, G. Helms, S. Mohammadi, and E. Kirilina. 2021. “Quantitative Magnetic Resonance Imaging of Brain Anatomy: Towards in-Vivo Histology.” Nature Reviews Physics. (http://dx.doi.org/10.1038/s42254-021-00326-1)
 
 ### Datasets
-- Callaghan, M. F., Lutti, A., Ashburner, J., Balteau, E., Corbin, N., Draganski, B., Helms, G., Kherif, F., Leutritz, T., Mohammadi, S., Phillips, C., Reimer, E., Ruthotto, L., Seif, M., Tabelow, K., Ziegler, G., Weiskopf, N., 2019. “Example dataset for the hMRI toolbox.” Data in Brief 25, 104132. (https://doi.org/10.1016/j.dib.2019.104132).
+- Callaghan, M. F., Lutti, A., Ashburner, J., Balteau, E., Corbin, N., Draganski, B., Helms, G., Kherif, F., Leutritz, T., Mohammadi, S., Phillips, C., Reimer, E., Ruthotto, L., Seif, M., Tabelow, K., Ziegler, G., Weiskopf, N., 2019. “Example dataset for the hMRI toolbox.” Data in Brief 25, 104132. (https://doi.org/10.1016/j.dib.2019.104132)
 - Karakuzu, A., Whitaker, K. J., de Hollander, G., Lazari, A., Phillips, C., Khan, A., & Gau, R. 2023. “qMRI-BIDS example dataset.” (https://doi.org/10.17605/OSF.IO/K4BS5)
 
 

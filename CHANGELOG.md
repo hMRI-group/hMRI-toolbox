@@ -9,7 +9,7 @@ to track down more information about the given change.
 
 ## [unreleased]
 ### Fixed
-- replace `http://hmri.info` with [https://hmri.info](https://hmri.info) due to HTTP 504 (Gateway Timeout) (#139)
+- replace `http://hmri.info` with [https://hmri.info](https://hmri.info) due to HTTP 504 (Gateway Timeout) ([#139](https://github.com/hMRI-group/hMRI-toolbox/pull/139))
 
 ## [v1.0.0]
 ### Added
@@ -57,7 +57,7 @@ to track down more information about the given change.
 ## [v0.6.1]
 ### Fixed
 - The local config files have been converted to scripts for compatibility with compiled version
-- function-evaluate SPM-struct (preproc8.val) for SPM development version compatibility
+- function-evaluate SPM-struct (`preproc8.val`) for SPM development version compatibility
 - copy acquisition metadata to TE=0 volumes in Results/Supplementary folder after map creation so they can be used as input to the toolbox if needed
 
 ## [v0.6.0]

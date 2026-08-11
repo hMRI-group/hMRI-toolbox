@@ -1,14 +1,12 @@
-%{
-REFERENCES:
---Veraart et al., NeuroImage (2016) 142, p 394-406 (https://doi.org/10.1016/j.neuroimage.2016.08.016)  
---Does, MD al. Evaluation of principal component analysis image denoising on multi‐exponential MRI relaxometry. Magn Reson Med. 2019; 81: 3503– 3514. https://doi.org/10.1002/mrm.27658
---https://github.com/Neurophysics-CFIN/MP-PCA-Denoising/tree/master
-%}
 function [denoised,S2,P] = mppca_denoise(image,window,mask)
+% Exploiting data redundancy (PCA) and known random matrix properties
+% (Marchenko Pastur eigenvalue distribution) to estimate and partially
+% remove noise.
+%
 % MP-PCA denoising
 %
 % input:
-% image:  images to be denoised. Must have 3 or 4 indices with MRI images 
+% image:  images to be denoised. Must have 3 or 4 indices with MRI images
 %         along the last index and voxels in the first 2 or 3.
 % window: sliding window
 % mask:   is true for all voxels per default but can be manually set to
@@ -18,14 +16,43 @@ function [denoised,S2,P] = mppca_denoise(image,window,mask)
 % denoised: denoised images
 % S2:       map of estimated noise variance
 % P:        number of detected signal principal components
-
+%
+% Denoising implementation by Jonas Olesen, Mark Does and Sune Jespersen
+% for diffusion MRI data based on the algorithm presented by Veraart et al.
+% (2016) 142, p 394-406 https://doi.org/10.1016/j.neuroimage.2016.08.016.
+% Modified to remove mean across voxels (compute principal components of
+% the covariance not correlation matrix).
+%
+% Original source: https://github.com/Neurophysics-CFIN/MP-PCA-Denoising
+%
+% Free to use, but please cite Veraart et al., NeuroImage (2016) 142,
+% p 394-406 (https://doi.org/10.1016/j.neuroimage.2016.08.016) and Does, MD
+% et al. Evaluation of principal component analysis image denoising on
+% multi‐exponential MRI relaxometry. Magn Reson Med. 2019; 81: 3503– 3514
+% (https://doi.org/10.1002/mrm.27658).
+%
+% Copyright (C) 2020 Jonas Olesen, Mark Does and Sune Jespersen
+%
+% This program is free software; you can redistribute it and/or modify
+% it under the terms of the GNU General Public License as published by
+% the Free Software Foundation; either version 2 of the License, or
+% (at your option) any later version.
+%
+% This program is distributed in the hope that it will be useful,
+% but WITHOUT ANY WARRANTY; without even the implied warranty of
+% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+% GNU General Public License for more details.
+%
+% You should have received a copy of the GNU General Public License along
+% with this program; if not, write to the Free Software Foundation, Inc.,
+% 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 %% adjust image dimensions and assert
 dimsOld = size(image);
 if ~exist('mask','var')
     mask = [];
 end
-[image,mask] = mppca_imageAssert(image,mask);
+[image,mask] = imageAssert(image,mask);
 
 dims = size(image);
 assert(length(window)>1 && length(window)<4,'window must have 2 or 3 dimensions')
@@ -62,7 +89,7 @@ for index = 0:M*N*O-1
     end
 
     % denoise X
-    [X(:,maskX),s2,p] = mppca_denoiseMatrix(X(:,maskX));
+    [X(:,maskX),s2,p] = denoiseMatrix(X(:,maskX));
 
     % assign
     X(:,~maskX) = 0;
@@ -89,11 +116,11 @@ S2 = reshape(S2,dimsOld(1:end-1));
 
 end
 
-
+%% Auxiliary functions
+function [image,mask] = imageAssert(image,mask)
 % Want first image indices to discriminate between pixels and last
 % dimension to hold data for each pixel. This function puts the image data
 % on the form: row x col x slice x rest.
-function [image,mask] = mppca_imageAssert(image,mask)
 
 dims = size(image);
 assert(length(dims)<=4,'image data array must not have more than 4 dimensions')
@@ -135,7 +162,7 @@ end
 
 
 % X: denoised matrix, s2: original noise variance, p: number of signal components, s2_after: noise variance after denoising
-function [X,s2,p,s2_after] = mppca_denoiseMatrix(X) 
+function [X,s2,p,s2_after] = denoiseMatrix(X)
 M = size(X,1);
 N = size(X,2);
 if M<N
@@ -148,7 +175,8 @@ U = U(:,order);
 csum = cumsum(lambda,'reverse');
 p = (0:length(lambda)-1)';
 
-% handle the case find returns []
+% handle the case where no elements are below the Marchenko-Pastur
+% threshold and so p_init = []
 p_init=find((lambda-lambda(end)).*(M-p).*(N-p) < 4*csum*sqrt(M*N),1);
 if isempty(p_init)
     p=0;
@@ -166,4 +194,3 @@ end
 s2 = csum(p+1)/((M-p)*(N-p));
 s2_after = s2 - csum(p+1)/(M*N);
 end
-

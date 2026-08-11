@@ -6,7 +6,10 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 
 ## [unreleased]
 ### Added
-- option to fit linear dependence of R2* on flip angle
+- option to fit linear dependence of R2* on flip angle (#114)[https://github.com/hMRI-group/hMRI-toolbox/pull/114]
+
+### Fixed
+- replace http://hmri.info with https://hmri.info due to HTTP 504 (Gateway Timeout)
 
 ## [v1.0.0]
 ### Added

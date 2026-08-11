@@ -37,7 +37,7 @@ A [qMRI brain imaging data structure (BIDS)](https://doi.org/10.1038/s41597-022-
 
 ## Licence
 
-The hMRI toolbox is free but copyright software, distributed under the terms of the GNU General Public Licence as published by the Free Software Foundation (either version 2, as given in file [LICENSE], or at your option, any later version). Further details on "copyleft" can be found at http://www.gnu.org/copyleft/. In particular, the hMRI toolbox is supplied as is. No formal support or maintenance is provided or implied.
+The hMRI toolbox is free but copyright software, distributed under the terms of the GNU General Public Licence as published by the Free Software Foundation (either version 2, as given in file [LICENSE](LICENSE), or at your option, any later version). Further details on "copyleft" can be found at http://www.gnu.org/copyleft/. In particular, the hMRI toolbox is supplied as is. No formal support or maintenance is provided or implied.
 
 ## Download
 

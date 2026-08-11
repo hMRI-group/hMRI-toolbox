@@ -7,7 +7,7 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 ## [unreleased]
 ### Fixed
 - replace http://hmri.info with https://hmri.info due to HTTP 504 (Gateway Timeout)
-- error map calculations now always respect the small angle approximation flag (#140)
+- error map calculations now always respect the small angle approximation flag ([#140](https://github.com/hMRI-group/hMRI-toolbox/pull/140))
 
 ## [v1.0.0]
 ### Added

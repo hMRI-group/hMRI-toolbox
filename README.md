@@ -15,7 +15,7 @@ It allows the estimation of high-quality multi-parameter qMRI maps
 and magnetisation transfer MT saturation) (Weiskopf et al., 2013), 
 followed by spatial registration in common space for statistical analysis (Draganski et al., 2011).
 
-Embedded in the [Statistical Parametric Mapping](http://www.fil.ion.ucl.ac.uk/spm) (SPM) framework, 
+Embedded in the [Statistical Parametric Mapping](https://www.fil.ion.ucl.ac.uk/spm) (SPM) framework,
 it can be readily combined with existing SPM toolboxes for estimating diffusion MRI parameter maps, 
 and it benefits from the extensive range of established SPM tools for high-accuracy spatial registration and statistical inferences.
 
@@ -35,19 +35,26 @@ A full example dataset can be `git clone`ed or downloaded from one of the follow
 
 A [qMRI brain imaging data structure (BIDS)](https://doi.org/10.1038/s41597-022-01571-4) compatible version of the example dataset can be downloaded from the `ds-mpm` folder at [https://osf.io/k4bs5/](https://osf.io/k4bs5/).
 
+## Example acquisition protocols
+
+Several example MRI protocols (standard MPM protocol using customised Siemens sequences, MPM protocols implemented using Siemens and Philips product sequences)
+as well as a setup (for Siemens 3T MRI) and usage tutorial are available on [Github](https://github.com/hMRI-group/hMRI-toolbox-demodata).
+Please be aware that we provide these protocols and information without any warranty.
+They must be considered work-in-progress, possibly non-optimal protocols and information.
+
 ## Licence
 
-The hMRI toolbox is free but copyright software, distributed under the terms of the GNU General Public Licence as published by the Free Software Foundation (either version 2, as given in file [LICENSE](LICENSE), or at your option, any later version). Further details on "copyleft" can be found at http://www.gnu.org/copyleft/. In particular, the hMRI toolbox is supplied as is. No formal support or maintenance is provided or implied.
+The hMRI toolbox is free but copyright software, distributed under the terms of the GNU General Public Licence as published by the Free Software Foundation (either version 2, as given in file [LICENSE](LICENSE), or at your option, any later version). Further details on "copyleft" can be found at [www.gnu.org/copyleft/](https://www.gnu.org/copyleft/). In particular, the hMRI toolbox is supplied as is. No formal support or maintenance is provided or implied.
 
 ## Download
 
-The latest release (as well as the previous- and pre-releases) of the hMRI-toolbox Matlab code 
+The latest release (as well as previous- and pre-releases) of the hMRI-toolbox Matlab code
 can be downloaded as a zip archive (.zip) or a Tarball (.tar.gz) from the [releases page](https://github.com/hMRI-group/hMRI-toolbox/releases).
 
 ## E-Mail List
 
 We have created an e-mail list for users of the hMRI-toolbox: HMRI-TOOLBOX@JISCMAIL.AC.UK. 
-[Registered users](https://www.jiscmail.ac.uk/cgi-bin/webadmin?SUBED1=HMRI-TOOLBOX&amp;A=1) can login 
+[Registered users](https://www.jiscmail.ac.uk/cgi-bin/webadmin?SUBED1=HMRI-TOOLBOX&amp;A=1) can login
 to view the message archive on the [list homepage](https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=HMRI-TOOLBOX).
 
 ## Developers of the hMRI-toolbox
@@ -128,6 +135,6 @@ Please also cite the relevant references for the methods that are implemented in
 - M.F.C.'s research was funded in whole or in part by the Discovery Research Platform for Naturalistic Neuroimaging funded by the Wellcome [226793/Z/22/Z].
 - A.L. is supported by the Swiss National Science Foundation (project grant Nr CR00I5-235940). 
 - The Wellcome Centre for Human Neuroimaging is supported by core funding from the Wellcome [203147/Z/16/Z]. 
-- C.P. is supported by the [F.R.S.-FNRS](http://www.fnrs.be/en/), Belgium.
+- C.P. is supported by the [F.R.S.-FNRS](https://www.fnrs.be/en/), Belgium.
 - F.K. is funded by the European Union’s Horizon Europe research and innovation programme under grant agreement No 101095384 (PHASE IV AI), by the European Union’s Horizon 2020 research and innovation programme under grant agreement No 871643 (MORPHEMIC), and by Collaborative Research on Science and Society 2026 (CROSS 2026) UNIL-EPFL. 
 - The hMRI Toolbox project is supported by the Max Planck Society.

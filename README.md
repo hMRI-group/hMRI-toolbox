@@ -11,7 +11,7 @@ such as axon, myelin, iron and water concentration ([Weiskopf et al. 2015](#weis
 
 The hMRI-toolbox is an easy-to-use open-source and flexible tool for qMRI data handling and processing.
 It allows the estimation of high-quality multi-parameter qMRI maps
-(longitudinal and effective transverse relaxation rates \[R1 and R2*\], proton density \[PD\] 
+(longitudinal and effective transverse relaxation rates \[R1 and R2\*\], proton density \[PD\] 
 and magnetisation transfer \[MT\] saturation; [Weiskopf et al. 2013](#weiskopf2013)),
 followed by spatial registration in common space for statistical analysis ([Draganski et al. 2011](#draganski2011)).
 
@@ -131,7 +131,7 @@ Please also cite the relevant references for the methods that are implemented in
 - N.W. and S.M. received funding from the BMBF (01EW1711A and B) in the framework of ERA-NET NEURON.
 - S.M. has received funding from the European Union by ERC grant (Acronym: MRStain, Grant agreement ID: 101089218, DOI: [10.3030/101089218](https://doi.org/10.3030/101089218)). Views and opinions expressed are, however, those of the author(s) only and do not necessarily reflect those of the European Union or the European Research Council Executive Agency. Neither the European Union nor the granting authority can be held responsible for them.
 - S.M. supported by the German Research Foundation (DFG Priority Program 2041 “Computational Connectomics”, [MO 2397/5-1, MO 2397/5-2], by the Emmy Noether Stipend: MO 2397/4-1; MO 2397/4-2).
-- B.D. is supported by the Swiss National Science Foundation (project grant no. 213595, 32003B\_135679, 32003B\_159780, 324730\_192755 and CRSK-3_190185), InnoSuisse Flagship Swiss brAInHealth project, ERA_NET NEURON JTC2020: iSEE and JTC2023-ELSA: BrainTree projects.
+- B.D. is supported by the Swiss National Science Foundation (project grant no. 213595, 32003B\_135679, 32003B\_159780, 324730\_192755 and CRSK-3\_190185), InnoSuisse Flagship Swiss brAInHealth project, ERA\_NET NEURON JTC2020: iSEE and JTC2023-ELSA: BrainTree projects.
 - M.F.C.’s research was funded in whole or in part by the Discovery Research Platform for Naturalistic Neuroimaging funded by the Wellcome \[226793/Z/22/Z\].
 - A.L. is supported by the Swiss National Science Foundation (project grant Nr CR00I5-235940).
 - The Wellcome Centre for Human Neuroimaging is supported by core funding from the Wellcome \[203147/Z/16/Z\].

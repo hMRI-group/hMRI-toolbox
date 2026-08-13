@@ -51,6 +51,8 @@ The hMRI-toolbox is free but copyright software, distributed under the terms of 
 The latest release (as well as previous- and pre-releases) of the hMRI-toolbox Matlab code
 can be downloaded as a zip archive (.zip) or a Tarball (.tar.gz) from the [releases page](https://github.com/hMRI-group/hMRI-toolbox/releases).
 
+A compiled version of the toolbox which does not require a Matlab license are also provided; see [here](https://github.com/hMRI-group/hMRI-toolbox/wiki/GetStarted#compilation-of-the-toolbox) for more details.
+
 ## E-Mail List
 
 We have created an e-mail list for users of the hMRI-toolbox: [HMRI-TOOLBOX@JISCMAIL.AC.UK](mailto:HMRI-TOOLBOX@JISCMAIL.AC.UK).

@@ -59,6 +59,10 @@ We have created an e-mail list for users of the hMRI-toolbox: [HMRI-TOOLBOX@JISC
 [Registered users](https://www.jiscmail.ac.uk/cgi-bin/webadmin?SUBED1=HMRI-TOOLBOX&amp;A=1) can login
 to view the message archive on the [list homepage](https://www.jiscmail.ac.uk/cgi-bin/webadmin?A0=HMRI-TOOLBOX).
 
+## Workshops
+
+Materials from the recent hMRI toolbox workshop in Bordeaux (part of the [OHBM OSSIG 2026 BrainHack](https://ohbm.github.io/hackathon2026/)) can be found [here](https://hmri-group.github.io/hMRI-Bordeaux-meeting/).
+
 ## Developers of the hMRI-toolbox
 
 The development of the hMRI-toolbox is an international collaborative effort including the following developers and sites:

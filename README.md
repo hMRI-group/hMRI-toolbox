@@ -113,6 +113,7 @@ Please also cite the relevant references for the methods that are implemented in
 ### Applications
 - <a name="mohammadi2015"></a> Mohammadi, S., Carey, D., Dick, F., Diedrichsen, J., Sereno, M.I., Reisert, M., Callaghan, M.F., Weiskopf, N., 2015. “Whole-Brain In-vivo Measurements of the Axonal G-Ratio in a Group of 37 Healthy Volunteers.” Front Neurosci 9, 441. [doi:10.3389/fnins.2015.00441](https://doi.org/10.3389/fnins.2015.00441)
 - Callaghan, Martina F. et al. 2014. “Widespread Age-Related Differences in the Human Brain Microstructure Revealed by Quantitative Magnetic Resonance Imaging.” Neurobiology of Aging 35:1862–72. [doi:10.1016/j.neurobiolaging.2014.02.008](https://doi.org/10.1016/j.neurobiolaging.2014.02.008)
+- Farner, L., Scheuren, P.S., Sharifi, K. et al. 2026. “Anti-Nogo-A NG101 treatment induces changes in spinal cord micro- and macrostructure following spinal cord injury.” Nat Commun 17, 4197. [doi:10.1038/s41467-026-71412-0](https://doi.org/10.1038/s41467-026-71412-0)
 
 ### Reviews
 - <a name="weiskopf2015"></a> Weiskopf, N., Mohammadi, S., Lutti, A., Callaghan, M.F., 2015. “Advances in MRI-based computational neuroanatomy: from morphometry to in-vivo histology.” Curr. Opin. Neurol. 28, 313-322. [doi:10.1097/WCO.0000000000000222](https://doi.org/10.1097/WCO.0000000000000222)

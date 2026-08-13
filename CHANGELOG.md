@@ -172,7 +172,7 @@ Made available under "ADVANCED USERS ONLY": the option to use the R1-UNICORT-der
 - **New option to disable the coregistration steps**:
 Coregistration shouldn't be disabled but it can be convenient in specific cases (simulated data, phantom data).
 Option made available under "ADVANCED USERS ONLY", i.e. can only be modified by an advanced user implementing customized defaults.
-When enabled (defaults), all input images to `hmri_create_MTProt.`m (transmit and receive fields, T1w and MTw images) are coregistered to the PDw average (or TE=0 fit) image (see `hmri_create_MTProt.m`).
+When enabled (defaults), all input images to `hmri_create_MTProt.m` (transmit and receive fields, T1w and MTw images) are coregistered to the PDw average (or TE=0 fit) image (see `hmri_create_MTProt.m`).
 
 ### Changed
 

@@ -11,8 +11,8 @@ such as axon, myelin, iron and water concentration ([Weiskopf et al. 2015](#weis
 
 The hMRI-toolbox is an easy-to-use open-source and flexible tool for qMRI data handling and processing.
 It allows the estimation of high-quality multi-parameter qMRI maps
-(longitudinal and effective transverse relaxation rates \[R1 and R2\*\], proton density \[PD\] 
-and magnetisation transfer \[MT\] saturation; [Weiskopf et al. 2013](#weiskopf2013)),
+(longitudinal and effective transverse relaxation rates (R1 and R2\*), proton density (PD)
+and magnetisation transfer (MT) saturation (MTsat); [Weiskopf et al. 2013](#weiskopf2013)),
 followed by spatial registration in common space for statistical analysis ([Draganski et al. 2011](#draganski2011)).
 
 It is embedded in the [Statistical Parametric Mapping](https://www.fil.ion.ucl.ac.uk/spm) (SPM) framework, meaning that
@@ -29,7 +29,7 @@ These pages are work-in-progress and updated on a regular basis.
 
 ## hMRI-Toolbox and example dataset papers
 
-For a reference on the scientific background, methods and concepts please use [this paper](https://doi.org/10.1016/j.neuroimage.2019.01.029) and cite it when publishing results compiled with the hMRI-toolbox.
+For a reference on the scientific background, methods and concepts please use [the hMRI-toolbox paper](#tabelow2019) and cite it when publishing results compiled with the hMRI-toolbox.
 
 A full example dataset can be obtained from one of the following links: ([GitHub](https://github.com/hMRI-group/hMRI-toolbox-demodata) | [OwnCloud](https://owncloud.gwdg.de/index.php/s/znxsMrPUB2TJsLz) | [Mega](https://mega.nz/folder/OnxDALZa#bFe0xKJTuuUeGXrYnlX8dA)). The description of the example dataset is also available in [this paper](https://doi.org/10.1016/j.dib.2019.104132), which should be cited when publishing results using the example dataset.
 
@@ -44,7 +44,7 @@ They must be considered work-in-progress, possibly non-optimal protocols and inf
 
 ## Licence
 
-The hMRI-toolbox is free but copyright software, distributed under the terms of the GNU General Public License as published by the Free Software Foundation (either version 2, as given in file [LICENSE](https://github.com/hMRI-group/hMRI-toolbox/blob/master/LICENSE), or at your option, any later version). Further details on "copyleft" can be found at [www.gnu.org/copyleft/](https://www.gnu.org/copyleft/). In particular, the hMRI-toolbox is supplied as is. No formal support or maintenance is provided or implied.
+The hMRI-toolbox is free but copyright software, distributed under the terms of the GNU General Public License as published by the Free Software Foundation (either version 2, as given in file [LICENSE](https://github.com/hMRI-group/hMRI-toolbox/blob/master/LICENSE), or at your option, any later version). Further details on “copyleft” can be found at [www.gnu.org/copyleft/](https://www.gnu.org/copyleft/). In particular, the hMRI-toolbox is supplied as is. No formal support or maintenance is provided or implied.
 
 ## Download
 
@@ -77,50 +77,50 @@ The development of the hMRI-toolbox is an international collaborative effort inc
 ## Toolbox Reference
 
 Please cite this key reference when you use the toolbox:
-- Tabelow, K., Balteau, E., Ashburner, J., Callaghan, M. F., Draganski, B., Helms, G., Kherif, F., Leutritz, T., Lutti, A., Phillips, C., Reimer, E., Ruthotto, L., Seif, M., Weiskopf, N., Ziegler, G., Mohammadi, S., 2019. hMRI – A toolbox for quantitative MRI in neuroscience and clinical research. Neuroimage 194, 191-210. (https://doi.org/10.1016/j.neuroimage.2019.01.029)
+- <a name="tabelow2019"></a> Tabelow, K., Balteau, E., Ashburner, J., Callaghan, M. F., Draganski, B., Helms, G., Kherif, F., Leutritz, T., Lutti, A., Phillips, C., Reimer, E., Ruthotto, L., Seif, M., Weiskopf, N., Ziegler, G., Mohammadi, S., 2019. “hMRI – A toolbox for quantitative MRI in neuroscience and clinical research.” Neuroimage 194, 191-210. [doi:10.1016/j.neuroimage.2019.01.029](https://doi.org/10.1016/j.neuroimage.2019.01.029)
 
 ## Additional References
 Please also cite the relevant references for the methods that are implemented in the toolbox detailed below.
 
 ### Quantitative map creation
-- Helms, Gunther, Henning Dathe, and Peter Dechent. 2008. “Quantitative FLASH MRI at 3T Using a Rational Approximation of the Ernst Equation.” Magnetic Resonance in Medicine 59(3):667–72. (https://doi.org/10.1002/mrm.21542)
-- Helms, Gunther, Henning Dathe, Kai Kallenberg, and Peter Dechent. 2008. “High-Resolution Maps of Magnetization Transfer with Inherent Correction for RF Inhomogeneity and T1 Relaxation Obtained from 3D FLASH MRI.” Magnetic Resonance in Medicine 60(6):1396–1407. (https://doi.org/10.1002/mrm.21732)
-- Weiskopf, Nikolaus, Martina F. Callaghan, Oliver Josephs, Antoine Lutti, and Siawoosh Mohammadi. 2014. “Estimating the Apparent Transverse Relaxation Time (R2\*) from Images with Different Contrasts (ESTATICS) Reduces Motion Artifacts.” Frontiers in Neuroscience 8(September):1–10. (https://doi.org/10.3389/fnins.2014.00278)
-- Edwards, LJ Pine, KJ, Lipp, I et al. 2026. “Analytical Dual Flip Angle R1 Calculation Outside the Small-Angle Regime.” Magnetic Resonance in Medicine 95.4:2420–2428. (https://doi.org/10.1002/mrm.70174)
-- <a name="weiskopf2013"></a> Weiskopf, N., Suckling, J., Williams, G., Correia, M.M., Inkster, B., Tait, R., Ooi, C., Bullmore, E.T., Lutti, A., 2013. Quantitative multi-parameter mapping of R1, PD\*, MT, and R2\* at 3T: a multi-center validation. Front. Neurosci. 7, 95. (https://doi.org/10.3389/fnins.2013.00095)
-- Leutritz, Tobias et al. 2020. “Multiparameter Mapping of Relaxation (R1, R2\*), Proton Density and Magnetization Transfer Saturation at 3 T: A Multicenter Dual-Vendor Reproducibility and Repeatability Study.” Human Brain Mapping 41(15):4232–47. (https://doi.org/10.1002/hbm.25122)
+- Helms, Gunther, Henning Dathe, and Peter Dechent. 2008. “Quantitative FLASH MRI at 3T Using a Rational Approximation of the Ernst Equation.” Magnetic Resonance in Medicine 59(3):667–72. [doi:10.1002/mrm.21542](https://doi.org/10.1002/mrm.21542)
+- Helms, Gunther, Henning Dathe, Kai Kallenberg, and Peter Dechent. 2008. “High-Resolution Maps of Magnetization Transfer with Inherent Correction for RF Inhomogeneity and T1 Relaxation Obtained from 3D FLASH MRI.” Magnetic Resonance in Medicine 60(6):1396–1407. [doi:10.1002/mrm.21732](https://doi.org/10.1002/mrm.21732)
+- Weiskopf, Nikolaus, Martina F. Callaghan, Oliver Josephs, Antoine Lutti, and Siawoosh Mohammadi. 2014. “Estimating the Apparent Transverse Relaxation Time (R2\*) from Images with Different Contrasts (ESTATICS) Reduces Motion Artifacts.” Frontiers in Neuroscience 8(September):1–10. [doi:10.3389/fnins.2014.00278](https://doi.org/10.3389/fnins.2014.00278)
+- Edwards, LJ Pine, KJ, Lipp, I et al. 2026. “Analytical Dual Flip Angle R1 Calculation Outside the Small-Angle Regime.” Magnetic Resonance in Medicine 95.4:2420–2428. [doi:10.1002/mrm.70174](https://doi.org/10.1002/mrm.70174)
+- <a name="weiskopf2013"></a> Weiskopf, N., Suckling, J., Williams, G., Correia, M.M., Inkster, B., Tait, R., Ooi, C., Bullmore, E.T., Lutti, A., 2013. “Quantitative multi-parameter mapping of R1, PD\*, MT, and R2\* at 3T: a multi-center validation.” Front. Neurosci. 7, 95. [doi:10.3389/fnins.2013.00095](https://doi.org/10.3389/fnins.2013.00095)
+- Leutritz, Tobias et al. 2020. “Multiparameter Mapping of Relaxation (R1, R2\*), Proton Density and Magnetization Transfer Saturation at 3 T: A Multicenter Dual-Vendor Reproducibility and Repeatability Study.” Human Brain Mapping 41(15):4232–47. [doi:10.1002/hbm.25122](https://doi.org/10.1002/hbm.25122)
 
 ### Artefact correction
-- Lutti, Antoine et al. 2012. “Robust and Fast Whole Brain Mapping of the RF Transmit Field B1 at 7T.” PloS one 7(3):e32379. (https://doi.org/10.1371/journal.pone.0032379)
-- Lutti, Antoine, Chloe Hutton, Jürgen Finsterbusch, Gunther Helms, and Nikolaus Weiskopf. 2010. “Optimization and Validation of Methods for Mapping of the Radiofrequency Transmit Field at 3T.” Magnetic Resonance in Medicine 64(1):229–38. (https://doi.org/10.1002/mrm.22421)
-- Weiskopf, Nikolaus et al. 2011. “Unified Segmentation Based Correction of R1 Brain Maps for RF Transmit Field Inhomogeneities (UNICORT).” NeuroImage 54(3):2116–24. (https://doi.org/10.1016/j.neuroimage.2010.10.023)
-- Papp, Daniel, Martina F. Callaghan, Heiko Meyer, Craig Buckley, and Nikolaus Weiskopf. 2016. “Correction of Inter-Scan Motion Artifacts in Quantitative R1 Mapping by Accounting for Receive Coil Sensitivity Effects.” Magnetic Resonance in Medicine 76(5):1478–85. (https://doi.org/10.1002/mrm.26058)
-- Balbastre Y, Aghaeifar A, Corbin N, Brudfors M, Ashburner J, Callaghan MF. 2022. “Correcting inter-scan motion artifacts in quantitative R1 mapping at 7T.” Magn Reson Med. 88:280-291. (https://doi.org/10.1002/mrm.29216)
-- Corbin, Nadège and Martina F. Callaghan. 2021. “Imperfect Spoiling in Variable Flip Angle T1 Mapping at 7T: Quantifying and Minimizing Impact.” Magnetic Resonance in Medicine 86(2):693–708. (https://doi.org/10.1002/mrm.28720)
+- Lutti, Antoine et al. 2012. “Robust and Fast Whole Brain Mapping of the RF Transmit Field B1 at 7T.” PloS one 7(3):e32379. [doi:10.1371/journal.pone.0032379](https://doi.org/10.1371/journal.pone.0032379)
+- Lutti, Antoine, Chloe Hutton, Jürgen Finsterbusch, Gunther Helms, and Nikolaus Weiskopf. 2010. “Optimization and Validation of Methods for Mapping of the Radiofrequency Transmit Field at 3T.” Magnetic Resonance in Medicine 64(1):229–38. [doi:10.1002/mrm.22421](https://doi.org/10.1002/mrm.22421)
+- Weiskopf, Nikolaus et al. 2011. “Unified Segmentation Based Correction of R1 Brain Maps for RF Transmit Field Inhomogeneities (UNICORT).” NeuroImage 54(3):2116–24. [doi:10.1016/j.neuroimage.2010.10.023](https://doi.org/10.1016/j.neuroimage.2010.10.023)
+- Papp, Daniel, Martina F. Callaghan, Heiko Meyer, Craig Buckley, and Nikolaus Weiskopf. 2016. “Correction of Inter-Scan Motion Artifacts in Quantitative R1 Mapping by Accounting for Receive Coil Sensitivity Effects.” Magnetic Resonance in Medicine 76(5):1478–85. [doi:10.1002/mrm.26058](https://doi.org/10.1002/mrm.26058)
+- Balbastre Y, Aghaeifar A, Corbin N, Brudfors M, Ashburner J, Callaghan MF. 2022. “Correcting inter-scan motion artifacts in quantitative R1 mapping at 7T.” Magn Reson Med. 88:280-291. [doi:10.1002/mrm.29216](https://doi.org/10.1002/mrm.29216)
+- Corbin, Nadège and Martina F. Callaghan. 2021. “Imperfect Spoiling in Variable Flip Angle T1 Mapping at 7T: Quantifying and Minimizing Impact.” Magnetic Resonance in Medicine 86(2):693–708. [doi:10.1002/mrm.28720](https://doi.org/10.1002/mrm.28720)
 
 ### Group analysis / statistical methods
-- <a name="draganski2011"></a> Draganski, B., Ashburner, J., Hutton, C., Kherif, F., Frackowiak, R.S.J., Helms, G., Weiskopf, N., 2011. “Regional specificity of MRI contrast parameter changes in normal ageing revealed by voxel-based quantification (VBQ).” Neuroimage 55, 1423-1434. (https://doi.org/10.1016/j.neuroimage.2011.01.052)
-- Mohammadi, Siawoosh et al. 2022. “Error quantification in multi-parameter mapping facilitates robust estimation and enhanced group level sensitivity.” NeuroImage. (https://doi.org/10.1016/j.neuroimage.2022.119529)
-- Lutti, A., Corbin, N., Ashburner, J., Ziegler, G., Draganski, B., Phillips, C., Kherif, F., Callaghan, M. F., & Di Domenicantonio, G. 2022. “Restoring statistical validity in group analyses of motion-corrupted MRI data.” Human Brain Mapping, 43(6), 1973–1983. (https://doi.org/10.1002/hbm.25767)
-- Corbin, Nadège, Rita Oliveira, Quentin Raynaud, Giulia Di Domenicantonio, Bogdan Draganski, Ferath Kherif, Martina F. Callaghan, Antoine Lutti. 2023. “Statistical analyses of motion-corrupted MRI relaxometry data computed from multiple scans.” Journal of Neuroscience Methods. (https://doi.org/10.1016/j.jneumeth.2023.109950)
+- <a name="draganski2011"></a> Draganski, B., Ashburner, J., Hutton, C., Kherif, F., Frackowiak, R.S.J., Helms, G., Weiskopf, N., 2011. “Regional specificity of MRI contrast parameter changes in normal ageing revealed by voxel-based quantification (VBQ).” Neuroimage 55, 1423-1434. [doi:10.1016/j.neuroimage.2011.01.052](https://doi.org/10.1016/j.neuroimage.2011.01.052)
+- Mohammadi, Siawoosh et al. 2022. “Error quantification in multi-parameter mapping facilitates robust estimation and enhanced group level sensitivity.” Neuroimage. [doi:10.1016/j.neuroimage.2022.119529](https://doi.org/10.1016/j.neuroimage.2022.119529)
+- Lutti, A., Corbin, N., Ashburner, J., Ziegler, G., Draganski, B., Phillips, C., Kherif, F., Callaghan, M. F., & Di Domenicantonio, G. 2022. “Restoring statistical validity in group analyses of motion-corrupted MRI data.” Human Brain Mapping, 43(6), 1973–1983. [doi:10.1002/hbm.25767](https://doi.org/10.1002/hbm.25767)
+- Corbin, Nadège, Rita Oliveira, Quentin Raynaud, Giulia Di Domenicantonio, Bogdan Draganski, Ferath Kherif, Martina F. Callaghan, Antoine Lutti. 2023. “Statistical analyses of motion-corrupted MRI relaxometry data computed from multiple scans.” Journal of Neuroscience Methods. [doi:10.1016/j.jneumeth.2023.109950](https://doi.org/10.1016/j.jneumeth.2023.109950)
 
 ### Denoising
-- Veraart et al., 2016. “Denoising of diffusion MRI using random matrix theory.” Neuroimage 142, p 394–406 (https://doi.org/10.1016/j.neuroimage.2016.08.016)
-- Does MD, Olesen JL, Harkins KD, et al. 2019. “Evaluation of principal component analysis image denoising on multi-exponential MRI relaxometry.” Magn Reson Med. 2019; 81:3503–3514. (https://doi.org/10.1002/mrm.27658)
-- Bazin P-L, Alkemade A, van der Zwaag W, Caan M, Mulder M and Forstmann BU, 2019. “Denoising High-Field Multi-Dimensional MRI With Local Complex PCA.” Front. Neurosci. 13:1066. (https://doi.org/10.3389/fnins.2019.01066)
-- Herthum H, Hetzer S. 2024. “Tensor denoising of quantitative multi-parameter mapping.” Magn Reson Med. 92:145–157. (https://doi.org/10.1002/mrm.30050)
+- Veraart et al., 2016. “Denoising of diffusion MRI using random matrix theory.” Neuroimage 142, p 394–406 [doi:10.1016/j.neuroimage.2016.08.016](https://doi.org/10.1016/j.neuroimage.2016.08.016)
+- Does MD, Olesen JL, Harkins KD, et al. 2019. “Evaluation of principal component analysis image denoising on multi-exponential MRI relaxometry.” Magn Reson Med. 2019; 81:3503–3514. [doi:10.1002/mrm.27658](https://doi.org/10.1002/mrm.27658)
+- Bazin P-L, Alkemade A, van der Zwaag W, Caan M, Mulder M and Forstmann BU, 2019. “Denoising High-Field Multi-Dimensional MRI With Local Complex PCA.” Front. Neurosci. 13:1066. [doi:10.3389/fnins.2019.01066](https://doi.org/10.3389/fnins.2019.01066)
+- Herthum H, Hetzer S. 2024. “Tensor denoising of quantitative multi-parameter mapping.” Magn Reson Med. 92:145–157. [doi:10.1002/mrm.30050](https://doi.org/10.1002/mrm.30050)
 
 ### Applications
-- <a name="mohammadi2015"></a> Mohammadi, S., Carey, D., Dick, F., Diedrichsen, J., Sereno, M.I., Reisert, M., Callaghan, M.F., Weiskopf, N., 2015. “Whole-Brain In-vivo Measurements of the Axonal G-Ratio in a Group of 37 Healthy Volunteers.” Front Neurosci 9, 441. (https://doi.org/10.3389/fnins.2015.00441)
-- Callaghan, Martina F. et al. 2014. “Widespread Age-Related Differences in the Human Brain Microstructure Revealed by Quantitative Magnetic Resonance Imaging.” Neurobiology of Aging 35:1862–72. (https://doi.org/10.1016/j.neurobiolaging.2014.02.008)
+- <a name="mohammadi2015"></a> Mohammadi, S., Carey, D., Dick, F., Diedrichsen, J., Sereno, M.I., Reisert, M., Callaghan, M.F., Weiskopf, N., 2015. “Whole-Brain In-vivo Measurements of the Axonal G-Ratio in a Group of 37 Healthy Volunteers.” Front Neurosci 9, 441. [doi:10.3389/fnins.2015.00441](https://doi.org/10.3389/fnins.2015.00441)
+- Callaghan, Martina F. et al. 2014. “Widespread Age-Related Differences in the Human Brain Microstructure Revealed by Quantitative Magnetic Resonance Imaging.” Neurobiology of Aging 35:1862–72. [doi:10.1016/j.neurobiolaging.2014.02.008](https://doi.org/10.1016/j.neurobiolaging.2014.02.008)
 
 ### Reviews
-- <a name="weiskopf2015"></a> Weiskopf, N., Mohammadi, S., Lutti, A., Callaghan, M.F., 2015. “Advances in MRI-based computational neuroanatomy: from morphometry to in-vivo histology.” Curr. Opin. Neurol. 28, 313-322. (https://doi.org/10.1097/WCO.0000000000000222)
-- <a name="weiskopf2021"></a> N. Weiskopf, L. Edwards, G. Helms, S. Mohammadi, and E. Kirilina. 2021. “Quantitative Magnetic Resonance Imaging of Brain Anatomy: Towards in-Vivo Histology.” Nature Reviews Physics. (http://dx.doi.org/10.1038/s42254-021-00326-1)
+- <a name="weiskopf2015"></a> Weiskopf, N., Mohammadi, S., Lutti, A., Callaghan, M.F., 2015. “Advances in MRI-based computational neuroanatomy: from morphometry to in-vivo histology.” Curr. Opin. Neurol. 28, 313-322. [doi:10.1097/WCO.0000000000000222](https://doi.org/10.1097/WCO.0000000000000222)
+- <a name="weiskopf2021"></a> N. Weiskopf, L. Edwards, G. Helms, S. Mohammadi, and E. Kirilina. 2021. “Quantitative Magnetic Resonance Imaging of Brain Anatomy: Towards in-Vivo Histology.” Nature Reviews Physics. [doi:10.1038/s42254-021-00326-1](https://doi.org/10.1038/s42254-021-00326-1)
 
 ### Datasets
-- Callaghan, M. F., Lutti, A., Ashburner, J., Balteau, E., Corbin, N., Draganski, B., Helms, G., Kherif, F., Leutritz, T., Mohammadi, S., Phillips, C., Reimer, E., Ruthotto, L., Seif, M., Tabelow, K., Ziegler, G., Weiskopf, N., 2019. “Example dataset for the hMRI toolbox.” Data in Brief 25, 104132. (https://doi.org/10.1016/j.dib.2019.104132)
-- Karakuzu, A., Whitaker, K. J., de Hollander, G., Lazari, A., Phillips, C., Khan, A., & Gau, R. 2023. “qMRI-BIDS example dataset.” (https://doi.org/10.17605/OSF.IO/K4BS5)
+- Callaghan, M. F., Lutti, A., Ashburner, J., Balteau, E., Corbin, N., Draganski, B., Helms, G., Kherif, F., Leutritz, T., Mohammadi, S., Phillips, C., Reimer, E., Ruthotto, L., Seif, M., Tabelow, K., Ziegler, G., Weiskopf, N., 2019. “Example dataset for the hMRI toolbox.” Data in Brief 25, 104132. [doi:10.1016/j.dib.2019.104132](https://doi.org/10.1016/j.dib.2019.104132)
+- Karakuzu, A., Whitaker, K. J., de Hollander, G., Lazari, A., Phillips, C., Khan, A., & Gau, R. 2023. “qMRI-BIDS example dataset.” [doi:10.17605/OSF.IO/K4BS5](https://doi.org/10.17605/OSF.IO/K4BS5)
 
 
 ## Acknowledgments and Funding
@@ -131,10 +131,10 @@ Please also cite the relevant references for the methods that are implemented in
 - N.W. and S.M. received funding from the BMBF (01EW1711A and B) in the framework of ERA-NET NEURON.
 - S.M. has received funding from the European Union by ERC grant (Acronym: MRStain, Grant agreement ID: 101089218, DOI: [10.3030/101089218](https://doi.org/10.3030/101089218)). Views and opinions expressed are, however, those of the author(s) only and do not necessarily reflect those of the European Union or the European Research Council Executive Agency. Neither the European Union nor the granting authority can be held responsible for them.
 - S.M. supported by the German Research Foundation (DFG Priority Program 2041 “Computational Connectomics”, [MO 2397/5-1, MO 2397/5-2], by the Emmy Noether Stipend: MO 2397/4-1; MO 2397/4-2).
-- B.D. is supported by the Swiss National Science Foundation (project grant no. 213595, 32003B\_135679, 32003B\_159780, 324730\_192755 and CRSK-3\_190185), InnoSuisse Flagship Swiss brAInHealth project, ERA\_NET NEURON JTC2020: iSEE and JTC2023-ELSA: BrainTree projects.
-- M.F.C.’s research was funded in whole or in part by the Discovery Research Platform for Naturalistic Neuroimaging funded by the Wellcome \[226793/Z/22/Z\].
+- B.D. is supported by the Swiss National Science Foundation (project grant no. 213595, 32003B_135679, 32003B_159780, 324730_192755 and CRSK-3_190185), InnoSuisse Flagship Swiss brAInHealth project, ERA_NET NEURON JTC2020: iSEE and JTC2023-ELSA: BrainTree projects.
+- M.F.C.’s research was funded in whole or in part by the Discovery Research Platform for Naturalistic Neuroimaging funded by the Wellcome [226793/Z/22/Z].
 - A.L. is supported by the Swiss National Science Foundation (project grant Nr CR00I5-235940).
-- The Wellcome Centre for Human Neuroimaging is supported by core funding from the Wellcome \[203147/Z/16/Z\].
+- The Wellcome Centre for Human Neuroimaging is supported by core funding from the Wellcome [203147/Z/16/Z].
 - C.P. is supported by the [F.R.S.-FNRS](https://www.fnrs.be/en/), Belgium.
 - F.K. is funded by the European Union’s Horizon Europe research and innovation programme under grant agreement No 101095384 (PHASE IV AI), by the European Union’s Horizon 2020 research and innovation programme under grant agreement No 871643 (MORPHEMIC), and by Collaborative Research on Science and Society 2026 (CROSS 2026) UNIL-EPFL.
 - The hMRI Toolbox project is supported by the Max Planck Society.

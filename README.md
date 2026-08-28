@@ -71,7 +71,7 @@ The development of the hMRI-toolbox is an international collaborative effort inc
 - Luke J. Edwards (Department of Cognitive Neuroscience, Faculty of Psychology and Neuroscience, Maastricht University, Maastricht, The Netherlands; previously Max Planck Institute for Human Cognitive and Brain Sciences, Leipzig, Germany)
 - Evelyne Balteau, Christophe Phillips ([University of Liège](https://www.giga.uliege.be), Liège, Belgium) 
 - Siawoosh Mohammadi (Department of Neuroradiology, University of Lübeck, Lübeck, Germany; previously Medical Center Hamburg-Eppendorf, Hamburg, Germany)
-- Martina F. Callaghan, John Ashburner (University College London, London, United Kingdom)
+- Martina F. Callaghan, John Ashburner (Functional Imaging Laboratory, Department of Imaging Neuroscience, UCL Queen Square Institute of Neurology, University College London, London, United Kingdom)
 - Karsten Tabelow (Weierstrass Institute for Applied Analysis and Stochastics, Berlin, Germany)
 - Ferath Kerif, Antoine Lutti (LREN, DNC - CHUV, University Lausanne, Lausanne, Switzerland)
 - Bogdan Draganski (University Bern, Bern, Switzerland; previously University Lausanne, Lausanne, Switzerland)

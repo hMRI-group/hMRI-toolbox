@@ -8,6 +8,9 @@ When possible, please add a link to the relevant pull request or issue in order 
 to track down more information about the given change.
 
 ## [unreleased]
+### Added
+- option to use a separate B1 map for B1 correction of MTsat; useful if pTx used for excitation pulses and CP mode for the MT pulse
+
 ### Fixed
 - replace `http://hmri.info` with [https://hmri.info](https://hmri.info) due to HTTP 504 (Gateway Timeout) ([#139](https://github.com/hMRI-group/hMRI-toolbox/pull/139))
 

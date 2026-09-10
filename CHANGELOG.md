@@ -8,6 +8,9 @@ When possible, please add a link to the relevant pull request or issue in order 
 to track down more information about the given change.
 
 ## [unreleased]
+### Added
+- option to fit linear dependence of R2* on flip angle [#114](https://github.com/hMRI-group/hMRI-toolbox/pull/114)
+
 ### Fixed
 - replace `http://hmri.info` with [https://hmri.info](https://hmri.info) due to HTTP 504 (Gateway Timeout) ([#139](https://github.com/hMRI-group/hMRI-toolbox/pull/139))
 

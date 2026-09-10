@@ -9,6 +9,7 @@ to track down more information about the given change.
 
 ## [unreleased]
 ### Fixed
+- error map calculations now always respect the small angle approximation flag ([#140](https://github.com/hMRI-group/hMRI-toolbox/pull/140))
 - replace `http://hmri.info` with [https://hmri.info](https://hmri.info) due to HTTP 504 (Gateway Timeout) ([#139](https://github.com/hMRI-group/hMRI-toolbox/pull/139))
 
 ## [v1.0.0]

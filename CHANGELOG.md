@@ -4,16 +4,22 @@ This changelog documents all notable changes to the hMRI-toolbox.
 
 Most recent version numbers *should* follow the [Semantic Versioning](https://semver.org/spec/v2.0.0.html) principles (e.g. bug fixes: x.x.1 > x.x.2, new feature with backward compatibility: x.2.x > x.3.0, major release affecting the way data are handled and processed: 1.x.x > 2.0.0).
 
+When possible, please add a link to the relevant pull request or issue in order to allow people
+to track down more information about the given change.
+
 ## [unreleased]
 ### Added
 - option to use a separate B1 map for B1 correction of MTsat; useful if pTx used for excitation pulses and CP mode for the MT pulse
 
+### Fixed
+- replace `http://hmri.info` with [https://hmri.info](https://hmri.info) due to HTTP 504 (Gateway Timeout) ([#139](https://github.com/hMRI-group/hMRI-toolbox/pull/139))
+
 ## [v1.0.0]
 ### Added
 - option to choose different models and parameters for B1-correction of MTsat
-- set default WM percent value in hmri_defaults
+- set default WM percent value in `hmri_defaults`
 - spatial processing: add explicit mask creation and fix implicit mask (0 to NaN in float images)
-- update FIL seste seq parameters in get_metadata_val_classic
+- update FIL seste seq parameters in `get_metadata_val_classic`
 - denoising module-first part: Java-Matlab interface for LCPCA denoising
 - read EffectiveEchoTime in new TerraX Dicom format
 - save LCPCA-denoising supplementary files as nifti instead of .mat
@@ -21,19 +27,19 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 - robust combination of two runs using error maps
 - add .orig file extension to .gitignore to prevent merge artifacts to be pushed
 - update GUI code to enhance documentation for Proc. Smoothing
-- denoising module (lcpca): set mat_intent fields to input file values instead of spm_create_vol setting of 'aligned'
+- denoising module (lcpca): set `mat_intent` fields to input file values instead of `spm_create_vol` setting of 'aligned'
 - denoising module-second part: MPPCA denoising
 - added imperfect spoiling correction coefficients for common FIL protocols (3T and 7T).
   Note that these coefficients are computed without the small angle approximation.
-- Update defaults with new recommended options: no more small angle approximation, and using weighted least squares R2* fitting
+- Update defaults with new recommended options: no more small angle approximation, and using weighted least squares R2\* fitting
 
 ### Fixed
 - replace `datestr(now)` with `datetime('now')` in line with [MATLAB recommendation](https://mathworks.com/help/matlab/matlab_prog/replace-discouraged-instances-of-serial-date-numbers-and-date-strings.html)
 - fix crash if input images have different matrix sizes, and warn
 - make B1-map creation using 3DEPI SE/STE and AFI methods fall back to defaults without sidecar files, rather than crash
-- Modify the filenames as files are copied to RFsensCalc to prevent overwriting in further processing
+- modify the filenames as files are copied to RFsensCalc to prevent overwriting in further processing
 - batch interface now enforces the number of B1 input images correctly for B1 mapping methods which only need two images
-- more informative error if optimization toolbox not present during NLLS R2* calculation
+- more informative error if optimization toolbox not present during NLLS R2\* calculation
 - fix 3D-EPI B1 mapping not using b1defaults for Triotim scanner
 - use cell- instead of char- array to accommodate filenames of unequal length in RFsens
 - prevent missing B1 map for MTsat spamming the log
@@ -47,14 +53,14 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 ### Breaking changes
 - Old, unused imperfect spoiling correction coefficients have been removed and replaced with new ones.
   If you need the old coefficients, you will need to add them back using a local defaults file.
-- Fix inconsistency between new implementation of PD and old T2* weighting removal method
+- Fix inconsistency between new implementation of PD and old T2\* weighting removal method
 - Update imperfect spoiling correction with upstream bugfixes in EPG-X so computed coefficients will be different
 - Default AFI TR2/TR1 value now based on the second input image having the longer TR, which may not be the case for older data
 
 ## [v0.6.1]
 ### Fixed
 - The local config files have been converted to scripts for compatibility with compiled version
-- function-evaluate SPM-struct (preproc8.val) for SPM development version compatibility
+- function-evaluate SPM-struct (`preproc8.val`) for SPM development version compatibility
 - copy acquisition metadata to TE=0 volumes in Results/Supplementary folder after map creation so they can be used as input to the toolbox if needed
 
 ## [v0.6.0]
@@ -88,7 +94,7 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 ## [v0.4.0]
 
 ### Added
-- weighted least squares R2* fitting
+- weighted least squares R2\* fitting
 - cleaner input/output functions for map creation
 - several unit tests
 - nulling of bright voxels during unified segmentation to improve segmentation of anonymised data
@@ -154,8 +160,8 @@ Many small bugs - refer to commits for details...
 ### Added
 
 - **Single echo VFA approach**:
-Implemented with a default minimum number of echoes for R2* calculation of 4.
-The number of echoes used is logged and a general warning informs the user about data interpretation when R2* map derived from only a few echoes.
+Implemented with a default minimum number of echoes for R2\* calculation of 4.
+The number of echoes used is logged and a general warning informs the user about data interpretation when R2\* map derived from only a few echoes.
 
 - **Metadata & processing parameters**:
 Bunch of modifications to improve the readability and completeness of the metadata, for each output image as well as for the processing parameters.
@@ -169,7 +175,7 @@ Made available under "ADVANCED USERS ONLY": the option to use the R1-UNICORT-der
 - **New option to disable the coregistration steps**:
 Coregistration shouldn't be disabled but it can be convenient in specific cases (simulated data, phantom data).
 Option made available under "ADVANCED USERS ONLY", i.e. can only be modified by an advanced user implementing customized defaults.
-When enabled (defaults), all input images to hmri_create_MTProt.m (transmit and receive fields, T1w and MTw images) are coregistered to the PDw average (or TE=0 fit) image (see hmri_create_MTProt.m).
+When enabled (defaults), all input images to `hmri_create_MTProt.m` (transmit and receive fields, T1w and MTw images) are coregistered to the PDw average (or TE=0 fit) image (see `hmri_create_MTProt.m`).
 
 ### Changed
 
@@ -223,7 +229,7 @@ The current BIDS proposal is to have B1 maps scaled so that a value of 1 corresp
 To be continued...
 
 - **Logging processing messages**:
-In order to review and keep track of info, warnings and other messages coming up during data processing, all messages are logged using the hmri_log.m script.
+In order to review and keep track of info, warnings and other messages coming up during data processing, all messages are logged using the `hmri_log.m` script.
 Various options available (pop-up messages, messages logged to the Matlab Command Window, messages saved into a log file).
 Improved tracking and readability of the messages, with more explicit descriptions and improved uniformity of the used format.
 
@@ -244,9 +250,9 @@ Many small bugs - refer to commits for details...
 ### Added
 
 - **Single echo VFA approach**:
-Implemented with a default minimum number of echoes for R2* calculation of 4.
+Implemented with a default minimum number of echoes for R2\* calculation of 4.
 The number of echoes used is logged and a general warning informs the user
-about data interpretation when R2* map derived from only a few echoes.
+about data interpretation when R2\* map derived from only a few echoes.
 
 - **Metadata & processing parameters**:
 Bunch of modifications to improve the readability and completeness of the metadata, for each output image as well as for the processing parameters.
@@ -264,9 +270,9 @@ Coregistration shouldn't be disabled but it can be convenient in specific
 cases (simulated data, phantom data).
 Option made available under "ADVANCED USERS ONLY", i.e. can only be
 modified by an advanced user implementing customized defaults.
-When enabled (defaults), all input images to hmri_create_MTProt.m (transmit and receive
+When enabled (defaults), all input images to `hmri_create_MTProt.m` (transmit and receive
 fields, T1w and MTw images) are coregistered to the PDw average (or TE=0
-fit) image (see hmri_create_MTProt.m).
+fit) image (see `hmri_create_MTProt.m`).
 
 ### Changed
 

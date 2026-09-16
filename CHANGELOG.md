@@ -10,7 +10,7 @@ to track down more information about the given change.
 ## [unreleased]
 ### Fixed
 - replace `http://hmri.info` with [https://hmri.info](https://hmri.info) due to HTTP 504 (Gateway Timeout) ([#139](https://github.com/hMRI-group/hMRI-toolbox/pull/139))
-- miscellaneous small fixes and updates to the documentation and website ([#142](https://github.com/hMRI-group/hMRI-toolbox/pull/142), [#143](https://github.com/hMRI-group/hMRI-toolbox/pull/143))
+- miscellaneous small fixes and updates to the documentation and website ([#142](https://github.com/hMRI-group/hMRI-toolbox/pull/142), [#147](https://github.com/hMRI-group/hMRI-toolbox/pull/147))
 
 ## [v1.0.0]
 ### Added

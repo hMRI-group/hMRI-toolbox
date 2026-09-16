@@ -10,6 +10,7 @@ to track down more information about the given change.
 ## [unreleased]
 ### Fixed
 - replace `http://hmri.info` with [https://hmri.info](https://hmri.info) due to HTTP 504 (Gateway Timeout) ([#139](https://github.com/hMRI-group/hMRI-toolbox/pull/139))
+- miscellaneous small fixes and updates to the documentation and website ([#142](https://github.com/hMRI-group/hMRI-toolbox/pull/142), [#143](https://github.com/hMRI-group/hMRI-toolbox/pull/143))
 
 ## [v1.0.0]
 ### Added
@@ -28,7 +29,7 @@ to track down more information about the given change.
 - denoising module-second part: MPPCA denoising
 - added imperfect spoiling correction coefficients for common FIL protocols (3T and 7T).
   Note that these coefficients are computed without the small angle approximation.
-- Update defaults with new recommended options: no more small angle approximation, and using weighted least squares R2\* fitting
+- update defaults with new recommended options: no more small angle approximation, and using weighted least squares R2\* fitting
 
 ### Fixed
 - replace `datestr(now)` with `datetime('now')` in line with [MATLAB recommendation](https://mathworks.com/help/matlab/matlab_prog/replace-discouraged-instances-of-serial-date-numbers-and-date-strings.html)
@@ -45,14 +46,15 @@ to track down more information about the given change.
 - do not log ISC-applied to R1 in case of no-B1-corr and UNICORT
 - account for diffusion while gradients are off when calculating imperfect spoiling correction parameters
 - apply shift and diffusion operators in the correct order when calculating imperfect spoiling correction parameters
-- Default AFI TR2/TR1 value now matches typical sequence order
+- default AFI TR2/TR1 value now matches typical sequence order
+- miscellaneous small fixes and updates to the documentation and website ([#133](https://github.com/hMRI-group/hMRI-toolbox/pull/133), [#134](https://github.com/hMRI-group/hMRI-toolbox/pull/134))
 
 ### Breaking changes
-- Old, unused imperfect spoiling correction coefficients have been removed and replaced with new ones.
+- old, unused imperfect spoiling correction coefficients have been removed and replaced with new ones.
   If you need the old coefficients, you will need to add them back using a local defaults file.
-- Fix inconsistency between new implementation of PD and old T2\* weighting removal method
-- Update imperfect spoiling correction with upstream bugfixes in EPG-X so computed coefficients will be different
-- Default AFI TR2/TR1 value now based on the second input image having the longer TR, which may not be the case for older data
+- fix inconsistency between new implementation of PD and old T2\* weighting removal method
+- update imperfect spoiling correction with upstream bugfixes in EPG-X so computed coefficients will be different
+- default AFI TR2/TR1 value now based on the second input image having the longer TR, which may not be the case for older data
 
 ## [v0.6.1]
 ### Fixed

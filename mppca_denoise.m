@@ -23,14 +23,20 @@ function [denoised,S2,P] = mppca_denoise(image,window,mask)
 % Modified to remove mean across voxels (compute principal components of
 % the covariance not correlation matrix).
 %
-% Original source: https://github.com/Neurophysics-CFIN/MP-PCA-Denoising
-%
 % Free to use, but please cite Veraart et al., NeuroImage (2016) 142,
 % p 394-406 (https://doi.org/10.1016/j.neuroimage.2016.08.016) and Does, MD
 % et al. Evaluation of principal component analysis image denoising on
-% multi‐exponential MRI relaxometry. Magn Reson Med. 2019; 81: 3503– 3514
+% multi-exponential MRI relaxometry. Magn Reson Med. 2019; 81: 3503-3514
 % (https://doi.org/10.1002/mrm.27658).
 %
+% References:
+%   Original source: https://github.com/Neurophysics-CFIN/MP-PCA-Denoising
+%   Veraart, J et al., Neuroimage (2016), Denoising of diffusion MRI using
+%     random matrix theory. (https://doi.org/10.1016/j.neuroimage.2016.08.016)
+%   Does, MD et al., Magn Reson Med (2019), Evaluation of principal component
+%     analysis image denoising on multi-exponential MRI relaxometry.
+%     (https://doi.org/10.1002/mrm.27658)
+%__________________________________________________________________________
 % Copyright (C) 2020 Jonas Olesen, Mark Does and Sune Jespersen
 %
 % This program is free software; you can redistribute it and/or modify

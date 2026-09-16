@@ -715,7 +715,8 @@ weighted_data(1).TE = TE_array;
 
 for img=1:length(denoising_params.pdw)
     im_str = spm_vol(denoising_params.pdw(img));
-    im_vol = spm_read_vols(im_str{1}); 
+    im_vol = spm_read_vols(im_str{1});
+    im_vol=max(im_vol,1);
     weighted_data(1).data(:,:,:,img) = im_vol;
 end
 
@@ -726,7 +727,8 @@ weighted_data(2).TE = TE_array;
 
 for img=1:length(denoising_params.t1w)
     im_str = spm_vol(denoising_params.t1w(img));
-    im_vol = spm_read_vols(im_str{1}); 
+    im_vol = spm_read_vols(im_str{1});
+    im_vol=max(im_vol,1);
     weighted_data(2).data(:,:,:,img) = im_vol;
 
 end
@@ -738,6 +740,7 @@ weighted_data(3).TE = TE_array;
 for img=1:length(denoising_params.mtw)
     im_str = spm_vol(denoising_params.mtw(img));
     im_vol = spm_read_vols(im_str{1}); 
+    im_vol=max(im_vol,1);
     weighted_data(3).data(:,:,:,img) = im_vol;
 
 end

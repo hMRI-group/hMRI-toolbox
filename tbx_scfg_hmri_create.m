@@ -377,6 +377,13 @@ for i=1:numel(job.subj)
     cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
     
     k=k+1;
+
+    cdep(k)            = cfg_dep;
+    cdep(k).sname      = sprintf('DeltaR2s_subj%d',i);
+    cdep(k).src_output = substruct('.','subj','()',{i},'.','DeltaR2s','()',{':'});
+    cdep(k).tgt_spec   = cfg_findspec({{'filter','image','strtype','e'}});
+    
+    k=k+1;
     
 end
 dep = cdep;

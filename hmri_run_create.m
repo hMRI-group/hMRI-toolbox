@@ -107,6 +107,12 @@ job.subj.log.flags = struct('LogFile',struct('Enabled',true,'FileName','hMRI_map
     'PopUp',job.subj.popup,'ComWin',true);
 flags = job.subj.log.flags;
 flags.PopUp = false;
+
+% introduce global popup flag for use of other functions further down 
+% the processing
+global hmri_popupFlag;
+hmri_popupFlag = job.subj.log.flags;
+
 hmri_log(sprintf('\t============ CREATE hMRI MAPS MODULE - %s.m (%s) ============', mfilename, datetime('now')),flags);
 
 if newrespath

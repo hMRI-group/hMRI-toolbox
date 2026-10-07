@@ -1228,6 +1228,13 @@ end
 %=========================================================================%
 function mpm_params = get_mpm_params(jobsubj)
 
+% init for general output to suppress error with few PDw run (e.g. 3 echos)
+mpm_params = struct();
+mpm_params.output = struct();
+mpm_params.output.suffix = '';
+mpm_params.output.descrip =cell(3,1);
+
+
 % save SPM version (slight differences may appear in the results depending
 % on the SPM version!)
 [v,r] = spm('Ver');

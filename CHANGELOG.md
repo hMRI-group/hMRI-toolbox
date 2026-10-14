@@ -7,6 +7,8 @@ Most recent version numbers *should* follow the [Semantic Versioning](https://se
 ## [unreleased]
 ### Fixed
 - replace http://hmri.info with https://hmri.info due to HTTP 504 (Gateway Timeout)
+### Added
+- denoising module-third part: Adaptive denoising ([#150](https://github.com/hMRI-group/hMRI-toolbox/pull/150))
 
 ## [v1.0.0]
 ### Added

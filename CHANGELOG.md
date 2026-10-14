@@ -11,6 +11,8 @@ to track down more information about the given change.
 ### Fixed
 - replace `http://hmri.info` with [https://hmri.info](https://hmri.info) due to HTTP 504 (Gateway Timeout) ([#139](https://github.com/hMRI-group/hMRI-toolbox/pull/139))
 - miscellaneous small fixes and updates to the documentation and website ([#142](https://github.com/hMRI-group/hMRI-toolbox/pull/142), [#147](https://github.com/hMRI-group/hMRI-toolbox/pull/147))
+### Added
+- denoising module-third part: Adaptive denoising ([#150](https://github.com/hMRI-group/hMRI-toolbox/pull/150))
 
 ## [v1.0.0]
 ### Added

@@ -15,6 +15,10 @@ switch denoising_protocol
         [output_mag, output_phase] = hmri_calc_mppcadenoise(denoising_params);
         varargout{1} = output_mag;
         varargout{2} = output_phase;
+    case 'paws_denoise'
+        [output_mag, output_phase] = hmri_calc_adaptivedenoising(denoising_params);
+        varargout{1} = output_mag;
+        varargout{2} = output_phase;
 end
 end
 
@@ -70,6 +74,10 @@ denoising_params.phase_img = cellstr(char(spm_file(jobsubj.phase_img,'number',''
 denoising_params.phase_bool = any(~cellfun(@isempty, denoising_params.phase_img));
 denoising_params.mag_bool = any(~cellfun(@isempty, denoising_params.mag_img));
 
+% Load contrast tags
+denoising_params.mag_img_cotags= string(jobsubj.mag_img_cotags);
+denoising_params.phase_img_cotags= string(jobsubj.phase_img_cotags);
+
 % processing can continue if only magnitude images were entered but
 % only warn that optional phase img are missing
 if ~denoising_params.phase_bool || ~isfield(jobsubj,'phase_img')
@@ -94,17 +102,41 @@ switch denoising_protocol
         hmri_log(sprintf('Lcpca Denoising Parameters:\n\n%s', ...
             printdnstruct),denoising_params.defflags);
         case 'mppca_denoise'
+
         denoising_params.mask = jobsubj.denoisingtype.(denoising_protocol).mask;
         denoising_params.ngbsize = jobsubj.denoisingtype.(denoising_protocol).ngbsize;
 
         denoising_params.output_path = jobsubj.path.dnrespath;
         denoising_params.supp_path = jobsubj.path.supplpath;
-
         % Print mppca denoising parameters 
         print_mppca_params.ngbsize = denoising_params.ngbsize;
         printdnstruct = printstruct(print_mppca_params);
         hmri_log(sprintf('MP-PCA Denoising Parameters:\n\n%s', ...
             printdnstruct),denoising_params.defflags);
+
+        case 'paws_denoise'
+            
+        denoising_params.mask = jobsubj.denoisingtype.(denoising_protocol).mask;
+        denoising_params.kstar = jobsubj.denoisingtype.(denoising_protocol).kstar;
+        denoising_params.patchsize = jobsubj.denoisingtype.(denoising_protocol).patchsize;
+        denoising_params.ladjust = jobsubj.denoisingtype.(denoising_protocol).ladjust;
+        denoising_params.output_path = jobsubj.path.dnrespath;
+        denoising_params.supp_path = jobsubj.path.supplpath;
+
+        % Get separate contrasts
+        contrasts = {"pdw","t1w","mtw"};
+        cotags= denoising_params.mag_img_cotags;
+        full_mag_img=denoising_params.mag_img;
+        for c = 1:length(contrasts)
+            con = contrasts{c};
+            con_filter = (cotags==con);
+            denoising_params.(con) = full_mag_img(con_filter);
+        end
+
+        % Get TE for further processing
+        denoising_params.t1w_te = get_te(char(denoising_params.t1w));
+        denoising_params.pdw_te = get_te(char(denoising_params.pdw));
+        denoising_params.mtw_te = get_te(char(denoising_params.mtw));
 
 end
 
@@ -619,6 +651,528 @@ Ni_dim.dat(:,:,:)=num_pc;
 
 end
 
+
+%===============================================================================================%
+% Calculate adaptive-denoising
+%=================================================================================================%
+
+function [output_mag, output_phase] = hmri_calc_adaptivedenoising(denoising_params)
+
+%define the flag for log
+pawsflags = denoising_params.defflags;
+pawsflags_nopopup = pawsflags;
+pawsflags_nopopup.PopUp = false;
+
+% set the metadata mod
+json = hmri_get_defaults('json');
+
+%%Read from the input the processing parameters
+image_list = cellstr(denoising_params.mag_img);
+firstIm= image_list{1};
+%Get params from 1st image and init variables
+image = spm_vol(firstIm);
+imagevol = spm_read_vols(image);
+imsize = size(imagevol);
+imlen = length(image_list);
+wghts = sqrt(sum(image.mat(1:3,1:3).^2));
+
+%%Read pawsdenoise params
+mask = denoising_params.mask;
+kstar = double(denoising_params.kstar);
+patchsize = double(denoising_params.patchsize);
+ladjust = double(denoising_params.ladjust);
+
+adaptive_params_check = sprintf('Adaptive denoising input parameters: kstar=%d, patchsize=%d, ladjust=%d \n', kstar, patchsize,ladjust);
+hmri_log(adaptive_params_check,pawsflags);
+
+alpha= denoising_params.alpha;
+fit_method = denoising_params.fit_method;
+mscbw = denoising_params.mscbw;
+spmin = denoising_params.spmin;
+lambda0 = denoising_params.lambda0;
+corr_fac_patchsize = denoising_params.corr_fac_patchsize;
+
+% ──Pre-process mask input as .nii───────────────────────────────────────────────────────
+if (iscell(mask) && isempty(mask{1})) || isempty(mask)
+    mask = logical(ones(imsize));
+else
+    mask_str = spm_vol(mask);
+    mask_vols = spm_read_vols(mask_str{1});
+    dims= size(mask_vols);
+    premask = true([dims 1]);
+    premask(:,:,:,1)= mask_vols;
+    premask = logical(premask);
+    mask = premask;
+end
+
+
+
+% prepare weighted_data for further processing
+
+weighted_data(1).data = zeros(imsize(1),imsize(2),imsize(3),length(denoising_params.pdw));
+TE_array = [denoising_params.pdw_te.te];
+weighted_data(1).TE = TE_array;
+
+for img=1:length(denoising_params.pdw)
+    im_str = spm_vol(denoising_params.pdw(img));
+    im_vol = spm_read_vols(im_str{1});
+    im_vol=max(im_vol,1);
+    weighted_data(1).data(:,:,:,img) = im_vol;
+end
+
+weighted_data(2).data = zeros(imsize(1),imsize(2),imsize(3),length(denoising_params.t1w));
+TE_array = [denoising_params.t1w_te.te];
+weighted_data(2).TE = TE_array;
+
+
+for img=1:length(denoising_params.t1w)
+    im_str = spm_vol(denoising_params.t1w(img));
+    im_vol = spm_read_vols(im_str{1});
+    im_vol=max(im_vol,1);
+    weighted_data(2).data(:,:,:,img) = im_vol;
+
+end
+
+weighted_data(3).data = zeros(imsize(1),imsize(2),imsize(3),length(denoising_params.mtw));
+TE_array = [denoising_params.mtw_te.te];
+weighted_data(3).TE = TE_array;
+
+for img=1:length(denoising_params.mtw)
+    im_str = spm_vol(denoising_params.mtw(img));
+    im_vol = spm_read_vols(im_str{1}); 
+    im_vol=max(im_vol,1);
+    weighted_data(3).data(:,:,:,img) = im_vol;
+
+end
+
+
+
+  % ══ Step 1: mimic estimateESTATICS ════════════════════════════════════════
+  %
+  % estimateESTATICS fits S_k = A_k * exp(-R2* * TE) via NLS per voxel and
+  % collects modelCoeff [nv x nvoxel], invCov [nv x nv x nvoxel], rsigma.
+  % We use hmri_calc_R2s (log-linear OLS) as an approximation, then build
+  % modelCoeff and a signal-space invCov from its output.
+
+  [R2s, extrapolated, SError] = hmri_calc_R2s(weighted_data, fit_method);
+
+  % Derived dimensions
+  numcon       = numel(weighted_data);      % number of contrasts
+  nvec         = numcon + 1;                % R2s + one intercept per contrast
+  [n1, n2, n3] = size(R2s);
+  nechos       = sum(arrayfun(@(w) numel(w.TE), weighted_data));
+
+  % modelCoeff [nvec x nmask]: R2s in row 1, signal at TE=0 in rows 2..nvec.
+  modelCoeff      = zeros(nvec, nnz(mask));
+  modelCoeff(1,:) = R2s(mask);
+  for w = 1:numcon
+    modelCoeff(w+1,:) = extrapolated{w}(mask);
+  end
+
+  % ══ Step 2: mimic smoothESTATICS ══════════════════════════════════════════
+  %
+  % Build invCov from the NLS signal-model Jacobian, consistent with
+  % signal-space modelCoeff = [R2s, A_1, ..., A_ncon].
+  %
+  % Jacobian of S_k = A_{c(k)} * exp(-R2s * TE_k) w.r.t. [R2s, A_1,...]:
+  %   J[k, 1]   = -A_{c(k)} * TE_k * exp(-R2s * TE_k)
+  %   J[k, w+1] =  exp(-R2s * TE_k)  for echo k in contrast w, else 0
+  %
+  % invCov(v) = J(v)' J(v) / sigma2_signal(v), stored in lower-triangular
+  % row-major order matching KLdistsi (element order: (1,1),(2,1),(2,2),...).
+
+  % Signal-space residual variance per voxel [n1 x n2 x n3].
+  % SError.weighted{w} = rms of signal residuals for contrast w (per voxel).
+  sigma2_NLS = zeros(n1, n2, n3);
+  for w = 1:numcon
+    nTE_w      = numel(weighted_data(w).TE);
+    sigma2_NLS = sigma2_NLS + nTE_w * SError.weighted{w}.^2;
+  end
+  sigma2_NLS = sigma2_NLS / (nechos - nvec);
+
+  % Optional spatial stabilisation of sigma2 (mirrors rsdx/rsdhat in R).
+  if mscbw > 0 && exist('medianFilter3D', 'file')
+    sigma2_s        = medianFilter3D(sigma2_NLS, mscbw, mask);
+    sigma2_s(~mask) = mean(sigma2_s(mask));
+  else
+    sigma2_s = sigma2_NLS;
+  end
+
+  % Compute J'J blocks vectorised over masked voxels.
+  nmask  = nnz(mask);
+  R2s_v  = R2s(mask)';          % [1 x nmask]
+  JtJ_11 = zeros(1, nmask);     % (R2s,  R2s ) block
+  JtJ_w1 = zeros(numcon, nmask);% (A_w,  R2s ) blocks
+  JtJ_ww = zeros(numcon, nmask);% (A_w,  A_w ) diagonal blocks
+
+  for w = 1:numcon
+    TEs_w  = weighted_data(w).TE(:);           % [nTE_w x 1]
+    A_w_v  = extrapolated{w}(mask)';           % [1 x nmask]
+    exp2   = exp(-2 * TEs_w .* R2s_v);        % [nTE_w x nmask]
+    JtJ_11    = JtJ_11 + A_w_v.^2 .* sum(TEs_w.^2 .* exp2, 1);
+    JtJ_w1(w,:) =      - A_w_v    .* sum(TEs_w    .* exp2, 1);
+    JtJ_ww(w,:) =                    sum(             exp2, 1);
+  end
+
+  sigma2_v = sigma2_s(mask)';   % [1 x nmask]
+
+  % Assemble invCov [nvd x nmask] in KLdistsi lower-triangular row-major order:
+  % (1,1),(2,1),(2,2),(3,1),(3,2),(3,3),... Cross-contrast off-diagonals are 0.
+  nvd    = nvec * (nvec + 1) / 2;
+  invCov = zeros(nvd, nmask);
+  idx    = 0;
+  for row = 1:nvec
+    for col = 1:row
+      idx = idx + 1;
+      if row == 1 && col == 1
+        invCov(idx,:) = JtJ_11 ./ sigma2_v;
+      elseif col == 1
+        invCov(idx,:) = JtJ_w1(row-1,:) ./ sigma2_v;
+      elseif row == col
+        invCov(idx,:) = JtJ_ww(row-1,:) ./ sigma2_v;
+      end
+    end
+  end
+
+  % mpmData [nechos x nmask] — raw echo data restricted to mask.
+  mpmData  = zeros(nechos, nnz(mask));
+  echo_idx = 1;
+  for w = 1:numcon
+    nTE    = numel(weighted_data(w).TE);
+    data_w = reshape(weighted_data(w).data, [], nTE);   % [nvoxel x nTE]
+    mpmData(echo_idx:echo_idx+nTE-1, :) = data_w(mask(:), :)';
+    echo_idx = echo_idx + nTE;
+  end
+
+  % ══ PAWS Smoothing ═════════════════════════
+
+  % modelCoeff : nvec x nmask double matrix of model parameters (mask-restricted)
+  % mpmData    : nechos x nmask double matrix of raw echo data (mask-restricted)
+  % invCov     : nvec*(nvec+1)/2 x nmask double matrix, lower-triangular inverse covariance (mask-restricted)
+  % mask       : n1 x n2 x n3 logical array
+  % nechos     : total number of echoes across all contrasts
+  % nvec       : number of model parameters
+  % wghts      : 3-element voxel-size ratio vector [wx, wy, wz], or [] for isotropic
+  % kstar      : number of smoothing iterations
+  % patchsize  : patch radius (0, 1, or 2)
+  % ladjust    : adaptation bandwidth adjustment factor (default 1)
+  % alpha      : significance level for the adaptive test (default 0.025)
+  %              supported values: 0.5, 0.1, 0.05, 0.025, 0.01
+
+  % wghts: default to isotropic, then convert 3-element [wx,wy,wz] to
+  % 2-element ratio vector [wx/wy, wx/wz] as expected by the C functions
+  if isempty(wghts)
+    wghts = [1, 1, 1];
+  end
+  wghts = wghts(1) ./ wghts(2:3);
+  
+  % spatial dims from mask
+  [n1, n2, n3] = size(mask);
+
+  % ── Spatial Dimensions ────────────────────────────────────────────────────
+  % patch size in each dimension (1 when that dimension is flat)
+  np1 = 2 * patchsize + 1;
+  if n2 > 1, np2 = 2 * patchsize + 1; else np2 = 1; end
+  if n3 > 1, np3 = 2 * patchsize + 1; else np3 = 1; end
+
+  hmax   = 1.25 ^ (kstar / 3);
+  lambda = ladjust * 2 * nvec * qf(nvec, nechos - nvec, alpha) * corr_fac_patchsize(patchsize + 1);
+
+  paws_params = sprintf('PAWS: kstar=%d, patchsize=%d, ladjust=%d, lambda=%.4f\n', kstar, patchsize,ladjust, lambda);
+  hmri_log(paws_params,pawsflags_nopopup);
+
+  % ── Mask Position Array ───────────────────────────────────────────────────
+  % position array: 0 outside mask, 1..nmask inside mask (int32 for MEX)
+  position = zeros(n1, n2, n3, 'int32');
+  position(mask > 0) = int32(1:nnz(mask));
+
+  % ── Smoothing State Variables ─────────────────────────────────────────────
+  % initialise adaptation weights and current estimate
+  bi    = ones(1, nnz(mask));
+  theta = modelCoeff;
+
+  % ── PAWS Smoothing Iteration ──────────────────────────────────────────────
+  k = 1;
+  while k <= kstar
+
+    hakt    = gethani(1, 1.25 * hmax, 2, 1.25 ^ k, wghts, 1e-4);
+    dlw     = 2 * floor(hakt ./ [1, wghts]) + 1;
+    lwghtSz = prod(dlw);  % scalar size of the lwght scratch buffer
+
+    iteration_params = sprintf('PAWS: iteration %d/%d  hakt=%.3f  lambda0=%.4g\n', k, kstar, hakt, lambda0);
+    hmri_log(iteration_params,pawsflags_nopopup);
+
+    if k == kstar && ~isempty(mpmData)
+
+      [bi, theta, smoothedmpmData] = pvawslast(modelCoeff, ...
+                                               mpmData, ...
+                                               position, ...
+                                               nvec, ...
+                                               nvec * (nvec + 1) / 2, ...
+                                               nechos, ...
+                                               n1, n2, n3, ...
+                                               hakt, lambda0, ...
+                                               theta, bi, invCov, ...
+                                               1, ...
+                                               spmin, wghts, lwghtSz, ...
+                                               np1, np2, np3);
+
+    else
+
+      [bi, theta] = pvaws(modelCoeff, ...
+                          position, ...
+                          nvec, ...
+                          nvec * (nvec + 1) / 2, ...
+                          n1, n2, n3, ...
+                          hakt, lambda0, ...
+                          theta, bi, invCov, ...
+                          1, ...
+                          spmin, wghts, lwghtSz, ...
+                          np1, np2, np3);
+
+    end
+
+    lambda0 = lambda;
+    k = k + 1;
+  end
+
+  % ── Reconstruct denoised weighted_data ────────────────────────────────────
+  denoised_weighted_data = weighted_data;
+  echo_idx = 1;
+  for w = 1:numcon
+    nTE      = numel(weighted_data(w).TE);
+    data_out = zeros(n1, n2, n3, nTE);
+    for e = 1:nTE
+      vol       = zeros(n1, n2, n3);
+      vol(mask) = smoothedmpmData(echo_idx + e - 1, :);
+      data_out(:,:,:,e) = vol;
+    end
+    denoised_weighted_data(w).data = data_out;
+    echo_idx = echo_idx + nTE;
+  end
+
+
+  data_out = denoised_weighted_data(1).data;
+  data_size = size(data_out);
+  data_len = data_size(4);
+  output_path = cellstr(denoising_params.output_path);
+  supp_path = cellstr(denoising_params.supp_path);
+  idx_mag = 1;
+  image_list = denoising_params.pdw;
+  for echo = 1:data_len
+      % get denoised volume
+      volumedata  = data_out(:,:,:,echo);
+      % write the volume to .nii with an update to standard .nii header
+      firstfile = image_list{echo};
+      filehdr = spm_vol(image_list{echo});
+
+      [path,filename,ext] = fileparts(firstfile);
+      [~,mainfilename,~] = fileparts(firstfile);
+      filename = strcat('AdaptiveDenoised_',filename,'.nii');
+
+      outfname = fullfile(output_path{1},filename);
+      dt = filehdr.dt;
+      updated_descrip = strcat(filehdr.descrip, ' + adaptive denoised');
+      denoised_nifti = hmri_create_nifti(outfname, filehdr, dt, updated_descrip);
+      denoised_nifti.dat(:,:,:) = volumedata;
+
+      % write metadata as extended header and sidecar json
+      Output_hdr = init_dn_output_metadata(image_list, denoising_params);
+      Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (ADAPTIVE)'];
+      Output_hdr.history.output.imtype = 'Denoising (ADAPTIVE)';
+      % add acquisition data if available (otherwise fields will be empty)
+      jsonfilename = fullfile(path,strcat(mainfilename,'.json'));
+      if exist(jsonfilename, 'file') ==2
+          try
+              jsondata = spm_jsonread(jsonfilename);
+              data_RepetitionTime = get_metadata_val(jsondata,'RepetitionTime');
+              data_EchoTime = get_metadata_val(jsondata,'EchoTime' );
+              data_FlipAngle = get_metadata_val(jsondata, 'FlipAngle');
+              Output_hdr.acqpar = struct('RepetitionTime',data_RepetitionTime, ...
+                  'EchoTime',data_EchoTime,'FlipAngle',data_FlipAngle);
+          catch
+              hmri_log('Although json sidecar file were found, the writing of acquisition metadata failed', mppcaflags_nopopup);  
+
+          end
+      else
+          hmri_log('No json sidecar file were found, skipping the writing of acquisition metadata', mppcaflags_nopopup);  
+      end
+
+      % set all the metadata
+      set_metadata(outfname,Output_hdr,json);
+
+      % add image to the output list
+      out_mag{idx_mag} = outfname;
+      idx_mag = idx_mag +1;
+
+
+  end
+
+
+  data_out = denoised_weighted_data(2).data;
+  data_size = size(data_out);
+  data_len = data_size(4);
+  image_list = denoising_params.t1w;
+  for echo = 1:data_len
+      % get denoised volume
+      volumedata  = data_out(:,:,:,echo);
+      % write the volume to .nii with an update to standard .nii header
+      firstfile = image_list{echo};
+      filehdr = spm_vol(image_list{echo});
+
+      [path,filename,ext] = fileparts(firstfile);
+      [~,mainfilename,~] = fileparts(firstfile);
+      filename = strcat('AdaptiveDenoised_',filename,'.nii');
+
+      outfname = fullfile(output_path{1},filename);
+      dt = filehdr.dt;
+      updated_descrip = strcat(filehdr.descrip, ' + adaptive denoised');
+      denoised_nifti = hmri_create_nifti(outfname, filehdr, dt, updated_descrip);
+      denoised_nifti.dat(:,:,:) = volumedata;
+
+      % write metadata as extended header and sidecar json
+      Output_hdr = init_dn_output_metadata(image_list, denoising_params);
+      Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (ADAPTIVE)'];
+      Output_hdr.history.output.imtype = 'Denoising (ADAPTIVE)';
+      % add acquisition data if available (otherwise fields will be empty)
+      jsonfilename = fullfile(path,strcat(mainfilename,'.json'));
+      if exist(jsonfilename, 'file') ==2
+          try
+              jsondata = spm_jsonread(jsonfilename);
+              data_RepetitionTime = get_metadata_val(jsondata,'RepetitionTime');
+              data_EchoTime = get_metadata_val(jsondata,'EchoTime' );
+              data_FlipAngle = get_metadata_val(jsondata, 'FlipAngle');
+              Output_hdr.acqpar = struct('RepetitionTime',data_RepetitionTime, ...
+                  'EchoTime',data_EchoTime,'FlipAngle',data_FlipAngle);
+          catch
+              hmri_log('Although json sidecar file were found, the writing of acquisition metadata failed', mppcaflags_nopopup);  
+
+          end
+      else
+          hmri_log('No json sidecar file were found, skipping the writing of acquisition metadata', mppcaflags_nopopup);  
+      end
+
+      % set all the metadata
+      set_metadata(outfname,Output_hdr,json);
+
+      % add image to the output list
+      out_mag{idx_mag} = outfname;
+      idx_mag = idx_mag +1;
+
+
+  end
+
+  data_out = denoised_weighted_data(3).data;
+  data_size = size(data_out);
+  data_len = data_size(4);
+  image_list = denoising_params.mtw;
+  for echo = 1:data_len
+      % get denoised volume
+      volumedata  = data_out(:,:,:,echo);
+      % write the volume to .nii with an update to standard .nii header
+      firstfile = image_list{echo};
+      filehdr = spm_vol(image_list{echo});
+
+      [path,filename,ext] = fileparts(firstfile);
+      [~,mainfilename,~] = fileparts(firstfile);
+      filename = strcat('AdaptiveDenoised_',filename,'.nii');
+
+      outfname = fullfile(output_path{1},filename);
+      dt = filehdr.dt;
+      updated_descrip = strcat(filehdr.descrip, ' + adaptive denoised');
+      denoised_nifti = hmri_create_nifti(outfname, filehdr, dt, updated_descrip);
+      denoised_nifti.dat(:,:,:) = volumedata;
+
+      % write metadata as extended header and sidecar json
+      Output_hdr = init_dn_output_metadata(image_list, denoising_params);
+      Output_hdr.history.procstep.descrip = [Output_hdr.history.procstep.descrip ' (ADAPTIVE)'];
+      Output_hdr.history.output.imtype = 'Denoising (ADAPTIVE)';
+      % add acquisition data if available (otherwise fields will be empty)
+      jsonfilename = fullfile(path,strcat(mainfilename,'.json'));
+      if exist(jsonfilename, 'file') ==2
+          try
+              jsondata = spm_jsonread(jsonfilename);
+              data_RepetitionTime = get_metadata_val(jsondata,'RepetitionTime');
+              data_EchoTime = get_metadata_val(jsondata,'EchoTime' );
+              data_FlipAngle = get_metadata_val(jsondata, 'FlipAngle');
+              Output_hdr.acqpar = struct('RepetitionTime',data_RepetitionTime, ...
+                  'EchoTime',data_EchoTime,'FlipAngle',data_FlipAngle);
+          catch
+              hmri_log('Although json sidecar file were found, the writing of acquisition metadata failed', mppcaflags_nopopup);  
+
+          end
+      else
+          hmri_log('No json sidecar file were found, skipping the writing of acquisition metadata', mppcaflags_nopopup);  
+      end
+
+      % set all the metadata
+      set_metadata(outfname,Output_hdr,json);
+
+      % add image to the output list
+      out_mag{idx_mag} = outfname;
+      idx_mag = idx_mag +1;
+
+
+  end
+
+output_mag = out_mag;
+output_phase = {};
+end
+
+%=========================================================================%
+% Calculate/keep quantile values in adaptive denoising.
+%=========================================================================%
+
+function qval = qf(df1, df2, alpha)
+% Look-up table of F quantiles qf(1-alpha, df1, df2).
+% df1  : 1..4   (numerator degrees of freedom)
+% df2  : 1..40  (denominator degrees of freedom)
+% alpha: significance level — one of 0.5, 0.1, 0.05, 0.025, 0.01
+alpha_supported = [0.5, 0.1, 0.05, 0.025, 0.01];
+aidx = find(abs(alpha_supported - alpha) < 1e-10);
+if isempty(aidx)
+    error('hmri_calc_paws:qf:unsupportedAlpha', ...
+        'alpha must be one of: 0.5, 0.1, 0.05, 0.025, 0.01');
+end
+
+% quantile(df1, df2, alpha_idx)  —  values from R: qf(1-alpha, df1, 1:40)
+quantile = zeros(4, 40, 5);
+
+% alpha = 0.5  (50th percentile)
+quantile(1,:,1) = [  1.000000   0.666667   0.585060   0.548632   0.528074   0.514890   0.505723   0.498982   0.493818   0.489737   0.486430   0.483696   0.481399   0.479441   0.477753   0.476283   0.474990   0.473845   0.472823   0.471906   0.471079   0.470329   0.469645   0.469019   0.468444   0.467915   0.467425   0.466971   0.466549   0.466155   0.465788   0.465443   0.465120   0.464816   0.464530   0.464259   0.464004   0.463762   0.463533   0.463315];
+quantile(2,:,1) = [  1.500000   1.000000   0.881102   0.828427   0.798770   0.779763   0.766548   0.756828   0.749381   0.743492   0.738719   0.734772   0.731455   0.728627   0.726187   0.724062   0.722193   0.720538   0.719061   0.717735   0.716538   0.715452   0.714463   0.713557   0.712726   0.711959   0.711250   0.710593   0.709982   0.709412   0.708879   0.708381   0.707912   0.707472   0.707057   0.706666   0.706296   0.705946   0.705614   0.705298];
+quantile(3,:,1) = [  1.709226   1.134943   1.000000   0.940534   0.907146   0.885783   0.870944   0.860038   0.851684   0.845081   0.839730   0.835306   0.831587   0.828418   0.825684   0.823303   0.821209   0.819354   0.817698   0.816213   0.814872   0.813655   0.812546   0.811532   0.810600   0.809741   0.808947   0.808210   0.807525   0.806887   0.806290   0.805731   0.805207   0.804713   0.804249   0.803810   0.803395   0.803003   0.802631   0.802278];
+quantile(4,:,1) = [  1.822715   1.207107   1.063226   1.000000   0.964562   0.941913   0.926193   0.914645   0.905804   0.898817   0.893157   0.888478   0.884546   0.881195   0.878305   0.875787   0.873574   0.871612   0.869863   0.868293   0.866875   0.865589   0.864418   0.863345   0.862361   0.861453   0.860614   0.859835   0.859112   0.858437   0.857806   0.857216   0.856661   0.856140   0.855649   0.855185   0.854747   0.854332   0.853939   0.853566];
+
+% alpha = 0.1  (90th percentile)
+quantile(1,:,2) = [ 39.863458   8.526316   5.538319   4.544771   4.060420   3.775950   3.589428   3.457919   3.360303   3.285015   3.225202   3.176549   3.136205   3.102213   3.073186   3.048110   3.026232   3.006977   2.989900   2.974653   2.960956   2.948585   2.937356   2.927117   2.917745   2.909132   2.901192   2.893846   2.887033   2.880695   2.874784   2.869259   2.864083   2.859225   2.854655   2.850349   2.846285   2.842442   2.838804   2.835354];
+quantile(2,:,2) = [ 49.500000   9.000000   5.462383   4.324555   3.779716   3.463304   3.257442   3.113118   3.006452   2.924466   2.859511   2.806796   2.763167   2.726468   2.695173   2.668171   2.644638   2.623947   2.605612   2.589254   2.574569   2.561314   2.549290   2.538332   2.528305   2.519096   2.510609   2.502761   2.495483   2.488716   2.482407   2.476512   2.470990   2.465809   2.460936   2.456346   2.452014   2.447920   2.444044   2.440369];
+quantile(3,:,2) = [ 53.593245   9.161790   5.390773   4.190860   3.619477   3.288762   3.074072   2.923796   2.812863   2.727673   2.660229   2.605525   2.560273   2.522224   2.489788   2.461811   2.437434   2.416005   2.397022   2.380087   2.364888   2.351170   2.338727   2.327390   2.317017   2.307491   2.298712   2.290595   2.283069   2.276071   2.269548   2.263453   2.257744   2.252387   2.247350   2.242605   2.238128   2.233896   2.229890   2.226092];
+quantile(4,:,2) = [ 55.832961   9.243416   5.342644   4.107250   3.520196   3.180763   2.960534   2.806426   2.692680   2.605336   2.536188   2.480102   2.433705   2.394692   2.361433   2.332745   2.307747   2.285772   2.266303   2.248934   2.233345   2.219274   2.206512   2.194882   2.184242   2.174469   2.165463   2.157136   2.149415   2.142235   2.135542   2.129288   2.123430   2.117934   2.112765   2.107896   2.103302   2.098959   2.094848   2.090950];
+
+% alpha = 0.05  (95th percentile)
+quantile(1,:,3) = [161.447639  18.512821  10.127964   7.708647   6.607891   5.987378   5.591448   5.317655   5.117355   4.964603   4.844336   4.747225   4.667193   4.600110   4.543077   4.493998   4.451322   4.413873   4.380750   4.351244   4.324794   4.300950   4.279344   4.259677   4.241699   4.225201   4.210008   4.195972   4.182964   4.170877   4.159615   4.149097   4.139252   4.130018   4.121338   4.113165   4.105456   4.098172   4.091279   4.084746];
+quantile(2,:,3) = [199.500000  19.000000   9.552094   6.944272   5.786135   5.143253   4.737414   4.458970   4.256495   4.102821   3.982298   3.885294   3.805565   3.738892   3.682320   3.633723   3.591531   3.554557   3.521893   3.492828   3.466800   3.443357   3.422132   3.402826   3.385190   3.369016   3.354131   3.340386   3.327654   3.315830   3.304817   3.294537   3.284918   3.275898   3.267424   3.259446   3.251924   3.244818   3.238096   3.231727];
+quantile(3,:,3) = [215.707345  19.164292   9.276628   6.591382   5.409451   4.757063   4.346831   4.066181   3.862548   3.708265   3.587434   3.490295   3.410534   3.343889   3.287382   3.238872   3.196777   3.159908   3.127350   3.098391   3.072467   3.049125   3.027998   3.008787   2.991241   2.975154   2.960351   2.946685   2.934030   2.922277   2.911334   2.901120   2.891564   2.882604   2.874187   2.866266   2.858796   2.851741   2.845068   2.838745];
+quantile(4,:,3) = [224.583241  19.246794   9.117182   6.388233   5.192168   4.533677   4.120312   3.837853   3.633089   3.478050   3.356690   3.259167   3.179117   3.112250   3.055568   3.006917   2.964708   2.927744   2.895107   2.866081   2.840100   2.816708   2.795539   2.776289   2.758710   2.742594   2.727765   2.714076   2.701399   2.689628   2.678667   2.668437   2.658867   2.649894   2.641465   2.633532   2.626052   2.618988   2.612306   2.605975];
+
+% alpha = 0.025  (97.5th percentile)
+quantile(1,:,4) = [647.789011  38.506329  17.443443  12.217863  10.006982   8.813101   8.072669   7.570882   7.209283   6.936728   6.724130   6.553769   6.414254   6.297939   6.199501   6.115127   6.042013   5.978052   5.921631   5.871494   5.826648   5.786299   5.749805   5.716639   5.686366   5.658624   5.633109   5.609564   5.587768   5.567535   5.548702   5.531129   5.514693   5.499288   5.484820   5.471206   5.458372   5.446254   5.434793   5.423937];
+quantile(2,:,4) = [799.500000  39.000000  16.044106  10.649111   8.433621   7.259856   6.541520   6.059467   5.714705   5.456396   5.255889   5.095867   4.965266   4.856698   4.765048   4.686665   4.618874   4.559672   4.507528   4.461255   4.419918   4.382768   4.349202   4.318726   4.290932   4.265483   4.242094   4.220525   4.200572   4.182061   4.164840   4.148779   4.133765   4.119700   4.106496   4.094076   4.082372   4.071326   4.060881   4.050992];
+quantile(3,:,4) = [864.162972  39.165495  15.439182   9.979199   7.763589   6.598799   5.889819   5.415962   5.078119   4.825621   4.630025   4.474185   4.347178   4.241728   4.152804   4.076823   4.011163   3.953863   3.903428   3.858699   3.818761   3.782886   3.750486   3.721080   3.694273   3.669736   3.647192   3.626408   3.607187   3.589359   3.572778   3.557318   3.542868   3.529334   3.516631   3.504685   3.493429   3.482807   3.472766   3.463260];
+quantile(4,:,4) = [899.583310  39.248418  15.100979   9.604530   7.387886   6.227161   5.522594   5.052632   4.718078   4.468342   4.275072   4.121209   3.995898   3.891914   3.804271   3.729417   3.664754   3.608344   3.558706   3.514695   3.475408   3.440126   3.408268   3.379359   3.353009   3.328894   3.306741   3.286321   3.267438   3.249925   3.233640   3.218456   3.204267   3.190977   3.178505   3.166777   3.155728   3.145301   3.135445   3.126114];
+
+% alpha = 0.01  (99th percentile)
+quantile(1,:,5) = [4052.180695  98.502513  34.116222  21.197690  16.258177  13.745023  12.246383  11.258624  10.561431  10.044289   9.646034   9.330212   9.073806   8.861593   8.683117   8.530965   8.399740   8.285420   8.184947   8.095958   8.016597   7.945386   7.881134   7.822871   7.769798   7.721254   7.676684   7.635619   7.597663   7.562476   7.529766   7.499281   7.470801   7.444136   7.419117   7.395597   7.373445   7.352545   7.332794   7.314100];
+quantile(2,:,5) = [4999.500000  99.000000  30.816520  18.000000  13.273934  10.924767   9.546578   8.649111   8.021517   7.559432   7.205713   6.926608   6.700965   6.514884   6.358873   6.226235   6.112114   6.012905   5.925879   5.848932   5.780416   5.719022   5.663699   5.613591   5.567997   5.526335   5.488118   5.452937   5.420445   5.390346   5.362385   5.336343   5.312029   5.289277   5.267941   5.247894   5.229022   5.211225   5.194413   5.178508];
+quantile(3,:,5) = [5403.352014  99.166201  29.456695  16.694369  12.059954   9.779538   8.451285   7.590992   6.991917   6.552313   6.216730   5.952545   5.739380   5.563886   5.416965   5.292214   5.185000   5.091890   5.010287   4.938193   4.874046   4.816606   4.764877   4.718051   4.675465   4.636570   4.600907   4.568091   4.537795   4.509740   4.483686   4.459429   4.436787   4.415606   4.395749   4.377096   4.359540   4.342988   4.327356   4.312569];
+quantile(4,:,5) = [5624.583330  99.249372  28.709898  15.977025  11.391928   9.148301   7.846645   7.006077   6.422085   5.994339   5.668300   5.411951   5.205330   5.035378   4.893210   4.772578   4.668968   4.579036   4.500258   4.430690   4.368815   4.313429   4.263567   4.218445   4.177420   4.139960   4.105622   4.074032   4.044873   4.017877   3.992811   3.969477   3.947701   3.927333   3.908241   3.890308   3.873433   3.857524   3.842502   3.828294];
+
+qval = quantile(df1, df2, aidx);
+end
+
+
+
 %=========================================================================%
 % To arrange the metadata structure for denoising output.
 %=========================================================================%
@@ -646,4 +1200,21 @@ fntmp = fieldnames(struc);
 for cf = 1:length(fntmp)
     s = sprintf('%s %16s: %s\n', s, fntmp{cf}, num2str(struc.(fntmp{cf})));
 end
+end
+
+%% =======================================================================%
+% modify get_trtefa to get TE values
+% To extract the TE values out of the descriptor field of 
+% the nifti header or the extended header/JSON metadata.
+%=========================================================================%
+function p = get_te(P)
+
+N = nifti(P);
+nN = numel(N);
+p(nN) = struct('te',[]);
+
+for ii = 1:numel(N)
+    p(ii).te = get_metadata_val(P(ii,:),'EchoTime');
+end
+
 end

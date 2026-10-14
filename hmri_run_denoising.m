@@ -13,11 +13,17 @@ function out = hmri_denoising_local(jobsubj)
 % concatenate all contrasts into jobsubj.mag_img and phase_img
 contrasts = {'pdw','t1w','mtw'};
 jobsubj.mag_img = {};
+jobsubj.mag_img_cotags = [];
 jobsubj.phase_img = {};
+jobsubj.phase_img_cotags = [];
 for c = 1:length(contrasts)
     con = contrasts{c};
     jobsubj.mag_img = [jobsubj.mag_img; jobsubj.(con).mag_img];
+    cotags_add=repmat(con,length(jobsubj.(con).mag_img),1);
+    jobsubj.mag_img_cotags = [jobsubj.mag_img_cotags; cotags_add];
     jobsubj.phase_img = [jobsubj.phase_img; jobsubj.(con).phase_img];
+    cotags_add=repmat(con,length(jobsubj.(con).phase_img),1);
+    jobsubj.phase_img_cotags = [jobsubj.phase_img_cotags; cotags_add];
 end
 
 % Case indir versus outdir
@@ -116,6 +122,8 @@ switch  denoising_protocol
         protocol_text = 'LCPCA';
     case 'mppca_denoise'
         protocol_text = 'MPPCA';
+    case 'paws_denoise'
+        protocol_text = 'Adaptive denoising';
 end
 log_text = sprintf("APPLYING %s DENOISING", protocol_text);
 

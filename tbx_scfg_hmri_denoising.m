@@ -147,7 +147,7 @@ paws_kstar.name    = 'Kstar parameter';
 paws_kstar.val     = {[16]};
 paws_kstar.strtype = 'e';
 paws_kstar.num     = [1 1];
-paws_kstar.help    = {['Specify kstar parameter']};
+paws_kstar.help    = {['Specify kstar parameter. Number of iterations for the procedure (default 16)']};
 
 % ---------------------------------------------------------------------
 % patchsz
@@ -155,10 +155,10 @@ paws_kstar.help    = {['Specify kstar parameter']};
 paws_patchsize         = cfg_entry;
 paws_patchsize.tag     = 'patchsize';
 paws_patchsize.name    = 'Patchsize parameter';
-paws_patchsize.val     = {[1]};
+paws_patchsize.val     = {[2]};
 paws_patchsize.strtype = 'e';
 paws_patchsize.num     = [1 1];
-paws_patchsize.help    = {['Specify patchsize parameter']};
+paws_patchsize.help    = {['Specify patchsize parameter. Size of the patch for local comparison (default 2)']};
 
 % ---------------------------------------------------------------------
 % ladjust
@@ -169,7 +169,7 @@ paws_ladjust.name    = 'Ladjust parameter';
 paws_ladjust.val     = {[1]};
 paws_ladjust.strtype = 'e';
 paws_ladjust.num     = [1 1];
-paws_ladjust.help    = {['Specify ladjust parameter']};
+paws_ladjust.help    = {['Specify ladjust parameter. Correction factor for adaptation parameter (default 1)']};
 
 
 % ---------------------------------------------------------------------
@@ -282,7 +282,8 @@ denoisingtype.help   = {'Choose the method for denoising.'
     ['- MPPCA denoising: Veraart et al., NeuroImage (2016) 142, p 394-406. '...
     'Does, MD al., Magn Reson Med. (2019) 81,p 3503– 3514.']
     ['- Adaptive denoising: Mohammadi, et al. WIAS preprint (2017). '...
-    'Polzehl et al. Magnetic Resonance Brain Imaging 2nd edition (2023)']};
+    'Polzehl et al. Magnetic Resonance Brain Imaging 2nd edition (2023).'...
+    ' Polzehl et al. Journal of Statistical Software (2020).']};
 denoisingtype.values = {denoisinginput_lcpca denoisinginput_mppca denoisinginput_paws};
 denoisingtype.val    = {denoisinginput_lcpca};
 
